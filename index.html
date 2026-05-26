@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="pt-BR">
 <head>
 <meta charset="UTF-8">
@@ -652,349 +652,12 @@ footer {
   .cursor, .cursor-follower { display: none; }
 }
 
-/* ── 3D MOCKUPS ── */
-.mockup-3d-wrap {
-  position: relative;
-  width: 100%; max-width: 520px;
-  perspective: 1200px;
-  display: flex; align-items: flex-end;
-  justify-content: center;
-  padding-bottom: 20px;
-}
-
-/* NOTEBOOK 3D */
-.notebook-3d {
-  transform: rotateY(-18deg) rotateX(4deg);
-  transform-style: preserve-3d;
-  filter: drop-shadow(-30px 30px 60px rgba(0,0,0,0.35));
-  animation: float3d 4s ease-in-out infinite;
-  position: relative; z-index: 2;
-}
-@keyframes float3d {
-  0%,100% { transform: rotateY(-18deg) rotateX(4deg) translateY(0); }
-  50% { transform: rotateY(-18deg) rotateX(4deg) translateY(-10px); }
-}
-
-.notebook-lid {
-  width: 340px;
-  background: #1C1C1E;
-  border-radius: 12px 12px 4px 4px;
-  padding: 8px 8px 6px;
-  position: relative;
-  border: 1px solid rgba(255,255,255,0.08);
-  box-shadow: inset 0 0 0 1px rgba(255,255,255,0.05), 0 0 0 1px rgba(0,0,0,0.8);
-}
-.notebook-lid::after {
-  content: '';
-  position: absolute; inset: 0;
-  background: linear-gradient(135deg, rgba(255,255,255,0.06) 0%, transparent 50%);
-  border-radius: 12px 12px 4px 4px;
-  pointer-events: none;
-}
-
-.notebook-screen {
-  background: var(--cream);
-  border-radius: 6px;
-  overflow: hidden;
-  aspect-ratio: 16/10;
-  position: relative;
-}
-
-.nb-camera {
-  width: 6px; height: 6px; border-radius: 50%;
-  background: #333; margin: 4px auto 0;
-  box-shadow: 0 0 0 1px rgba(255,255,255,0.1);
-}
-
-/* Conteúdo dentro da tela do notebook */
-.nb-nav {
-  display: flex; justify-content: space-between; align-items: center;
-  padding: 6px 10px;
-  border-bottom: 1px solid rgba(0,0,0,0.08);
-  background: white;
-}
-.nb-logo { font-size: 0.45rem; font-weight: 700; letter-spacing: 2px; color: #1a1a1a; }
-.nb-links { display: flex; gap: 8px; }
-.nb-links span { font-size: 0.3rem; color: #888; }
-.nb-hero { padding: 10px 10px 6px; }
-.nb-tag { font-size: 0.3rem; letter-spacing: 2px; color: #C9A84C; margin-bottom: 5px; }
-.nb-title { font-family: var(--serif); font-size: 0.85rem; color: #1a1a1a; line-height: 1.1; margin-bottom: 5px; }
-.nb-title em { font-style: italic; color: #1a1a1a; }
-.nb-sub { font-size: 0.3rem; color: #888; line-height: 1.5; margin-bottom: 6px; max-width: 120px; }
-.nb-btn { display: inline-block; background: #1a1a1a; color: #fff; padding: 3px 8px; border-radius: 20px; font-size: 0.28rem; letter-spacing: 1px; }
-.nb-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 4px; padding: 0 10px 10px; }
-.nb-card { aspect-ratio: 4/3; border-radius: 4px; }
-
-/* Base do notebook */
-.notebook-base {
-  width: 340px;
-  transform-style: preserve-3d;
-}
-.nb-base-top {
-  height: 14px;
-  background: linear-gradient(to bottom, #2C2C2E, #1C1C1E);
-  border-radius: 0 0 2px 2px;
-  display: flex; align-items: center; justify-content: center;
-  border: 1px solid rgba(255,255,255,0.06);
-  border-top: none;
-}
-.nb-trackpad {
-  width: 60px; height: 8px;
-  background: rgba(255,255,255,0.04);
-  border-radius: 3px;
-  border: 1px solid rgba(255,255,255,0.06);
-}
-.nb-base-bottom {
-  height: 8px;
-  background: linear-gradient(to bottom, #1A1A1C, #111);
-  border-radius: 0 0 8px 8px;
-  box-shadow: 0 8px 30px rgba(0,0,0,0.5), 0 2px 0 rgba(255,255,255,0.04);
-}
-
-/* CELULAR 3D */
-.phone-3d {
-  position: absolute;
-  right: -20px; bottom: 0;
-  transform: rotateY(8deg) rotateX(2deg);
-  filter: drop-shadow(10px 20px 40px rgba(0,0,0,0.4));
-  animation: floatPhone 4s ease-in-out infinite;
-  animation-delay: .5s;
-  z-index: 3;
-}
-@keyframes floatPhone {
-  0%,100% { transform: rotateY(8deg) rotateX(2deg) translateY(0); }
-  50% { transform: rotateY(8deg) rotateX(2deg) translateY(-8px); }
-}
-
-.phone-body {
-  width: 110px;
-  background: #1C1C1E;
-  border-radius: 22px;
-  padding: 6px;
-  position: relative;
-  border: 1px solid rgba(255,255,255,0.1);
-  box-shadow:
-    inset 0 0 0 1px rgba(255,255,255,0.06),
-    0 0 0 1px rgba(0,0,0,0.8),
-    -4px 0 0 rgba(0,0,0,0.4),
-    4px 0 0 rgba(255,255,255,0.03);
-}
-.phone-body::before {
-  content: '';
-  position: absolute; inset: 0;
-  background: linear-gradient(145deg, rgba(255,255,255,0.08) 0%, transparent 40%);
-  border-radius: 22px;
-  pointer-events: none;
-}
-
-/* Botões laterais */
-.phone-btn-vol {
-  position: absolute; left: -3px; top: 40px;
-  width: 3px; height: 24px;
-  background: #2C2C2E; border-radius: 2px 0 0 2px;
-}
-.phone-btn-power {
-  position: absolute; right: -3px; top: 50px;
-  width: 3px; height: 16px;
-  background: #2C2C2E; border-radius: 0 2px 2px 0;
-}
-
-.phone-screen {
-  background: #0A0A0A;
-  border-radius: 17px;
-  overflow: hidden;
-  aspect-ratio: 9/19.5;
-  position: relative;
-  display: flex; flex-direction: column;
-}
-
-.phone-notch {
-  width: 36px; height: 10px;
-  background: #1C1C1E; border-radius: 0 0 8px 8px;
-  margin: 0 auto;
-  position: relative; z-index: 5;
-  flex-shrink: 0;
-}
-
-.ph-nav {
-  display: flex; justify-content: space-between; align-items: center;
-  padding: 4px 8px;
-  border-bottom: 1px solid rgba(201,168,76,0.15);
-  flex-shrink: 0;
-}
-.ph-hero { padding: 8px 8px 4px; flex-shrink: 0; }
-.ph-products {
-  flex: 1; padding: 4px 8px;
-  display: flex; flex-direction: column; gap: 4px;
-  overflow: hidden;
-}
-.ph-product {
-  display: flex; gap: 6px; align-items: center;
-  background: rgba(255,255,255,0.04);
-  border-radius: 6px; padding: 4px 6px;
-  border: 1px solid rgba(255,255,255,0.06);
-}
-.ph-prod-img {
-  width: 22px; height: 22px; border-radius: 4px;
-  flex-shrink: 0; display: flex; align-items: center;
-  justify-content: center; font-size: 0.65rem;
-}
-.ph-prod-name { font-size: 0.35rem; color: #F5F0E8; margin-bottom: 1px; }
-.ph-prod-price { font-size: 0.38rem; color: #C9A84C; font-weight: 600; }
-.ph-indicator {
-  width: 30px; height: 3px; background: rgba(255,255,255,0.2);
-  border-radius: 2px; margin: 6px auto;
-  flex-shrink: 0;
-}
-
-/* Badge 3D */
-.hero-badge-3d {
-  position: absolute; bottom: -10px; left: 10px;
-  background: white;
-  padding: 12px 16px; border-radius: 12px;
-  font-size: 0.72rem; line-height: 1.5;
-  box-shadow: 0 20px 60px rgba(0,0,0,0.15), 0 4px 16px rgba(0,0,0,0.1);
-  z-index: 10;
-  animation: floatBadge 4s ease-in-out infinite;
-  animation-delay: 1s;
-}
-@keyframes floatBadge {
-  0%,100% { transform: translateY(0); }
-  50% { transform: translateY(-5px); }
-}
-.hero-badge-3d strong { display: block; font-weight: 600; color: #1a1a1a; font-size: 0.72rem; }
-.hero-badge-3d span { color: #888; font-size: 0.65rem; }
-
 /* REVEAL ANIMATION */
 .reveal {
   opacity: 0; transform: translateY(30px);
   transition: opacity .7s ease, transform .7s ease;
 }
 .reveal.visible { opacity: 1; transform: translateY(0); }
-
-/* ── MODAL DE PROJETOS ── */
-.modal-overlay {
-  position: fixed; inset: 0; z-index: 2000;
-  background: rgba(0,0,0,0.80);
-  backdrop-filter: blur(8px);
-  -webkit-backdrop-filter: blur(8px);
-  display: flex; align-items: center; justify-content: center;
-  padding: 16px;
-  opacity: 0; pointer-events: none;
-  transition: opacity .35s ease;
-}
-.modal-overlay.open {
-  opacity: 1; pointer-events: all;
-}
-.modal-card {
-  background: var(--white);
-  border-radius: 22px;
-  width: 100%; max-width: 840px;
-  max-height: 92vh;
-  overflow-y: auto;
-  position: relative;
-  transform: scale(0.86) translateY(32px);
-  transition: transform .44s cubic-bezier(0.34,1.46,0.64,1), opacity .35s ease;
-  opacity: 0;
-  box-shadow: 0 50px 120px rgba(0,0,0,0.50), 0 8px 32px rgba(0,0,0,0.25);
-}
-.modal-overlay.open .modal-card {
-  transform: scale(1) translateY(0);
-  opacity: 1;
-}
-.modal-close {
-  position: absolute; top: 16px; right: 16px;
-  width: 40px; height: 40px; border-radius: 50%;
-  background: rgba(0,0,0,0.07); border: none; cursor: pointer;
-  display: flex; align-items: center; justify-content: center;
-  font-size: 1rem; line-height: 1; color: var(--gray); z-index: 10;
-  transition: background .2s, color .2s, transform .3s;
-  font-family: var(--sans);
-}
-.modal-close:hover {
-  background: rgba(0,0,0,0.14); color: var(--black);
-  transform: rotate(90deg);
-}
-.modal-preview {
-  width: 100%; aspect-ratio: 4/3;
-  border-radius: 22px 22px 0 0;
-  overflow: hidden;
-  position: relative;
-  background: #f0ede8;
-}
-.modal-preview-scaler {
-  position: absolute; top: 0; left: 0;
-  transform-origin: top left;
-}
-.modal-preview-scaler .projeto-img {
-  display: flex !important;
-  flex-direction: column !important;
-  align-items: stretch !important;
-  padding: 0 !important;
-}
-.modal-body {
-  padding: 28px 38px 38px;
-}
-.modal-header { margin-bottom: 14px; }
-.modal-tag-label {
-  font-size: 0.62rem; letter-spacing: 3.5px; color: var(--gray);
-  text-transform: uppercase; display: block; margin-bottom: 10px;
-}
-.modal-project-title {
-  font-family: var(--serif);
-  font-size: clamp(1.7rem, 3.5vw, 2.4rem);
-  font-weight: 700; color: var(--black); line-height: 1.1;
-}
-.modal-divider {
-  height: 1px; background: rgba(0,0,0,0.09);
-  margin: 20px 0;
-}
-.modal-desc {
-  font-size: 0.875rem; color: var(--gray);
-  line-height: 1.95; margin-bottom: 22px;
-}
-.modal-techs-label {
-  font-size: 0.6rem; letter-spacing: 3px; color: var(--gray);
-  text-transform: uppercase; margin-bottom: 10px; display: block;
-}
-.modal-techs {
-  display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 30px;
-}
-.modal-tech {
-  background: var(--black); color: var(--cream);
-  padding: 5px 16px; border-radius: 50px;
-  font-size: 0.7rem; letter-spacing: 0.5px;
-  font-family: var(--sans); font-weight: 300;
-}
-.modal-actions {
-  display: flex; gap: 12px; flex-wrap: wrap;
-}
-.modal-btn-live {
-  display: inline-flex; align-items: center; gap: 9px;
-  background: var(--black); color: var(--cream);
-  padding: 13px 28px; border-radius: 50px;
-  font-size: 0.75rem; font-weight: 400; letter-spacing: 1.5px;
-  text-transform: uppercase; text-decoration: none;
-  font-family: var(--sans); transition: all .3s;
-}
-.modal-btn-live:hover { transform: translateY(-2px); box-shadow: 0 12px 30px rgba(0,0,0,0.22); }
-.modal-btn-wa {
-  display: inline-flex; align-items: center; gap: 9px;
-  background: #25D366; color: #fff;
-  padding: 13px 28px; border-radius: 50px;
-  font-size: 0.75rem; font-weight: 400; letter-spacing: 1.5px;
-  text-transform: uppercase; text-decoration: none;
-  font-family: var(--sans); transition: all .3s;
-}
-.modal-btn-wa:hover { transform: translateY(-2px); box-shadow: 0 12px 30px rgba(37,211,102,0.32); }
-.modal-card::-webkit-scrollbar { width: 3px; }
-.modal-card::-webkit-scrollbar-track { background: transparent; }
-.modal-card::-webkit-scrollbar-thumb { background: rgba(0,0,0,0.12); border-radius: 2px; }
-@media (max-width: 600px) {
-  .modal-body { padding: 22px 20px 30px; }
-  .modal-actions { flex-direction: column; }
-  .modal-btn-live, .modal-btn-wa { justify-content: center; text-align: center; }
-}
 </style>
 </head>
 <body>
@@ -1055,87 +718,28 @@ footer {
     </div>
   </div>
   <div class="hero-right">
-    <div class="mockup-3d-wrap">
-
-      <!-- NOTEBOOK 3D -->
-      <div class="notebook-3d">
-        <!-- Tela -->
-        <div class="notebook-lid">
-          <div class="notebook-screen">
-            <!-- Conteúdo do site dentro da tela -->
-            <div class="nb-nav">
-              <span class="nb-logo">V · VARIANT</span>
-              <div class="nb-links">
-                <span>Sobre</span><span>Trabalhos</span><span>Contato</span>
-              </div>
-            </div>
-            <div class="nb-hero">
-              <div class="nb-tag">SITES QUE TRANSFORMAM</div>
-              <div class="nb-title">Excelência<br><em>em cada<br>detalhe.</em></div>
-              <div class="nb-sub">Design estratégico para marcas que querem ir além.</div>
-              <div class="nb-btn">Ver trabalhos →</div>
-            </div>
-            <!-- Grade decorativa -->
-            <div class="nb-grid">
-              <div class="nb-card" style="background:linear-gradient(135deg,#1a1a2e,#16213e)"></div>
-              <div class="nb-card" style="background:linear-gradient(135deg,#0d0d0d,#1a1a1a)"></div>
-              <div class="nb-card" style="background:linear-gradient(135deg,#FDF0F0,#F5E6E8)"></div>
+    <div class="mockup-wrap">
+      <div class="mockup-laptop">
+        <div class="mockup-screen">
+          <div class="mockup-nav-bar">
+            <div class="mockup-dots">
+              <span style="background:#ff5f57"></span>
+              <span style="background:#febc2e"></span>
+              <span style="background:#28c840"></span>
             </div>
           </div>
-          <!-- Camera -->
-          <div class="nb-camera"></div>
-        </div>
-        <!-- Base -->
-        <div class="notebook-base">
-          <div class="nb-base-top">
-            <div class="nb-trackpad"></div>
+          <div class="mockup-content">
+            <div class="mockup-hero-text">Excelência<br><em>em cada<br>detalhe.</em></div>
+            <p class="mockup-sub">Design estratégico para marcas que querem ir além do comum.</p>
+            <div class="mockup-btn">Saiba mais →</div>
           </div>
-          <div class="nb-base-bottom"></div>
         </div>
+        <div class="mockup-base"><div class="mockup-base-line"></div></div>
       </div>
-
-      <!-- CELULAR 3D -->
-      <div class="phone-3d">
-        <div class="phone-body">
-          <!-- Botões laterais -->
-          <div class="phone-btn-vol"></div>
-          <div class="phone-btn-power"></div>
-          <!-- Tela -->
-          <div class="phone-screen">
-            <div class="phone-notch"></div>
-            <!-- Conteúdo -->
-            <div class="ph-nav">
-              <span style="font-size:0.45rem;letter-spacing:2px;color:#F5F0E8;font-family:var(--serif)">NOIR</span>
-              <span style="font-size:0.6rem">🛍</span>
-            </div>
-            <div class="ph-hero">
-              <div style="font-size:0.4rem;color:#C9A84C;letter-spacing:2px;margin-bottom:4px">NOVA COLEÇÃO</div>
-              <div style="font-family:var(--serif);font-size:0.75rem;color:#F5F0E8;line-height:1.1;margin-bottom:6px">Vista sua<br><em>essência.</em></div>
-              <div style="font-size:0.35rem;color:rgba(245,240,232,0.4);margin-bottom:10px">Moda sofisticada feminina</div>
-            </div>
-            <!-- Produtos -->
-            <div class="ph-products">
-              <div class="ph-product">
-                <div class="ph-prod-img" style="background:linear-gradient(135deg,#1a1a1a,#2a2a2a)">👗</div>
-                <div class="ph-prod-info"><div class="ph-prod-name">Blazer Noir</div><div class="ph-prod-price">R$289</div></div>
-              </div>
-              <div class="ph-product">
-                <div class="ph-prod-img" style="background:linear-gradient(135deg,#2a1a2a,#3a2a3a)">👘</div>
-                <div class="ph-prod-info"><div class="ph-prod-name">Vestido Fluid</div><div class="ph-prod-price">R$199</div></div>
-              </div>
-            </div>
-            <!-- Home indicator -->
-            <div class="ph-indicator"></div>
-          </div>
-        </div>
-      </div>
-
-      <!-- Badge flutuante -->
-      <div class="hero-badge-3d">
+      <div class="hero-badge">
         <strong>🚀 Sites rápidos, modernos</strong>
         <span>e otimizados para converter.</span>
       </div>
-
     </div>
   </div>
 </section>
@@ -1193,246 +797,137 @@ footer {
   </div>
 
   <div class="projetos-grid">
-    <!-- Projeto 1 — Arquitetura: site completo com nav, hero, grid de projetos -->
-    <div class="projeto-card reveal" onclick="openProjectModal(0)">
+    <!-- Projeto 1 — Arquitetura: branco minimalista -->
+    <div class="projeto-card reveal">
       <div class="projeto-img-wrap">
-        <div class="projeto-img proj-1" style="background:#F8F6F2;align-items:stretch;padding:0;flex-direction:column;">
-          <!-- Nav -->
-          <div style="display:flex;justify-content:space-between;align-items:center;padding:8px 14px;border-bottom:1px solid #E8E4DE;background:#fff">
-            <span style="font-size:0.6rem;font-weight:700;letter-spacing:3px;color:#1a1a1a">MORETTI</span>
-            <div style="display:flex;gap:8px">
-              <span style="font-size:0.4rem;color:#888;letter-spacing:1px">PROJETOS</span>
-              <span style="font-size:0.4rem;color:#888;letter-spacing:1px">SOBRE</span>
-              <span style="font-size:0.4rem;color:#888;letter-spacing:1px">CONTATO</span>
-            </div>
-          </div>
-          <!-- Hero -->
-          <div style="padding:12px 14px;flex:1">
-            <div style="width:20px;height:1px;background:#C9A84C;margin-bottom:8px"></div>
-            <div style="font-family:var(--serif);font-size:1rem;color:#1a1a1a;line-height:1.1;margin-bottom:6px">Arquitetura que<br><em>transforma espaços.</em></div>
-            <div style="font-size:0.4rem;color:#888;margin-bottom:10px">Projetos exclusivos para quem vive o design</div>
-            <!-- Grid de projetos miniatura -->
-            <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:4px">
-              <div style="aspect-ratio:1;background:linear-gradient(135deg,#2C2C2C,#444);border-radius:3px"></div>
-              <div style="aspect-ratio:1;background:linear-gradient(135deg,#D4C5B0,#C8B89A);border-radius:3px"></div>
-              <div style="aspect-ratio:1;background:linear-gradient(135deg,#1A1A1A,#333);border-radius:3px"></div>
-            </div>
-            <div style="margin-top:8px;display:inline-block;background:#1a1a1a;color:#fff;padding:3px 10px;font-size:0.4rem;letter-spacing:1px">VER PROJETOS →</div>
+        <div class="projeto-img proj-1" style="align-items:flex-start;padding:16px;">
+          <div class="proj-mini" style="width:90%">
+            <div class="proj-mini-accent"></div>
+            <div class="proj-mini-nav"></div>
+            <div class="proj-mini-title" style="color:#1a1a1a;font-size:0.9rem">Arquitetura que<br>transforma espaços.</div>
+            <div class="proj-mini-sub" style="color:#888">Projetos exclusivos para quem vive o design</div>
+            <div class="proj-mini-btn" style="background:#1a1a1a;color:#fff;border-radius:2px;margin-top:8px">Ver projeto →</div>
           </div>
         </div>
         <div class="projeto-overlay"><span>Ver projeto</span></div>
       </div>
       <div class="projeto-info">
-        <div><div class="projeto-tag">Site Institucional</div><div class="projeto-name">Moretti Arquitetura</div></div>
+        <div>
+          <div class="projeto-tag">Site Institucional</div>
+          <div class="projeto-name">Moretti Arquitetura</div>
+        </div>
         <div class="projeto-num">01</div>
       </div>
     </div>
 
-    <!-- Projeto 2 — Academia: landing page full com stats e planos -->
-    <div class="projeto-card reveal" onclick="openProjectModal(1)">
+    <!-- Projeto 2 — Academia: vermelho brutal -->
+    <div class="projeto-card reveal">
       <div class="projeto-img-wrap">
-        <div class="projeto-img proj-2" style="background:#0D0D0D;align-items:stretch;padding:0;flex-direction:column;">
-          <!-- Nav -->
-          <div style="display:flex;justify-content:space-between;align-items:center;padding:8px 14px;border-bottom:1px solid rgba(230,57,70,0.3)">
-            <span style="font-size:0.6rem;font-weight:900;letter-spacing:2px;color:#fff">BLACKFIT</span>
-            <div style="background:#E63946;padding:3px 8px;font-size:0.4rem;color:#fff;letter-spacing:1px">MATRICULE-SE</div>
-          </div>
-          <!-- Hero -->
-          <div style="padding:10px 14px">
-            <div style="font-size:0.4rem;color:#E63946;letter-spacing:3px;margin-bottom:6px">SANTOS/SP</div>
-            <div style="font-family:var(--sans);font-size:1.1rem;font-weight:900;color:#fff;text-transform:uppercase;letter-spacing:-2px;line-height:1;margin-bottom:8px">MAIS QUE<br>UMA<br>ACADEMIA.</div>
-            <!-- Stats -->
-            <div style="display:flex;gap:10px;margin-bottom:8px">
-              <div style="text-align:center"><div style="font-size:0.7rem;font-weight:900;color:#E63946">500+</div><div style="font-size:0.35rem;color:rgba(255,255,255,0.4)">ALUNOS</div></div>
-              <div style="text-align:center"><div style="font-size:0.7rem;font-weight:900;color:#E63946">24H</div><div style="font-size:0.35rem;color:rgba(255,255,255,0.4)">ABERTO</div></div>
-              <div style="text-align:center"><div style="font-size:0.7rem;font-weight:900;color:#E63946">15+</div><div style="font-size:0.35rem;color:rgba(255,255,255,0.4)">MODALIDADES</div></div>
-            </div>
-            <!-- Planos -->
-            <div style="display:flex;gap:4px">
-              <div style="flex:1;background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);padding:5px;border-radius:4px">
-                <div style="font-size:0.4rem;color:rgba(255,255,255,0.4);margin-bottom:2px">BÁSICO</div>
-                <div style="font-size:0.55rem;color:#fff;font-weight:700">R$89</div>
-              </div>
-              <div style="flex:1;background:#E63946;padding:5px;border-radius:4px">
-                <div style="font-size:0.4rem;color:rgba(255,255,255,0.7);margin-bottom:2px">PREMIUM</div>
-                <div style="font-size:0.55rem;color:#fff;font-weight:700">R$149</div>
-              </div>
-              <div style="flex:1;background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);padding:5px;border-radius:4px">
-                <div style="font-size:0.4rem;color:rgba(255,255,255,0.4);margin-bottom:2px">VIP</div>
-                <div style="font-size:0.55rem;color:#fff;font-weight:700">R$249</div>
-              </div>
-            </div>
+        <div class="projeto-img proj-2" style="align-items:flex-end;padding:20px;">
+          <div class="proj-mini" style="width:100%">
+            <div class="proj-mini-nav" style="background:#E63946;height:3px;margin-bottom:14px"></div>
+            <div class="proj-mini-title" style="color:#fff;font-size:1rem;font-weight:900;text-transform:uppercase;letter-spacing:-1px;font-style:normal">MAIS QUE UMA<br>ACADEMIA.</div>
+            <div class="proj-mini-sub" style="color:rgba(255,255,255,0.4)">Um estilo de vida completo</div>
+            <div class="proj-mini-btn" style="background:#E63946;color:#fff;border-radius:0;letter-spacing:2px;margin-top:10px">ENTRAR →</div>
           </div>
         </div>
         <div class="projeto-overlay"><span>Ver projeto</span></div>
       </div>
       <div class="projeto-info">
-        <div><div class="projeto-tag">Landing Page</div><div class="projeto-name">BlackFit Studio</div></div>
+        <div>
+          <div class="projeto-tag">Landing Page</div>
+          <div class="projeto-name">BlackFit Studio</div>
+        </div>
         <div class="projeto-num">02</div>
       </div>
     </div>
 
-    <!-- Projeto 3 — Beleza: catálogo com serviços e agendamento -->
-    <div class="projeto-card reveal" onclick="openProjectModal(2)">
+    <!-- Projeto 3 — Beleza: rosa pastel delicado -->
+    <div class="projeto-card reveal">
       <div class="projeto-img-wrap">
-        <div class="projeto-img proj-3" style="background:linear-gradient(135deg,#FDF0F0,#F5E6E8);align-items:stretch;padding:0;flex-direction:column;">
-          <!-- Nav -->
-          <div style="display:flex;justify-content:space-between;align-items:center;padding:8px 14px;background:rgba(255,255,255,0.8)">
-            <span style="font-family:var(--serif);font-size:0.65rem;color:#5C2D35;font-style:italic">Bloom Beauty</span>
-            <div style="background:#E8B4B8;padding:3px 8px;border-radius:20px;font-size:0.4rem;color:#5C2D35">Agendar</div>
-          </div>
-          <!-- Hero -->
-          <div style="padding:10px 14px;flex:1">
-            <div style="font-size:0.4rem;color:#9B6B72;letter-spacing:2px;margin-bottom:4px">🌸 STUDIO DE BELEZA</div>
-            <div style="font-family:var(--serif);font-size:0.9rem;color:#5C2D35;margin-bottom:8px;line-height:1.2">Beleza que<br><em>realça sua essência.</em></div>
-            <!-- Serviços em cards -->
-            <div style="display:flex;flex-direction:column;gap:4px">
-              <div style="background:rgba(255,255,255,0.7);padding:5px 8px;border-radius:8px;display:flex;justify-content:space-between;align-items:center">
-                <div><div style="font-size:0.45rem;color:#5C2D35;font-weight:500">Corte + Escova</div><div style="font-size:0.38rem;color:#9B6B72">60 min</div></div>
-                <div style="font-size:0.5rem;color:#5C2D35;font-weight:600">R$120</div>
-              </div>
-              <div style="background:#E8B4B8;padding:5px 8px;border-radius:8px;display:flex;justify-content:space-between;align-items:center">
-                <div><div style="font-size:0.45rem;color:#5C2D35;font-weight:500">Coloração Premium</div><div style="font-size:0.38rem;color:#7a4550">120 min</div></div>
-                <div style="font-size:0.5rem;color:#5C2D35;font-weight:600">R$280</div>
-              </div>
-              <div style="background:rgba(255,255,255,0.7);padding:5px 8px;border-radius:8px;display:flex;justify-content:space-between;align-items:center">
-                <div><div style="font-size:0.45rem;color:#5C2D35;font-weight:500">Tratamento Capilar</div><div style="font-size:0.38rem;color:#9B6B72">90 min</div></div>
-                <div style="font-size:0.5rem;color:#5C2D35;font-weight:600">R$180</div>
-              </div>
-            </div>
+        <div class="projeto-img proj-3" style="align-items:center;padding:16px;">
+          <div class="proj-mini" style="width:85%;background:rgba(255,255,255,0.7);border:1px solid rgba(200,150,150,0.2);border-radius:12px">
+            <div class="proj-mini-nav" style="background:#E8B4B8;border-radius:4px;margin-bottom:10px"></div>
+            <div style="font-size:0.9rem;margin-bottom:4px">🌸</div>
+            <div class="proj-mini-title" style="color:#5C2D35;font-size:0.8rem">Beleza que<br>realça sua essência.</div>
+            <div class="proj-mini-sub" style="color:#9B6B72">Studio de beleza premium em Santos</div>
+            <div class="proj-mini-btn" style="background:#E8B4B8;color:#5C2D35;border-radius:20px;margin-top:8px">Agendar →</div>
           </div>
         </div>
         <div class="projeto-overlay"><span>Ver projeto</span></div>
       </div>
       <div class="projeto-info">
-        <div><div class="projeto-tag">Catálogo + Agendamento</div><div class="projeto-name">Bloom Beauty</div></div>
+        <div>
+          <div class="projeto-tag">Catálogo + Agendamento</div>
+          <div class="projeto-name">Bloom Beauty</div>
+        </div>
         <div class="projeto-num">03</div>
       </div>
     </div>
 
-    <!-- Projeto 4 — Restaurante: cardápio digital com categorias -->
-    <div class="projeto-card reveal" onclick="openProjectModal(3)">
+    <!-- Projeto 4 — Restaurante: verde escuro sofisticado -->
+    <div class="projeto-card reveal">
       <div class="projeto-img-wrap">
-        <div class="projeto-img proj-4" style="background:#1B2D1E;align-items:stretch;padding:0;flex-direction:column;">
-          <!-- Nav -->
-          <div style="display:flex;justify-content:space-between;align-items:center;padding:8px 14px;border-bottom:1px solid rgba(74,124,89,0.3)">
-            <span style="font-family:var(--serif);font-size:0.65rem;color:#E8DCC8;font-style:italic">Trattoria Bella</span>
-            <span style="font-size:0.5rem">🍃</span>
-          </div>
-          <!-- Categorias -->
-          <div style="display:flex;gap:6px;padding:8px 14px;border-bottom:1px solid rgba(255,255,255,0.06);overflow:hidden">
-            <div style="background:#4A7C59;padding:3px 8px;border-radius:20px;font-size:0.38rem;color:#E8DCC8;white-space:nowrap">Entradas</div>
-            <div style="background:rgba(255,255,255,0.05);padding:3px 8px;border-radius:20px;font-size:0.38rem;color:rgba(232,220,200,0.5);white-space:nowrap">Massas</div>
-            <div style="background:rgba(255,255,255,0.05);padding:3px 8px;border-radius:20px;font-size:0.38rem;color:rgba(232,220,200,0.5);white-space:nowrap">Carnes</div>
-            <div style="background:rgba(255,255,255,0.05);padding:3px 8px;border-radius:20px;font-size:0.38rem;color:rgba(232,220,200,0.5);white-space:nowrap">Sobremesas</div>
-          </div>
-          <!-- Itens do cardápio -->
-          <div style="padding:8px 14px;display:flex;flex-direction:column;gap:5px;flex:1">
-            <div style="display:flex;gap:8px;align-items:center">
-              <div style="width:28px;height:28px;background:linear-gradient(135deg,#2d4a2d,#3d6b3d);border-radius:4px;flex-shrink:0"></div>
-              <div style="flex:1"><div style="font-size:0.45rem;color:#E8DCC8;font-weight:500">Bruschetta al Pomodoro</div><div style="font-size:0.38rem;color:rgba(232,220,200,0.4)">Tomate, manjericão, azeite</div></div>
-              <div style="font-size:0.5rem;color:#4A7C59;font-weight:600">R$32</div>
-            </div>
-            <div style="display:flex;gap:8px;align-items:center">
-              <div style="width:28px;height:28px;background:linear-gradient(135deg,#4a3020,#6b4a30);border-radius:4px;flex-shrink:0"></div>
-              <div style="flex:1"><div style="font-size:0.45rem;color:#E8DCC8;font-weight:500">Tagliatelle al Ragù</div><div style="font-size:0.38rem;color:rgba(232,220,200,0.4)">Massa fresca, ragù bolonhesa</div></div>
-              <div style="font-size:0.5rem;color:#4A7C59;font-weight:600">R$68</div>
-            </div>
-            <div style="display:flex;gap:8px;align-items:center;background:rgba(74,124,89,0.1);padding:4px;border-radius:4px">
-              <div style="width:28px;height:28px;background:linear-gradient(135deg,#3d2d1a,#5d4a2a);border-radius:4px;flex-shrink:0"></div>
-              <div style="flex:1"><div style="font-size:0.45rem;color:#E8DCC8;font-weight:500">Filé ao Marsala ⭐</div><div style="font-size:0.38rem;color:rgba(232,220,200,0.4)">Chef recomenda</div></div>
-              <div style="font-size:0.5rem;color:#4A7C59;font-weight:600">R$98</div>
-            </div>
+        <div class="projeto-img proj-4" style="align-items:center;padding:16px;">
+          <div class="proj-mini" style="width:88%;background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);border-radius:8px">
+            <div style="font-size:1rem;margin-bottom:6px">🍃</div>
+            <div class="proj-mini-nav" style="background:#4A7C59;margin-bottom:10px"></div>
+            <div class="proj-mini-title" style="color:#E8DCC8;font-size:0.8rem">Sabor autêntico<br>em cada prato.</div>
+            <div class="proj-mini-sub" style="color:rgba(232,220,200,0.5)">Cardápio digital completo</div>
+            <div class="proj-mini-btn" style="background:#4A7C59;color:#E8DCC8;border-radius:4px;margin-top:8px">Ver cardápio →</div>
           </div>
         </div>
         <div class="projeto-overlay"><span>Ver projeto</span></div>
       </div>
       <div class="projeto-info">
-        <div><div class="projeto-tag">Cardápio Digital</div><div class="projeto-name">Trattoria Bella</div></div>
+        <div>
+          <div class="projeto-tag">Cardápio Digital</div>
+          <div class="projeto-name">Trattoria Bella</div>
+        </div>
         <div class="projeto-num">04</div>
       </div>
     </div>
 
-    <!-- Projeto 5 — Moda: loja com produtos e filtros -->
-    <div class="projeto-card reveal" onclick="openProjectModal(4)">
+    <!-- Projeto 5 — Moda: preto total luxo dourado -->
+    <div class="projeto-card reveal">
       <div class="projeto-img-wrap">
-        <div class="projeto-img proj-5" style="background:#0A0A0A;align-items:stretch;padding:0;flex-direction:column;">
-          <!-- Nav -->
-          <div style="display:flex;justify-content:space-between;align-items:center;padding:8px 14px;border-bottom:1px solid rgba(201,168,76,0.15)">
-            <span style="font-family:var(--serif);font-size:0.7rem;color:#F5F0E8;letter-spacing:4px">NOIR</span>
-            <div style="display:flex;gap:8px;align-items:center">
-              <span style="font-size:0.38rem;color:rgba(255,255,255,0.3);letter-spacing:1px">COLEÇÃO</span>
-              <span style="font-size:0.38rem;color:rgba(255,255,255,0.3);letter-spacing:1px">SOBRE</span>
-              <div style="background:#C9A84C;width:18px;height:18px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:0.4rem">🛍</div>
-            </div>
-          </div>
-          <!-- Filtros -->
-          <div style="display:flex;gap:4px;padding:6px 14px;border-bottom:1px solid rgba(255,255,255,0.05)">
-            <div style="border:1px solid #C9A84C;padding:2px 6px;font-size:0.35rem;color:#C9A84C">TODOS</div>
-            <div style="border:1px solid rgba(255,255,255,0.1);padding:2px 6px;font-size:0.35rem;color:rgba(255,255,255,0.3)">BLAZERS</div>
-            <div style="border:1px solid rgba(255,255,255,0.1);padding:2px 6px;font-size:0.35rem;color:rgba(255,255,255,0.3)">VESTIDOS</div>
-          </div>
-          <!-- Grid produtos -->
-          <div style="display:grid;grid-template-columns:1fr 1fr;gap:4px;padding:8px 14px;flex:1">
-            <div style="background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.06);border-radius:4px;overflow:hidden">
-              <div style="height:40px;background:linear-gradient(135deg,#1a1a1a,#2a2a2a);display:flex;align-items:center;justify-content:center;font-size:1rem">👗</div>
-              <div style="padding:5px"><div style="font-size:0.4rem;color:#F5F0E8;margin-bottom:1px">Blazer Noir</div><div style="font-size:0.45rem;color:#C9A84C;font-weight:500">R$289</div><div style="margin-top:3px;font-size:0.35rem;color:#C9A84C;border:1px solid rgba(201,168,76,0.3);padding:1px 4px;display:inline-block">INTERESSE</div></div>
-            </div>
-            <div style="background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.06);border-radius:4px;overflow:hidden">
-              <div style="height:40px;background:linear-gradient(135deg,#2a1a2a,#3a2a3a);display:flex;align-items:center;justify-content:center;font-size:1rem">👘</div>
-              <div style="padding:5px"><div style="font-size:0.4rem;color:#F5F0E8;margin-bottom:1px">Vestido Fluid</div><div style="font-size:0.45rem;color:#C9A84C;font-weight:500">R$199</div><div style="margin-top:3px;font-size:0.35rem;color:#C9A84C;border:1px solid rgba(201,168,76,0.3);padding:1px 4px;display:inline-block">INTERESSE</div></div>
-            </div>
+        <div class="projeto-img proj-5" style="align-items:center;padding:16px;">
+          <div class="proj-mini" style="width:85%;background:transparent;border:1px solid rgba(201,168,76,0.25);border-radius:0;padding:16px">
+            <div class="proj-mini-nav" style="background:rgba(201,168,76,0.3);height:1px;margin-bottom:16px"></div>
+            <div class="proj-mini-title" style="color:#F5F0E8;font-size:0.9rem;font-style:italic">Vista sua<br><em>essência.</em></div>
+            <div class="proj-mini-sub" style="color:rgba(245,240,232,0.3);margin-top:6px">Moda sofisticada feminina</div>
+            <div class="proj-mini-btn" style="background:transparent;color:#C9A84C;border:1px solid #C9A84C;border-radius:0;letter-spacing:2px;margin-top:12px;padding:4px 10px">VER CATÁLOGO</div>
           </div>
         </div>
         <div class="projeto-overlay"><span>Ver projeto</span></div>
       </div>
       <div class="projeto-info">
-        <div><div class="projeto-tag">Catálogo de Vendas</div><div class="projeto-name">NOIR Store</div></div>
+        <div>
+          <div class="projeto-tag">Catálogo de Vendas</div>
+          <div class="projeto-name">NOIR Store</div>
+        </div>
         <div class="projeto-num">05</div>
       </div>
     </div>
 
-    <!-- Projeto 6 — Advocacia: site completo com áreas e equipe -->
-    <div class="projeto-card reveal" onclick="openProjectModal(5)">
+    <!-- Projeto 6 — Advocacia: azul marinho clássico -->
+    <div class="projeto-card reveal">
       <div class="projeto-img-wrap">
-        <div class="projeto-img proj-6" style="background:linear-gradient(160deg,#0F1B2D,#1A2D45);align-items:stretch;padding:0;flex-direction:column;">
-          <!-- Nav -->
-          <div style="display:flex;justify-content:space-between;align-items:center;padding:8px 14px;border-bottom:1px solid rgba(201,168,76,0.2)">
-            <div>
-              <div style="font-size:0.55rem;color:#E8E0D0;letter-spacing:2px;font-weight:500">VT ADVOGADOS</div>
-              <div style="font-size:0.35rem;color:rgba(232,224,208,0.4);letter-spacing:1px">OAB/SP</div>
-            </div>
-            <div style="background:#C9A84C;padding:3px 8px;font-size:0.38rem;color:#0F1B2D;font-weight:600">CONSULTA</div>
-          </div>
-          <!-- Hero -->
-          <div style="padding:10px 14px;border-bottom:1px solid rgba(255,255,255,0.05)">
-            <div style="width:16px;height:1px;background:#C9A84C;margin-bottom:5px"></div>
-            <div style="font-family:var(--serif);font-size:0.8rem;color:#E8E0D0;font-style:italic;margin-bottom:4px">Advocacia com<br>tradição.</div>
-            <div style="font-size:0.38rem;color:rgba(232,224,208,0.4)">Desde 1979 · Santos & Guarujá</div>
-          </div>
-          <!-- Áreas -->
-          <div style="padding:8px 14px;flex:1">
-            <div style="font-size:0.38rem;color:#C9A84C;letter-spacing:2px;margin-bottom:6px">ÁREAS DE ATUAÇÃO</div>
-            <div style="display:flex;flex-direction:column;gap:4px">
-              <div style="display:flex;align-items:center;gap:6px;padding:4px 6px;background:rgba(255,255,255,0.03);border-left:2px solid #C9A84C">
-                <span style="font-size:0.6rem">⚖️</span>
-                <div><div style="font-size:0.42rem;color:#E8E0D0">Direito Trabalhista</div></div>
-              </div>
-              <div style="display:flex;align-items:center;gap:6px;padding:4px 6px;background:rgba(255,255,255,0.03);border-left:2px solid rgba(201,168,76,0.3)">
-                <span style="font-size:0.6rem">🏛️</span>
-                <div><div style="font-size:0.42rem;color:#E8E0D0">Direito Previdenciário</div></div>
-              </div>
-              <div style="display:flex;align-items:center;gap:6px;padding:4px 6px;background:rgba(255,255,255,0.03);border-left:2px solid rgba(201,168,76,0.3)">
-                <span style="font-size:0.6rem">📋</span>
-                <div><div style="font-size:0.42rem;color:#E8E0D0">Direito Cível</div></div>
-              </div>
-            </div>
+        <div class="projeto-img proj-6" style="align-items:center;padding:16px;">
+          <div class="proj-mini" style="width:88%;background:rgba(255,255,255,0.03);border-top:2px solid #C9A84C;border-radius:0;padding:14px">
+            <div class="proj-mini-nav" style="background:rgba(201,168,76,0.2);margin-bottom:12px"></div>
+            <div class="proj-mini-title" style="color:#E8E0D0;font-size:0.8rem;font-style:italic">Advocacia com<br>tradição e excelência.</div>
+            <div class="proj-mini-sub" style="color:rgba(232,224,208,0.4)">45+ anos de atuação jurídica</div>
+            <div class="proj-mini-btn" style="background:#C9A84C;color:#0F1B2D;border-radius:2px;font-weight:600;margin-top:10px">Saiba mais →</div>
           </div>
         </div>
         <div class="projeto-overlay"><span>Ver projeto</span></div>
       </div>
       <div class="projeto-info">
-        <div><div class="projeto-tag">Site Institucional</div><div class="projeto-name">VT Advogados</div></div>
+        <div>
+          <div class="projeto-tag">Site Institucional</div>
+          <div class="projeto-name">VT Advogados</div>
+        </div>
         <div class="projeto-num">06</div>
       </div>
     </div>
@@ -1562,33 +1057,6 @@ footer {
   <div class="footer-logo">Variant</div>
   <p class="footer-copy">© 2025 <span>Variant Agência de Marketing</span>. Todos os direitos reservados.</p>
 </footer>
-
-<!-- ── MODAL DE PROJETOS ── -->
-<div class="modal-overlay" id="projectModal">
-  <div class="modal-card" id="modalCard">
-    <button class="modal-close" onclick="closeModal()" aria-label="Fechar">✕</button>
-    <div class="modal-preview" id="modalPreview"></div>
-    <div class="modal-body">
-      <div class="modal-header">
-        <span class="modal-tag-label" id="modalTagLabel"></span>
-        <h3 class="modal-project-title" id="modalProjectTitle"></h3>
-      </div>
-      <div class="modal-divider"></div>
-      <p class="modal-desc" id="modalProjectDesc"></p>
-      <span class="modal-techs-label">Tecnologias utilizadas</span>
-      <div class="modal-techs" id="modalTechsList"></div>
-      <div class="modal-actions">
-        <a href="#" class="modal-btn-live" id="modalBtnLive">
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M2 12h20M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>
-          Ver site ao vivo
-        </a>
-        <a href="#" class="modal-btn-wa" id="modalBtnWa" target="_blank">
-          💬 Solicitar projeto similar
-        </a>
-      </div>
-    </div>
-  </div>
-</div>
 
 <script>
 // CURSOR
@@ -1759,139 +1227,6 @@ function copyPrompt() {
 }
 
 renderStep();
-
-// ── MODAL DE PROJETOS ──
-const projectsData = [
-  {
-    name: 'Moretti Arquitetura',
-    tag: 'Site Institucional',
-    desc: 'Site institucional desenvolvido para um renomado escritório de arquitetura contemporânea. O projeto contempla uma galeria visual imersiva com os trabalhos do portfólio, organizada por categorias como residencial, comercial e corporativo. A navegação intuitiva e o design minimalista reforçam a sofisticação da marca, enquanto o formulário de contato integrado facilita a captação de leads altamente qualificados e o agendamento de reuniões com novos clientes.',
-    techs: ['HTML5 & CSS3', 'JavaScript', 'Design Responsivo', 'Galeria Interativa', 'Formulário de Contato', 'SEO On-page'],
-    waMsg: 'Olá! Vi o projeto Moretti Arquitetura no portfólio da Variant e gostaria de solicitar um projeto similar para o meu negócio. Podem me ajudar?'
-  },
-  {
-    name: 'BlackFit Studio',
-    tag: 'Landing Page',
-    desc: 'Landing page de alta conversão desenvolvida para uma academia moderna focada em resultados expressivos. A página apresenta os planos de assinatura com comparativo detalhado de benefícios, galeria das modalidades disponíveis e depoimentos reais de alunos transformados. A integração direta com o WhatsApp permite que novos interessados entrem em contato instantaneamente, maximizando o número de matrículas e potencializando cada visita ao site.',
-    techs: ['HTML5 & CSS3', 'JavaScript', 'WhatsApp API', 'Design Responsivo', 'Otimização de Conversão', 'Animações CSS'],
-    waMsg: 'Olá! Vi o projeto BlackFit Studio no portfólio da Variant e gostaria de solicitar um projeto similar para o meu negócio. Podem me ajudar?'
-  },
-  {
-    name: 'Bloom Beauty',
-    tag: 'Catálogo + Agendamento',
-    desc: 'Plataforma digital completa desenvolvida para um estúdio de beleza premium. O site apresenta o catálogo de serviços com descrições detalhadas, preços e duração estimada de cada procedimento. O sistema de agendamento integrado permite que clientes marquem horários diretamente pelo site ou pelo WhatsApp, reduzindo o trabalho operacional da equipe e aumentando significativamente o volume de agendamentos confirmados.',
-    techs: ['HTML5 & CSS3', 'JavaScript', 'Sistema de Agendamento', 'WhatsApp API', 'Catálogo de Serviços', 'Design Responsivo'],
-    waMsg: 'Olá! Vi o projeto Bloom Beauty no portfólio da Variant e gostaria de solicitar um projeto similar para o meu negócio. Podem me ajudar?'
-  },
-  {
-    name: 'Trattoria Bella',
-    tag: 'Cardápio Digital',
-    desc: 'Cardápio digital sofisticado desenvolvido para um restaurante italiano tradicional com décadas de história. O projeto apresenta todos os pratos organizados por categorias — entradas, massas, carnes e sobremesas — com fotos profissionais e descrições detalhadas dos ingredientes e método de preparo. O botão de pedido via WhatsApp permite que clientes façam reservas e pedidos com total agilidade, ampliando o volume de atendimentos e fidelizando a clientela.',
-    techs: ['HTML5 & CSS3', 'JavaScript', 'Cardápio Interativo', 'WhatsApp API', 'Filtros por Categoria', 'Design Responsivo'],
-    waMsg: 'Olá! Vi o projeto Trattoria Bella no portfólio da Variant e gostaria de solicitar um projeto similar para o meu negócio. Podem me ajudar?'
-  },
-  {
-    name: 'NOIR Store',
-    tag: 'Catálogo de Vendas',
-    desc: 'Catálogo de vendas online desenvolvido para uma loja de moda feminina de alto padrão. O projeto conta com um grid de produtos visualmente impactante, sistema de filtros por categoria (blazers, vestidos, acessórios) e botão de interesse que direciona o cliente diretamente para o WhatsApp ou Instagram. O design escuro e elegante reforça o posicionamento luxuoso da marca e cria uma experiência de compra premium para cada visitante.',
-    techs: ['HTML5 & CSS3', 'JavaScript', 'Grid de Produtos', 'Filtros por Categoria', 'WhatsApp API', 'Design Premium'],
-    waMsg: 'Olá! Vi o projeto NOIR Store no portfólio da Variant e gostaria de solicitar um projeto similar para o meu negócio. Podem me ajudar?'
-  },
-  {
-    name: 'VT Advogados',
-    tag: 'Site Institucional',
-    desc: 'Site institucional elegante desenvolvido para um tradicional escritório de advocacia com décadas de atuação reconhecida. O projeto destaca as áreas de atuação com descrições claras e objetivas, apresenta a equipe de advogados com suas credenciais e especialidades, e disponibiliza um formulário de consulta inicial completo e direto. O design sóbrio e profissional transmite autoridade, credibilidade e confiança para novos clientes em potencial.',
-    techs: ['HTML5 & CSS3', 'JavaScript', 'Design Institucional', 'Formulário de Contato', 'Áreas de Atuação', 'SEO On-page'],
-    waMsg: 'Olá! Vi o projeto VT Advogados no portfólio da Variant e gostaria de solicitar um projeto similar para o meu negócio. Podem me ajudar?'
-  }
-];
-
-function openProjectModal(index) {
-  const data = projectsData[index];
-  const cards = document.querySelectorAll('.projeto-card');
-  const card = cards[index];
-
-  // Preencher conteúdo textual
-  document.getElementById('modalTagLabel').textContent = data.tag;
-  document.getElementById('modalProjectTitle').textContent = data.name;
-  document.getElementById('modalProjectDesc').textContent = data.desc;
-
-  // Tags de tecnologias
-  const techsEl = document.getElementById('modalTechsList');
-  techsEl.innerHTML = data.techs.map(t => `<span class="modal-tech">${t}</span>`).join('');
-
-  // Botão WhatsApp com mensagem pré-preenchida
-  document.getElementById('modalBtnWa').href =
-    'https://wa.me/5513996410149?text=' + encodeURIComponent(data.waMsg);
-
-  // Clonar o mockup visual do card para o preview do modal
-  const srcImg = card.querySelector('.projeto-img');
-  const preview = document.getElementById('modalPreview');
-  preview.innerHTML = '';
-  const scaler = document.createElement('div');
-  scaler.className = 'modal-preview-scaler';
-  const cloned = srcImg.cloneNode(true);
-  // Garantir dimensões explícitas no clone
-  cloned.style.display = 'flex';
-  cloned.style.flexDirection = 'column';
-  cloned.style.alignItems = 'stretch';
-  scaler.appendChild(cloned);
-  preview.appendChild(scaler);
-
-  // Bloquear scroll do body e abrir modal
-  document.body.style.overflow = 'hidden';
-  document.getElementById('projectModal').classList.add('open');
-
-  // Calcular e aplicar o scale após render completo
-  requestAnimationFrame(() => {
-    requestAnimationFrame(() => {
-      const pw = preview.offsetWidth;
-      const ph = preview.offsetHeight;
-      const ow = srcImg.offsetWidth;
-      const oh = srcImg.offsetHeight;
-      if (ow > 0 && oh > 0) {
-        const scaleX = pw / ow;
-        const scaleY = ph / oh;
-        const scale = Math.min(scaleX, scaleY);
-        cloned.style.width  = ow + 'px';
-        cloned.style.height = oh + 'px';
-        scaler.style.width  = ow + 'px';
-        scaler.style.height = oh + 'px';
-        scaler.style.transform = 'scale(' + scale + ')';
-        // Centralizar horizontalmente se sobrar espaço
-        const offsetX = Math.max(0, (pw - ow * scale) / 2);
-        const offsetY = Math.max(0, (ph - oh * scale) / 2);
-        scaler.style.left = offsetX + 'px';
-        scaler.style.top  = offsetY + 'px';
-      }
-    });
-  });
-}
-
-function closeModal() {
-  const overlay = document.getElementById('projectModal');
-  overlay.classList.remove('open');
-  document.body.style.overflow = '';
-  // Limpar preview após animação de saída
-  setTimeout(function() {
-    if (!overlay.classList.contains('open')) {
-      document.getElementById('modalPreview').innerHTML = '';
-    }
-  }, 460);
-}
-
-// Fechar ao clicar no overlay (fora do card)
-document.getElementById('projectModal').addEventListener('click', function(e) {
-  if (e.target === this) closeModal();
-});
-
-// Fechar com tecla Escape
-document.addEventListener('keydown', function(e) {
-  if (e.key === 'Escape' && document.getElementById('projectModal').classList.contains('open')) {
-    closeModal();
-  }
-});
 </script>
 </body>
 </html>
-
