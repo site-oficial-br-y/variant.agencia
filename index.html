@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="pt-BR">
 <head>
 <meta charset="UTF-8">
@@ -871,6 +871,130 @@ footer {
   transition: opacity .7s ease, transform .7s ease;
 }
 .reveal.visible { opacity: 1; transform: translateY(0); }
+
+/* ── MODAL DE PROJETOS ── */
+.modal-overlay {
+  position: fixed; inset: 0; z-index: 2000;
+  background: rgba(0,0,0,0.80);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  display: flex; align-items: center; justify-content: center;
+  padding: 16px;
+  opacity: 0; pointer-events: none;
+  transition: opacity .35s ease;
+}
+.modal-overlay.open {
+  opacity: 1; pointer-events: all;
+}
+.modal-card {
+  background: var(--white);
+  border-radius: 22px;
+  width: 100%; max-width: 840px;
+  max-height: 92vh;
+  overflow-y: auto;
+  position: relative;
+  transform: scale(0.86) translateY(32px);
+  transition: transform .44s cubic-bezier(0.34,1.46,0.64,1), opacity .35s ease;
+  opacity: 0;
+  box-shadow: 0 50px 120px rgba(0,0,0,0.50), 0 8px 32px rgba(0,0,0,0.25);
+}
+.modal-overlay.open .modal-card {
+  transform: scale(1) translateY(0);
+  opacity: 1;
+}
+.modal-close {
+  position: absolute; top: 16px; right: 16px;
+  width: 40px; height: 40px; border-radius: 50%;
+  background: rgba(0,0,0,0.07); border: none; cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 1rem; line-height: 1; color: var(--gray); z-index: 10;
+  transition: background .2s, color .2s, transform .3s;
+  font-family: var(--sans);
+}
+.modal-close:hover {
+  background: rgba(0,0,0,0.14); color: var(--black);
+  transform: rotate(90deg);
+}
+.modal-preview {
+  width: 100%; aspect-ratio: 4/3;
+  border-radius: 22px 22px 0 0;
+  overflow: hidden;
+  position: relative;
+  background: #f0ede8;
+}
+.modal-preview-scaler {
+  position: absolute; top: 0; left: 0;
+  transform-origin: top left;
+}
+.modal-preview-scaler .projeto-img {
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: stretch !important;
+  padding: 0 !important;
+}
+.modal-body {
+  padding: 28px 38px 38px;
+}
+.modal-header { margin-bottom: 14px; }
+.modal-tag-label {
+  font-size: 0.62rem; letter-spacing: 3.5px; color: var(--gray);
+  text-transform: uppercase; display: block; margin-bottom: 10px;
+}
+.modal-project-title {
+  font-family: var(--serif);
+  font-size: clamp(1.7rem, 3.5vw, 2.4rem);
+  font-weight: 700; color: var(--black); line-height: 1.1;
+}
+.modal-divider {
+  height: 1px; background: rgba(0,0,0,0.09);
+  margin: 20px 0;
+}
+.modal-desc {
+  font-size: 0.875rem; color: var(--gray);
+  line-height: 1.95; margin-bottom: 22px;
+}
+.modal-techs-label {
+  font-size: 0.6rem; letter-spacing: 3px; color: var(--gray);
+  text-transform: uppercase; margin-bottom: 10px; display: block;
+}
+.modal-techs {
+  display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 30px;
+}
+.modal-tech {
+  background: var(--black); color: var(--cream);
+  padding: 5px 16px; border-radius: 50px;
+  font-size: 0.7rem; letter-spacing: 0.5px;
+  font-family: var(--sans); font-weight: 300;
+}
+.modal-actions {
+  display: flex; gap: 12px; flex-wrap: wrap;
+}
+.modal-btn-live {
+  display: inline-flex; align-items: center; gap: 9px;
+  background: var(--black); color: var(--cream);
+  padding: 13px 28px; border-radius: 50px;
+  font-size: 0.75rem; font-weight: 400; letter-spacing: 1.5px;
+  text-transform: uppercase; text-decoration: none;
+  font-family: var(--sans); transition: all .3s;
+}
+.modal-btn-live:hover { transform: translateY(-2px); box-shadow: 0 12px 30px rgba(0,0,0,0.22); }
+.modal-btn-wa {
+  display: inline-flex; align-items: center; gap: 9px;
+  background: #25D366; color: #fff;
+  padding: 13px 28px; border-radius: 50px;
+  font-size: 0.75rem; font-weight: 400; letter-spacing: 1.5px;
+  text-transform: uppercase; text-decoration: none;
+  font-family: var(--sans); transition: all .3s;
+}
+.modal-btn-wa:hover { transform: translateY(-2px); box-shadow: 0 12px 30px rgba(37,211,102,0.32); }
+.modal-card::-webkit-scrollbar { width: 3px; }
+.modal-card::-webkit-scrollbar-track { background: transparent; }
+.modal-card::-webkit-scrollbar-thumb { background: rgba(0,0,0,0.12); border-radius: 2px; }
+@media (max-width: 600px) {
+  .modal-body { padding: 22px 20px 30px; }
+  .modal-actions { flex-direction: column; }
+  .modal-btn-live, .modal-btn-wa { justify-content: center; text-align: center; }
+}
 </style>
 </head>
 <body>
@@ -1070,7 +1194,7 @@ footer {
 
   <div class="projetos-grid">
     <!-- Projeto 1 — Arquitetura: site completo com nav, hero, grid de projetos -->
-    <div class="projeto-card reveal">
+    <div class="projeto-card reveal" onclick="openProjectModal(0)">
       <div class="projeto-img-wrap">
         <div class="projeto-img proj-1" style="background:#F8F6F2;align-items:stretch;padding:0;flex-direction:column;">
           <!-- Nav -->
@@ -1105,7 +1229,7 @@ footer {
     </div>
 
     <!-- Projeto 2 — Academia: landing page full com stats e planos -->
-    <div class="projeto-card reveal">
+    <div class="projeto-card reveal" onclick="openProjectModal(1)">
       <div class="projeto-img-wrap">
         <div class="projeto-img proj-2" style="background:#0D0D0D;align-items:stretch;padding:0;flex-direction:column;">
           <!-- Nav -->
@@ -1149,7 +1273,7 @@ footer {
     </div>
 
     <!-- Projeto 3 — Beleza: catálogo com serviços e agendamento -->
-    <div class="projeto-card reveal">
+    <div class="projeto-card reveal" onclick="openProjectModal(2)">
       <div class="projeto-img-wrap">
         <div class="projeto-img proj-3" style="background:linear-gradient(135deg,#FDF0F0,#F5E6E8);align-items:stretch;padding:0;flex-direction:column;">
           <!-- Nav -->
@@ -1187,7 +1311,7 @@ footer {
     </div>
 
     <!-- Projeto 4 — Restaurante: cardápio digital com categorias -->
-    <div class="projeto-card reveal">
+    <div class="projeto-card reveal" onclick="openProjectModal(3)">
       <div class="projeto-img-wrap">
         <div class="projeto-img proj-4" style="background:#1B2D1E;align-items:stretch;padding:0;flex-direction:column;">
           <!-- Nav -->
@@ -1230,7 +1354,7 @@ footer {
     </div>
 
     <!-- Projeto 5 — Moda: loja com produtos e filtros -->
-    <div class="projeto-card reveal">
+    <div class="projeto-card reveal" onclick="openProjectModal(4)">
       <div class="projeto-img-wrap">
         <div class="projeto-img proj-5" style="background:#0A0A0A;align-items:stretch;padding:0;flex-direction:column;">
           <!-- Nav -->
@@ -1269,7 +1393,7 @@ footer {
     </div>
 
     <!-- Projeto 6 — Advocacia: site completo com áreas e equipe -->
-    <div class="projeto-card reveal">
+    <div class="projeto-card reveal" onclick="openProjectModal(5)">
       <div class="projeto-img-wrap">
         <div class="projeto-img proj-6" style="background:linear-gradient(160deg,#0F1B2D,#1A2D45);align-items:stretch;padding:0;flex-direction:column;">
           <!-- Nav -->
@@ -1438,6 +1562,33 @@ footer {
   <div class="footer-logo">Variant</div>
   <p class="footer-copy">© 2025 <span>Variant Agência de Marketing</span>. Todos os direitos reservados.</p>
 </footer>
+
+<!-- ── MODAL DE PROJETOS ── -->
+<div class="modal-overlay" id="projectModal">
+  <div class="modal-card" id="modalCard">
+    <button class="modal-close" onclick="closeModal()" aria-label="Fechar">✕</button>
+    <div class="modal-preview" id="modalPreview"></div>
+    <div class="modal-body">
+      <div class="modal-header">
+        <span class="modal-tag-label" id="modalTagLabel"></span>
+        <h3 class="modal-project-title" id="modalProjectTitle"></h3>
+      </div>
+      <div class="modal-divider"></div>
+      <p class="modal-desc" id="modalProjectDesc"></p>
+      <span class="modal-techs-label">Tecnologias utilizadas</span>
+      <div class="modal-techs" id="modalTechsList"></div>
+      <div class="modal-actions">
+        <a href="#" class="modal-btn-live" id="modalBtnLive">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M2 12h20M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>
+          Ver site ao vivo
+        </a>
+        <a href="#" class="modal-btn-wa" id="modalBtnWa" target="_blank">
+          💬 Solicitar projeto similar
+        </a>
+      </div>
+    </div>
+  </div>
+</div>
 
 <script>
 // CURSOR
@@ -1608,6 +1759,139 @@ function copyPrompt() {
 }
 
 renderStep();
+
+// ── MODAL DE PROJETOS ──
+const projectsData = [
+  {
+    name: 'Moretti Arquitetura',
+    tag: 'Site Institucional',
+    desc: 'Site institucional desenvolvido para um renomado escritório de arquitetura contemporânea. O projeto contempla uma galeria visual imersiva com os trabalhos do portfólio, organizada por categorias como residencial, comercial e corporativo. A navegação intuitiva e o design minimalista reforçam a sofisticação da marca, enquanto o formulário de contato integrado facilita a captação de leads altamente qualificados e o agendamento de reuniões com novos clientes.',
+    techs: ['HTML5 & CSS3', 'JavaScript', 'Design Responsivo', 'Galeria Interativa', 'Formulário de Contato', 'SEO On-page'],
+    waMsg: 'Olá! Vi o projeto Moretti Arquitetura no portfólio da Variant e gostaria de solicitar um projeto similar para o meu negócio. Podem me ajudar?'
+  },
+  {
+    name: 'BlackFit Studio',
+    tag: 'Landing Page',
+    desc: 'Landing page de alta conversão desenvolvida para uma academia moderna focada em resultados expressivos. A página apresenta os planos de assinatura com comparativo detalhado de benefícios, galeria das modalidades disponíveis e depoimentos reais de alunos transformados. A integração direta com o WhatsApp permite que novos interessados entrem em contato instantaneamente, maximizando o número de matrículas e potencializando cada visita ao site.',
+    techs: ['HTML5 & CSS3', 'JavaScript', 'WhatsApp API', 'Design Responsivo', 'Otimização de Conversão', 'Animações CSS'],
+    waMsg: 'Olá! Vi o projeto BlackFit Studio no portfólio da Variant e gostaria de solicitar um projeto similar para o meu negócio. Podem me ajudar?'
+  },
+  {
+    name: 'Bloom Beauty',
+    tag: 'Catálogo + Agendamento',
+    desc: 'Plataforma digital completa desenvolvida para um estúdio de beleza premium. O site apresenta o catálogo de serviços com descrições detalhadas, preços e duração estimada de cada procedimento. O sistema de agendamento integrado permite que clientes marquem horários diretamente pelo site ou pelo WhatsApp, reduzindo o trabalho operacional da equipe e aumentando significativamente o volume de agendamentos confirmados.',
+    techs: ['HTML5 & CSS3', 'JavaScript', 'Sistema de Agendamento', 'WhatsApp API', 'Catálogo de Serviços', 'Design Responsivo'],
+    waMsg: 'Olá! Vi o projeto Bloom Beauty no portfólio da Variant e gostaria de solicitar um projeto similar para o meu negócio. Podem me ajudar?'
+  },
+  {
+    name: 'Trattoria Bella',
+    tag: 'Cardápio Digital',
+    desc: 'Cardápio digital sofisticado desenvolvido para um restaurante italiano tradicional com décadas de história. O projeto apresenta todos os pratos organizados por categorias — entradas, massas, carnes e sobremesas — com fotos profissionais e descrições detalhadas dos ingredientes e método de preparo. O botão de pedido via WhatsApp permite que clientes façam reservas e pedidos com total agilidade, ampliando o volume de atendimentos e fidelizando a clientela.',
+    techs: ['HTML5 & CSS3', 'JavaScript', 'Cardápio Interativo', 'WhatsApp API', 'Filtros por Categoria', 'Design Responsivo'],
+    waMsg: 'Olá! Vi o projeto Trattoria Bella no portfólio da Variant e gostaria de solicitar um projeto similar para o meu negócio. Podem me ajudar?'
+  },
+  {
+    name: 'NOIR Store',
+    tag: 'Catálogo de Vendas',
+    desc: 'Catálogo de vendas online desenvolvido para uma loja de moda feminina de alto padrão. O projeto conta com um grid de produtos visualmente impactante, sistema de filtros por categoria (blazers, vestidos, acessórios) e botão de interesse que direciona o cliente diretamente para o WhatsApp ou Instagram. O design escuro e elegante reforça o posicionamento luxuoso da marca e cria uma experiência de compra premium para cada visitante.',
+    techs: ['HTML5 & CSS3', 'JavaScript', 'Grid de Produtos', 'Filtros por Categoria', 'WhatsApp API', 'Design Premium'],
+    waMsg: 'Olá! Vi o projeto NOIR Store no portfólio da Variant e gostaria de solicitar um projeto similar para o meu negócio. Podem me ajudar?'
+  },
+  {
+    name: 'VT Advogados',
+    tag: 'Site Institucional',
+    desc: 'Site institucional elegante desenvolvido para um tradicional escritório de advocacia com décadas de atuação reconhecida. O projeto destaca as áreas de atuação com descrições claras e objetivas, apresenta a equipe de advogados com suas credenciais e especialidades, e disponibiliza um formulário de consulta inicial completo e direto. O design sóbrio e profissional transmite autoridade, credibilidade e confiança para novos clientes em potencial.',
+    techs: ['HTML5 & CSS3', 'JavaScript', 'Design Institucional', 'Formulário de Contato', 'Áreas de Atuação', 'SEO On-page'],
+    waMsg: 'Olá! Vi o projeto VT Advogados no portfólio da Variant e gostaria de solicitar um projeto similar para o meu negócio. Podem me ajudar?'
+  }
+];
+
+function openProjectModal(index) {
+  const data = projectsData[index];
+  const cards = document.querySelectorAll('.projeto-card');
+  const card = cards[index];
+
+  // Preencher conteúdo textual
+  document.getElementById('modalTagLabel').textContent = data.tag;
+  document.getElementById('modalProjectTitle').textContent = data.name;
+  document.getElementById('modalProjectDesc').textContent = data.desc;
+
+  // Tags de tecnologias
+  const techsEl = document.getElementById('modalTechsList');
+  techsEl.innerHTML = data.techs.map(t => `<span class="modal-tech">${t}</span>`).join('');
+
+  // Botão WhatsApp com mensagem pré-preenchida
+  document.getElementById('modalBtnWa').href =
+    'https://wa.me/5513996410149?text=' + encodeURIComponent(data.waMsg);
+
+  // Clonar o mockup visual do card para o preview do modal
+  const srcImg = card.querySelector('.projeto-img');
+  const preview = document.getElementById('modalPreview');
+  preview.innerHTML = '';
+  const scaler = document.createElement('div');
+  scaler.className = 'modal-preview-scaler';
+  const cloned = srcImg.cloneNode(true);
+  // Garantir dimensões explícitas no clone
+  cloned.style.display = 'flex';
+  cloned.style.flexDirection = 'column';
+  cloned.style.alignItems = 'stretch';
+  scaler.appendChild(cloned);
+  preview.appendChild(scaler);
+
+  // Bloquear scroll do body e abrir modal
+  document.body.style.overflow = 'hidden';
+  document.getElementById('projectModal').classList.add('open');
+
+  // Calcular e aplicar o scale após render completo
+  requestAnimationFrame(() => {
+    requestAnimationFrame(() => {
+      const pw = preview.offsetWidth;
+      const ph = preview.offsetHeight;
+      const ow = srcImg.offsetWidth;
+      const oh = srcImg.offsetHeight;
+      if (ow > 0 && oh > 0) {
+        const scaleX = pw / ow;
+        const scaleY = ph / oh;
+        const scale = Math.min(scaleX, scaleY);
+        cloned.style.width  = ow + 'px';
+        cloned.style.height = oh + 'px';
+        scaler.style.width  = ow + 'px';
+        scaler.style.height = oh + 'px';
+        scaler.style.transform = 'scale(' + scale + ')';
+        // Centralizar horizontalmente se sobrar espaço
+        const offsetX = Math.max(0, (pw - ow * scale) / 2);
+        const offsetY = Math.max(0, (ph - oh * scale) / 2);
+        scaler.style.left = offsetX + 'px';
+        scaler.style.top  = offsetY + 'px';
+      }
+    });
+  });
+}
+
+function closeModal() {
+  const overlay = document.getElementById('projectModal');
+  overlay.classList.remove('open');
+  document.body.style.overflow = '';
+  // Limpar preview após animação de saída
+  setTimeout(function() {
+    if (!overlay.classList.contains('open')) {
+      document.getElementById('modalPreview').innerHTML = '';
+    }
+  }, 460);
+}
+
+// Fechar ao clicar no overlay (fora do card)
+document.getElementById('projectModal').addEventListener('click', function(e) {
+  if (e.target === this) closeModal();
+});
+
+// Fechar com tecla Escape
+document.addEventListener('keydown', function(e) {
+  if (e.key === 'Escape' && document.getElementById('projectModal').classList.contains('open')) {
+    closeModal();
+  }
+});
 </script>
 </body>
 </html>
+
