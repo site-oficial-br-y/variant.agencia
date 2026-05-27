@@ -200,53 +200,190 @@ nav {
 .hero-social-text { font-size: 0.78rem; color: var(--gray); }
 .hero-social-text strong { color: var(--black); font-weight: 500; }
 
-/* Hero right — mockup */
+/* Hero right — mockup 3D */
 .hero-right {
   position: relative; z-index: 1;
   display: flex; align-items: center; justify-content: center;
   opacity: 0; animation: fadeUp .8s .4s ease forwards;
 }
 .mockup-wrap {
-  position: relative; width: 100%; max-width: 480px;
+  position: relative;
+  width: 100%; max-width: 480px;
+  height: 340px;
 }
+
+/* --- Laptop --- */
 .mockup-laptop {
-  width: 100%;
-  background: #1A1917; border-radius: 12px;
-  padding: 12px 12px 0;
-  box-shadow: 0 40px 80px rgba(0,0,0,0.3);
+  position: absolute;
+  left: 0; top: 0;
+  width: 74%;
+  background: linear-gradient(145deg, #2a2a2e, #1a1a1e);
+  border-radius: 12px 12px 0 0;
+  padding: 8px 8px 0;
+  box-shadow:
+    0 0 0 1px rgba(255,255,255,0.07),
+    0 30px 65px rgba(0,0,0,0.5),
+    inset 0 1px 0 rgba(255,255,255,0.08);
+  transform: perspective(900px) rotateY(-8deg) rotateX(4deg);
+  transform-origin: left center;
+}
+.mockup-camera-bar {
+  height: 8px;
+  display: flex; align-items: center; justify-content: center;
+  margin-bottom: 2px;
+}
+.mockup-camera-dot {
+  width: 5px; height: 5px;
+  border-radius: 50%;
+  background: #3a3a3e;
+  box-shadow: 0 0 0 1px rgba(255,255,255,0.04);
 }
 .mockup-screen {
-  background: var(--cream); border-radius: 6px;
+  background: var(--cream); border-radius: 4px;
   overflow: hidden; aspect-ratio: 16/10;
   display: flex; flex-direction: column;
+  position: relative;
+}
+.mockup-screen::after {
+  content: '';
+  position: absolute; inset: 0;
+  background: linear-gradient(130deg, rgba(255,255,255,0.07) 0%, transparent 45%);
+  pointer-events: none; z-index: 1; border-radius: 4px;
 }
 .mockup-nav-bar {
-  display: flex; align-items: center; padding: 8px 12px;
-  border-bottom: 1px solid rgba(0,0,0,0.08);
-  gap: 8px;
+  display: flex; align-items: center; padding: 6px 10px;
+  border-bottom: 1px solid rgba(0,0,0,0.07);
+  gap: 7px; background: rgba(0,0,0,0.015); flex-shrink: 0;
 }
-.mockup-dots { display: flex; gap: 5px; }
-.mockup-dots span { width: 7px; height: 7px; border-radius: 50%; }
-.mockup-content { flex: 1; padding: 16px; display: flex; flex-direction: column; gap: 8px; }
-.mockup-hero-text { font-family: var(--serif); font-size: 1.2rem; font-weight: 700; line-height: 1.2; }
+.mockup-dots { display: flex; gap: 4px; }
+.mockup-dots span { width: 6px; height: 6px; border-radius: 50%; }
+.mockup-url-bar {
+  flex: 1; background: rgba(0,0,0,0.055); border-radius: 4px;
+  height: 10px; display: flex; align-items: center; justify-content: center;
+  font-size: 0.28rem; color: var(--gray); letter-spacing: 0.5px;
+}
+.mockup-content { flex: 1; padding: 10px 14px; display: flex; flex-direction: column; gap: 5px; }
+.mockup-hero-text { font-family: var(--serif); font-size: 1.05rem; font-weight: 700; line-height: 1.15; }
 .mockup-hero-text em { font-style: italic; }
-.mockup-sub { font-size: 0.55rem; color: var(--gray); line-height: 1.5; max-width: 180px; }
+.mockup-sub { font-size: 0.46rem; color: var(--gray); line-height: 1.5; max-width: 180px; }
 .mockup-btn {
   display: inline-block; background: var(--black);
-  color: var(--cream); padding: 5px 12px; border-radius: 20px;
-  font-size: 0.5rem; letter-spacing: 1px; text-transform: uppercase;
-  width: fit-content; margin-top: 4px;
+  color: var(--cream); padding: 4px 12px; border-radius: 20px;
+  font-size: 0.42rem; letter-spacing: 1px; text-transform: uppercase;
+  width: fit-content;
 }
+.mockup-metrics {
+  display: flex; gap: 10px;
+  margin-top: auto; padding-top: 6px;
+  border-top: 1px solid rgba(0,0,0,0.07);
+}
+.mockup-metric { display: flex; flex-direction: column; }
+.mockup-metric-num {
+  font-family: var(--serif); font-size: 0.66rem;
+  font-weight: 700; color: var(--black); line-height: 1;
+}
+.mockup-metric-label { font-size: 0.28rem; color: var(--gray); }
 .mockup-base {
-  height: 20px; background: #1A1917;
-  border-radius: 0 0 12px 12px;
+  background: linear-gradient(180deg, #202024, #2a2a2e);
+  border-radius: 0 0 10px 10px; height: 20px;
   display: flex; align-items: center; justify-content: center;
+  position: relative;
 }
-.mockup-base-line { width: 60px; height: 3px; background: #333; border-radius: 2px; }
+.mockup-base::before {
+  content: '';
+  position: absolute; top: 6px; left: 50%; transform: translateX(-50%);
+  width: 48px; height: 4px;
+  background: rgba(255,255,255,0.08); border-radius: 2px;
+}
+.mockup-base-line { display: none; }
+
+/* --- Phone --- */
+.mockup-phone {
+  position: absolute;
+  right: 0; bottom: 10px;
+  width: 28%;
+  background: linear-gradient(145deg, #1e1e22, #101012);
+  border-radius: 26px;
+  padding: 10px 5px 12px;
+  box-shadow:
+    0 0 0 1px rgba(255,255,255,0.07),
+    0 20px 50px rgba(0,0,0,0.55),
+    inset 0 1px 0 rgba(255,255,255,0.07);
+  transform: perspective(600px) rotateY(10deg) rotateX(-4deg);
+  transform-origin: right bottom;
+  z-index: 2;
+}
+.mockup-phone::before {
+  content: '';
+  position: absolute; left: -2px; top: 55px;
+  width: 2px; height: 12px;
+  background: rgba(255,255,255,0.1); border-radius: 1px 0 0 1px;
+  box-shadow: 0 18px 0 rgba(255,255,255,0.1);
+}
+.mockup-phone::after {
+  content: '';
+  position: absolute; right: -2px; top: 65px;
+  width: 2px; height: 18px;
+  background: rgba(255,255,255,0.1); border-radius: 0 1px 1px 0;
+}
+.mockup-phone-island {
+  width: 28px; height: 6px;
+  background: #000; border-radius: 3px;
+  margin: 0 auto 5px;
+}
+.mockup-phone-screen {
+  background: var(--cream); border-radius: 18px;
+  overflow: hidden; aspect-ratio: 9/18;
+  display: flex; flex-direction: column;
+  position: relative;
+}
+.mockup-phone-screen::after {
+  content: '';
+  position: absolute; inset: 0;
+  background: linear-gradient(140deg, rgba(255,255,255,0.07) 0%, transparent 40%);
+  pointer-events: none; z-index: 1;
+}
+.mockup-phone-statusbar {
+  display: flex; justify-content: space-between; align-items: center;
+  padding: 4px 8px 2px;
+  font-size: 0.24rem; color: var(--black); flex-shrink: 0;
+}
+.mockup-phone-content {
+  flex: 1; padding: 3px 8px 8px;
+  display: flex; flex-direction: column;
+}
+.mockup-phone-tag {
+  font-size: 0.22rem; letter-spacing: 2px; color: var(--gray);
+  text-transform: uppercase; margin-bottom: 3px;
+}
+.mockup-phone-title {
+  font-family: var(--serif);
+  font-size: 0.65rem; font-weight: 700; line-height: 1.15; margin-bottom: 3px;
+}
+.mockup-phone-title em { font-style: italic; }
+.mockup-phone-desc {
+  font-size: 0.25rem; color: var(--gray); line-height: 1.5; margin-bottom: 5px;
+}
+.mockup-phone-stats { display: flex; gap: 4px; margin-bottom: 5px; }
+.mockup-phone-stat {
+  flex: 1; background: rgba(0,0,0,0.04);
+  border-radius: 5px; padding: 3px 4px; text-align: center;
+}
+.mockup-phone-stat span {
+  display: block; font-family: var(--serif);
+  font-size: 0.48rem; font-weight: 700; color: var(--black); line-height: 1;
+}
+.mockup-phone-stat p { font-size: 0.2rem; color: var(--gray); margin: 0; }
+.mockup-phone-cta {
+  background: var(--black); color: var(--cream);
+  border-radius: 20px; padding: 4px 6px;
+  font-size: 0.24rem; text-align: center;
+  margin-top: auto; letter-spacing: 0.5px;
+}
 
 /* Badge flutuante */
 .hero-badge {
-  position: absolute; bottom: 20px; right: -10px;
+  position: absolute; bottom: -14px; left: 8px;
   background: var(--black); color: var(--cream);
   padding: 12px 18px; border-radius: 12px;
   font-size: 0.72rem; line-height: 1.5;
@@ -813,7 +950,10 @@ footer {
   </div>
   <div class="hero-right">
     <div class="mockup-wrap">
+
+      <!-- Laptop 3D -->
       <div class="mockup-laptop">
+        <div class="mockup-camera-bar"><div class="mockup-camera-dot"></div></div>
         <div class="mockup-screen">
           <div class="mockup-nav-bar">
             <div class="mockup-dots">
@@ -821,15 +961,58 @@ footer {
               <span style="background:#febc2e"></span>
               <span style="background:#28c840"></span>
             </div>
+            <div class="mockup-url-bar">variant.agencia</div>
           </div>
           <div class="mockup-content">
             <div class="mockup-hero-text">Excelência<br><em>em cada<br>detalhe.</em></div>
             <p class="mockup-sub">Design estratégico para marcas que querem ir além do comum.</p>
             <div class="mockup-btn">Saiba mais →</div>
+            <div class="mockup-metrics">
+              <div class="mockup-metric">
+                <span class="mockup-metric-num">50+</span>
+                <span class="mockup-metric-label">Projetos</span>
+              </div>
+              <div class="mockup-metric">
+                <span class="mockup-metric-num">100%</span>
+                <span class="mockup-metric-label">Satisfação</span>
+              </div>
+              <div class="mockup-metric">
+                <span class="mockup-metric-num">48h</span>
+                <span class="mockup-metric-label">Entrega</span>
+              </div>
+            </div>
           </div>
         </div>
         <div class="mockup-base"><div class="mockup-base-line"></div></div>
       </div>
+
+      <!-- Phone 3D -->
+      <div class="mockup-phone">
+        <div class="mockup-phone-island"></div>
+        <div class="mockup-phone-screen">
+          <div class="mockup-phone-statusbar">
+            <span>9:41</span>
+            <span>●●● 🔋</span>
+          </div>
+          <div class="mockup-phone-content">
+            <div class="mockup-phone-tag">Variant Agência</div>
+            <div class="mockup-phone-title">Seu negócio<br><em>no digital.</em></div>
+            <div class="mockup-phone-desc">Sites que geram resultados reais para sua marca.</div>
+            <div class="mockup-phone-stats">
+              <div class="mockup-phone-stat">
+                <span>50+</span>
+                <p>projetos</p>
+              </div>
+              <div class="mockup-phone-stat">
+                <span>48h</span>
+                <p>entrega</p>
+              </div>
+            </div>
+            <div class="mockup-phone-cta">💬 Falar no WhatsApp</div>
+          </div>
+        </div>
+      </div>
+
       <div class="hero-badge">
         <strong>🚀 Sites rápidos, modernos</strong>
         <span>e otimizados para converter.</span>
@@ -909,12 +1092,25 @@ footer {
           <div style="padding:12px 12px 8px;flex:1;display:flex;flex-direction:column;background:#F8F6F2">
             <div style="width:22px;height:2px;background:#C9A84C;margin-bottom:6px;flex-shrink:0"></div>
             <div style="font-family:var(--serif);font-size:0.85rem;font-weight:700;color:#1a1a1a;line-height:1.15;margin-bottom:4px">Arquitetura que<br><em>transforma espaços.</em></div>
-            <div style="font-size:0.35rem;color:#888;line-height:1.6;margin-bottom:7px">Projetos exclusivos para quem valoriza design contemporâneo e sofisticação.</div>
-            <div style="background:#1a1a1a;color:#fff;padding:3px 9px;font-size:0.3rem;letter-spacing:1.5px;text-transform:uppercase;border-radius:2px;width:fit-content">Ver portfólio →</div>
-            <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:4px;margin-top:auto;padding-top:10px">
-              <div style="background:linear-gradient(135deg,#D8D2CA,#C8C2BA);border-radius:3px;aspect-ratio:1"></div>
-              <div style="background:linear-gradient(135deg,#CBC5BC,#BCB6AE);border-radius:3px;aspect-ratio:1"></div>
-              <div style="background:linear-gradient(135deg,#BEB8B0,#B0AAA2);border-radius:3px;aspect-ratio:1"></div>
+            <div style="font-size:0.35rem;color:#888;line-height:1.6;margin-bottom:6px">Projetos exclusivos para quem valoriza design contemporâneo e sofisticação.</div>
+            <div style="display:flex;gap:4px;margin-bottom:7px">
+              <div style="background:#f0ece6;border:1px solid #e0dbd3;padding:1px 6px;font-size:0.26rem;color:#888;border-radius:3px">Todos</div>
+              <div style="background:#1a1a1a;color:#fff;padding:1px 6px;font-size:0.26rem;border-radius:3px">Residencial</div>
+              <div style="background:#f0ece6;border:1px solid #e0dbd3;padding:1px 6px;font-size:0.26rem;color:#888;border-radius:3px">Comercial</div>
+            </div>
+            <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:4px;margin-top:auto">
+              <div style="position:relative;border-radius:3px;overflow:hidden;aspect-ratio:1">
+                <div style="background:linear-gradient(135deg,#D8D2CA,#C8C2BA);width:100%;height:100%"></div>
+                <div style="position:absolute;bottom:0;left:0;right:0;background:rgba(0,0,0,0.45);padding:2px 3px;font-size:0.22rem;color:#fff">Casa Jardins</div>
+              </div>
+              <div style="position:relative;border-radius:3px;overflow:hidden;aspect-ratio:1">
+                <div style="background:linear-gradient(135deg,#CBC5BC,#BCB6AE);width:100%;height:100%"></div>
+                <div style="position:absolute;bottom:0;left:0;right:0;background:rgba(0,0,0,0.45);padding:2px 3px;font-size:0.22rem;color:#fff">Loft Vila</div>
+              </div>
+              <div style="position:relative;border-radius:3px;overflow:hidden;aspect-ratio:1">
+                <div style="background:linear-gradient(135deg,#BEB8B0,#B0AAA2);width:100%;height:100%"></div>
+                <div style="position:absolute;bottom:0;left:0;right:0;background:rgba(0,0,0,0.45);padding:2px 3px;font-size:0.22rem;color:#fff;display:flex;align-items:center;gap:2px"><span style="color:#C9A84C">★</span>Award</div>
+              </div>
             </div>
           </div>
         </div>
@@ -946,8 +1142,19 @@ footer {
             <div style="font-size:0.26rem;color:#E63946;letter-spacing:3px;text-transform:uppercase;margin-bottom:4px">ALTO RENDIMENTO</div>
             <div style="font-size:1.05rem;font-weight:900;color:#fff;line-height:1;text-transform:uppercase;letter-spacing:-1px;margin-bottom:5px">MAIS QUE<br>UMA<br>ACADEMIA.</div>
             <div style="font-size:0.3rem;color:rgba(255,255,255,0.3);line-height:1.5;margin-bottom:8px">Treinos personalizados • Nutrição • Resultados reais</div>
-            <div style="background:#E63946;color:#fff;padding:3px 10px;font-size:0.3rem;letter-spacing:2px;text-transform:uppercase;width:fit-content">MATRICULAR AGORA →</div>
-            <div style="display:flex;gap:4px;margin-top:auto;padding-top:10px">
+            <div style="display:flex;align-items:center;gap:6px;margin-bottom:7px">
+              <div style="background:#E63946;color:#fff;padding:3px 10px;font-size:0.3rem;letter-spacing:2px;text-transform:uppercase">MATRICULAR AGORA →</div>
+              <div style="background:#22c55e;color:#fff;padding:2px 6px;font-size:0.24rem;letter-spacing:1px;text-transform:uppercase;border-radius:2px;animation:float 2s ease-in-out infinite">VAGAS!</div>
+            </div>
+            <div style="border:1px solid rgba(255,255,255,0.07);border-radius:4px;padding:4px 6px;margin-bottom:4px">
+              <div style="font-size:0.24rem;color:#E63946;letter-spacing:1px;text-transform:uppercase;margin-bottom:3px">HOJE</div>
+              <div style="display:flex;flex-direction:column;gap:2px">
+                <div style="display:flex;justify-content:space-between;font-size:0.26rem;color:rgba(255,255,255,0.5)"><span>06:00</span><span style="color:rgba(255,255,255,0.7)">Funcional</span><span style="color:#E63946">●</span></div>
+                <div style="display:flex;justify-content:space-between;font-size:0.26rem;color:rgba(255,255,255,0.5)"><span>08:00</span><span style="color:rgba(255,255,255,0.7)">Body Pump</span><span style="color:rgba(255,255,255,0.2)">●</span></div>
+                <div style="display:flex;justify-content:space-between;font-size:0.26rem;color:rgba(255,255,255,0.5)"><span>19:00</span><span style="color:rgba(255,255,255,0.7)">HIIT</span><span style="color:rgba(255,255,255,0.2)">●</span></div>
+              </div>
+            </div>
+            <div style="display:flex;gap:4px;margin-top:auto;padding-top:6px">
               <div style="flex:1;border:1px solid rgba(255,255,255,0.08);padding:4px 5px;border-radius:3px">
                 <div style="font-size:0.26rem;color:rgba(255,255,255,0.35);text-transform:uppercase;margin-bottom:2px">Basic</div>
                 <div style="font-size:0.48rem;font-weight:700;color:#fff">R$89<span style="font-size:0.26rem;font-weight:300;color:rgba(255,255,255,0.3)">/mês</span></div>
@@ -989,8 +1196,16 @@ footer {
             </div>
           </div>
           <div style="padding:12px 12px 8px;flex:1;display:flex;flex-direction:column;background:linear-gradient(160deg,#FDF0F0,#F5E6E8)">
-            <div style="font-family:var(--serif);font-size:0.85rem;font-weight:700;color:#5C2D35;line-height:1.2;margin-bottom:4px">Realce sua<br><em>beleza natural.</em></div>
-            <div style="font-size:0.33rem;color:#9B6B72;line-height:1.5;margin-bottom:8px">Studio premium em Santos — atendimento personalizado</div>
+            <div style="font-family:var(--serif);font-size:0.85rem;font-weight:700;color:#5C2D35;line-height:1.2;margin-bottom:3px">Realce sua<br><em>beleza natural.</em></div>
+            <div style="display:flex;align-items:center;gap:4px;margin-bottom:3px">
+              <span style="font-size:0.5rem;line-height:1;color:#E8B4B8">★★★★★</span>
+              <span style="font-size:0.28rem;color:#9B6B72;font-weight:500">4.9</span>
+              <span style="font-size:0.26rem;color:#C4A0A4">· 320 avaliações</span>
+            </div>
+            <div style="display:flex;align-items:center;gap:4px;margin-bottom:6px">
+              <div style="width:6px;height:6px;background:#22c55e;border-radius:50%;flex-shrink:0"></div>
+              <span style="font-size:0.28rem;color:#9B6B72">Próximo horário: <strong style="color:#5C2D35">14h30</strong></span>
+            </div>
             <div style="background:#E8B4B8;color:#5C2D35;padding:3px 10px;font-size:0.3rem;border-radius:20px;font-weight:500;width:fit-content">Agendar horário →</div>
             <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:5px;margin-top:auto;padding-top:10px">
               <div style="background:rgba(255,255,255,0.75);border:1px solid rgba(200,150,150,0.2);border-radius:8px;padding:6px 4px;text-align:center">
@@ -1037,8 +1252,14 @@ footer {
             </div>
           </div>
           <div style="padding:12px 12px 8px;background:#1B2D1E;flex:1;display:flex;flex-direction:column">
-            <div style="font-size:0.26rem;color:#4A7C59;letter-spacing:3px;text-transform:uppercase;margin-bottom:4px">CARDÁPIO DIGITAL</div>
-            <div style="font-family:var(--serif);font-size:0.82rem;font-weight:700;color:#E8DCC8;line-height:1.2;margin-bottom:4px;font-style:italic">Sabor autêntico<br>em cada prato.</div>
+            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px">
+              <div style="font-size:0.26rem;color:#4A7C59;letter-spacing:3px;text-transform:uppercase">CARDÁPIO DIGITAL</div>
+              <div style="display:flex;align-items:center;gap:3px">
+                <div style="width:5px;height:5px;background:#22c55e;border-radius:50%"></div>
+                <span style="font-size:0.24rem;color:rgba(232,220,200,0.5)">Aberto · fecha às 23h</span>
+              </div>
+            </div>
+            <div style="font-family:var(--serif);font-size:0.82rem;font-weight:700;color:#E8DCC8;line-height:1.2;margin-bottom:3px;font-style:italic">Sabor autêntico<br>em cada prato.</div>
             <div style="font-size:0.3rem;color:rgba(232,220,200,0.35);line-height:1.5;margin-bottom:7px">Culinária italiana tradicional • Ingredientes frescos</div>
             <div style="display:flex;gap:3px;margin-bottom:8px;flex-wrap:wrap">
               <div style="background:#4A7C59;color:#E8DCC8;padding:2px 7px;font-size:0.26rem;border-radius:2px">Entradas</div>
@@ -1083,14 +1304,18 @@ footer {
             </div>
           </div>
           <div style="padding:10px 12px 6px;background:#0A0A0A;flex-shrink:0">
-            <div style="width:16px;height:1px;background:rgba(201,168,76,0.4);margin-bottom:5px"></div>
+            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:5px">
+              <div style="width:16px;height:1px;background:rgba(201,168,76,0.4)"></div>
+              <div style="background:#C9A84C;color:#0A0A0A;padding:1px 6px;font-size:0.22rem;letter-spacing:2px;text-transform:uppercase;font-weight:700;border-radius:2px">NOVA COLEÇÃO</div>
+            </div>
             <div style="font-family:var(--serif);font-size:0.78rem;font-style:italic;color:#F5F0E8;line-height:1.2;margin-bottom:4px">Vista sua<br><em>essência.</em></div>
-            <div style="font-size:0.26rem;color:rgba(245,240,232,0.25);letter-spacing:1px;text-transform:uppercase;margin-bottom:6px">Coleção Outono 2025</div>
+            <div style="font-size:0.26rem;color:rgba(245,240,232,0.25);letter-spacing:1px;text-transform:uppercase;margin-bottom:6px">Outono 2025 — Edição Limitada</div>
             <div style="display:inline-block;border:1px solid #C9A84C;color:#C9A84C;padding:2px 8px;font-size:0.26rem;letter-spacing:2px;text-transform:uppercase">VER CATÁLOGO</div>
           </div>
           <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:4px;padding:6px 12px 8px;background:#0A0A0A;flex:1;align-content:start">
-            <div style="background:#141414;border:1px solid rgba(201,168,76,0.08);border-radius:2px;overflow:hidden">
+            <div style="background:#141414;border:1px solid rgba(201,168,76,0.08);border-radius:2px;overflow:hidden;position:relative">
               <div style="background:linear-gradient(180deg,#1c1c1c,#242424);aspect-ratio:0.72"></div>
+              <div style="position:absolute;top:3px;right:3px;background:#C9A84C;color:#0A0A0A;padding:1px 4px;font-size:0.2rem;font-weight:700;letter-spacing:1px">NOVO</div>
               <div style="padding:3px 4px">
                 <div style="font-size:0.26rem;color:rgba(245,240,232,0.55);margin-bottom:1px">Blazer Noir</div>
                 <div style="font-size:0.26rem;color:#C9A84C">R$ 389</div>
@@ -1144,8 +1369,13 @@ footer {
             </div>
           </div>
           <div style="padding:12px 12px 8px;background:linear-gradient(160deg,#0F1B2D,#1A2D45);flex:1;display:flex;flex-direction:column">
-            <div style="font-size:0.26rem;color:#C9A84C;letter-spacing:2px;text-transform:uppercase;margin-bottom:4px">DESDE 1979 • 45 ANOS</div>
-            <div style="font-family:var(--serif);font-size:0.8rem;font-style:italic;color:#E8E0D0;line-height:1.2;margin-bottom:4px">Advocacia com tradição<br>e excelência.</div>
+            <div style="display:flex;align-items:center;gap:6px;margin-bottom:4px">
+              <div style="font-size:0.26rem;color:#C9A84C;letter-spacing:2px;text-transform:uppercase">DESDE 1979</div>
+              <div style="font-size:0.4rem;color:#C9A84C;line-height:1">★★★★★</div>
+              <div style="font-size:0.22rem;color:rgba(232,224,208,0.35)">Google</div>
+            </div>
+            <div style="font-family:var(--serif);font-size:0.8rem;font-style:italic;color:#E8E0D0;line-height:1.2;margin-bottom:3px">Advocacia com tradição<br>e excelência.</div>
+            <div style="font-size:0.24rem;color:rgba(201,168,76,0.6);margin-bottom:3px">OAB/SP Nº 12.847 · 45 anos de atuação</div>
             <div style="font-size:0.3rem;color:rgba(232,224,208,0.35);line-height:1.5;margin-bottom:8px">Atuação jurídica especializada para pessoas físicas e empresas</div>
             <div style="background:#C9A84C;color:#0F1B2D;padding:3px 9px;font-size:0.28rem;letter-spacing:1.5px;text-transform:uppercase;font-weight:600;width:fit-content;border-radius:2px">Consulta gratuita →</div>
             <div style="display:flex;gap:4px;margin-top:auto;padding-top:10px;flex-wrap:wrap">
