@@ -894,13 +894,28 @@ footer {
     <!-- Projeto 1 — Arquitetura: branco minimalista -->
     <div class="projeto-card reveal">
       <div class="projeto-img-wrap">
-        <div class="projeto-img proj-1" style="align-items:flex-start;padding:16px;">
-          <div class="proj-mini" style="width:90%">
-            <div class="proj-mini-accent"></div>
-            <div class="proj-mini-nav"></div>
-            <div class="proj-mini-title" style="color:#1a1a1a;font-size:0.9rem">Arquitetura que<br>transforma espaços.</div>
-            <div class="proj-mini-sub" style="color:#888">Projetos exclusivos para quem vive o design</div>
-            <div class="proj-mini-btn" style="background:#1a1a1a;color:#fff;border-radius:2px;margin-top:8px">Ver projeto →</div>
+        <div class="projeto-img proj-1" style="flex-direction:column;align-items:stretch;justify-content:flex-start;padding:0;overflow:hidden;">
+          <div style="display:flex;align-items:center;justify-content:space-between;padding:6px 12px;background:#fff;border-bottom:1px solid #ebe7e0;flex-shrink:0">
+            <div style="display:flex;align-items:center;gap:5px">
+              <div style="width:6px;height:6px;background:#C9A84C;border-radius:50%;flex-shrink:0"></div>
+              <span style="font-family:var(--serif);font-size:0.52rem;font-weight:700;letter-spacing:2.5px;color:#111">MORETTI</span>
+            </div>
+            <div style="display:flex;gap:10px">
+              <span style="font-size:0.28rem;color:#bbb;text-transform:uppercase;letter-spacing:0.5px">Sobre</span>
+              <span style="font-size:0.28rem;color:#bbb;text-transform:uppercase;letter-spacing:0.5px">Projetos</span>
+              <span style="font-size:0.28rem;color:#bbb;text-transform:uppercase;letter-spacing:0.5px">Contato</span>
+            </div>
+          </div>
+          <div style="padding:12px 12px 8px;flex:1;display:flex;flex-direction:column;background:#F8F6F2">
+            <div style="width:22px;height:2px;background:#C9A84C;margin-bottom:6px;flex-shrink:0"></div>
+            <div style="font-family:var(--serif);font-size:0.85rem;font-weight:700;color:#1a1a1a;line-height:1.15;margin-bottom:4px">Arquitetura que<br><em>transforma espaços.</em></div>
+            <div style="font-size:0.35rem;color:#888;line-height:1.6;margin-bottom:7px">Projetos exclusivos para quem valoriza design contemporâneo e sofisticação.</div>
+            <div style="background:#1a1a1a;color:#fff;padding:3px 9px;font-size:0.3rem;letter-spacing:1.5px;text-transform:uppercase;border-radius:2px;width:fit-content">Ver portfólio →</div>
+            <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:4px;margin-top:auto;padding-top:10px">
+              <div style="background:linear-gradient(135deg,#D8D2CA,#C8C2BA);border-radius:3px;aspect-ratio:1"></div>
+              <div style="background:linear-gradient(135deg,#CBC5BC,#BCB6AE);border-radius:3px;aspect-ratio:1"></div>
+              <div style="background:linear-gradient(135deg,#BEB8B0,#B0AAA2);border-radius:3px;aspect-ratio:1"></div>
+            </div>
           </div>
         </div>
         <div class="projeto-overlay"><span>Ver projeto</span></div>
@@ -917,12 +932,35 @@ footer {
     <!-- Projeto 2 — Academia: vermelho brutal -->
     <div class="projeto-card reveal">
       <div class="projeto-img-wrap">
-        <div class="projeto-img proj-2" style="align-items:flex-end;padding:20px;">
-          <div class="proj-mini" style="width:100%">
-            <div class="proj-mini-nav" style="background:#E63946;height:3px;margin-bottom:14px"></div>
-            <div class="proj-mini-title" style="color:#fff;font-size:1rem;font-weight:900;text-transform:uppercase;letter-spacing:-1px;font-style:normal">MAIS QUE UMA<br>ACADEMIA.</div>
-            <div class="proj-mini-sub" style="color:rgba(255,255,255,0.4)">Um estilo de vida completo</div>
-            <div class="proj-mini-btn" style="background:#E63946;color:#fff;border-radius:0;letter-spacing:2px;margin-top:10px">ENTRAR →</div>
+        <div class="projeto-img proj-2" style="flex-direction:column;align-items:stretch;justify-content:flex-start;padding:0;overflow:hidden;">
+          <div style="height:3px;background:#E63946;flex-shrink:0"></div>
+          <div style="display:flex;align-items:center;justify-content:space-between;padding:6px 12px;background:#111;flex-shrink:0">
+            <span style="font-size:0.55rem;font-weight:900;color:#fff;letter-spacing:1px">BLACK<span style="color:#E63946">FIT</span></span>
+            <div style="display:flex;gap:8px">
+              <span style="font-size:0.26rem;color:rgba(255,255,255,0.35);text-transform:uppercase">Planos</span>
+              <span style="font-size:0.26rem;color:rgba(255,255,255,0.35);text-transform:uppercase">Turmas</span>
+              <span style="font-size:0.26rem;color:#E63946;text-transform:uppercase">Matricular</span>
+            </div>
+          </div>
+          <div style="padding:12px 12px 8px;background:#0D0D0D;flex:1;display:flex;flex-direction:column">
+            <div style="font-size:0.26rem;color:#E63946;letter-spacing:3px;text-transform:uppercase;margin-bottom:4px">ALTO RENDIMENTO</div>
+            <div style="font-size:1.05rem;font-weight:900;color:#fff;line-height:1;text-transform:uppercase;letter-spacing:-1px;margin-bottom:5px">MAIS QUE<br>UMA<br>ACADEMIA.</div>
+            <div style="font-size:0.3rem;color:rgba(255,255,255,0.3);line-height:1.5;margin-bottom:8px">Treinos personalizados • Nutrição • Resultados reais</div>
+            <div style="background:#E63946;color:#fff;padding:3px 10px;font-size:0.3rem;letter-spacing:2px;text-transform:uppercase;width:fit-content">MATRICULAR AGORA →</div>
+            <div style="display:flex;gap:4px;margin-top:auto;padding-top:10px">
+              <div style="flex:1;border:1px solid rgba(255,255,255,0.08);padding:4px 5px;border-radius:3px">
+                <div style="font-size:0.26rem;color:rgba(255,255,255,0.35);text-transform:uppercase;margin-bottom:2px">Basic</div>
+                <div style="font-size:0.48rem;font-weight:700;color:#fff">R$89<span style="font-size:0.26rem;font-weight:300;color:rgba(255,255,255,0.3)">/mês</span></div>
+              </div>
+              <div style="flex:1;border:1px solid #E63946;padding:4px 5px;border-radius:3px;background:rgba(230,57,70,0.08)">
+                <div style="font-size:0.26rem;color:#E63946;text-transform:uppercase;margin-bottom:2px">Pro ★</div>
+                <div style="font-size:0.48rem;font-weight:700;color:#fff">R$139<span style="font-size:0.26rem;font-weight:300;color:rgba(255,255,255,0.3)">/mês</span></div>
+              </div>
+              <div style="flex:1;border:1px solid rgba(255,255,255,0.08);padding:4px 5px;border-radius:3px">
+                <div style="font-size:0.26rem;color:rgba(255,255,255,0.35);text-transform:uppercase;margin-bottom:2px">Elite</div>
+                <div style="font-size:0.48rem;font-weight:700;color:#fff">R$199<span style="font-size:0.26rem;font-weight:300;color:rgba(255,255,255,0.3)">/mês</span></div>
+              </div>
+            </div>
           </div>
         </div>
         <div class="projeto-overlay"><span>Ver projeto</span></div>
@@ -939,13 +977,38 @@ footer {
     <!-- Projeto 3 — Beleza: rosa pastel delicado -->
     <div class="projeto-card reveal">
       <div class="projeto-img-wrap">
-        <div class="projeto-img proj-3" style="align-items:center;padding:16px;">
-          <div class="proj-mini" style="width:85%;background:rgba(255,255,255,0.7);border:1px solid rgba(200,150,150,0.2);border-radius:12px">
-            <div class="proj-mini-nav" style="background:#E8B4B8;border-radius:4px;margin-bottom:10px"></div>
-            <div style="font-size:0.9rem;margin-bottom:4px">🌸</div>
-            <div class="proj-mini-title" style="color:#5C2D35;font-size:0.8rem">Beleza que<br>realça sua essência.</div>
-            <div class="proj-mini-sub" style="color:#9B6B72">Studio de beleza premium em Santos</div>
-            <div class="proj-mini-btn" style="background:#E8B4B8;color:#5C2D35;border-radius:20px;margin-top:8px">Agendar →</div>
+        <div class="projeto-img proj-3" style="flex-direction:column;align-items:stretch;justify-content:flex-start;padding:0;overflow:hidden;">
+          <div style="display:flex;align-items:center;justify-content:space-between;padding:6px 12px;background:rgba(255,255,255,0.9);border-bottom:1px solid rgba(200,150,150,0.15);flex-shrink:0">
+            <div style="display:flex;align-items:center;gap:5px">
+              <span style="font-size:0.6rem">🌸</span>
+              <span style="font-family:var(--serif);font-size:0.5rem;font-style:italic;color:#5C2D35;font-weight:700">Bloom Beauty</span>
+            </div>
+            <div style="display:flex;gap:8px">
+              <span style="font-size:0.26rem;color:#9B6B72">Serviços</span>
+              <span style="font-size:0.26rem;color:#E8B4B8;font-weight:500">Agendar</span>
+            </div>
+          </div>
+          <div style="padding:12px 12px 8px;flex:1;display:flex;flex-direction:column;background:linear-gradient(160deg,#FDF0F0,#F5E6E8)">
+            <div style="font-family:var(--serif);font-size:0.85rem;font-weight:700;color:#5C2D35;line-height:1.2;margin-bottom:4px">Realce sua<br><em>beleza natural.</em></div>
+            <div style="font-size:0.33rem;color:#9B6B72;line-height:1.5;margin-bottom:8px">Studio premium em Santos — atendimento personalizado</div>
+            <div style="background:#E8B4B8;color:#5C2D35;padding:3px 10px;font-size:0.3rem;border-radius:20px;font-weight:500;width:fit-content">Agendar horário →</div>
+            <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:5px;margin-top:auto;padding-top:10px">
+              <div style="background:rgba(255,255,255,0.75);border:1px solid rgba(200,150,150,0.2);border-radius:8px;padding:6px 4px;text-align:center">
+                <div style="font-size:0.6rem;margin-bottom:2px">💅</div>
+                <div style="font-size:0.26rem;color:#5C2D35;font-weight:500">Manicure</div>
+                <div style="font-size:0.24rem;color:#9B6B72">R$ 35</div>
+              </div>
+              <div style="background:rgba(255,255,255,0.75);border:1px solid rgba(200,150,150,0.2);border-radius:8px;padding:6px 4px;text-align:center">
+                <div style="font-size:0.6rem;margin-bottom:2px">✨</div>
+                <div style="font-size:0.26rem;color:#5C2D35;font-weight:500">Sobrancelha</div>
+                <div style="font-size:0.24rem;color:#9B6B72">R$ 45</div>
+              </div>
+              <div style="background:rgba(255,255,255,0.75);border:1px solid rgba(200,150,150,0.2);border-radius:8px;padding:6px 4px;text-align:center">
+                <div style="font-size:0.6rem;margin-bottom:2px">👁</div>
+                <div style="font-size:0.26rem;color:#5C2D35;font-weight:500">Lash</div>
+                <div style="font-size:0.24rem;color:#9B6B72">R$ 120</div>
+              </div>
+            </div>
           </div>
         </div>
         <div class="projeto-overlay"><span>Ver projeto</span></div>
@@ -962,13 +1025,39 @@ footer {
     <!-- Projeto 4 — Restaurante: verde escuro sofisticado -->
     <div class="projeto-card reveal">
       <div class="projeto-img-wrap">
-        <div class="projeto-img proj-4" style="align-items:center;padding:16px;">
-          <div class="proj-mini" style="width:88%;background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);border-radius:8px">
-            <div style="font-size:1rem;margin-bottom:6px">🍃</div>
-            <div class="proj-mini-nav" style="background:#4A7C59;margin-bottom:10px"></div>
-            <div class="proj-mini-title" style="color:#E8DCC8;font-size:0.8rem">Sabor autêntico<br>em cada prato.</div>
-            <div class="proj-mini-sub" style="color:rgba(232,220,200,0.5)">Cardápio digital completo</div>
-            <div class="proj-mini-btn" style="background:#4A7C59;color:#E8DCC8;border-radius:4px;margin-top:8px">Ver cardápio →</div>
+        <div class="projeto-img proj-4" style="flex-direction:column;align-items:stretch;justify-content:flex-start;padding:0;overflow:hidden;">
+          <div style="display:flex;align-items:center;justify-content:space-between;padding:6px 12px;background:#162718;border-bottom:1px solid rgba(255,255,255,0.06);flex-shrink:0">
+            <div style="display:flex;align-items:center;gap:5px">
+              <span style="font-size:0.55rem">🍃</span>
+              <span style="font-family:var(--serif);font-size:0.48rem;letter-spacing:2px;color:#E8DCC8;font-style:italic">TRATTORIA BELLA</span>
+            </div>
+            <div style="display:flex;gap:8px">
+              <span style="font-size:0.26rem;color:rgba(232,220,200,0.3)">Cardápio</span>
+              <span style="font-size:0.26rem;color:#4A7C59">Reservar</span>
+            </div>
+          </div>
+          <div style="padding:12px 12px 8px;background:#1B2D1E;flex:1;display:flex;flex-direction:column">
+            <div style="font-size:0.26rem;color:#4A7C59;letter-spacing:3px;text-transform:uppercase;margin-bottom:4px">CARDÁPIO DIGITAL</div>
+            <div style="font-family:var(--serif);font-size:0.82rem;font-weight:700;color:#E8DCC8;line-height:1.2;margin-bottom:4px;font-style:italic">Sabor autêntico<br>em cada prato.</div>
+            <div style="font-size:0.3rem;color:rgba(232,220,200,0.35);line-height:1.5;margin-bottom:7px">Culinária italiana tradicional • Ingredientes frescos</div>
+            <div style="display:flex;gap:3px;margin-bottom:8px;flex-wrap:wrap">
+              <div style="background:#4A7C59;color:#E8DCC8;padding:2px 7px;font-size:0.26rem;border-radius:2px">Entradas</div>
+              <div style="border:1px solid rgba(255,255,255,0.1);color:rgba(232,220,200,0.4);padding:2px 7px;font-size:0.26rem;border-radius:2px">Massas</div>
+              <div style="border:1px solid rgba(255,255,255,0.1);color:rgba(232,220,200,0.4);padding:2px 7px;font-size:0.26rem;border-radius:2px">Carnes</div>
+              <div style="border:1px solid rgba(255,255,255,0.1);color:rgba(232,220,200,0.4);padding:2px 7px;font-size:0.26rem;border-radius:2px">Vinhos</div>
+            </div>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:5px;margin-top:auto">
+              <div style="background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.07);border-radius:5px;padding:5px">
+                <div style="background:#2A4030;height:20px;border-radius:3px;margin-bottom:4px"></div>
+                <div style="font-size:0.28rem;color:#E8DCC8;font-weight:500">Bruschetta</div>
+                <div style="font-size:0.26rem;color:#4A7C59;margin-top:1px">R$ 28</div>
+              </div>
+              <div style="background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.07);border-radius:5px;padding:5px">
+                <div style="background:#2A4030;height:20px;border-radius:3px;margin-bottom:4px"></div>
+                <div style="font-size:0.28rem;color:#E8DCC8;font-weight:500">Carpaccio</div>
+                <div style="font-size:0.26rem;color:#4A7C59;margin-top:1px">R$ 45</div>
+              </div>
+            </div>
           </div>
         </div>
         <div class="projeto-overlay"><span>Ver projeto</span></div>
@@ -985,12 +1074,42 @@ footer {
     <!-- Projeto 5 — Moda: preto total luxo dourado -->
     <div class="projeto-card reveal">
       <div class="projeto-img-wrap">
-        <div class="projeto-img proj-5" style="align-items:center;padding:16px;">
-          <div class="proj-mini" style="width:85%;background:transparent;border:1px solid rgba(201,168,76,0.25);border-radius:0;padding:16px">
-            <div class="proj-mini-nav" style="background:rgba(201,168,76,0.3);height:1px;margin-bottom:16px"></div>
-            <div class="proj-mini-title" style="color:#F5F0E8;font-size:0.9rem;font-style:italic">Vista sua<br><em>essência.</em></div>
-            <div class="proj-mini-sub" style="color:rgba(245,240,232,0.3);margin-top:6px">Moda sofisticada feminina</div>
-            <div class="proj-mini-btn" style="background:transparent;color:#C9A84C;border:1px solid #C9A84C;border-radius:0;letter-spacing:2px;margin-top:12px;padding:4px 10px">VER CATÁLOGO</div>
+        <div class="projeto-img proj-5" style="flex-direction:column;align-items:stretch;justify-content:flex-start;padding:0;overflow:hidden;">
+          <div style="display:flex;align-items:center;justify-content:space-between;padding:6px 12px;background:#0A0A0A;border-bottom:1px solid rgba(201,168,76,0.1);flex-shrink:0">
+            <span style="font-family:var(--serif);font-size:0.65rem;font-style:italic;color:#C9A84C;letter-spacing:3px;font-weight:700">NOIR</span>
+            <div style="display:flex;gap:8px">
+              <span style="font-size:0.26rem;color:rgba(245,240,232,0.25);letter-spacing:1px;text-transform:uppercase">Coleção</span>
+              <span style="font-size:0.26rem;color:rgba(245,240,232,0.25);letter-spacing:1px;text-transform:uppercase">Lookbook</span>
+            </div>
+          </div>
+          <div style="padding:10px 12px 6px;background:#0A0A0A;flex-shrink:0">
+            <div style="width:16px;height:1px;background:rgba(201,168,76,0.4);margin-bottom:5px"></div>
+            <div style="font-family:var(--serif);font-size:0.78rem;font-style:italic;color:#F5F0E8;line-height:1.2;margin-bottom:4px">Vista sua<br><em>essência.</em></div>
+            <div style="font-size:0.26rem;color:rgba(245,240,232,0.25);letter-spacing:1px;text-transform:uppercase;margin-bottom:6px">Coleção Outono 2025</div>
+            <div style="display:inline-block;border:1px solid #C9A84C;color:#C9A84C;padding:2px 8px;font-size:0.26rem;letter-spacing:2px;text-transform:uppercase">VER CATÁLOGO</div>
+          </div>
+          <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:4px;padding:6px 12px 8px;background:#0A0A0A;flex:1;align-content:start">
+            <div style="background:#141414;border:1px solid rgba(201,168,76,0.08);border-radius:2px;overflow:hidden">
+              <div style="background:linear-gradient(180deg,#1c1c1c,#242424);aspect-ratio:0.72"></div>
+              <div style="padding:3px 4px">
+                <div style="font-size:0.26rem;color:rgba(245,240,232,0.55);margin-bottom:1px">Blazer Noir</div>
+                <div style="font-size:0.26rem;color:#C9A84C">R$ 389</div>
+              </div>
+            </div>
+            <div style="background:#141414;border:1px solid rgba(201,168,76,0.08);border-radius:2px;overflow:hidden">
+              <div style="background:linear-gradient(180deg,#1a1a1a,#222);aspect-ratio:0.72"></div>
+              <div style="padding:3px 4px">
+                <div style="font-size:0.26rem;color:rgba(245,240,232,0.55);margin-bottom:1px">Vestido Éden</div>
+                <div style="font-size:0.26rem;color:#C9A84C">R$ 520</div>
+              </div>
+            </div>
+            <div style="background:#141414;border:1px solid rgba(201,168,76,0.08);border-radius:2px;overflow:hidden">
+              <div style="background:linear-gradient(180deg,#181818,#202020);aspect-ratio:0.72"></div>
+              <div style="padding:3px 4px">
+                <div style="font-size:0.26rem;color:rgba(245,240,232,0.55);margin-bottom:1px">Calça Soie</div>
+                <div style="font-size:0.26rem;color:#C9A84C">R$ 295</div>
+              </div>
+            </div>
           </div>
         </div>
         <div class="projeto-overlay"><span>Ver projeto</span></div>
@@ -1007,12 +1126,34 @@ footer {
     <!-- Projeto 6 — Advocacia: azul marinho clássico -->
     <div class="projeto-card reveal">
       <div class="projeto-img-wrap">
-        <div class="projeto-img proj-6" style="align-items:center;padding:16px;">
-          <div class="proj-mini" style="width:88%;background:rgba(255,255,255,0.03);border-top:2px solid #C9A84C;border-radius:0;padding:14px">
-            <div class="proj-mini-nav" style="background:rgba(201,168,76,0.2);margin-bottom:12px"></div>
-            <div class="proj-mini-title" style="color:#E8E0D0;font-size:0.8rem;font-style:italic">Advocacia com<br>tradição e excelência.</div>
-            <div class="proj-mini-sub" style="color:rgba(232,224,208,0.4)">45+ anos de atuação jurídica</div>
-            <div class="proj-mini-btn" style="background:#C9A84C;color:#0F1B2D;border-radius:2px;font-weight:600;margin-top:10px">Saiba mais →</div>
+        <div class="projeto-img proj-6" style="flex-direction:column;align-items:stretch;justify-content:flex-start;padding:0;overflow:hidden;">
+          <div style="height:3px;background:linear-gradient(90deg,#C9A84C,#E5C96A);flex-shrink:0"></div>
+          <div style="display:flex;align-items:center;justify-content:space-between;padding:6px 12px;background:#0F1B2D;border-bottom:1px solid rgba(201,168,76,0.1);flex-shrink:0">
+            <div style="display:flex;align-items:center;gap:6px">
+              <div style="width:16px;height:16px;border:1px solid rgba(201,168,76,0.5);display:flex;align-items:center;justify-content:center;flex-shrink:0">
+                <span style="font-size:0.4rem;color:#C9A84C;font-weight:700">VT</span>
+              </div>
+              <div>
+                <div style="font-family:var(--serif);font-size:0.44rem;letter-spacing:2px;color:#E8E0D0;font-style:italic">VT ADVOGADOS</div>
+                <div style="font-size:0.24rem;color:rgba(232,224,208,0.3);letter-spacing:1px;text-transform:uppercase">Advocacia & Consultoria</div>
+              </div>
+            </div>
+            <div style="display:flex;gap:8px">
+              <span style="font-size:0.26rem;color:rgba(232,224,208,0.25)">Atuação</span>
+              <span style="font-size:0.26rem;color:#C9A84C">Consulta</span>
+            </div>
+          </div>
+          <div style="padding:12px 12px 8px;background:linear-gradient(160deg,#0F1B2D,#1A2D45);flex:1;display:flex;flex-direction:column">
+            <div style="font-size:0.26rem;color:#C9A84C;letter-spacing:2px;text-transform:uppercase;margin-bottom:4px">DESDE 1979 • 45 ANOS</div>
+            <div style="font-family:var(--serif);font-size:0.8rem;font-style:italic;color:#E8E0D0;line-height:1.2;margin-bottom:4px">Advocacia com tradição<br>e excelência.</div>
+            <div style="font-size:0.3rem;color:rgba(232,224,208,0.35);line-height:1.5;margin-bottom:8px">Atuação jurídica especializada para pessoas físicas e empresas</div>
+            <div style="background:#C9A84C;color:#0F1B2D;padding:3px 9px;font-size:0.28rem;letter-spacing:1.5px;text-transform:uppercase;font-weight:600;width:fit-content;border-radius:2px">Consulta gratuita →</div>
+            <div style="display:flex;gap:4px;margin-top:auto;padding-top:10px;flex-wrap:wrap">
+              <div style="border:1px solid rgba(201,168,76,0.2);padding:2px 7px;font-size:0.24rem;color:rgba(232,224,208,0.45);border-radius:2px">Direito Civil</div>
+              <div style="border:1px solid rgba(201,168,76,0.2);padding:2px 7px;font-size:0.24rem;color:rgba(232,224,208,0.45);border-radius:2px">Trabalhista</div>
+              <div style="border:1px solid rgba(201,168,76,0.2);padding:2px 7px;font-size:0.24rem;color:rgba(232,224,208,0.45);border-radius:2px">Empresarial</div>
+              <div style="border:1px solid rgba(201,168,76,0.2);padding:2px 7px;font-size:0.24rem;color:rgba(232,224,208,0.45);border-radius:2px">Criminal</div>
+            </div>
           </div>
         </div>
         <div class="projeto-overlay"><span>Ver projeto</span></div>
@@ -1336,9 +1477,9 @@ renderStep();
       <span class="modal-techs-label">Tecnologias utilizadas</span>
       <div class="modal-techs" id="modalTechs"></div>
       <div class="modal-actions">
-        <a href="#" class="modal-btn-live" id="modalBtnLive">
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M2 12h20M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>
-          Ver site ao vivo
+        <a href="#" class="modal-btn-live" id="modalBtnLive" target="_blank">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+          Pedir projeto similar
         </a>
         <a href="#" class="modal-btn-wa" id="modalBtnWa" target="_blank">
           💬 Solicitar projeto similar
@@ -1427,20 +1568,20 @@ function openModal(idx) {
   var card = document.querySelectorAll('.projeto-card')[idx];
   var src  = card.querySelector('.projeto-img');
   var prev = document.getElementById('modalPreview');
+  var waHref = 'https://wa.me/5513996410149?text=' + encodeURIComponent(d.wa);
 
   document.getElementById('modalTag').textContent   = d.tag;
   document.getElementById('modalTitle').textContent = d.name;
   document.getElementById('modalDesc').textContent  = d.desc;
   document.getElementById('modalTechs').innerHTML =
     d.techs.map(function(t){ return '<span class="modal-tech">'+t+'</span>'; }).join('');
-  document.getElementById('modalBtnWa').href =
-    'https://wa.me/5513996410149?text=' + encodeURIComponent(d.wa);
+  document.getElementById('modalBtnWa').href   = waHref;
+  document.getElementById('modalBtnLive').href = waHref;
 
   prev.innerHTML = '';
   var scaler = document.createElement('div');
   scaler.className = 'modal-preview-scaler';
   var cloned = src.cloneNode(true);
-  cloned.style.cssText += ';display:flex;flex-direction:column;align-items:stretch;';
   scaler.appendChild(cloned);
   prev.appendChild(scaler);
 
@@ -1449,15 +1590,21 @@ function openModal(idx) {
 
   requestAnimationFrame(function(){
     requestAnimationFrame(function(){
-      var pw = prev.offsetWidth, ph = prev.offsetHeight;
-      var ow = src.offsetWidth,  oh = src.offsetHeight;
-      if (!ow || !oh) return;
-      var s = Math.min(pw/ow, ph/oh);
-      cloned.style.width  = ow+'px'; cloned.style.height = oh+'px';
-      scaler.style.width  = ow+'px'; scaler.style.height = oh+'px';
-      scaler.style.transform = 'scale('+s+')';
-      scaler.style.left = Math.max(0,(pw-ow*s)/2)+'px';
-      scaler.style.top  = Math.max(0,(ph-oh*s)/2)+'px';
+      var pw = prev.offsetWidth;
+      var ph = prev.offsetHeight;
+      /* pega dimensões do elemento original ou do wrapper (aspect-ratio 4/3) */
+      var wrap = src.parentElement;
+      var ow = src.offsetWidth  || wrap.offsetWidth  || pw   || 400;
+      var oh = src.offsetHeight || wrap.offsetHeight || (ow * 3 / 4);
+      if (!oh) oh = ow * 3 / 4;
+      var s = Math.min(pw / ow, ph / oh);
+      cloned.style.width     = ow + 'px';
+      cloned.style.height    = oh + 'px';
+      scaler.style.width     = ow + 'px';
+      scaler.style.height    = oh + 'px';
+      scaler.style.transform = 'scale(' + s + ')';
+      scaler.style.left      = Math.max(0, (pw - ow * s) / 2) + 'px';
+      scaler.style.top       = Math.max(0, (ph - oh * s) / 2) + 'px';
     });
   });
 }
