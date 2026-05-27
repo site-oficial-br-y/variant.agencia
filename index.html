@@ -1075,7 +1075,7 @@ footer {
 
   <div class="projetos-grid">
     <!-- Projeto 1 — Arquitetura: branco minimalista -->
-    <div class="projeto-card reveal">
+    <div class="projeto-card reveal" onclick="openModal(0)">
       <div class="projeto-img-wrap">
         <div class="projeto-img proj-1" style="flex-direction:column;align-items:stretch;justify-content:flex-start;padding:0;overflow:hidden;">
           <div style="display:flex;align-items:center;justify-content:space-between;padding:6px 12px;background:#fff;border-bottom:1px solid #ebe7e0;flex-shrink:0">
@@ -1126,7 +1126,7 @@ footer {
     </div>
 
     <!-- Projeto 2 — Academia: vermelho brutal -->
-    <div class="projeto-card reveal">
+    <div class="projeto-card reveal" onclick="openModal(1)">
       <div class="projeto-img-wrap">
         <div class="projeto-img proj-2" style="flex-direction:column;align-items:stretch;justify-content:flex-start;padding:0;overflow:hidden;">
           <div style="height:3px;background:#E63946;flex-shrink:0"></div>
@@ -1182,7 +1182,7 @@ footer {
     </div>
 
     <!-- Projeto 3 — Beleza: rosa pastel delicado -->
-    <div class="projeto-card reveal">
+    <div class="projeto-card reveal" onclick="openModal(2)">
       <div class="projeto-img-wrap">
         <div class="projeto-img proj-3" style="flex-direction:column;align-items:stretch;justify-content:flex-start;padding:0;overflow:hidden;">
           <div style="display:flex;align-items:center;justify-content:space-between;padding:6px 12px;background:rgba(255,255,255,0.9);border-bottom:1px solid rgba(200,150,150,0.15);flex-shrink:0">
@@ -1238,7 +1238,7 @@ footer {
     </div>
 
     <!-- Projeto 4 — Restaurante: verde escuro sofisticado -->
-    <div class="projeto-card reveal">
+    <div class="projeto-card reveal" onclick="openModal(3)">
       <div class="projeto-img-wrap">
         <div class="projeto-img proj-4" style="flex-direction:column;align-items:stretch;justify-content:flex-start;padding:0;overflow:hidden;">
           <div style="display:flex;align-items:center;justify-content:space-between;padding:6px 12px;background:#162718;border-bottom:1px solid rgba(255,255,255,0.06);flex-shrink:0">
@@ -1293,7 +1293,7 @@ footer {
     </div>
 
     <!-- Projeto 5 — Moda: preto total luxo dourado -->
-    <div class="projeto-card reveal">
+    <div class="projeto-card reveal" onclick="openModal(4)">
       <div class="projeto-img-wrap">
         <div class="projeto-img proj-5" style="flex-direction:column;align-items:stretch;justify-content:flex-start;padding:0;overflow:hidden;">
           <div style="display:flex;align-items:center;justify-content:space-between;padding:6px 12px;background:#0A0A0A;border-bottom:1px solid rgba(201,168,76,0.1);flex-shrink:0">
@@ -1349,7 +1349,7 @@ footer {
     </div>
 
     <!-- Projeto 6 — Advocacia: azul marinho clássico -->
-    <div class="projeto-card reveal">
+    <div class="projeto-card reveal" onclick="openModal(5)">
       <div class="projeto-img-wrap">
         <div class="projeto-img proj-6" style="flex-direction:column;align-items:stretch;justify-content:flex-start;padding:0;overflow:hidden;">
           <div style="height:3px;background:linear-gradient(90deg,#C9A84C,#E5C96A);flex-shrink:0"></div>
@@ -1787,10 +1787,6 @@ document.querySelectorAll('.projeto-card').forEach(function(card, idx) {
   card.addEventListener('touchcancel', function() {
     card.classList.remove('is-touched'); moved = true;
   }, { passive: true });
-
-  card.addEventListener('click', function() {
-    if (!byTouch) openModal(idx);
-  });
 });
 
 function openModal(idx) {
