@@ -22,15 +22,13 @@ async function fetchPlaces(query: string, lat: number, lng: number, radius: numb
   )
   const data = await res.json()
   return (data.results || []).map((p: any) => ({
-    place_id: p.place_id,
     name: p.name,
-    address: p.vicinity,
-    rating: p.rating,
-    user_ratings_total: p.user_ratings_total,
-    website: p.website,
-    phone: p.formatted_phone_number,
-    types: p.types,
-    business_status: p.business_status,
+    address: p.vicinity || '',
+    rating: p.rating || 0,
+    reviews: p.user_ratings_total || 0,
+    website: p.website || '',
+    phone: p.formatted_phone_number || '',
+    isOpen: p.opening_hours?.open_now ?? null,
   }))
 }
 
@@ -83,7 +81,7 @@ export function SearchResults({ params, userId, onLimitReached }: { params: Sear
       Nome: r.name,
       Endereço: r.address || '',
       Avaliação: r.rating || '',
-      Avaliações: r.user_ratings_total || '',
+      Avaliações: r.reviews || '',
       Site: r.website || 'SEM SITE',
       Telefone: r.phone || '',
     }))
@@ -150,12 +148,12 @@ export function SearchResults({ params, userId, onLimitReached }: { params: Sear
       ) : (
         <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
           {results.map(place => (
-            <div key={place.place_id} style={{ background: 'rgba(255,255,255,.04)', border: '1px solid rgba(248,182,200,0.14)', borderRadius: 16, padding: '18px 20px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 16, flexWrap: 'wrap' }}>
+            <div key={place.name} style={{ background: 'rgba(255,255,255,.04)', border: '1px solid rgba(248,182,200,0.14)', borderRadius: 16, padding: '18px 20px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 16, flexWrap: 'wrap' }}>
               <div style={{ flex: 1, minWidth: 200 }}>
                 <div style={{ fontWeight: 700, marginBottom: 4 }}>{place.name}</div>
                 <div style={{ fontSize: '.8rem', color: 'rgba(255,255,255,.45)', marginBottom: 6 }}>{place.address}</div>
                 <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
-                  {place.rating && <span style={{ fontSize: '.72rem', background: 'rgba(255,200,0,.1)', color: '#fbbf24', borderRadius: 6, padding: '2px 8px' }}>⭐ {place.rating} ({place.user_ratings_total})</span>}
+                  {place.rating && <span style={{ fontSize: '.72rem', background: 'rgba(255,200,0,.1)', color: '#fbbf24', borderRadius: 6, padding: '2px 8px' }}>⭐ {place.rating} ({place.reviews})</span>}
                   {!place.website ? <span style={{ fontSize: '.72rem', background: 'rgba(232,121,160,.12)', color: '#e879a0', borderRadius: 6, padding: '2px 8px' }}>Sem site</span> : <span style={{ fontSize: '.72rem', background: 'rgba(74,222,128,.1)', color: '#4ade80', borderRadius: 6, padding: '2px 8px' }}>Tem site</span>}
                 </div>
               </div>
