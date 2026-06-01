@@ -1,0 +1,72 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --pink: #f8b6c8;
+  --pink-dark: #e879a0;
+  --pink-deep: #c2185b;
+  --dark: #0f0f1a;
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  background: var(--dark);
+  color: #fff;
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+  -webkit-font-smoothing: antialiased;
+}
+
+.text-gradient {
+  background: linear-gradient(135deg, #e879a0, #c2185b);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.hero-grid {
+  position: absolute;
+  inset: 0;
+  background-image: linear-gradient(rgba(248,182,200,.04) 1px, transparent 1px), linear-gradient(90deg, rgba(248,182,200,.04) 1px, transparent 1px);
+  background-size: 60px 60px;
+  pointer-events: none;
+}
+
+.reveal { opacity: 0; transform: translateY(28px); transition: opacity .7s ease, transform .7s ease; }
+.reveal.visible { opacity: 1; transform: none; }
+
+@keyframes fadeUp { from { opacity:0; transform:translateY(20px); } to { opacity:1; transform:none; } }
+@keyframes float { 0%,100% { transform:translateY(0); } 50% { transform:translateY(-12px); } }
+@keyframes blink { 0%,100% { opacity:1; } 50% { opacity:.3; } }
+@keyframes ticker { from { transform:translateX(0); } to { transform:translateX(-50%); } }
+@keyframes quizIn { from { opacity:0; transform:scale(.95) translateY(16px); } to { opacity:1; transform:none; } }
+@keyframes spin { to { transform:rotate(360deg); } }
+
+.animate-fadeUp { animation: fadeUp .8s ease both; }
+.animate-float { animation: float 5s ease-in-out infinite; }
+.animate-blink { animation: blink 2s ease-in-out infinite; }
+.animate-ticker { animation: ticker 28s linear infinite; }
+.animate-quiz-in { animation: quizIn .35s cubic-bezier(.34,1.56,.64,1) both; }
+
+.spinner {
+  display: inline-block;
+  width: 14px; height: 14px;
+  border: 2px solid rgba(248,182,200,.3);
+  border-top-color: #e879a0;
+  border-radius: 50%;
+  animation: spin .7s linear infinite;
+  vertical-align: middle;
+  margin-right: 6px;
+}
+
+.dash-bar-item {
+  flex: 1;
+  background: linear-gradient(180deg, #e879a0, rgba(232,121,160,.3));
+  border-radius: 3px 3px 0 0;
+  min-width: 6px;
+  transition: height .5s ease;
+}
+
+.has-site { background: rgba(74,222,128,.08); color: #4ade80; }
+.no-site { background: rgba(250,100,50,.12); color: #fb923c; }

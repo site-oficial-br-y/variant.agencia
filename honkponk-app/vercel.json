@@ -1,0 +1,6 @@
+{
+  "framework": "nextjs",
+  "env": {
+    "NEXT_PUBLIC_GOOGLE_PLACES_KEY": "@google_places_key"
+  }
+}
