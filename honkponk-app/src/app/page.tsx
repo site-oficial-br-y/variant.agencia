@@ -47,35 +47,104 @@ export default function HomePage() {
       <QuizOverlay open={quizOpen} onClose={() => setQuizOpen(false)} onSearch={handleSearch} />
 
       {/* Hero */}
-      <section style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '120px 24px 80px', textAlign: 'center', position: 'relative', overflow: 'hidden' }}>
-        <div style={{ position: 'absolute', inset: 0, background: 'radial-gradient(ellipse 80% 60% at 50% 0%, rgba(232,121,160,.18) 0%, transparent 70%)', pointerEvents: 'none' }} />
-        <div className="reveal" style={{ position: 'relative', zIndex: 1, maxWidth: 760, margin: '0 auto' }}>
-          <div style={{ display: 'inline-flex', alignItems: 'center', gap: 8, background: 'rgba(248,182,200,.1)', border: '1px solid rgba(248,182,200,.2)', borderRadius: 100, padding: '6px 16px', fontSize: '.78rem', fontWeight: 700, color: '#f8b6c8', marginBottom: 28, letterSpacing: '.5px', textTransform: 'uppercase' as const }}>
-            🎯 Prospecção inteligente de leads B2B
+      <section style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', padding: '100px 24px 60px', position: 'relative', overflow: 'hidden' }}>
+        <div className="hero-grid" />
+        <div style={{ position: 'absolute', inset: 0, background: 'radial-gradient(ellipse 70% 60% at 60% 20%, rgba(232,121,160,.12) 0%, transparent 70%)', pointerEvents: 'none' }} />
+        <div style={{ maxWidth: 1200, margin: '0 auto', width: '100%', display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(300px,1fr))', gap: 60, alignItems: 'center', position: 'relative', zIndex: 1 }}>
+          {/* Texto */}
+          <div className="reveal">
+            <div style={{ display: 'inline-flex', alignItems: 'center', gap: 8, background: 'rgba(248,182,200,.1)', border: '1px solid rgba(248,182,200,.25)', borderRadius: 100, padding: '6px 14px', fontSize: '.78rem', fontWeight: 600, color: '#f8b6c8', marginBottom: 24 }}>
+              <span style={{ width: 6, height: 6, background: '#e879a0', borderRadius: '50%', display: 'inline-block', animation: 'blink 2s ease-in-out infinite' }} />
+              Prospecção inteligente com dados reais
+            </div>
+            <h1 style={{ fontSize: 'clamp(2.2rem,5vw,3.6rem)', fontWeight: 900, lineHeight: 1.1, letterSpacing: -2, marginBottom: 20 }}>
+              Encontre clientes<br />
+              <span style={{ background: 'linear-gradient(135deg,#e879a0,#f8b6c8)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>antes da concorrência.</span>
+            </h1>
+            <p style={{ fontSize: '1.05rem', color: 'rgba(255,255,255,.55)', lineHeight: 1.7, marginBottom: 36, maxWidth: 480 }}>
+              Honk Ponk rastreia negócios por região e filtra leads que realmente precisam do seu serviço. Chega de prospectar empresas que já têm o que você vende.
+            </p>
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: 14 }}>
+              <button onClick={() => setQuizOpen(true)} style={{ display: 'inline-flex', alignItems: 'center', gap: 8, background: 'linear-gradient(135deg,#e879a0,#c2185b)', color: '#fff', border: 'none', borderRadius: 12, padding: '14px 28px', fontSize: '1rem', fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit', boxShadow: '0 8px 30px rgba(232,121,160,.35)' }}>
+                🔍 Buscar leads agora
+              </button>
+              <a href="#como-funciona" style={{ display: 'inline-flex', alignItems: 'center', gap: 8, background: 'transparent', color: 'rgba(255,255,255,.75)', border: '1px solid rgba(255,255,255,.15)', borderRadius: 12, padding: '14px 28px', fontSize: '1rem', fontWeight: 600, textDecoration: 'none' }}>
+                Ver como funciona
+              </a>
+            </div>
+            <div style={{ display: 'flex', gap: 28, marginTop: 40 }}>
+              {[['+ 180k', 'negócios mapeados'], ['340+', 'cidades cobertas'], ['94%', 'taxa de contato']].map(([num, lbl]) => (
+                <div key={lbl}>
+                  <div style={{ fontSize: '1.6rem', fontWeight: 800 }}>{num}</div>
+                  <div style={{ fontSize: '.78rem', color: 'rgba(255,255,255,.4)', marginTop: 2 }}>{lbl}</div>
+                </div>
+              ))}
+            </div>
           </div>
-          <h1 style={{ fontSize: 'clamp(2.4rem,6vw,4.2rem)', fontWeight: 900, letterSpacing: -2, lineHeight: 1.05, marginBottom: 24 }}>
-            Encontre seus próximos<br />
-            <span style={{ background: 'linear-gradient(135deg,#e879a0,#f8b6c8)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>clientes agora.</span>
-          </h1>
-          <p style={{ fontSize: 'clamp(1rem,2vw,1.2rem)', color: 'rgba(255,255,255,.55)', maxWidth: 520, margin: '0 auto 40px', lineHeight: 1.6 }}>
-            Pesquise empresas no Google Maps filtradas pelo seu serviço. Contato direto via WhatsApp em segundos.
-          </p>
-          <div style={{ display: 'flex', gap: 14, justifyContent: 'center', flexWrap: 'wrap' }}>
-            <button onClick={() => setQuizOpen(true)} style={{ background: 'linear-gradient(135deg,#e879a0,#c2185b)', color: '#fff', border: 'none', borderRadius: 14, padding: '16px 36px', fontSize: '1.05rem', fontWeight: 800, cursor: 'pointer', fontFamily: 'inherit', boxShadow: '0 12px 40px rgba(232,121,160,.4)', letterSpacing: -.3 }}>
-              🔍 Buscar leads grátis
-            </button>
-            <a href="#como-funciona" style={{ background: 'rgba(255,255,255,.07)', color: 'rgba(255,255,255,.8)', border: '1px solid rgba(255,255,255,.12)', borderRadius: 14, padding: '16px 28px', fontSize: '1rem', fontWeight: 600, textDecoration: 'none' }}>
-              Como funciona →
-            </a>
+
+          {/* Monitor flutuante */}
+          <div className="animate-float reveal" style={{ position: 'relative' }}>
+            <div style={{ position: 'absolute', top: -18, right: 20, animation: 'float 4.5s 1s ease-in-out infinite', background: 'rgba(22,22,42,.95)', border: '1px solid rgba(248,182,200,.2)', borderRadius: 12, padding: '10px 14px', boxShadow: '0 20px 50px rgba(0,0,0,.5)', fontSize: '.72rem', whiteSpace: 'nowrap', zIndex: 10 }}>
+              <div style={{ color: 'rgba(255,255,255,.4)', fontSize: '.62rem', marginBottom: 3 }}>Novo lead encontrado</div>
+              <div style={{ fontWeight: 700, color: '#f8b6c8', fontSize: '.85rem' }}>Clínica Bella Vida</div>
+              <div style={{ color: '#4ade80', fontSize: '.65rem' }}>↑ Score 98 · Santos/SP · sem site</div>
+            </div>
+            <div style={{ background: 'rgba(22,22,42,.95)', border: '1px solid rgba(248,182,200,.15)', borderRadius: 20, overflow: 'hidden', boxShadow: '0 40px 100px rgba(0,0,0,.6)' }}>
+              <div style={{ background: 'rgba(30,30,53,.8)', padding: '10px 16px', display: 'flex', alignItems: 'center', gap: 8, borderBottom: '1px solid rgba(248,182,200,.1)' }}>
+                {['#ff5f57','#febc2e','#28c840'].map(c => <div key={c} style={{ width: 10, height: 10, borderRadius: '50%', background: c }} />)}
+                <div style={{ flex: 1, background: 'rgba(255,255,255,.05)', borderRadius: 6, padding: '4px 10px', fontSize: '.72rem', color: 'rgba(255,255,255,.3)', margin: '0 12px' }}>
+                  🔒 app.honkponk.com.br/dashboard
+                </div>
+              </div>
+              <div style={{ padding: 16 }}>
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 14 }}>
+                  <span style={{ fontSize: '.8rem', fontWeight: 700 }}>Painel de Prospecção</span>
+                  <span style={{ display: 'flex', alignItems: 'center', gap: 5, fontSize: '.68rem', color: '#4ade80', fontWeight: 600 }}>
+                    <span style={{ width: 6, height: 6, background: '#4ade80', borderRadius: '50%', display: 'inline-block', animation: 'blink 2s ease-in-out infinite' }} />
+                    ao vivo
+                  </span>
+                </div>
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3,1fr)', gap: 8, marginBottom: 12 }}>
+                  {[['1.247','Leads hoje','+18%'],['83','Contatados','+7%'],['R$12k','Em negócios','+31%']].map(([val,lbl,delta]) => (
+                    <div key={lbl} style={{ background: 'rgba(255,255,255,.05)', borderRadius: 10, padding: '10px 12px' }}>
+                      <div style={{ fontSize: '1.1rem', fontWeight: 800 }}>{val}</div>
+                      <div style={{ fontSize: '.62rem', color: 'rgba(255,255,255,.4)', margin: '2px 0' }}>{lbl}</div>
+                      <div style={{ fontSize: '.62rem', color: '#4ade80' }}>↑ {delta}</div>
+                    </div>
+                  ))}
+                </div>
+                <div style={{ background: 'rgba(255,255,255,.04)', borderRadius: 10, padding: '10px 12px', marginBottom: 10, display: 'flex', alignItems: 'flex-end', gap: 3, height: 60 }}>
+                  {[30,45,28,60,42,75,55,80,48,65,35,70,58,85,62,78,40,90,55,68].map((h, i) => (
+                    <div key={i} style={{ flex: 1, background: 'rgba(232,121,160,.5)', borderRadius: 2, height: `${h}%` }} />
+                  ))}
+                </div>
+                {[['Restaurante Sabor Caseiro','Sem site','97'],['Auto Center Silva','Sem site','91']].map(([name,tag,score]) => (
+                  <div key={name} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '7px 0', borderTop: '1px solid rgba(255,255,255,.05)', fontSize: '.72rem' }}>
+                    <span style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                      <span style={{ width: 6, height: 6, borderRadius: '50%', background: '#e879a0', display: 'inline-block' }} />
+                      {name}
+                    </span>
+                    <span style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                      <span style={{ background: 'rgba(74,222,128,.1)', color: '#4ade80', borderRadius: 4, padding: '2px 6px', fontSize: '.62rem' }}>{tag} ✓</span>
+                      <span style={{ fontWeight: 700 }}>{score}</span>
+                    </span>
+                  </div>
+                ))}
+                <div style={{ background: 'rgba(232,121,160,.08)', border: '1px solid rgba(232,121,160,.2)', borderRadius: 8, padding: '8px 10px', marginTop: 8, fontSize: '.68rem' }}>
+                  <div style={{ color: 'rgba(255,255,255,.4)', marginBottom: 2 }}>Filtro ativo</div>
+                  <div style={{ fontWeight: 700, color: '#f8b6c8', fontSize: '.78rem' }}>Criação de Sites</div>
+                  <div style={{ color: 'rgba(255,255,255,.4)', marginTop: 1 }}>Só leads sem site cadastrado</div>
+                </div>
+              </div>
+            </div>
           </div>
-          <p style={{ marginTop: 20, fontSize: '.8rem', color: 'rgba(255,255,255,.3)' }}>Grátis para sempre • Sem cartão • Resultados reais</p>
         </div>
 
         {/* Ticker */}
-        <div style={{ position: 'absolute', bottom: 32, left: 0, right: 0, overflow: 'hidden', maskImage: 'linear-gradient(90deg,transparent,#000 15%,#000 85%,transparent)' }}>
+        <div style={{ position: 'absolute', bottom: 24, left: 0, right: 0, overflow: 'hidden', maskImage: 'linear-gradient(90deg,transparent,#000 15%,#000 85%,transparent)' }}>
           <div style={{ display: 'flex', gap: 32, animation: 'ticker 20s linear infinite', width: 'max-content' }}>
             {[...TICKER_ITEMS, ...TICKER_ITEMS].map((c, i) => (
-              <span key={i} style={{ fontSize: '.78rem', color: 'rgba(255,255,255,.25)', whiteSpace: 'nowrap', fontWeight: 600 }}>📍 {c}</span>
+              <span key={i} style={{ fontSize: '.78rem', color: 'rgba(255,255,255,.2)', whiteSpace: 'nowrap', fontWeight: 600 }}>📍 {c}</span>
             ))}
           </div>
         </div>
