@@ -43,7 +43,7 @@ export default function HomePage() {
 
   return (
     <>
-      <Navbar onGetStarted={() => setQuizOpen(true)} />
+      <Navbar onOpenQuiz={() => setQuizOpen(true)} />
       <QuizOverlay open={quizOpen} onClose={() => setQuizOpen(false)} onSearch={handleSearch} />
 
       {/* Hero */}
