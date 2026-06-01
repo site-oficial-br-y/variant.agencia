@@ -41,7 +41,7 @@ export async function POST(req: NextRequest) {
   }
 
   const radius = allBrazil ? 50000 : 15000
-  const query = segConfig.query
+  const query = segConfig
 
   const placesRes = await fetch(
     `https://maps.googleapis.com/maps/api/place/nearbysearch/json?location=${lat},${lng}&radius=${radius}&keyword=${encodeURIComponent(query)}&key=${GOOGLE_KEY}`
