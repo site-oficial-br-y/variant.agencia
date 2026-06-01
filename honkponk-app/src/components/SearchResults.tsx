@@ -36,7 +36,7 @@ async function fetchPlaces(query: string, lat: number, lng: number, radius: numb
 
 function generateWaMsg(place: PlaceResult, service: string): string {
   const meta = SERVICE_META[service] || SERVICE_META.outros
-  return encodeURIComponent(meta.waMsg(place.name, place.address || ''))
+  return encodeURIComponent(meta.waMsg(place.name))
 }
 
 export function SearchResults({ params, userId, onLimitReached }: { params: SearchParams; userId: string | null; onLimitReached: () => void }) {
