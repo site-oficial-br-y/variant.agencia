@@ -121,7 +121,7 @@ export default function HomePage() {
       </section>
 
       {/* Features */}
-      <section style={{ padding: '90px 24px', background: '#16162a' }}>
+      <section id="recursos" style={{ padding: '90px 24px', background: '#16162a' }}>
         <div style={{ maxWidth: 1000, margin: '0 auto' }}>
           <div className="reveal" style={{ textAlign: 'center', marginBottom: 60 }}>
             <h2 style={{ fontSize: 'clamp(1.8rem,4vw,2.8rem)', fontWeight: 800, letterSpacing: -1.5 }}>Tudo que você precisa para prospectar.</h2>

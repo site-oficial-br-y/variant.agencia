@@ -36,12 +36,16 @@ export function Navbar({ onOpenQuiz }: NavbarProps) {
 
       <div style={{ display: 'flex', alignItems: 'center', gap: 32 }}>
         <div style={{ display: 'flex', gap: 28 }}>
-          {[['#como-funciona','Como funciona'],['#busca','Buscar leads'],['#features','Recursos'],['#precos','Preços']].map(([href,label]) => (
+          {[['#como-funciona','Como funciona'],['#recursos','Recursos'],['#precos','Preços']].map(([href,label]) => (
             <a key={href} href={href} style={{ fontSize: '.875rem', fontWeight: 500, color: 'rgba(255,255,255,.6)', textDecoration: 'none', transition: 'color .2s' }}
               onMouseEnter={e => (e.target as HTMLElement).style.color='#fff'}
               onMouseLeave={e => (e.target as HTMLElement).style.color='rgba(255,255,255,.6)'}
             >{label}</a>
           ))}
+          <button onClick={onOpenQuiz} style={{ fontSize: '.875rem', fontWeight: 500, color: 'rgba(255,255,255,.6)', background: 'none', border: 'none', cursor: 'pointer', padding: 0, fontFamily: 'inherit', transition: 'color .2s' }}
+            onMouseEnter={e => (e.target as HTMLElement).style.color='#fff'}
+            onMouseLeave={e => (e.target as HTMLElement).style.color='rgba(255,255,255,.6)'}
+          >Buscar leads</button>
         </div>
         <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
           <a href="https://www.instagram.com/honkponk.oficial" target="_blank" rel="noopener" style={{ color: 'rgba(255,255,255,.6)', textDecoration: 'none', fontSize: '1.2rem' }}>
