@@ -26,7 +26,7 @@ export default function SignupPage() {
     if (error) {
       setError(error.message)
     } else {
-      router.push('/dashboard')
+      router.push('/signup/confirmar?email=' + encodeURIComponent(email))
     }
     setLoading(false)
   }
