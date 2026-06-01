@@ -7,29 +7,29 @@ interface SearchParams { service: string; city: string; segment: string; allBraz
 
 const GOOGLE_KEY = process.env.NEXT_PUBLIC_GOOGLE_PLACES_KEY || ''
 
-async function geocodeCity(city: string): Promise<{ lat: number; lng: number } | null> {
+async function geocodeCity(city: string): Promise<{ lat: number; lng: number }> {
   const res = await fetch(
     `https://maps.googleapis.com/maps/api/geocode/json?address=${encodeURIComponent(city + ', Brasil')}&key=${GOOGLE_KEY}`
   )
   const data = await res.json()
   if (data.results?.[0]) return data.results[0].geometry.location
-  return null
+  return { lat: -15.8, lng: -47.9 }
 }
 
-async function fetchPlaces(query: string, lat: number, lng: number, radius: number): Promise<PlaceResult[]> {
+async function fetchPlaces(query: string, lat: number, lng: number, radius: number): Promise<any[]> {
   const res = await fetch(
-    `https://maps.googleapis.com/maps/api/place/nearbysearch/json?location=${lat},${lng}&radius=${radius}&keyword=${encodeURIComponent(query)}&key=${GOOGLE_KEY}`
+    `https://maps.googleapis.com/maps/api/place/nearbysearch/json?location=${lat},${lng}&radius=${radius}&keyword=${encodeURIComponent(query)}&key=${GOOGLE_KEY}&language=pt-BR`
   )
   const data = await res.json()
-  return (data.results || []).map((p: any) => ({
-    name: p.name,
-    address: p.vicinity || '',
-    rating: p.rating || 0,
-    reviews: p.user_ratings_total || 0,
-    website: p.website || '',
-    phone: p.formatted_phone_number || '',
-    isOpen: p.opening_hours?.open_now ?? null,
-  }))
+  return data.results || []
+}
+
+async function fetchDetails(placeId: string): Promise<{ website?: string; phone?: string }> {
+  const res = await fetch(
+    `https://maps.googleapis.com/maps/api/place/details/json?place_id=${placeId}&fields=website,formatted_phone_number&key=${GOOGLE_KEY}`
+  )
+  const data = await res.json()
+  return { website: data.result?.website, phone: data.result?.formatted_phone_number }
 }
 
 function generateWaMsg(place: PlaceResult, service: string): string {
@@ -45,7 +45,7 @@ export function SearchResults({ params, userId, onLimitReached }: { params: Sear
   const [exported, setExported] = useState(false)
 
   const meta = SERVICE_META[params.service] || SERVICE_META.outros
-  const segConfig = SEGMENT_QUERIES[params.segment]
+  const segQuery = SEGMENT_QUERIES[params.segment] || params.segment
 
   const runSearch = useCallback(async () => {
     setLoading(true)
@@ -54,26 +54,61 @@ export function SearchResults({ params, userId, onLimitReached }: { params: Sear
     setResults([])
 
     try {
-      const res = await fetch('/api/search', {
+      // Check limit server-side first
+      const limitRes = await fetch('/api/search', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(params),
+        body: JSON.stringify({ checkOnly: true, ...params }),
       })
-      const data = await res.json()
+      if (limitRes.status === 403) { onLimitReached(); setLoading(false); return }
 
-      if (res.status === 403) { onLimitReached(); return }
-      if (!res.ok) { setError(data.error || 'Erro na busca.'); return }
+      // Geocode city
+      let lat = -15.8, lng = -47.9
+      if (!params.allBrazil && params.city) {
+        const loc = await geocodeCity(params.city)
+        lat = loc.lat; lng = loc.lng
+      }
 
-      const places: PlaceResult[] = data.results || []
-      const filtered = meta.filterFn ? places.filter(meta.filterFn) : places
+      const radius = params.allBrazil ? 50000 : 20000
+      const raw = await fetchPlaces(segQuery, lat, lng, radius)
+
+      if (!raw.length) { setResults([]); setSearched(true); setLoading(false); return }
+
+      // Get details for first 10 results in parallel
+      const detailed: PlaceResult[] = await Promise.all(
+        raw.slice(0, 10).map(async (p: any) => {
+          const details = await fetchDetails(p.place_id)
+          return {
+            name: p.name,
+            address: p.vicinity || '',
+            rating: p.rating || 0,
+            reviews: p.user_ratings_total || 0,
+            website: details.website || '',
+            phone: details.phone || '',
+            isOpen: p.opening_hours?.open_now ?? null,
+          }
+        })
+      )
+
+      // Apply service filter
+      const filtered = meta.filterFn ? detailed.filter(p => meta.filterFn({ website: p.website || undefined })) : detailed
       setResults(filtered)
-    } catch {
-      setError('Erro de conexão.')
+
+      // Increment counter server-side
+      if (userId) {
+        fetch('/api/search', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ countOnly: true, ...params }),
+        }).catch(() => {})
+      }
+    } catch (e) {
+      setError('Erro na busca. Verifique sua conexão.')
     } finally {
       setLoading(false)
       setSearched(true)
     }
-  }, [params, meta, onLimitReached])
+  }, [params, meta, segQuery, userId, onLimitReached])
 
   async function handleExport() {
     const { utils, writeFile } = await import('xlsx')
@@ -109,7 +144,7 @@ export function SearchResults({ params, userId, onLimitReached }: { params: Sear
     return (
       <div style={{ textAlign: 'center', padding: '80px 24px' }}>
         <div className="spinner" style={{ margin: '0 auto 20px' }} />
-        <p style={{ color: 'rgba(255,255,255,.5)' }}>Buscando leads em {params.allBrazil ? 'todo o Brasil' : params.city}...</p>
+        <p style={{ color: 'rgba(255,255,255,.5)' }}>Buscando leads{!params.allBrazil && params.city ? ` em ${params.city}` : ' no Brasil'}...</p>
       </div>
     )
   }
@@ -125,16 +160,16 @@ export function SearchResults({ params, userId, onLimitReached }: { params: Sear
 
   return (
     <div>
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 24, flexWrap: 'wrap', gap: 12 }}>
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 20, flexWrap: 'wrap', gap: 12 }}>
         <div>
           <span style={{ fontSize: '.75rem', fontWeight: 700, color: '#e879a0', textTransform: 'uppercase', letterSpacing: 1 }}>{results.length} leads encontrados</span>
-          <p style={{ fontSize: '.82rem', color: 'rgba(255,255,255,.4)', marginTop: 2 }}>{meta.filterLabel}</p>
+          <p style={{ fontSize: '.8rem', color: 'rgba(255,255,255,.4)', marginTop: 2 }}>{meta.filterLabel}</p>
         </div>
         <div style={{ display: 'flex', gap: 10 }}>
-          <button onClick={runSearch} style={{ background: 'rgba(255,255,255,.06)', color: 'rgba(255,255,255,.7)', border: '1px solid rgba(255,255,255,.1)', borderRadius: 10, padding: '9px 16px', fontSize: '.82rem', fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit' }}>↻ Nova busca</button>
+          <button onClick={runSearch} style={{ background: 'rgba(255,255,255,.06)', color: 'rgba(255,255,255,.7)', border: '1px solid rgba(255,255,255,.1)', borderRadius: 10, padding: '9px 16px', fontSize: '.82rem', fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit' }}>↻ Atualizar</button>
           {results.length > 0 && (
             <button onClick={handleExport} style={{ background: exported ? 'rgba(74,222,128,.15)' : 'rgba(255,255,255,.06)', color: exported ? '#4ade80' : 'rgba(255,255,255,.7)', border: `1px solid ${exported ? 'rgba(74,222,128,.3)' : 'rgba(255,255,255,.1)'}`, borderRadius: 10, padding: '9px 16px', fontSize: '.82rem', fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit' }}>
-              {exported ? '✓ Exportado' : '⬇ Exportar Excel'}
+              {exported ? '✓ Exportado' : '⬇ Excel'}
             </button>
           )}
         </div>
@@ -146,27 +181,28 @@ export function SearchResults({ params, userId, onLimitReached }: { params: Sear
           <p>Nenhum lead encontrado com esse filtro. Tente outra cidade ou segmento.</p>
         </div>
       ) : (
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-          {results.map(place => (
-            <div key={place.name} style={{ background: 'rgba(255,255,255,.04)', border: '1px solid rgba(248,182,200,0.14)', borderRadius: 16, padding: '18px 20px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 16, flexWrap: 'wrap' }}>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+          {results.map((place, i) => (
+            <div key={i} style={{ background: 'rgba(255,255,255,.04)', border: '1px solid rgba(248,182,200,0.14)', borderRadius: 14, padding: '16px 20px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 16, flexWrap: 'wrap' }}>
               <div style={{ flex: 1, minWidth: 200 }}>
-                <div style={{ fontWeight: 700, marginBottom: 4 }}>{place.name}</div>
-                <div style={{ fontSize: '.8rem', color: 'rgba(255,255,255,.45)', marginBottom: 6 }}>{place.address}</div>
-                <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
-                  {place.rating && <span style={{ fontSize: '.72rem', background: 'rgba(255,200,0,.1)', color: '#fbbf24', borderRadius: 6, padding: '2px 8px' }}>⭐ {place.rating} ({place.reviews})</span>}
-                  {!place.website ? <span style={{ fontSize: '.72rem', background: 'rgba(232,121,160,.12)', color: '#e879a0', borderRadius: 6, padding: '2px 8px' }}>Sem site</span> : <span style={{ fontSize: '.72rem', background: 'rgba(74,222,128,.1)', color: '#4ade80', borderRadius: 6, padding: '2px 8px' }}>Tem site</span>}
+                <div style={{ fontWeight: 700, marginBottom: 3 }}>{place.name}</div>
+                <div style={{ fontSize: '.78rem', color: 'rgba(255,255,255,.4)', marginBottom: 6 }}>{place.address}</div>
+                <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
+                  {place.rating > 0 && <span style={{ fontSize: '.7rem', background: 'rgba(255,200,0,.1)', color: '#fbbf24', borderRadius: 6, padding: '2px 8px' }}>⭐ {place.rating} ({place.reviews})</span>}
+                  {!place.website ? <span style={{ fontSize: '.7rem', background: 'rgba(232,121,160,.12)', color: '#e879a0', borderRadius: 6, padding: '2px 8px' }}>Sem site</span> : <span style={{ fontSize: '.7rem', background: 'rgba(74,222,128,.1)', color: '#4ade80', borderRadius: 6, padding: '2px 8px' }}>Tem site</span>}
+                  {place.isOpen === true && <span style={{ fontSize: '.7rem', background: 'rgba(74,222,128,.1)', color: '#4ade80', borderRadius: 6, padding: '2px 8px' }}>Aberto</span>}
                 </div>
               </div>
               <div style={{ display: 'flex', gap: 8, flexShrink: 0 }}>
                 {place.phone && (
                   <a href={`https://wa.me/55${place.phone.replace(/\D/g,'')}?text=${generateWaMsg(place, params.service)}`} target="_blank" rel="noopener noreferrer"
-                    style={{ background: 'rgba(37,211,102,.15)', color: '#25d366', border: '1px solid rgba(37,211,102,.25)', borderRadius: 10, padding: '8px 14px', fontSize: '.8rem', fontWeight: 700, textDecoration: 'none', whiteSpace: 'nowrap' }}>
+                    style={{ background: 'rgba(37,211,102,.15)', color: '#25d366', border: '1px solid rgba(37,211,102,.25)', borderRadius: 10, padding: '8px 14px', fontSize: '.78rem', fontWeight: 700, textDecoration: 'none', whiteSpace: 'nowrap' }}>
                     WhatsApp
                   </a>
                 )}
                 {place.website && (
                   <a href={place.website} target="_blank" rel="noopener noreferrer"
-                    style={{ background: 'rgba(255,255,255,.06)', color: 'rgba(255,255,255,.6)', border: '1px solid rgba(255,255,255,.1)', borderRadius: 10, padding: '8px 14px', fontSize: '.8rem', fontWeight: 600, textDecoration: 'none' }}>
+                    style={{ background: 'rgba(255,255,255,.06)', color: 'rgba(255,255,255,.6)', border: '1px solid rgba(255,255,255,.1)', borderRadius: 10, padding: '8px 14px', fontSize: '.78rem', fontWeight: 600, textDecoration: 'none' }}>
                     Site
                   </a>
                 )}
