@@ -2,6 +2,8 @@
 @tailwind components;
 @tailwind utilities;
 
+html { scroll-behavior: smooth; }
+
 :root {
   --pink: #f8b6c8;
   --pink-dark: #e879a0;
