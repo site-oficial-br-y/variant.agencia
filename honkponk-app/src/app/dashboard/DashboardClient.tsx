@@ -45,7 +45,7 @@ export function DashboardClient({ user, profile, teamMembers }: { user: User; pr
   }
 
   return (
-    <div style={{ minHeight: '100vh', background: '#0f0f1a', color: '#fff', fontFamily: 'Inter, -apple-system, sans-serif', position: 'relative' }}>
+    <div className="animate-pageIn" style={{ minHeight: '100vh', background: '#0f0f1a', color: '#fff', fontFamily: 'Inter, -apple-system, sans-serif', position: 'relative' }}>
 
       {/* Fundo quadriculado */}
       <div style={{
@@ -80,7 +80,7 @@ export function DashboardClient({ user, profile, teamMembers }: { user: User; pr
       <div style={{ maxWidth: 960, margin: '0 auto', padding: '36px 20px', position: 'relative', zIndex: 1 }}>
 
         {/* Saudação + botão */}
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 14, marginBottom: 32 }}>
+        <div className="animate-pageIn" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 14, marginBottom: 32, animationDelay: '.05s' }}>
           <div>
             <h1 style={{ fontSize: '1.6rem', fontWeight: 800, letterSpacing: -0.5, marginBottom: 4 }}>
               Olá, {user.email?.split('@')[0]} 👋
@@ -98,7 +98,7 @@ export function DashboardClient({ user, profile, teamMembers }: { user: User; pr
         </div>
 
         {/* Cards */}
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(180px,1fr))', gap: 14, marginBottom: 32 }}>
+        <div className="animate-pageIn" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(180px,1fr))', gap: 14, marginBottom: 32, animationDelay: '.1s' }}>
           <div style={{ background: 'rgba(232,121,160,.08)', border: '1px solid rgba(232,121,160,.2)', borderRadius: 16, padding: '20px', backdropFilter: 'blur(10px)' }}>
             <div style={{ fontSize: '.68rem', fontWeight: 700, color: '#f8b6c8', textTransform: 'uppercase' as const, letterSpacing: 1, marginBottom: 8 }}>Plano</div>
             <div style={{ fontSize: '1.5rem', fontWeight: 900, marginBottom: 2 }}>{planConfig.name}</div>
@@ -120,7 +120,7 @@ export function DashboardClient({ user, profile, teamMembers }: { user: User; pr
 
         {/* Área principal */}
         {!searchParams ? (
-          <div style={{ background: 'rgba(255,255,255,.02)', border: '1px dashed rgba(248,182,200,.15)', borderRadius: 20, padding: '64px 24px', textAlign: 'center' as const, backdropFilter: 'blur(10px)' }}>
+          <div className="animate-pageIn" style={{ background: 'rgba(255,255,255,.02)', border: '1px dashed rgba(248,182,200,.15)', borderRadius: 20, padding: '64px 24px', textAlign: 'center' as const, backdropFilter: 'blur(10px)', animationDelay: '.18s' }}>
             <div style={{ fontSize: '3rem', marginBottom: 16 }}>🔍</div>
             <h2 style={{ fontSize: '1.2rem', fontWeight: 800, marginBottom: 8 }}>Nenhuma busca ainda</h2>
             <p style={{ color: 'rgba(255,255,255,.38)', marginBottom: 28, fontSize: '.86rem' }}>

@@ -40,6 +40,7 @@ body {
 .reveal.visible { opacity: 1; transform: none; }
 
 @keyframes fadeUp { from { opacity:0; transform:translateY(20px); } to { opacity:1; transform:none; } }
+@keyframes pageIn { from { opacity:0; transform:translateY(12px); } to { opacity:1; transform:none; } }
 @keyframes float { 0%,100% { transform:translateY(0) rotate(-.5deg); } 50% { transform:translateY(-18px) rotate(.5deg); } }
 @keyframes blink { 0%,100% { opacity:1; } 50% { opacity:.3; } }
 @keyframes ticker { from { transform:translateX(0); } to { transform:translateX(-50%); } }
@@ -47,6 +48,7 @@ body {
 @keyframes spin { to { transform:rotate(360deg); } }
 
 .animate-fadeUp { animation: fadeUp .8s ease both; }
+.animate-pageIn { animation: pageIn .5s cubic-bezier(.22,1,.36,1) both; }
 .animate-float { animation: float 6s cubic-bezier(.45,.05,.55,.95) infinite; }
 .animate-blink { animation: blink 2s ease-in-out infinite; }
 .animate-ticker { animation: ticker 28s linear infinite; }
