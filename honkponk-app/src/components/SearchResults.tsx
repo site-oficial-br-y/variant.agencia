@@ -1,5 +1,6 @@
 'use client'
 import { useState, useCallback } from 'react'
+import Link from 'next/link'
 import { SEGMENT_QUERIES, SERVICE_META } from '@/lib/search'
 import type { PlaceResult } from '@/lib/search'
 import { PLANS } from '@/lib/plans'
@@ -63,6 +64,7 @@ export function SearchResults({ params, userId, plan = 'free', onLimitReached }:
   const meta = SERVICE_META[params.service] || SERVICE_META.outros
   const segQuery = SEGMENT_QUERIES[params.segment] || params.segment
   const maxResults = PLANS[plan]?.maxResults ?? 5
+  const canExport = PLANS[plan]?.exportExcel ?? false
 
   const runSearch = useCallback(async () => {
     setLoading(true)
@@ -181,10 +183,15 @@ export function SearchResults({ params, userId, plan = 'free', onLimitReached }:
         </div>
         <div style={{ display: 'flex', gap: 10 }}>
           <button onClick={runSearch} style={{ background: 'rgba(255,255,255,.06)', color: 'rgba(255,255,255,.7)', border: '1px solid rgba(255,255,255,.1)', borderRadius: 10, padding: '9px 16px', fontSize: '.82rem', fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit' }}>↻ Atualizar</button>
-          {results.length > 0 && (
+          {results.length > 0 && canExport && (
             <button onClick={handleExport} style={{ background: exported ? 'rgba(74,222,128,.15)' : 'rgba(255,255,255,.06)', color: exported ? '#4ade80' : 'rgba(255,255,255,.7)', border: `1px solid ${exported ? 'rgba(74,222,128,.3)' : 'rgba(255,255,255,.1)'}`, borderRadius: 10, padding: '9px 16px', fontSize: '.82rem', fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit' }}>
               {exported ? '✓ Exportado' : '⬇ Excel'}
             </button>
+          )}
+          {results.length > 0 && !canExport && (
+            <Link href="/#precos" style={{ background: 'rgba(255,255,255,.06)', color: 'rgba(255,255,255,.4)', border: '1px solid rgba(255,255,255,.1)', borderRadius: 10, padding: '9px 16px', fontSize: '.82rem', fontWeight: 600, textDecoration: 'none', display: 'inline-flex', alignItems: 'center', gap: 6 }}>
+              🔒 Excel
+            </Link>
           )}
         </div>
       </div>

@@ -34,8 +34,12 @@ export function QuizOverlay({ open, onClose, onSearch }: { open: boolean; onClos
   const [allBrazil, setAllBrazil] = useState(false)
 
   useEffect(() => {
-    if (open) { document.body.style.overflow = 'hidden'; setStep(1) }
-    else document.body.style.overflow = ''
+    if (open) {
+      document.body.style.overflow = 'hidden'
+      setStep(1); setService(''); setCity(''); setSegment(''); setAllBrazil(false)
+    } else {
+      document.body.style.overflow = ''
+    }
   }, [open])
 
   const meta = SERVICE_META[service] || SERVICE_META.outros

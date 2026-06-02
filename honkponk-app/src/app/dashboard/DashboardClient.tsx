@@ -26,7 +26,8 @@ export function DashboardClient({ user, profile, teamMembers }: { user: User; pr
   const planConfig = PLANS[plan]
   const resetAt = profile ? new Date(profile.searches_reset_at) : new Date()
   const todaySearches = new Date() > resetAt ? 0 : (profile?.searches_today ?? 0)
-  const remaining = getRemainingSearches(plan, todaySearches)
+  const initialRemaining = getRemainingSearches(plan, todaySearches)
+  const [remaining, setRemaining] = useState(initialRemaining)
 
   async function handleLogout() {
     setLoggingOut(true)
@@ -38,6 +39,7 @@ export function DashboardClient({ user, profile, teamMembers }: { user: User; pr
     setQuizOpen(false)
     setSearchParams(data)
     setLimitMsg(false)
+    if (remaining !== null) setRemaining(r => (r !== null && r > 0 ? r - 1 : 0))
     setTimeout(() => {
       const el = document.getElementById('dash-results')
       if (el) el.scrollIntoView({ behavior: 'smooth' })
@@ -107,7 +109,7 @@ export function DashboardClient({ user, profile, teamMembers }: { user: User; pr
           <div style={{ background: 'rgba(255,255,255,.03)', border: '1px solid rgba(255,255,255,.08)', borderRadius: 16, padding: '20px', backdropFilter: 'blur(10px)' }}>
             <div style={{ fontSize: '.68rem', fontWeight: 700, color: '#f8b6c8', textTransform: 'uppercase' as const, letterSpacing: 1, marginBottom: 8 }}>Buscas hoje</div>
             <div style={{ fontSize: '1.5rem', fontWeight: 900, marginBottom: 2 }}>{remaining === null ? '∞' : remaining}</div>
-            <div style={{ fontSize: '.76rem', color: 'rgba(255,255,255,.38)' }}>{remaining === null ? 'Ilimitadas' : `de ${planConfig.searchesPerDay} disponíveis`}</div>
+            <div style={{ fontSize: '.76rem', color: 'rgba(255,255,255,.38)' }}>{remaining === null ? 'Ilimitadas' : `de ${planConfig.searchesPerDay} disponível${planConfig.searchesPerDay === 1 ? '' : 'is'}`}</div>
           </div>
           {plan !== 'enterprise' && (
             <div style={{ background: 'rgba(255,255,255,.03)', border: '1px solid rgba(255,255,255,.08)', borderRadius: 16, padding: '20px', backdropFilter: 'blur(10px)', display: 'flex', flexDirection: 'column' as const, gap: 10 }}>
@@ -155,7 +157,7 @@ export function DashboardClient({ user, profile, teamMembers }: { user: User; pr
                 ↺ Nova busca
               </button>
             </div>
-            <SearchResults params={searchParams} userId={user.id} plan={plan} onLimitReached={() => setLimitMsg(true)} />
+            <SearchResults key={JSON.stringify(searchParams)} params={searchParams} userId={user.id} plan={plan} onLimitReached={() => setLimitMsg(true)} />
           </div>
         )}
       </div>
