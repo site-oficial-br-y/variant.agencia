@@ -66,21 +66,16 @@ export function SearchResults({ params, userId, onLimitReached }: { params: Sear
 
       if (!raw.length) { setResults([]); setSearched(true); setLoading(false); return }
 
-      // Get details for first 10 results in parallel
-      const detailed: PlaceResult[] = await Promise.all(
-        raw.slice(0, 10).map(async (p: any) => {
-          const details = await fetchDetails(p.place_id)
-          return {
-            name: p.name,
-            address: p.vicinity || '',
-            rating: p.rating || 0,
-            reviews: p.user_ratings_total || 0,
-            website: details.website || '',
-            phone: details.phone || '',
-            isOpen: p.opening_hours?.open_now ?? null,
-          }
-        })
-      )
+      // New API returns website/phone directly in nearby results
+      const detailed: PlaceResult[] = raw.slice(0, 20).map((p: any) => ({
+        name: p.name,
+        address: p.vicinity || '',
+        rating: p.rating || 0,
+        reviews: p.user_ratings_total || 0,
+        website: p.website || '',
+        phone: p.formatted_phone_number || '',
+        isOpen: p.opening_hours?.open_now ?? null,
+      }))
 
       // Apply service filter
       const filtered = meta.filterFn ? detailed.filter(p => meta.filterFn({ website: p.website || undefined })) : detailed
