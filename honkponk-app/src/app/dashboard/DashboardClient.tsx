@@ -155,7 +155,7 @@ export function DashboardClient({ user, profile, teamMembers }: { user: User; pr
                 ↺ Nova busca
               </button>
             </div>
-            <SearchResults params={searchParams} userId={user.id} onLimitReached={() => setLimitMsg(true)} />
+            <SearchResults params={searchParams} userId={user.id} plan={plan} onLimitReached={() => setLimitMsg(true)} />
           </div>
         )}
       </div>

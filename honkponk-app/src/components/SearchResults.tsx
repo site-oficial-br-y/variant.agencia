@@ -2,6 +2,8 @@
 import { useState, useCallback } from 'react'
 import { SEGMENT_QUERIES, SERVICE_META } from '@/lib/search'
 import type { PlaceResult } from '@/lib/search'
+import { PLANS } from '@/lib/plans'
+import type { Plan } from '@/lib/plans'
 
 interface SearchParams { service: string; city: string; segment: string; allBrazil: boolean }
 
@@ -29,7 +31,7 @@ function generateWaMsg(place: PlaceResult, service: string): string {
   return encodeURIComponent(meta.waMsg(place.name))
 }
 
-export function SearchResults({ params, userId, onLimitReached }: { params: SearchParams; userId: string | null; onLimitReached: () => void }) {
+export function SearchResults({ params, userId, plan = 'free', onLimitReached }: { params: SearchParams; userId: string | null; plan?: Plan; onLimitReached: () => void }) {
   const [results, setResults] = useState<PlaceResult[]>([])
   const [loading, setLoading] = useState(false)
   const [searched, setSearched] = useState(false)
@@ -38,6 +40,7 @@ export function SearchResults({ params, userId, onLimitReached }: { params: Sear
 
   const meta = SERVICE_META[params.service] || SERVICE_META.outros
   const segQuery = SEGMENT_QUERIES[params.segment] || params.segment
+  const maxResults = PLANS[plan]?.maxResults ?? 5
 
   const runSearch = useCallback(async () => {
     setLoading(true)
@@ -67,7 +70,8 @@ export function SearchResults({ params, userId, onLimitReached }: { params: Sear
       if (!raw.length) { setResults([]); setSearched(true); setLoading(false); return }
 
       // New API returns website/phone directly in nearby results
-      const detailed: PlaceResult[] = raw.slice(0, 20).map((p: any) => ({
+      const limit = maxResults === null ? 20 : maxResults
+      const detailed: PlaceResult[] = raw.slice(0, limit).map((p: any) => ({
         name: p.name,
         address: p.vicinity || '',
         rating: p.rating || 0,

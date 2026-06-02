@@ -169,7 +169,7 @@ export default function HomePage() {
                 <Link href="/#precos" style={{ background: 'linear-gradient(135deg,#e879a0,#c2185b)', color: '#fff', borderRadius: 10, padding: '10px 20px', fontSize: '.85rem', fontWeight: 700, textDecoration: 'none' }}>Fazer upgrade</Link>
               </div>
             )}
-            <SearchResults params={searchParams} userId={userId} onLimitReached={() => setLimitMsg(true)} />
+            <SearchResults params={searchParams} userId={userId} plan={userPlan} onLimitReached={() => setLimitMsg(true)} />
           </div>
         </section>
       )}
