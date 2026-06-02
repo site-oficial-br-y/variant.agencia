@@ -56,7 +56,7 @@ export function QuizOverlay({ open, onClose, onSearch }: { open: boolean; onClos
           <div>
             <div style={{ fontSize: '.75rem', fontWeight: 700, color: '#e879a0', letterSpacing: 1, textTransform: 'uppercase', marginBottom: 10 }}>Passo 1 de 3</div>
             <h2 style={{ fontSize: '1.5rem', fontWeight: 800, marginBottom: 8 }}>O que você oferece?</h2>
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3,1fr)', gap: 12, marginBottom: 28 }}>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill,minmax(130px,1fr))', gap: 10, marginBottom: 28 }}>
               {SERVICES.map(s => (
                 <div key={s.key} onClick={() => setService(s.key)} style={{ background: service === s.key ? 'rgba(232,121,160,.12)' : 'rgba(255,255,255,.04)', border: `1.5px solid ${service === s.key ? '#e879a0' : 'rgba(255,255,255,.08)'}`, borderRadius: 16, padding: '18px 14px', cursor: 'pointer', textAlign: 'center', transition: 'all .2s' }}>
                   <div style={{ fontSize: '1.8rem', marginBottom: 8 }}>{s.icon}</div>
