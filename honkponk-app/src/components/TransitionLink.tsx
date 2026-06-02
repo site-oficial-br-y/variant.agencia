@@ -27,12 +27,17 @@ export function TransitionLink({ href, style, children }: TransitionLinkProps) {
     document.body.appendChild(overlay)
     overlayRef.current = overlay
 
-    // Fade in overlay then navigate
+    // Fade in overlay, navigate, then fade back out
     requestAnimationFrame(() => {
       overlay.style.opacity = '1'
     })
     setTimeout(() => {
       router.push(href)
+      // After navigation settles, fade the overlay out and remove it
+      setTimeout(() => {
+        overlay.style.opacity = '0'
+        setTimeout(() => overlay.remove(), 380)
+      }, 400)
     }, 360)
   }
 
