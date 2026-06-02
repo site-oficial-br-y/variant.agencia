@@ -19,6 +19,7 @@ export function DashboardClient({ user, profile, teamMembers }: { user: User; pr
   const [searchParams, setSearchParams] = useState<QuizData | null>(null)
   const [limitMsg, setLimitMsg] = useState(false)
   const [loggingOut, setLoggingOut] = useState(false)
+  const [hoveredCard, setHoveredCard] = useState<string | null>(null)
   const router = useRouter()
   const supabase = createClient()
 
@@ -101,18 +102,27 @@ export function DashboardClient({ user, profile, teamMembers }: { user: User; pr
 
         {/* Cards */}
         <div className="animate-pageIn" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(180px,1fr))', gap: 14, marginBottom: 32, animationDelay: '.1s' }}>
-          <div style={{ background: 'rgba(232,121,160,.08)', border: '1px solid rgba(232,121,160,.2)', borderRadius: 16, padding: '20px', backdropFilter: 'blur(10px)' }}>
-            <div style={{ fontSize: '.68rem', fontWeight: 700, color: '#f8b6c8', textTransform: 'uppercase' as const, letterSpacing: 1, marginBottom: 8 }}>Plano</div>
+          <div
+            onMouseEnter={() => setHoveredCard('plan')}
+            onMouseLeave={() => setHoveredCard(null)}
+            style={{ background: 'linear-gradient(135deg,rgba(232,121,160,.14),rgba(194,24,91,.08))', border: `1px solid ${hoveredCard === 'plan' ? '#e879a0' : 'rgba(232,121,160,.25)'}`, borderRadius: 16, padding: '20px', backdropFilter: 'blur(10px)', transform: hoveredCard === 'plan' ? 'translateY(-5px) scale(1.02)' : 'none', boxShadow: hoveredCard === 'plan' ? '0 16px 40px rgba(232,121,160,.22)' : '0 0px 0px transparent', transition: 'all .3s cubic-bezier(.34,1.56,.64,1)', cursor: 'default' }}>
+            <div style={{ fontSize: '.68rem', fontWeight: 700, color: '#f8b6c8', textTransform: 'uppercase' as const, letterSpacing: 1, marginBottom: 8 }}>Plano atual</div>
             <div style={{ fontSize: '1.5rem', fontWeight: 900, marginBottom: 2 }}>{planConfig.name}</div>
             <div style={{ fontSize: '.76rem', color: 'rgba(255,255,255,.38)' }}>{planConfig.price === 0 ? 'Grátis' : `${formatPrice(planConfig.price)}/mês`}</div>
           </div>
-          <div style={{ background: 'rgba(255,255,255,.03)', border: '1px solid rgba(255,255,255,.08)', borderRadius: 16, padding: '20px', backdropFilter: 'blur(10px)' }}>
+          <div
+            onMouseEnter={() => setHoveredCard('searches')}
+            onMouseLeave={() => setHoveredCard(null)}
+            style={{ background: 'rgba(255,255,255,.03)', border: `1px solid ${hoveredCard === 'searches' ? 'rgba(248,182,200,.35)' : 'rgba(255,255,255,.08)'}`, borderRadius: 16, padding: '20px', backdropFilter: 'blur(10px)', transform: hoveredCard === 'searches' ? 'translateY(-5px)' : 'none', boxShadow: hoveredCard === 'searches' ? '0 16px 40px rgba(0,0,0,.35)' : 'none', transition: 'all .3s cubic-bezier(.34,1.56,.64,1)', cursor: 'default' }}>
             <div style={{ fontSize: '.68rem', fontWeight: 700, color: '#f8b6c8', textTransform: 'uppercase' as const, letterSpacing: 1, marginBottom: 8 }}>Buscas hoje</div>
             <div style={{ fontSize: '1.5rem', fontWeight: 900, marginBottom: 2 }}>{remaining === null ? '∞' : remaining}</div>
             <div style={{ fontSize: '.76rem', color: 'rgba(255,255,255,.38)' }}>{remaining === null ? 'Ilimitadas' : `de ${planConfig.searchesPerDay} disponível${planConfig.searchesPerDay === 1 ? '' : 'is'}`}</div>
           </div>
           {plan !== 'enterprise' && (
-            <div style={{ background: 'rgba(255,255,255,.03)', border: '1px solid rgba(255,255,255,.08)', borderRadius: 16, padding: '20px', backdropFilter: 'blur(10px)', display: 'flex', flexDirection: 'column' as const, gap: 10 }}>
+            <div
+              onMouseEnter={() => setHoveredCard('upgrade')}
+              onMouseLeave={() => setHoveredCard(null)}
+              style={{ background: 'rgba(255,255,255,.03)', border: `1px solid ${hoveredCard === 'upgrade' ? 'rgba(248,182,200,.35)' : 'rgba(255,255,255,.08)'}`, borderRadius: 16, padding: '20px', backdropFilter: 'blur(10px)', display: 'flex', flexDirection: 'column' as const, gap: 10, transform: hoveredCard === 'upgrade' ? 'translateY(-5px)' : 'none', boxShadow: hoveredCard === 'upgrade' ? '0 16px 40px rgba(0,0,0,.35)' : 'none', transition: 'all .3s cubic-bezier(.34,1.56,.64,1)' }}>
               <div style={{ fontSize: '.68rem', fontWeight: 700, color: '#f8b6c8', textTransform: 'uppercase' as const, letterSpacing: 1 }}>Upgrade</div>
               <div style={{ fontSize: '.8rem', color: 'rgba(255,255,255,.42)', flex: 1 }}>Mais buscas, Excel e recursos avançados.</div>
               <Link href="/#precos" style={{ background: 'linear-gradient(135deg,#e879a0,#c2185b)', color: '#fff', borderRadius: 8, padding: '8px 14px', fontSize: '.78rem', fontWeight: 700, textDecoration: 'none', textAlign: 'center' as const }}>Ver planos →</Link>

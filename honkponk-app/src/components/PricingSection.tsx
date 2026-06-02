@@ -37,9 +37,9 @@ export function PricingSection({ onGetStarted }: { onGetStarted?: () => void }) 
                   borderRadius: 20,
                   padding: 28,
                   position: 'relative',
-                  boxShadow: featured ? '0 24px 60px rgba(232,121,160,.25)' : isHovered ? '0 16px 40px rgba(0,0,0,.4)' : 'none',
-                  transform: featured ? 'scale(1.04)' : isHovered ? 'translateY(-6px)' : 'none',
-                  transition: 'all .3s cubic-bezier(.34,1.56,.64,1)',
+                  boxShadow: featured ? '0 24px 60px rgba(232,121,160,.28)' : isHovered ? '0 20px 50px rgba(0,0,0,.5), 0 0 0 1px rgba(248,182,200,.15)' : 'none',
+                  transform: featured ? (isHovered ? 'scale(1.06) translateY(-4px)' : 'scale(1.04)') : isHovered ? 'translateY(-8px)' : 'none',
+                  transition: 'all .35s cubic-bezier(.34,1.56,.64,1)',
                   animationDelay: `${i * 0.1}s`,
                 }}>
                 {featured && (
