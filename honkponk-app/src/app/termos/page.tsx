@@ -6,7 +6,7 @@ export default function TermosPage() {
     <div style={{ minHeight: '100vh', background: '#0f0f1a', color: '#fff' }}>
       <nav style={{ padding: '16px 24px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', background: 'rgba(15,15,26,0.8)', backdropFilter: 'blur(20px)', borderBottom: '1px solid rgba(248,182,200,0.18)' }}>
         <Link href="/" style={{ display: 'flex', alignItems: 'center', gap: 10, textDecoration: 'none' }}>
-          <Image src="https://site-oficial-br-y.github.io/Honkponk/logo.png" alt="Honk Ponk" width={32} height={32} style={{ objectFit: 'contain', borderRadius: 6 }} />
+          <Image src="/logo.svg" alt="Honk Ponk" width={32} height={32} style={{ objectFit: 'contain', borderRadius: 6 }} />
           <span style={{ fontSize: '1.2rem', fontWeight: 800, color: '#fff' }}>Honk <em style={{ color: '#e879a0', fontStyle: 'normal' }}>Ponk</em></span>
         </Link>
         <Link href="/" style={{ color: 'rgba(255,255,255,.6)', textDecoration: 'none', fontSize: '.875rem' }}>← Voltar</Link>

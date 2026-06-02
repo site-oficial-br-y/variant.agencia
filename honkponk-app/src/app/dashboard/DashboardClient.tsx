@@ -64,7 +64,7 @@ export function DashboardClient({ user, profile, teamMembers }: { user: User; pr
       {/* Nav */}
       <nav style={{ padding: '14px 24px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', background: 'rgba(15,15,26,0.85)', backdropFilter: 'blur(24px)', borderBottom: '1px solid rgba(248,182,200,0.12)', position: 'sticky', top: 0, zIndex: 50 }}>
         <Link href="/" style={{ display: 'flex', alignItems: 'center', gap: 10, textDecoration: 'none' }}>
-          <Image src="https://site-oficial-br-y.github.io/Honkponk/logo.png" alt="Honk Ponk" width={28} height={28} style={{ objectFit: 'contain', borderRadius: 6 }} />
+          <Image src="/logo.svg" alt="Honk Ponk" width={28} height={28} style={{ objectFit: 'contain', borderRadius: 6 }} />
           <span style={{ fontSize: '1.05rem', fontWeight: 800, color: '#fff' }}>Honk <em style={{ color: '#e879a0', fontStyle: 'normal' }}>Ponk</em></span>
         </Link>
         <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>

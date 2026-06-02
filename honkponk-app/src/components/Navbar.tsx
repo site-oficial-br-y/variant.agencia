@@ -28,7 +28,7 @@ export function Navbar({ onOpenQuiz }: NavbarProps) {
   return (
     <nav style={{ position: 'fixed', top: 0, left: 0, right: 0, zIndex: 1000, padding: '14px 24px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', background: scrolled ? 'rgba(15,15,26,0.92)' : 'rgba(15,15,26,0.7)', backdropFilter: 'blur(20px)', borderBottom: scrolled ? '1px solid rgba(248,182,200,0.12)' : '1px solid transparent', transition: 'all .3s' }}>
       <Link href="/" style={{ display: 'flex', alignItems: 'center', gap: 10, textDecoration: 'none' }}>
-        <Image src="https://site-oficial-br-y.github.io/Honkponk/logo.png" alt="Honk Ponk" width={32} height={32} style={{ objectFit: 'contain', borderRadius: 6 }} />
+        <Image src="/logo.svg" alt="Honk Ponk" width={32} height={32} style={{ objectFit: 'contain', borderRadius: 6 }} />
         <span style={{ fontSize: '1.2rem', fontWeight: 800, color: '#fff', letterSpacing: '-.5px' }}>
           Honk <em style={{ color: '#e879a0', fontStyle: 'normal' }}>Ponk</em>
         </span>
