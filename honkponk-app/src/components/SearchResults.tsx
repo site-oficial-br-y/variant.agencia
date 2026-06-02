@@ -184,13 +184,17 @@ export function SearchResults({ params, userId, plan = 'free', onLimitReached }:
                   {place.isOpen === true && <span style={{ fontSize: '.7rem', background: 'rgba(74,222,128,.1)', color: '#4ade80', borderRadius: 6, padding: '2px 8px' }}>Aberto</span>}
                 </div>
               </div>
-              <div style={{ display: 'flex', gap: 8, flexShrink: 0 }}>
+              <div style={{ display: 'flex', gap: 8, flexShrink: 0, flexWrap: 'wrap' }}>
                 {place.phone && (
                   <a href={`https://wa.me/55${place.phone.replace(/\D/g,'')}?text=${generateWaMsg(place, params.service)}`} target="_blank" rel="noopener noreferrer"
                     style={{ background: 'rgba(37,211,102,.15)', color: '#25d366', border: '1px solid rgba(37,211,102,.25)', borderRadius: 10, padding: '8px 14px', fontSize: '.78rem', fontWeight: 700, textDecoration: 'none', whiteSpace: 'nowrap' }}>
                     WhatsApp
                   </a>
                 )}
+                <a href={`https://www.instagram.com/search?q=${encodeURIComponent(place.name)}`} target="_blank" rel="noopener noreferrer"
+                  style={{ background: 'rgba(225,48,108,.15)', color: '#e1306c', border: '1px solid rgba(225,48,108,.25)', borderRadius: 10, padding: '8px 14px', fontSize: '.78rem', fontWeight: 700, textDecoration: 'none', whiteSpace: 'nowrap' }}>
+                  Instagram
+                </a>
                 {place.website && (
                   <a href={place.website} target="_blank" rel="noopener noreferrer"
                     style={{ background: 'rgba(255,255,255,.06)', color: 'rgba(255,255,255,.6)', border: '1px solid rgba(255,255,255,.1)', borderRadius: 10, padding: '8px 14px', fontSize: '.78rem', fontWeight: 600, textDecoration: 'none' }}>
