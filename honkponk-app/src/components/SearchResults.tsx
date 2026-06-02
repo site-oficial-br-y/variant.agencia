@@ -191,7 +191,7 @@ export function SearchResults({ params, userId, plan = 'free', onLimitReached }:
                     WhatsApp
                   </a>
                 )}
-                <a href={`https://www.instagram.com/search?q=${encodeURIComponent(place.name)}`} target="_blank" rel="noopener noreferrer"
+                <a href={`https://www.google.com/search?q=${encodeURIComponent(place.name + ' instagram')}`} target="_blank" rel="noopener noreferrer"
                   style={{ background: 'rgba(225,48,108,.15)', color: '#e1306c', border: '1px solid rgba(225,48,108,.25)', borderRadius: 10, padding: '8px 14px', fontSize: '.78rem', fontWeight: 700, textDecoration: 'none', whiteSpace: 'nowrap' }}>
                   Instagram
                 </a>
