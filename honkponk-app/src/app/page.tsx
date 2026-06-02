@@ -33,6 +33,15 @@ export default function HomePage() {
     })
   }, [supabase])
 
+  useEffect(() => {
+    const obs = new IntersectionObserver(
+      entries => entries.forEach(e => { if (e.isIntersecting) { e.target.classList.add('visible'); obs.unobserve(e.target) } }),
+      { threshold: 0.08 }
+    )
+    document.querySelectorAll('.reveal').forEach(el => obs.observe(el))
+    return () => obs.disconnect()
+  }, [])
+
   function handleSearch(data: QuizData) {
     if (!userId) { window.location.href = '/signup'; return }
     setQuizOpen(false)
@@ -282,10 +291,6 @@ export default function HomePage() {
         .reveal.visible { opacity: 1; transform: translateY(0); }
       `}</style>
 
-      <script dangerouslySetInnerHTML={{ __html: `
-        const obs = new IntersectionObserver(entries => entries.forEach(e => { if(e.isIntersecting) { e.target.classList.add('visible'); obs.unobserve(e.target) } }), { threshold: 0.1 });
-        document.querySelectorAll('.reveal').forEach(el => obs.observe(el));
-      `}} />
     </>
   )
 }
