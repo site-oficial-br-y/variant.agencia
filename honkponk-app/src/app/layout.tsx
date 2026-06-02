@@ -8,7 +8,7 @@ const inter = Inter({ subsets: ['latin'] })
 export const metadata: Metadata = {
   title: 'Honk Ponk — Prospecção B2B Inteligente',
   description: 'Encontre clientes antes da concorrência. Honk Ponk rastreia negócios por região e filtra leads que realmente precisam do seu serviço.',
-  icons: { icon: '/logo.svg' },
+  icons: { icon: '/logo.png' },
   verification: { google: 'google-site-verification-code' },
 }
 

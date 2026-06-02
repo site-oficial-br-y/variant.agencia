@@ -12,7 +12,7 @@ function ConfirmarContent() {
     <div style={{ minHeight: '100vh', background: '#0f0f1a', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 24 }}>
       <div style={{ width: '100%', maxWidth: 420, textAlign: 'center' }}>
         <Link href="/" style={{ display: 'inline-flex', alignItems: 'center', gap: 10, textDecoration: 'none', marginBottom: 40 }}>
-          <Image src="/logo.svg" alt="Honk Ponk" width={36} height={36} style={{ objectFit: 'contain', borderRadius: 6 }} />
+          <Image src="/logo.png" alt="Honk Ponk" width={36} height={36} style={{ objectFit: 'contain', borderRadius: 6 }} />
           <span style={{ fontSize: '1.3rem', fontWeight: 800, color: '#fff' }}>Honk <em style={{ color: '#e879a0', fontStyle: 'normal' }}>Ponk</em></span>
         </Link>
         <div style={{ fontSize: '3rem', marginBottom: 20 }}>📧</div>
