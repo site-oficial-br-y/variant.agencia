@@ -1,9 +1,10 @@
 'use client'
+import { Suspense } from 'react'
 import { useSearchParams } from 'next/navigation'
 import Link from 'next/link'
 import Image from 'next/image'
 
-export default function ConfirmarPage() {
+function ConfirmarContent() {
   const params = useSearchParams()
   const email = params.get('email') || 'seu e-mail'
 
@@ -28,5 +29,13 @@ export default function ConfirmarPage() {
         </Link>
       </div>
     </div>
+  )
+}
+
+export default function ConfirmarPage() {
+  return (
+    <Suspense fallback={<div style={{ minHeight: '100vh', background: '#0f0f1a' }} />}>
+      <ConfirmarContent />
+    </Suspense>
   )
 }

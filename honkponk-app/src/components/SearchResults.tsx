@@ -5,29 +5,21 @@ import type { PlaceResult } from '@/lib/search'
 
 interface SearchParams { service: string; city: string; segment: string; allBrazil: boolean }
 
-const GOOGLE_KEY = process.env.NEXT_PUBLIC_GOOGLE_PLACES_KEY || ''
-
 async function geocodeCity(city: string): Promise<{ lat: number; lng: number }> {
-  const res = await fetch(
-    `https://maps.googleapis.com/maps/api/geocode/json?address=${encodeURIComponent(city + ', Brasil')}&key=${GOOGLE_KEY}`
-  )
+  const res = await fetch(`/api/places?action=geocode&address=${encodeURIComponent(city + ', Brasil')}`)
   const data = await res.json()
   if (data.results?.[0]) return data.results[0].geometry.location
   return { lat: -15.8, lng: -47.9 }
 }
 
 async function fetchPlaces(query: string, lat: number, lng: number, radius: number): Promise<any[]> {
-  const res = await fetch(
-    `https://maps.googleapis.com/maps/api/place/nearbysearch/json?location=${lat},${lng}&radius=${radius}&keyword=${encodeURIComponent(query)}&key=${GOOGLE_KEY}&language=pt-BR`
-  )
+  const res = await fetch(`/api/places?action=nearby&location=${lat},${lng}&radius=${radius}&keyword=${encodeURIComponent(query)}`)
   const data = await res.json()
   return data.results || []
 }
 
 async function fetchDetails(placeId: string): Promise<{ website?: string; phone?: string }> {
-  const res = await fetch(
-    `https://maps.googleapis.com/maps/api/place/details/json?place_id=${placeId}&fields=website,formatted_phone_number&key=${GOOGLE_KEY}`
-  )
+  const res = await fetch(`/api/places?action=details&place_id=${encodeURIComponent(placeId)}`)
   const data = await res.json()
   return { website: data.result?.website, phone: data.result?.formatted_phone_number }
 }
