@@ -105,10 +105,17 @@ export function SearchResults({ params, userId, plan = 'free', onLimitReached }:
         isOpen: p.opening_hours?.open_now ?? null,
       }))
 
-      // Apply service filter, then cap to plan limit
+      // Apply service filter
       const filtered = meta.filterFn ? detailed.filter(p => meta.filterFn({ website: p.website || undefined })) : detailed
       const limit = maxResults === null ? filtered.length : maxResults
-      setResults(filtered.slice(0, limit))
+
+      // If filtered results fall short of the limit, pad with unfiltered ones
+      let final = filtered.slice(0, limit)
+      if (final.length < limit) {
+        const extra = detailed.filter(p => !final.includes(p)).slice(0, limit - final.length)
+        final = [...final, ...extra]
+      }
+      setResults(final)
 
       // Increment counter server-side
       if (userId) {

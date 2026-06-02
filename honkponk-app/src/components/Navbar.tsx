@@ -3,6 +3,7 @@ import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import Image from 'next/image'
 import { createClient } from '@/lib/supabase/client'
+import { TransitionLink } from './TransitionLink'
 
 interface NavbarProps {
   onOpenQuiz?: () => void
@@ -50,9 +51,9 @@ export function Navbar({ onOpenQuiz }: NavbarProps) {
             <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M19.59 6.69a4.83 4.83 0 01-3.77-4.25V2h-3.45v13.67a2.89 2.89 0 01-2.88 2.5 2.89 2.89 0 01-2.89-2.89 2.89 2.89 0 012.89-2.89c.28 0 .54.04.79.1V9.01a6.33 6.33 0 00-.79-.05 6.34 6.34 0 00-6.34 6.34 6.34 6.34 0 006.34 6.34 6.34 6.34 0 006.33-6.34V8.69a8.18 8.18 0 004.78 1.52V6.76a4.85 4.85 0 01-1.01-.07z"/></svg>
           </a>
           {isLoggedIn ? (
-            <Link href="/dashboard" style={{ background: 'rgba(248,182,200,.1)', color: '#f8b6c8', border: '1px solid rgba(248,182,200,.25)', borderRadius: 10, padding: '7px 14px', fontSize: '.82rem', fontWeight: 600, textDecoration: 'none', whiteSpace: 'nowrap' }}>
+            <TransitionLink href="/dashboard" style={{ background: 'rgba(248,182,200,.1)', color: '#f8b6c8', border: '1px solid rgba(248,182,200,.25)', borderRadius: 10, padding: '7px 14px', fontSize: '.82rem', fontWeight: 600, textDecoration: 'none', whiteSpace: 'nowrap' }}>
               Minha Conta
-            </Link>
+            </TransitionLink>
           ) : (
             <button onClick={onOpenQuiz} style={{ background: 'linear-gradient(135deg,#e879a0,#c2185b)', color: '#fff', border: 'none', borderRadius: 10, padding: '8px 16px', fontSize: '.82rem', fontWeight: 700, cursor: 'pointer', boxShadow: '0 4px 15px rgba(232,121,160,.35)', fontFamily: 'inherit', whiteSpace: 'nowrap' }}>
               Começar grátis →

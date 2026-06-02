@@ -48,7 +48,7 @@ export function DashboardClient({ user, profile, teamMembers }: { user: User; pr
   }
 
   return (
-    <div className="animate-pageIn" style={{ minHeight: '100vh', background: '#0f0f1a', color: '#fff', fontFamily: 'Inter, -apple-system, sans-serif', position: 'relative' }}>
+    <div className="animate-pageFadeIn" style={{ minHeight: '100vh', background: '#0f0f1a', color: '#fff', fontFamily: 'Inter, -apple-system, sans-serif', position: 'relative' }}>
 
       {/* Fundo quadriculado */}
       <div style={{
