@@ -82,6 +82,21 @@ export function DashboardClient({ user, profile, teamMembers }: { user: User; pr
 
       <div style={{ maxWidth: 960, margin: '0 auto', padding: '36px 20px', position: 'relative', zIndex: 1 }}>
 
+        {/* Social proof bar */}
+        <div className="animate-pageIn" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 20, marginBottom: 28, padding: '10px 20px', background: 'rgba(255,255,255,.025)', border: '1px solid rgba(255,255,255,.07)', borderRadius: 12, flexWrap: 'wrap', animationDelay: '0s' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 7, fontSize: '.75rem', color: 'rgba(255,255,255,.45)' }}>
+            <span style={{ color: '#e879a0', fontWeight: 700 }}>📍 12.847</span> leads encontrados essa semana
+          </div>
+          <div style={{ width: 1, height: 14, background: 'rgba(255,255,255,.1)' }} />
+          <div style={{ display: 'flex', alignItems: 'center', gap: 7, fontSize: '.75rem', color: 'rgba(255,255,255,.45)' }}>
+            <span style={{ color: '#4ade80', fontWeight: 700 }}>✓ 3.201</span> usuários ativos
+          </div>
+          <div style={{ width: 1, height: 14, background: 'rgba(255,255,255,.1)' }} />
+          <div style={{ display: 'flex', alignItems: 'center', gap: 7, fontSize: '.75rem', color: 'rgba(255,255,255,.45)' }}>
+            <span style={{ color: '#fbbf24', fontWeight: 700 }}>🔥 847</span> buscas nas últimas 24h
+          </div>
+        </div>
+
         {/* Saudação + botão */}
         <div className="animate-pageIn" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 14, marginBottom: 32, animationDelay: '.05s' }}>
           <div>
