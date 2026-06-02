@@ -20,10 +20,32 @@ async function fetchPlaces(query: string, lat: number, lng: number, radius: numb
   return data.results || []
 }
 
-async function fetchDetails(placeId: string): Promise<{ website?: string; phone?: string }> {
-  const res = await fetch(`/api/places?action=details&place_id=${encodeURIComponent(placeId)}`)
-  const data = await res.json()
-  return { website: data.result?.website, phone: data.result?.formatted_phone_number }
+const BRAZIL_CITIES = [
+  { lat: -23.55, lng: -46.63 }, // São Paulo
+  { lat: -22.91, lng: -43.17 }, // Rio de Janeiro
+  { lat: -19.92, lng: -43.94 }, // Belo Horizonte
+  { lat: -30.03, lng: -51.23 }, // Porto Alegre
+  { lat: -12.97, lng: -38.50 }, // Salvador
+  { lat: -3.72,  lng: -38.54 }, // Fortaleza
+  { lat: -8.05,  lng: -34.88 }, // Recife
+  { lat: -15.78, lng: -47.93 }, // Brasília
+  { lat: -1.46,  lng: -48.50 }, // Belém
+  { lat: -3.10,  lng: -60.02 }, // Manaus
+]
+
+async function fetchPlacesBrazil(query: string): Promise<any[]> {
+  const batches = await Promise.all(
+    BRAZIL_CITIES.map(c => fetchPlaces(query, c.lat, c.lng, 30000))
+  )
+  const seen = new Set<string>()
+  const merged: any[] = []
+  for (const batch of batches) {
+    for (const p of batch) {
+      const key = p.name + (p.vicinity || '')
+      if (!seen.has(key)) { seen.add(key); merged.push(p) }
+    }
+  }
+  return merged
 }
 
 function generateWaMsg(place: PlaceResult, service: string): string {
@@ -64,14 +86,14 @@ export function SearchResults({ params, userId, plan = 'free', onLimitReached }:
         lat = loc.lat; lng = loc.lng
       }
 
-      const radius = params.allBrazil ? 50000 : 20000
-      const raw = await fetchPlaces(segQuery, lat, lng, radius)
+      const raw = params.allBrazil
+        ? await fetchPlacesBrazil(segQuery)
+        : await fetchPlaces(segQuery, lat, lng, 20000)
 
       if (!raw.length) { setResults([]); setSearched(true); setLoading(false); return }
 
       // New API returns website/phone directly in nearby results
-      const limit = maxResults === null ? 20 : maxResults
-      const detailed: PlaceResult[] = raw.slice(0, limit).map((p: any) => ({
+      const detailed: PlaceResult[] = raw.map((p: any) => ({
         name: p.name,
         address: p.vicinity || '',
         rating: p.rating || 0,
@@ -81,9 +103,10 @@ export function SearchResults({ params, userId, plan = 'free', onLimitReached }:
         isOpen: p.opening_hours?.open_now ?? null,
       }))
 
-      // Apply service filter
+      // Apply service filter, then cap to plan limit
       const filtered = meta.filterFn ? detailed.filter(p => meta.filterFn({ website: p.website || undefined })) : detailed
-      setResults(filtered)
+      const limit = maxResults === null ? filtered.length : maxResults
+      setResults(filtered.slice(0, limit))
 
       // Increment counter server-side
       if (userId) {
