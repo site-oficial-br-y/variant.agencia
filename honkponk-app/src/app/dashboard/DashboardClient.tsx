@@ -75,7 +75,7 @@ export function DashboardClient({ user, profile, teamMembers }: { user: User; pr
             {planConfig.name}
           </span>
           <a href="/checkout/coins" style={{ background: 'rgba(232,121,160,.1)', border: '1px solid rgba(232,121,160,.2)', borderRadius: 8, padding: '4px 10px', fontSize: '.76rem', fontWeight: 700, color: '#f8b6c8', display: 'flex', alignItems: 'center', gap: 5, textDecoration: 'none', cursor: 'pointer' }}>
-            <img src="/honk-coin.png" alt="Honk Coin" style={{ width: 16, height: 16, objectFit: 'contain' }} /> {profile?.honk_coins ?? 0}
+            🪙 {profile?.honk_coins ?? 0}
           </a>
           <button onClick={handleLogout} disabled={loggingOut} style={{ background: 'rgba(255,255,255,.05)', color: 'rgba(255,255,255,.5)', border: '1px solid rgba(255,255,255,.08)', borderRadius: 8, padding: '6px 14px', fontSize: '.78rem', fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit', transition: 'all .2s' }}>
             {loggingOut ? 'Saindo...' : 'Sair'}
