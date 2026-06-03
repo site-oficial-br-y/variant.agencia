@@ -100,6 +100,15 @@ export default function CoinsCheckoutPage() {
 
         {error && <p style={{ color: '#fb923c', fontSize: '.85rem', textAlign: 'center', marginBottom: 16 }}>{error}</p>}
 
+        <div style={{ background: 'rgba(255,255,255,.04)', border: '1px solid rgba(248,182,200,.15)', borderRadius: 16, padding: '16px 20px', marginBottom: 24, display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 16, flexWrap: 'wrap' as const }}>
+          <p style={{ color: 'rgba(255,255,255,.55)', fontSize: '.85rem', margin: 0 }}>
+            💡 Prefere buscas ilimitadas? Assine o <strong style={{ color: '#f8b6c8' }}>Freelancer por R$29,99/mês</strong> e sai muito mais barato.
+          </p>
+          <Link href="/checkout/freelancer" style={{ background: 'rgba(232,121,160,.15)', color: '#f8b6c8', border: '1px solid rgba(232,121,160,.3)', borderRadius: 10, padding: '8px 16px', fontSize: '.82rem', fontWeight: 700, textDecoration: 'none', whiteSpace: 'nowrap' as const }}>
+            Ver planos →
+          </Link>
+        </div>
+
         <p style={{ textAlign: 'center', color: 'rgba(255,255,255,.4)', fontSize: '.875rem' }}>
           <Link href="/dashboard" style={{ color: '#f8b6c8', textDecoration: 'none' }}>← Voltar para o dashboard</Link>
         </p>
