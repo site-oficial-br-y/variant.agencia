@@ -60,7 +60,7 @@ export const PLANS: Record<Plan, PlanConfig> = {
     exportExcel: true,
     maxUsers: 5,
     dedicatedSupport: true,
-    features: ['Tudo do plano Agência','Até 5 usuários na equipe','Suporte dedicado por e-mail','Onboarding personalizado','Relatórios de uso da equipe'],
+    features: ['Tudo do plano Agência','Até 5 usuários na equipe','Suporte dedicado por e-mail','Relatórios de uso da equipe'],
   },
 }
 
