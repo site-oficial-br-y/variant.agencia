@@ -115,7 +115,9 @@ export function SearchResults({ params, userId, plan = 'free', onLimitReached }:
   const [progressDone, setProgressDone] = useState(0)
 
   const meta = SERVICE_META[params.service] || SERVICE_META.outros
-  const segQuery = SEGMENT_QUERIES[params.segment] || params.segment
+  const segQueries: string[] = Array.isArray(SEGMENT_QUERIES[params.segment])
+    ? SEGMENT_QUERIES[params.segment] as string[]
+    : [params.segment]
   const maxResults = PLANS[plan]?.maxResults ?? 5
   const canExport = PLANS[plan]?.exportExcel ?? false
   const displayCount = useCountUp(results.length, 900)
@@ -142,12 +144,23 @@ export function SearchResults({ params, userId, plan = 'free', onLimitReached }:
         lat = loc.lat; lng = loc.lng
       }
 
-      const raw = params.allBrazil
-        ? await fetchPlacesBrazil(segQuery, (city, done) => {
-            setProgressCity(city)
-            setProgressDone(done)
-          })
-        : await fetchPlacesCity(segQuery, lat, lng, maxResults)
+      const queries = maxResults === null ? segQueries : segQueries.slice(0, 1)
+      let raw: any[] = []
+      if (params.allBrazil) {
+        raw = await fetchPlacesBrazil(queries[0], (city, done) => {
+          setProgressCity(city)
+          setProgressDone(done)
+        })
+      } else {
+        const batches = await Promise.all(queries.map(q => fetchPlacesCity(q, lat, lng, maxResults)))
+        const seen = new Set<string>()
+        for (const batch of batches) {
+          for (const p of batch) {
+            const key = p.name + (p.vicinity || '')
+            if (!seen.has(key)) { seen.add(key); raw.push(p) }
+          }
+        }
+      }
 
       if (!raw.length) { setResults([]); setSearched(true); setLoading(false); return }
 
@@ -184,7 +197,7 @@ export function SearchResults({ params, userId, plan = 'free', onLimitReached }:
       setLoading(false)
       setSearched(true)
     }
-  }, [params, meta, segQuery, userId, onLimitReached])
+  }, [params, meta, segQueries, userId, onLimitReached])
 
   async function handleExport() {
     const { utils, writeFile } = await import('xlsx')
