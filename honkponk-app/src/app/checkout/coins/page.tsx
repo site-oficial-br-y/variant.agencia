@@ -52,7 +52,10 @@ export default function CoinsCheckoutPage() {
             <Image src="/logo.png" alt="Honk Ponk" width={40} height={40} style={{ objectFit: 'contain', borderRadius: 8 }} />
             <span style={{ fontSize: '1.4rem', fontWeight: 800, color: '#fff' }}>Honk <em style={{ color: '#e879a0', fontStyle: 'normal' }}>Ponk</em></span>
           </Link>
-          <h1 style={{ fontSize: '2rem', fontWeight: 800, letterSpacing: -1, marginBottom: 8 }}>🪙 Honk Coins</h1>
+          <h1 style={{ fontSize: '2rem', fontWeight: 800, letterSpacing: -1, marginBottom: 8, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10 }}>
+            <Image src="/honk-coin.png" alt="Honk Coins" width={32} height={32} style={{ objectFit: 'contain' }} />
+            Honk Coins
+          </h1>
           <p style={{ color: 'rgba(255,255,255,.45)', fontSize: '1rem' }}>Pague só quando precisar. Sem assinatura.</p>
         </div>
 
@@ -70,7 +73,9 @@ export default function CoinsCheckoutPage() {
               {pkg.featured && (
                 <div style={{ position: 'absolute', top: -12, left: '50%', transform: 'translateX(-50%)', background: 'linear-gradient(135deg,#e879a0,#c2185b)', color: '#fff', borderRadius: 100, padding: '4px 14px', fontSize: '.72rem', fontWeight: 700, whiteSpace: 'nowrap', boxShadow: '0 4px 12px rgba(232,121,160,.4)' }}>⭐ Mais popular</div>
               )}
-              <div style={{ fontSize: '2.5rem', marginBottom: 8 }}>🪙</div>
+              <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 8 }}>
+                <Image src="/honk-coin.png" alt="Honk Coin" width={56} height={56} style={{ objectFit: 'contain' }} />
+              </div>
               <div style={{ fontSize: '2rem', fontWeight: 900, color: '#e879a0', marginBottom: 4 }}>{pkg.coins}</div>
               <div style={{ fontSize: '.8rem', color: 'rgba(255,255,255,.5)', marginBottom: 16 }}>coins · {pkg.description}</div>
               <div style={{ fontSize: '1.4rem', fontWeight: 800, marginBottom: 20 }}>{pkg.price}</div>
