@@ -1,7 +1,7 @@
 'use client'
 import { useState } from 'react'
 import Link from 'next/link'
-import Image from 'next/image'
+
 import { PLANS, formatPrice } from '@/lib/plans'
 
 export function PricingSection({ onGetStarted }: { onGetStarted?: () => void }) {
@@ -82,10 +82,7 @@ export function PricingSection({ onGetStarted }: { onGetStarted?: () => void }) 
       <div style={{ marginTop: 72 }}>
         <div className="reveal" style={{ textAlign: 'center', marginBottom: 40 }}>
           <span style={{ display: 'inline-block', background: 'rgba(248,182,200,.1)', border: '1px solid rgba(248,182,200,.2)', borderRadius: 100, padding: '4px 14px', fontSize: '.75rem', fontWeight: 700, color: '#f8b6c8', marginBottom: 16, letterSpacing: '.5px', textTransform: 'uppercase' as const }}>Avulso</span>
-          <h2 style={{ fontSize: 'clamp(1.6rem,3.5vw,2.4rem)', fontWeight: 800, letterSpacing: -1, lineHeight: 1.15, marginBottom: 10, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 12 }}>
-            <Image src="/honk-coin.png" alt="Honk Coins" width={36} height={36} style={{ objectFit: 'contain' }} />
-            Honk Coins
-          </h2>
+          <h2 style={{ fontSize: 'clamp(1.6rem,3.5vw,2.4rem)', fontWeight: 800, letterSpacing: -1, lineHeight: 1.15, marginBottom: 10 }}>🪙 Honk Coins</h2>
           <p style={{ color: 'rgba(255,255,255,.45)', fontSize: '1rem' }}>Pague só quando precisar. Sem assinatura.</p>
         </div>
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(200px,1fr))', gap: 20, maxWidth: 760, margin: '0 auto' }}>
@@ -106,9 +103,7 @@ export function PricingSection({ onGetStarted }: { onGetStarted?: () => void }) 
               {pkg.featured && (
                 <div style={{ position: 'absolute', top: -12, left: '50%', transform: 'translateX(-50%)', background: 'linear-gradient(135deg,#e879a0,#c2185b)', color: '#fff', borderRadius: 100, padding: '4px 14px', fontSize: '.72rem', fontWeight: 700, whiteSpace: 'nowrap' }}>⭐ Mais popular</div>
               )}
-              <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 8 }}>
-                <Image src="/honk-coin.png" alt="Honk Coin" width={52} height={52} style={{ objectFit: 'contain' }} />
-              </div>
+              <div style={{ fontSize: '2rem', marginBottom: 8 }}>🪙</div>
               <div style={{ fontSize: '2rem', fontWeight: 900, color: '#e879a0', marginBottom: 4 }}>{pkg.coins}</div>
               <div style={{ fontSize: '.78rem', color: 'rgba(255,255,255,.45)', marginBottom: 12 }}>coins · {pkg.label}</div>
               <div style={{ fontSize: '1.35rem', fontWeight: 800, marginBottom: 20 }}>{pkg.price}</div>
