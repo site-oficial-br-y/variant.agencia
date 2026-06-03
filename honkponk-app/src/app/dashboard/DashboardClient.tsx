@@ -10,7 +10,7 @@ import type { User } from '@supabase/supabase-js'
 import { QuizOverlay } from '@/components/QuizOverlay'
 import { SearchResults } from '@/components/SearchResults'
 
-interface Profile { id: string; email: string; plan: Plan; searches_today: number; searches_reset_at: string; team_owner_id?: string | null }
+interface Profile { id: string; email: string; plan: Plan; searches_today: number; searches_reset_at: string; team_owner_id?: string | null; honk_coins?: number }
 interface TeamMember { id: string; owner_id: string; member_email: string; status: string }
 interface QuizData { service: string; city: string; segment: string; allBrazil: boolean }
 
@@ -73,6 +73,9 @@ export function DashboardClient({ user, profile, teamMembers }: { user: User; pr
         <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
           <span style={{ background: 'rgba(248,182,200,.1)', border: '1px solid rgba(248,182,200,.2)', borderRadius: 8, padding: '4px 12px', fontSize: '.76rem', fontWeight: 700, color: '#f8b6c8' }}>
             {planConfig.name}
+          </span>
+          <span style={{ background: 'rgba(232,121,160,.1)', border: '1px solid rgba(232,121,160,.2)', borderRadius: 8, padding: '4px 10px', fontSize: '.76rem', fontWeight: 700, color: '#f8b6c8', display: 'flex', alignItems: 'center', gap: 4 }}>
+            🪙 {profile?.honk_coins ?? 0}
           </span>
           <button onClick={handleLogout} disabled={loggingOut} style={{ background: 'rgba(255,255,255,.05)', color: 'rgba(255,255,255,.5)', border: '1px solid rgba(255,255,255,.08)', borderRadius: 8, padding: '6px 14px', fontSize: '.78rem', fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit', transition: 'all .2s' }}>
             {loggingOut ? 'Saindo...' : 'Sair'}

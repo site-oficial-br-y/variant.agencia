@@ -10,9 +10,9 @@ export async function POST(req: NextRequest) {
   const supabase = createClient()
   const { data: { user } } = await supabase.auth.getUser()
 
-  let profile: { id: string; plan: Plan; searches_today: number; searches_reset_at: string } | null = null
+  let profile: { id: string; plan: Plan; searches_today: number; searches_reset_at: string; honk_coins?: number } | null = null
   if (user) {
-    const { data } = await supabase.from('users_profiles').select('id,plan,searches_today,searches_reset_at').eq('id', user.id).single()
+    const { data } = await supabase.from('users_profiles').select('id,plan,searches_today,searches_reset_at,honk_coins').eq('id', user.id).single()
     profile = data
   }
 
@@ -21,7 +21,11 @@ export async function POST(req: NextRequest) {
   const todaySearches = new Date() > resetAt ? 0 : (profile?.searches_today ?? 0)
 
   if (!canSearch(plan, todaySearches)) {
-    return NextResponse.json({ error: 'Limite atingido' }, { status: 403 })
+    const coins = profile?.honk_coins || 0
+    if (coins <= 0) {
+      return NextResponse.json({ error: 'Limite atingido' }, { status: 403 })
+    }
+    // Has coins — allow the search; coin will be deducted in countOnly step
   }
 
   if (checkOnly) {
@@ -29,12 +33,18 @@ export async function POST(req: NextRequest) {
   }
 
   if (countOnly && user && profile) {
-    const newCount = todaySearches + 1
-    const tomorrow = new Date(); tomorrow.setDate(tomorrow.getDate() + 1); tomorrow.setHours(0, 0, 0, 0)
-    await supabase.from('users_profiles').update({
-      searches_today: newCount,
-      searches_reset_at: new Date() > resetAt ? tomorrow.toISOString() : profile.searches_reset_at
-    }).eq('id', user.id)
+    const overLimit = !canSearch(plan, todaySearches)
+    if (overLimit) {
+      const coins = profile?.honk_coins || 0
+      await supabase.from('users_profiles').update({ honk_coins: Math.max(0, coins - 1) }).eq('id', user.id)
+    } else {
+      const newCount = todaySearches + 1
+      const tomorrow = new Date(); tomorrow.setDate(tomorrow.getDate() + 1); tomorrow.setHours(0, 0, 0, 0)
+      await supabase.from('users_profiles').update({
+        searches_today: newCount,
+        searches_reset_at: new Date() > resetAt ? tomorrow.toISOString() : profile.searches_reset_at
+      }).eq('id', user.id)
+    }
     return NextResponse.json({ ok: true })
   }
 

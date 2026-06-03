@@ -13,8 +13,8 @@ export async function POST(request: NextRequest) {
     const url = new URL(request.url)
     const topic = url.searchParams.get('topic')
     const qId = url.searchParams.get('id')
-    const { type, data, action } = body
-    const isPayment = type === 'payment' || topic === 'payment' || action?.startsWith('payment')
+    const { type: bodyType, data, action } = body
+    const isPayment = bodyType === 'payment' || topic === 'payment' || action?.startsWith('payment')
     if (!isPayment) return NextResponse.json({ received: true })
     const paymentId = data?.id || qId
     if (!paymentId) return NextResponse.json({ received: true })
@@ -24,10 +24,24 @@ export async function POST(request: NextRequest) {
     const payment = await res.json()
     if (payment.status !== 'approved') return NextResponse.json({ received: true })
     const ref = payment.external_reference || ''
-    const [userId, plan] = ref.split('|')
-    if (!userId || !plan) return NextResponse.json({ received: true })
-    await supabase.from('users_profiles').update({ plan }).eq('id', userId)
-    await supabase.from('subscriptions').upsert({ user_id: userId, plan, mp_subscription_id: String(paymentId), status: 'active' }, { onConflict: 'user_id' })
+    const parts = ref.split('|')
+    const userId = parts[0]
+    const type = parts[1]
+    if (!userId || !type) return NextResponse.json({ received: true })
+
+    if (type === 'coins') {
+      const coins = parseInt(parts[2] || '0', 10)
+      if (coins > 0) {
+        const { data: profile } = await supabase.from('users_profiles').select('honk_coins').eq('id', userId).single()
+        const current = (profile as { honk_coins?: number } | null)?.honk_coins || 0
+        await supabase.from('users_profiles').update({ honk_coins: current + coins }).eq('id', userId)
+      }
+    } else {
+      // type is the plan name (old format: userId|plan)
+      const plan = type
+      await supabase.from('users_profiles').update({ plan }).eq('id', userId)
+      await supabase.from('subscriptions').upsert({ user_id: userId, plan, mp_subscription_id: String(paymentId), status: 'active' }, { onConflict: 'user_id' })
+    }
     return NextResponse.json({ received: true })
   } catch (err) {
     console.error('Webhook error:', err)

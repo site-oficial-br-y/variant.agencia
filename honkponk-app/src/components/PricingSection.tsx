@@ -76,6 +76,54 @@ export function PricingSection({ onGetStarted }: { onGetStarted?: () => void }) 
           })}
         </div>
       </div>
+
+      {/* Honk Coins Section */}
+      <div style={{ marginTop: 72 }}>
+        <div className="reveal" style={{ textAlign: 'center', marginBottom: 40 }}>
+          <span style={{ display: 'inline-block', background: 'rgba(248,182,200,.1)', border: '1px solid rgba(248,182,200,.2)', borderRadius: 100, padding: '4px 14px', fontSize: '.75rem', fontWeight: 700, color: '#f8b6c8', marginBottom: 16, letterSpacing: '.5px', textTransform: 'uppercase' as const }}>Avulso</span>
+          <h2 style={{ fontSize: 'clamp(1.6rem,3.5vw,2.4rem)', fontWeight: 800, letterSpacing: -1, lineHeight: 1.15, marginBottom: 10 }}>🪙 Honk Coins</h2>
+          <p style={{ color: 'rgba(255,255,255,.45)', fontSize: '1rem' }}>Pague só quando precisar. Sem assinatura.</p>
+        </div>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(200px,1fr))', gap: 20, maxWidth: 760, margin: '0 auto' }}>
+          {[
+            { id: 'coins_10', coins: 10, price: 'R$9,90', label: 'Ideal para testar' },
+            { id: 'coins_30', coins: 30, price: 'R$19,90', label: 'Mais popular', featured: true },
+            { id: 'coins_60', coins: 60, price: 'R$34,90', label: 'Melhor custo-benefício' },
+          ].map((pkg) => (
+            <div key={pkg.id} className="reveal" style={{
+              background: pkg.featured ? 'linear-gradient(135deg,rgba(232,121,160,.18),rgba(194,24,91,.12))' : 'rgba(255,255,255,.04)',
+              border: `1px solid ${pkg.featured ? '#e879a0' : 'rgba(248,182,200,0.15)'}`,
+              borderRadius: 20,
+              padding: 28,
+              textAlign: 'center' as const,
+              position: 'relative',
+              boxShadow: pkg.featured ? '0 24px 60px rgba(232,121,160,.22)' : 'none',
+            }}>
+              {pkg.featured && (
+                <div style={{ position: 'absolute', top: -12, left: '50%', transform: 'translateX(-50%)', background: 'linear-gradient(135deg,#e879a0,#c2185b)', color: '#fff', borderRadius: 100, padding: '4px 14px', fontSize: '.72rem', fontWeight: 700, whiteSpace: 'nowrap' }}>⭐ Mais popular</div>
+              )}
+              <div style={{ fontSize: '2rem', marginBottom: 8 }}>🪙</div>
+              <div style={{ fontSize: '2rem', fontWeight: 900, color: '#e879a0', marginBottom: 4 }}>{pkg.coins}</div>
+              <div style={{ fontSize: '.78rem', color: 'rgba(255,255,255,.45)', marginBottom: 12 }}>coins · {pkg.label}</div>
+              <div style={{ fontSize: '1.35rem', fontWeight: 800, marginBottom: 20 }}>{pkg.price}</div>
+              <Link href="/checkout/coins" style={{
+                display: 'block',
+                background: pkg.featured ? 'linear-gradient(135deg,#e879a0,#c2185b)' : 'rgba(232,121,160,.15)',
+                color: '#fff',
+                border: pkg.featured ? 'none' : '1px solid rgba(232,121,160,.3)',
+                borderRadius: 12,
+                padding: '12px 16px',
+                fontSize: '.88rem',
+                fontWeight: 700,
+                textDecoration: 'none',
+                boxShadow: pkg.featured ? '0 8px 30px rgba(232,121,160,.35)' : 'none',
+              }}>
+                Comprar coins →
+              </Link>
+            </div>
+          ))}
+        </div>
+      </div>
     </section>
   )
 }
