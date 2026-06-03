@@ -21,6 +21,24 @@ async function fetchPlaces(query: string, lat: number, lng: number, radius: numb
   return data.results || []
 }
 
+async function fetchPlacesCity(query: string, lat: number, lng: number, maxResults: number | null): Promise<any[]> {
+  if (maxResults !== null && maxResults <= 20) {
+    return fetchPlaces(query, lat, lng, 20000)
+  }
+  // For unlimited plans: search with multiple radii to get more results
+  const radii = [5000, 15000, 30000, 50000]
+  const batches = await Promise.all(radii.map(r => fetchPlaces(query, lat, lng, r)))
+  const seen = new Set<string>()
+  const merged: any[] = []
+  for (const batch of batches) {
+    for (const p of batch) {
+      const key = p.name + (p.vicinity || '')
+      if (!seen.has(key)) { seen.add(key); merged.push(p) }
+    }
+  }
+  return merged
+}
+
 const BRAZIL_CITIES = [
   { lat: -23.55, lng: -46.63, name: 'São Paulo' },
   { lat: -22.91, lng: -43.17, name: 'Rio de Janeiro' },
@@ -129,7 +147,7 @@ export function SearchResults({ params, userId, plan = 'free', onLimitReached }:
             setProgressCity(city)
             setProgressDone(done)
           })
-        : await fetchPlaces(segQuery, lat, lng, 20000)
+        : await fetchPlacesCity(segQuery, lat, lng, maxResults)
 
       if (!raw.length) { setResults([]); setSearched(true); setLoading(false); return }
 
