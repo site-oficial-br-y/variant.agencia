@@ -45,6 +45,8 @@ export async function POST(req: NextRequest) {
         searches_reset_at: new Date() > resetAt ? tomorrow.toISOString() : profile.searches_reset_at
       }).eq('id', user.id)
     }
+    const { segment, city, allBrazil } = body
+    await supabase.from('search_logs').insert({ user_id: user.id, email: user.email, segment, location: allBrazil ? 'Todo Brasil' : (city || '') })
     return NextResponse.json({ ok: true })
   }
 
