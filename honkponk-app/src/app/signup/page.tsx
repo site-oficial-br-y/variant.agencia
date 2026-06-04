@@ -19,14 +19,11 @@ export default function SignupPage() {
     if (!terms) { setError('Você precisa aceitar os Termos de Uso.'); return }
     setError('')
     setLoading(true)
-    const { error } = await supabase.auth.signUp({
-      email, password,
-      options: { emailRedirectTo: `${window.location.origin}/auth/callback` },
-    })
+    const { error } = await supabase.auth.signUp({ email, password })
     if (error) {
       setError(error.message)
     } else {
-      router.push('/signup/confirmar?email=' + encodeURIComponent(email))
+      router.push('/dashboard')
     }
     setLoading(false)
   }
