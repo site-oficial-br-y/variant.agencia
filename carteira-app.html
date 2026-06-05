@@ -529,10 +529,17 @@
     <!-- Faixa amarela -->
     <div class="doc-banner">DOCUMENTO DE IDENTIFICAÇÃO</div>
 
-    <div class="doc-body">
-      <div class="rg-wrapper">
+    <div class="doc-body" style="padding:0; background:#fff;">
+      <div class="rg-wrapper" style="padding:0; align-items:flex-start;">
 
-        <!-- CIN CARD -->
+        <!-- IMAGEM DO DOCUMENTO -->
+        <!-- Salve o screenshot do seu RG como "documento.jpg" na mesma pasta -->
+        <img src="documento.jpg" alt="Documento de Identidade"
+             style="width:100%; max-width:430px; display:block; object-fit:contain;"
+             onerror="this.style.display='none'; document.getElementById('doc-fallback').style.display='flex'"/>
+
+        <!-- Fallback: card CSS caso a imagem não seja encontrada -->
+        <div id="doc-fallback" style="display:none; width:100%;">
         <div class="cin-card">
           <div class="cin-top-stripe"></div>
           <div class="cin-diagonal"></div>
@@ -649,6 +656,7 @@
           <div class="cin-bottom-stripe"></div>
         </div>
 
+        </div><!-- /doc-fallback -->
       </div>
     </div>
 
