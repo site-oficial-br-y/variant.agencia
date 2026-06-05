@@ -815,6 +815,16 @@
     document.getElementById('screen-doc').classList.remove('active');
     document.getElementById('screen-carteira').classList.add('active');
   }
+  // Carrega foto salva ao abrir
+  window.addEventListener('DOMContentLoaded', function() {
+    const saved = localStorage.getItem('doc-foto');
+    if (saved) {
+      document.getElementById('doc-img').src = saved;
+      document.getElementById('doc-img').style.display = 'block';
+      document.getElementById('pick-wrap').style.display = 'none';
+    }
+  });
+
   function loadDoc(event) {
     const file = event.target.files[0];
     if (!file) return;
@@ -824,6 +834,7 @@
       img.src = e.target.result;
       img.style.display = 'block';
       document.getElementById('pick-wrap').style.display = 'none';
+      localStorage.setItem('doc-foto', e.target.result);
     };
     reader.readAsDataURL(file);
   }
