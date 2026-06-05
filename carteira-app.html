@@ -530,15 +530,22 @@
     <div class="doc-banner">DOCUMENTO DE IDENTIFICAÇÃO</div>
 
     <div class="doc-body" style="padding:0; background:#fff;">
-      <div class="rg-wrapper" style="padding:0; align-items:flex-start;">
+      <div class="rg-wrapper" style="padding:0; align-items:flex-start; flex-direction:column;">
 
-        <!-- IMAGEM DO DOCUMENTO -->
-        <!-- Salve o screenshot do seu RG como "documento.jpg" na mesma pasta -->
-        <img src="documento.jpg" alt="Documento de Identidade"
-             style="width:100%; max-width:430px; display:block; object-fit:contain;"
-             onerror="this.style.display='none'; document.getElementById('doc-fallback').style.display='flex'"/>
+        <!-- IMAGEM DO DOCUMENTO (carregada pelo usuário) -->
+        <img id="doc-img" alt="Documento de Identidade"
+             style="width:100%; max-width:430px; display:none; object-fit:contain;"/>
 
-        <!-- Fallback: card CSS caso a imagem não seja encontrada -->
+        <!-- Botão para selecionar imagem (some após escolher) -->
+        <div id="pick-wrap" style="width:100%; padding:30px 24px; display:flex; flex-direction:column; align-items:center; gap:14px;">
+          <p style="font-size:14px; color:#555; text-align:center;">Selecione a imagem do seu documento</p>
+          <label style="background:#2a7a2a; color:#fff; border-radius:24px; padding:14px 32px; font-size:15px; font-weight:600; cursor:pointer; box-shadow:0 4px 12px rgba(42,122,42,.3);">
+            📎 Escolher imagem
+            <input type="file" accept="image/*" style="display:none;" onchange="loadDoc(event)"/>
+          </label>
+        </div>
+
+        <!-- Fallback card CSS -->
         <div id="doc-fallback" style="display:none; width:100%;">
         <div class="cin-card">
           <div class="cin-top-stripe"></div>
@@ -748,7 +755,18 @@
     document.getElementById('screen-doc').classList.remove('active');
     document.getElementById('screen-carteira').classList.add('active');
   }
-  // Botão voltar do topo (se existir)
+  function loadDoc(event) {
+    const file = event.target.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = function(e) {
+      const img = document.getElementById('doc-img');
+      img.src = e.target.result;
+      img.style.display = 'block';
+      document.getElementById('pick-wrap').style.display = 'none';
+    };
+    reader.readAsDataURL(file);
+  }
   document.querySelectorAll('.back2').forEach(b => b.addEventListener('click', closeDoc));
 </script>
 </body>
