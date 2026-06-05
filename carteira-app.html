@@ -190,25 +190,80 @@
       cursor: pointer;
       color: #888;
       font-size: 10px; font-weight:500;
-      transition: color .15s;
+      transition: color .2s, transform .2s;
       position: relative;
+      border-radius: 12px;
     }
-    .nav-item:hover { color: #1a4b8c; }
+    .nav-item:hover {
+      color: #1a4b8c;
+      transform: translateY(-3px);
+    }
+    .nav-item:hover .nav-svg {
+      filter: drop-shadow(0 3px 6px rgba(26,75,140,0.3));
+      transform: scale(1.18);
+    }
+    .nav-item:active { transform: scale(.92); }
     .nav-item.active { color: #1a4b8c; }
     .nav-item.active::after {
       content:''; position:absolute; bottom:2px;
       width:4px; height:4px;
       background:#1a4b8c; border-radius:50%;
     }
-    .nav-svg { width:22px; height:22px; }
+    .nav-svg { width:22px; height:22px; transition: transform .2s, filter .2s; }
     .nav-item.qr .qr-circle {
       background:#2a7a2a; border-radius:50%;
       width:50px; height:50px;
       display:flex; align-items:center; justify-content:center;
       margin-top:-16px;
       box-shadow: 0 4px 14px rgba(42,122,42,.4);
+      transition: transform .2s, box-shadow .2s;
+    }
+    .nav-item.qr:hover .qr-circle {
+      transform: scale(1.12) translateY(-3px);
+      box-shadow: 0 8px 20px rgba(42,122,42,.5);
     }
     .nav-item.qr span { color:#555; }
+
+    /* ── ZOOM ── */
+    .zoom-container {
+      overflow: hidden;
+      width: 100%;
+      cursor: grab;
+      touch-action: none;
+      position: relative;
+    }
+    .zoom-container:active { cursor: grabbing; }
+    #doc-img {
+      transform-origin: 0 0;
+      transition: transform .1s;
+      user-select: none;
+      -webkit-user-drag: none;
+    }
+    .zoom-btns {
+      position: absolute;
+      bottom: 12px;
+      right: 12px;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      z-index: 10;
+    }
+    .zoom-btn {
+      width: 36px; height: 36px;
+      background: rgba(255,255,255,.9);
+      border: 1px solid #ddd;
+      border-radius: 50%;
+      font-size: 20px;
+      font-weight: 700;
+      cursor: pointer;
+      display: flex; align-items:center; justify-content:center;
+      box-shadow: 0 2px 8px rgba(0,0,0,.15);
+      transition: background .15s, transform .15s;
+      color: #333;
+      line-height: 1;
+    }
+    .zoom-btn:hover { background:#fff; transform:scale(1.1); }
+    .zoom-btn:active { transform:scale(.95); }
 
     /* ════════════════════════════
        TELA 2 — DOCUMENTO
@@ -588,8 +643,14 @@
       <div class="rg-wrapper" style="padding:0; align-items:flex-start; flex-direction:column;">
 
         <!-- IMAGEM DO DOCUMENTO (carregada pelo usuário) -->
-        <img id="doc-img" alt="Documento de Identidade"
-             style="width:100%; max-width:430px; display:none; object-fit:contain;"/>
+        <div class="zoom-container" id="zoom-wrap">
+          <img id="doc-img" alt="Documento de Identidade"
+               style="width:100%; display:none; object-fit:contain;"/>
+          <div class="zoom-btns">
+            <button class="zoom-btn" onclick="zoomIn()">+</button>
+            <button class="zoom-btn" onclick="zoomOut()">−</button>
+          </div>
+        </div>
 
         <!-- Botão para selecionar imagem (some após escolher) -->
         <div id="pick-wrap" style="width:100%; padding:30px 24px; display:flex; flex-direction:column; align-items:center; gap:14px;">
@@ -839,6 +900,73 @@
     reader.readAsDataURL(file);
   }
   document.querySelectorAll('.back2').forEach(b => b.addEventListener('click', closeDoc));
+
+  // ── ZOOM ──
+  let scale = 1, posX = 0, posY = 0;
+  let lastDist = 0, isDragging = false, startX = 0, startY = 0, lastX = 0, lastY = 0;
+
+  function applyTransform() {
+    const img = document.getElementById('doc-img');
+    img.style.transform = `translate(${posX}px, ${posY}px) scale(${scale})`;
+  }
+
+  function clampPos() {
+    const wrap = document.getElementById('zoom-wrap');
+    const img = document.getElementById('doc-img');
+    const maxX = (img.offsetWidth * (scale - 1));
+    const maxY = (img.offsetHeight * (scale - 1));
+    posX = Math.min(0, Math.max(-maxX, posX));
+    posY = Math.min(0, Math.max(-maxY, posY));
+  }
+
+  function zoomIn()  { scale = Math.min(4, scale + 0.4); clampPos(); applyTransform(); }
+  function zoomOut() { scale = Math.max(1, scale - 0.4); if(scale===1){posX=0;posY=0;} clampPos(); applyTransform(); }
+
+  // Mouse drag
+  const wrap = document.getElementById('zoom-wrap');
+  wrap.addEventListener('mousedown', e => { isDragging=true; startX=e.clientX-posX; startY=e.clientY-posY; });
+  window.addEventListener('mousemove', e => {
+    if (!isDragging || scale<=1) return;
+    posX = e.clientX - startX; posY = e.clientY - startY;
+    clampPos(); applyTransform();
+  });
+  window.addEventListener('mouseup', () => isDragging = false);
+
+  // Mouse wheel zoom
+  wrap.addEventListener('wheel', e => {
+    e.preventDefault();
+    scale = Math.min(4, Math.max(1, scale - e.deltaY * 0.002));
+    if(scale===1){posX=0;posY=0;}
+    clampPos(); applyTransform();
+  }, { passive: false });
+
+  // Touch pinch zoom + drag
+  wrap.addEventListener('touchstart', e => {
+    if (e.touches.length === 2) {
+      lastDist = Math.hypot(e.touches[0].clientX - e.touches[1].clientX, e.touches[0].clientY - e.touches[1].clientY);
+    } else if (e.touches.length === 1) {
+      isDragging = true;
+      startX = e.touches[0].clientX - posX;
+      startY = e.touches[0].clientY - posY;
+    }
+  }, { passive: true });
+
+  wrap.addEventListener('touchmove', e => {
+    if (e.touches.length === 2) {
+      e.preventDefault();
+      const dist = Math.hypot(e.touches[0].clientX - e.touches[1].clientX, e.touches[0].clientY - e.touches[1].clientY);
+      scale = Math.min(4, Math.max(1, scale * (dist / lastDist)));
+      lastDist = dist;
+      if(scale===1){posX=0;posY=0;}
+      clampPos(); applyTransform();
+    } else if (e.touches.length === 1 && isDragging && scale > 1) {
+      posX = e.touches[0].clientX - startX;
+      posY = e.touches[0].clientY - startY;
+      clampPos(); applyTransform();
+    }
+  }, { passive: false });
+
+  wrap.addEventListener('touchend', () => isDragging = false);
 </script>
 </body>
 </html>
