@@ -1,1863 +1,382 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Variant — Agência de Marketing</title>
-<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,500;0,700;0,900;1,400;1,700&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
-<style>
-:root {
-  --cream: #F2EDE4;
-  --black: #111010;
-  --black-2: #1A1917;
-  --gray: #7A7570;
-  --gray-light: #B8B2AA;
-  --gold: #C9A84C;
-  --white: #FAFAF8;
-  --serif: 'Playfair Display', Georgia, serif;
-  --sans: 'DM Sans', sans-serif;
-}
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"/>
+  <title>gov.carteira</title>
+  <style>
+    *, *::before, *::after { margin:0; padding:0; box-sizing:border-box; }
 
-*, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
-html { scroll-behavior: smooth; }
+    html, body {
+      height: 100%;
+      overflow: hidden;
+      background: #f0f2f5;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    }
 
-body {
-  background: var(--cream);
-  color: var(--black);
-  font-family: var(--sans);
-  font-weight: 300;
-  overflow-x: hidden;
-  cursor: none;
-}
+    .app {
+      width: 100%;
+      max-width: 430px;
+      height: 100dvh;
+      margin: 0 auto;
+      background: #fff;
+      display: flex;
+      flex-direction: column;
+      position: relative;
+      overflow: hidden;
+    }
 
-/* CURSOR */
-.cursor {
-  width: 10px; height: 10px;
-  background: var(--black);
-  border-radius: 50%;
-  position: fixed; z-index: 9999;
-  pointer-events: none;
-  transform: translate(-50%, -50%);
-  transition: transform .1s, width .3s, height .3s, background .3s;
-}
-.cursor-follower {
-  width: 36px; height: 36px;
-  border: 1px solid rgba(0,0,0,0.3);
-  border-radius: 50%;
-  position: fixed; z-index: 9998;
-  pointer-events: none;
-  transform: translate(-50%, -50%);
-  transition: transform .15s ease, width .3s, height .3s;
-}
-body:hover .cursor { opacity: 1; }
+    @media (min-width: 500px) {
+      body { display:flex; align-items:center; justify-content:center; min-height:100vh; }
+      .app { height: 820px; border-radius: 36px; box-shadow: 0 24px 70px rgba(0,0,0,0.3); }
+    }
 
-/* SCROLLBAR */
-::-webkit-scrollbar { width: 3px; }
-::-webkit-scrollbar-track { background: var(--cream); }
-::-webkit-scrollbar-thumb { background: var(--black); }
+    .screen { display:none; flex-direction:column; flex:1; overflow:hidden; }
+    .screen.active { display:flex; }
 
-/* NAV */
-nav {
-  position: fixed; top: 0; left: 0; right: 0; z-index: 100;
-  display: flex; align-items: center; justify-content: space-between;
-  padding: 0 6%; height: 72px;
-  background: rgba(242,237,228,0.92);
-  backdrop-filter: blur(20px);
-  border-bottom: 1px solid rgba(0,0,0,0.06);
-}
-.nav-logo {
-  display: flex; align-items: center; gap: 10px;
-  text-decoration: none;
-}
-.nav-logo-v {
-  font-family: var(--serif);
-  font-size: 1.6rem; font-weight: 700;
-  color: var(--black); line-height: 1;
-}
-.nav-logo-text {
-  display: flex; flex-direction: column;
-}
-.nav-logo-name {
-  font-family: var(--sans);
-  font-size: 0.75rem; font-weight: 500;
-  letter-spacing: 4px; color: var(--black);
-  text-transform: uppercase;
-}
-.nav-logo-sub {
-  font-family: var(--sans);
-  font-size: 0.6rem; font-weight: 300;
-  letter-spacing: 2px; color: var(--gray);
-  text-transform: uppercase;
-}
-.nav-links { display: flex; gap: 2.5rem; list-style: none; }
-.nav-links a {
-  color: var(--gray); text-decoration: none;
-  font-size: 0.78rem; font-weight: 400; letter-spacing: 1px;
-  transition: color .25s; position: relative;
-}
-.nav-links a::after {
-  content: ''; position: absolute; bottom: -3px; left: 0;
-  width: 0; height: 1px; background: var(--black);
-  transition: width .3s;
-}
-.nav-links a:hover { color: var(--black); }
-.nav-links a:hover::after { width: 100%; }
-.nav-cta {
-  display: flex; align-items: center; gap: 8px;
-  background: var(--black); color: var(--cream);
-  padding: 10px 22px; text-decoration: none;
-  font-size: 0.75rem; font-weight: 400; letter-spacing: 1.5px;
-  text-transform: uppercase; font-family: var(--sans);
-  transition: all .3s; border-radius: 50px;
-}
-.nav-cta:hover { background: var(--black-2); transform: translateY(-1px); }
-.hamburger { display: none; flex-direction: column; gap: 5px; cursor: pointer; background: none; border: none; padding: 4px; }
-.hamburger span { width: 22px; height: 1px; background: var(--black); display: block; transition: .3s; }
+    .loading-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(255,255,255,0.96);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 18px;
+      z-index: 999;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity .25s;
+    }
+    .loading-overlay.show { opacity: 1; pointer-events: all; }
+    .loading-spinner {
+      width: 52px; height: 52px;
+      border: 4px solid #e0e0e0;
+      border-top-color: #1a4b8c;
+      border-radius: 50%;
+      animation: spin .8s linear infinite;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    .loading-text { font-size: 14px; color: #444; font-weight: 500; letter-spacing: .3px; }
+    .loading-dots::after { content: ''; animation: dots 1.4s steps(4, end) infinite; }
+    @keyframes dots {
+      0%   { content: ''; }
+      25%  { content: '.'; }
+      50%  { content: '..'; }
+      75%  { content: '...'; }
+    }
 
-/* MOBILE NAV */
-.mobile-nav {
-  display: none; position: fixed; inset: 0; z-index: 99;
-  background: var(--black);
-  flex-direction: column; align-items: center; justify-content: center; gap: 2.5rem;
-}
-.mobile-nav.open { display: flex; }
-.mobile-nav a {
-  color: var(--cream); font-family: var(--serif);
-  font-size: 2.5rem; font-style: italic;
-  text-decoration: none; transition: color .2s;
-}
-.mobile-nav a:hover { color: var(--gold); }
-.mobile-close {
-  position: absolute; top: 24px; right: 6%;
-  font-size: 1.2rem; cursor: pointer; color: var(--gray);
-  background: none; border: none; font-family: var(--sans);
-  letter-spacing: 2px; text-transform: uppercase;
-}
+    .top-bar {
+      background: #1a4b8c; color: #fff;
+      display: flex; align-items: center;
+      padding: 14px 16px; gap: 10px; flex-shrink: 0;
+    }
+    .top-bar .back { background:none; border:none; color:#fff; font-size:26px; cursor:pointer; line-height:1; padding:0 4px; }
+    .top-bar h1 { flex:1; text-align:center; font-size:17px; font-weight:600; margin-right:30px; }
 
-/* HERO */
-.hero {
-  min-height: 100vh;
-  display: grid; grid-template-columns: 1fr 1fr;
-  align-items: center;
-  padding: 100px 6% 60px;
-  position: relative; overflow: hidden;
-  gap: 40px;
-}
-.hero-bg-shape {
-  position: absolute; top: -10%; right: -5%;
-  width: 55%; height: 110%;
-  background: var(--black);
-  border-radius: 60% 0 0 50% / 50% 0 0 50%;
-  z-index: 0;
-}
-.hero-left { position: relative; z-index: 1; }
-.hero-tag {
-  font-size: 0.68rem; letter-spacing: 4px; color: var(--gray);
-  text-transform: uppercase; margin-bottom: 24px;
-  opacity: 0; animation: fadeUp .8s .2s ease forwards;
-}
-.hero h1 {
-  font-family: var(--serif);
-  font-size: clamp(2.8rem, 5vw, 4.2rem);
-  font-weight: 700; line-height: 1.1;
-  margin-bottom: 24px;
-  opacity: 0; animation: fadeUp .8s .3s ease forwards;
-}
-.hero h1 em { font-style: italic; }
-.hero-desc {
-  font-size: 0.9rem; color: var(--gray); line-height: 1.8;
-  max-width: 380px; margin-bottom: 40px;
-  opacity: 0; animation: fadeUp .8s .4s ease forwards;
-}
-.hero-btns {
-  display: flex; gap: 14px; flex-wrap: wrap;
-  opacity: 0; animation: fadeUp .8s .5s ease forwards;
-}
-.btn-dark {
-  display: inline-flex; align-items: center; gap: 10px;
-  background: var(--black); color: var(--cream);
-  padding: 14px 28px; border-radius: 50px;
-  font-size: 0.78rem; font-weight: 400; letter-spacing: 1.5px;
-  text-transform: uppercase; text-decoration: none;
-  font-family: var(--sans); transition: all .3s;
-}
-.btn-dark:hover { transform: translateY(-2px); box-shadow: 0 12px 30px rgba(0,0,0,0.2); }
-.btn-dark svg { transition: transform .3s; }
-.btn-dark:hover svg { transform: translateX(4px); }
-.hero-social {
-  display: flex; align-items: center; gap: 12px;
-  margin-top: 50px;
-  opacity: 0; animation: fadeUp .8s .6s ease forwards;
-}
-.hero-avatars { display: flex; }
-.hero-avatars span {
-  width: 32px; height: 32px; border-radius: 50%;
-  background: var(--black-2); border: 2px solid var(--cream);
-  margin-left: -8px; display: flex; align-items: center; justify-content: center;
-  font-size: 0.65rem; color: var(--cream); font-weight: 500;
-}
-.hero-avatars span:first-child { margin-left: 0; }
-.hero-social-text { font-size: 0.78rem; color: var(--gray); }
-.hero-social-text strong { color: var(--black); font-weight: 500; }
+    .carteira-content {
+      flex: 1; padding: 22px 18px;
+      display: flex; flex-direction: column; align-items: center;
+      gap: 14px; overflow-y: auto;
+    }
 
-/* Hero right — mockup 3D */
-.hero-right {
-  position: relative; z-index: 1;
-  display: flex; align-items: center; justify-content: center;
-  opacity: 0; animation: fadeUp .8s .4s ease forwards;
-}
-.mockup-wrap {
-  position: relative;
-  width: 100%; max-width: 480px;
-  height: 340px;
-}
+    .doc-card {
+      width: 100%; border-radius: 16px; overflow: hidden;
+      box-shadow: 0 4px 18px rgba(0,0,0,0.13);
+      cursor: pointer; transition: transform .15s;
+    }
+    .doc-card:active { transform: scale(.97); }
+    .card-header {
+      background: linear-gradient(135deg, #5ecce8 0%, #4ab8d4 60%, #3aa0bc 100%);
+      padding: 20px 16px 38px; position: relative; min-height: 118px; overflow: hidden;
+    }
+    .card-header::before {
+      content:''; position:absolute; top:0; left:0;
+      border-style:solid; border-width:76px 76px 0 0;
+      border-color:#f0c020 transparent transparent transparent;
+    }
+    .id-badge {
+      position:absolute; top:10px; left:10px;
+      background:#1a4b8c; color:#fff;
+      font-size:11px; font-weight:700;
+      padding:2px 7px; border-radius:4px; z-index:2;
+    }
+    .card-title {
+      position:relative; z-index:2;
+      color:#1a3a6b; font-size:15px; font-weight:700;
+      margin-left:44px; margin-top:6px;
+    }
+    .brasao-mini {
+      position:absolute; right:10px; top:50%;
+      transform:translateY(-50%);
+      opacity:.22; width:88px; height:88px;
+    }
+    .card-footer { background:#fff; padding:13px 16px; font-size:14px; color:#333; font-weight:500; }
 
-/* --- Laptop --- */
-.mockup-laptop {
-  position: absolute;
-  left: 0; top: 0;
-  width: 74%;
-  background: linear-gradient(145deg, #2a2a2e, #1a1a1e);
-  border-radius: 12px 12px 0 0;
-  padding: 8px 8px 0;
-  box-shadow:
-    0 0 0 1px rgba(255,255,255,0.07),
-    0 30px 65px rgba(0,0,0,0.5),
-    inset 0 1px 0 rgba(255,255,255,0.08);
-  transform: perspective(900px) rotateY(-8deg) rotateX(4deg);
-  transform-origin: left center;
-}
-.mockup-camera-bar {
-  height: 8px;
-  display: flex; align-items: center; justify-content: center;
-  margin-bottom: 2px;
-}
-.mockup-camera-dot {
-  width: 5px; height: 5px;
-  border-radius: 50%;
-  background: #3a3a3e;
-  box-shadow: 0 0 0 1px rgba(255,255,255,0.04);
-}
-.mockup-screen {
-  background: var(--cream); border-radius: 4px;
-  overflow: hidden; aspect-ratio: 16/10;
-  display: flex; flex-direction: column;
-  position: relative;
-}
-.mockup-screen::after {
-  content: '';
-  position: absolute; inset: 0;
-  background: linear-gradient(130deg, rgba(255,255,255,0.07) 0%, transparent 45%);
-  pointer-events: none; z-index: 1; border-radius: 4px;
-}
-.mockup-nav-bar {
-  display: flex; align-items: center; padding: 6px 10px;
-  border-bottom: 1px solid rgba(0,0,0,0.07);
-  gap: 7px; background: rgba(0,0,0,0.015); flex-shrink: 0;
-}
-.mockup-dots { display: flex; gap: 4px; }
-.mockup-dots span { width: 6px; height: 6px; border-radius: 50%; }
-.mockup-url-bar {
-  flex: 1; background: rgba(0,0,0,0.055); border-radius: 4px;
-  height: 10px; display: flex; align-items: center; justify-content: center;
-  font-size: 0.28rem; color: var(--gray); letter-spacing: 0.5px;
-}
-.mockup-content { flex: 1; padding: 10px 14px; display: flex; flex-direction: column; gap: 5px; }
-.mockup-hero-text { font-family: var(--serif); font-size: 1.05rem; font-weight: 700; line-height: 1.15; }
-.mockup-hero-text em { font-style: italic; }
-.mockup-sub { font-size: 0.46rem; color: var(--gray); line-height: 1.5; max-width: 180px; }
-.mockup-btn {
-  display: inline-block; background: var(--black);
-  color: var(--cream); padding: 4px 12px; border-radius: 20px;
-  font-size: 0.42rem; letter-spacing: 1px; text-transform: uppercase;
-  width: fit-content;
-}
-.mockup-metrics {
-  display: flex; gap: 10px;
-  margin-top: auto; padding-top: 6px;
-  border-top: 1px solid rgba(0,0,0,0.07);
-}
-.mockup-metric { display: flex; flex-direction: column; }
-.mockup-metric-num {
-  font-family: var(--serif); font-size: 0.66rem;
-  font-weight: 700; color: var(--black); line-height: 1;
-}
-.mockup-metric-label { font-size: 0.28rem; color: var(--gray); }
-.mockup-base {
-  background: linear-gradient(180deg, #202024, #2a2a2e);
-  border-radius: 0 0 10px 10px; height: 20px;
-  display: flex; align-items: center; justify-content: center;
-  position: relative;
-}
-.mockup-base::before {
-  content: '';
-  position: absolute; top: 6px; left: 50%; transform: translateX(-50%);
-  width: 48px; height: 4px;
-  background: rgba(255,255,255,0.08); border-radius: 2px;
-}
-.mockup-base-line { display: none; }
+    .add-btn {
+      margin-top: auto; margin-bottom: 10px;
+      background: #2a7a2a; color: #fff; border: none;
+      border-radius: 28px; padding: 15px 46px;
+      font-size: 15px; font-weight:600; cursor: pointer;
+      box-shadow: 0 4px 14px rgba(42,122,42,.3); transition: background .2s;
+    }
+    .add-btn:active { background:#1e5e1e; }
 
-/* --- Phone --- */
-.mockup-phone {
-  position: absolute;
-  right: 0; bottom: 10px;
-  width: 28%;
-  background: linear-gradient(145deg, #1e1e22, #101012);
-  border-radius: 26px;
-  padding: 10px 5px 12px;
-  box-shadow:
-    0 0 0 1px rgba(255,255,255,0.07),
-    0 20px 50px rgba(0,0,0,0.55),
-    inset 0 1px 0 rgba(255,255,255,0.07);
-  transform: perspective(600px) rotateY(10deg) rotateX(-4deg);
-  transform-origin: right bottom;
-  z-index: 2;
-}
-.mockup-phone::before {
-  content: '';
-  position: absolute; left: -2px; top: 55px;
-  width: 2px; height: 12px;
-  background: rgba(255,255,255,0.1); border-radius: 1px 0 0 1px;
-  box-shadow: 0 18px 0 rgba(255,255,255,0.1);
-}
-.mockup-phone::after {
-  content: '';
-  position: absolute; right: -2px; top: 65px;
-  width: 2px; height: 18px;
-  background: rgba(255,255,255,0.1); border-radius: 0 1px 1px 0;
-}
-.mockup-phone-island {
-  width: 28px; height: 6px;
-  background: #000; border-radius: 3px;
-  margin: 0 auto 5px;
-}
-.mockup-phone-screen {
-  background: var(--cream); border-radius: 18px;
-  overflow: hidden; aspect-ratio: 9/18;
-  display: flex; flex-direction: column;
-  position: relative;
-}
-.mockup-phone-screen::after {
-  content: '';
-  position: absolute; inset: 0;
-  background: linear-gradient(140deg, rgba(255,255,255,0.07) 0%, transparent 40%);
-  pointer-events: none; z-index: 1;
-}
-.mockup-phone-statusbar {
-  display: flex; justify-content: space-between; align-items: center;
-  padding: 4px 8px 2px;
-  font-size: 0.24rem; color: var(--black); flex-shrink: 0;
-}
-.mockup-phone-content {
-  flex: 1; padding: 3px 8px 8px;
-  display: flex; flex-direction: column;
-}
-.mockup-phone-tag {
-  font-size: 0.22rem; letter-spacing: 2px; color: var(--gray);
-  text-transform: uppercase; margin-bottom: 3px;
-}
-.mockup-phone-title {
-  font-family: var(--serif);
-  font-size: 0.65rem; font-weight: 700; line-height: 1.15; margin-bottom: 3px;
-}
-.mockup-phone-title em { font-style: italic; }
-.mockup-phone-desc {
-  font-size: 0.25rem; color: var(--gray); line-height: 1.5; margin-bottom: 5px;
-}
-.mockup-phone-stats { display: flex; gap: 4px; margin-bottom: 5px; }
-.mockup-phone-stat {
-  flex: 1; background: rgba(0,0,0,0.04);
-  border-radius: 5px; padding: 3px 4px; text-align: center;
-}
-.mockup-phone-stat span {
-  display: block; font-family: var(--serif);
-  font-size: 0.48rem; font-weight: 700; color: var(--black); line-height: 1;
-}
-.mockup-phone-stat p { font-size: 0.2rem; color: var(--gray); margin: 0; }
-.mockup-phone-cta {
-  background: var(--black); color: var(--cream);
-  border-radius: 20px; padding: 4px 6px;
-  font-size: 0.24rem; text-align: center;
-  margin-top: auto; letter-spacing: 0.5px;
-}
+    .bottom-nav {
+      display: flex; background: #fff;
+      border-top: 1px solid #e2e2e2; flex-shrink: 0;
+      padding-bottom: env(safe-area-inset-bottom);
+    }
+    .nav-item {
+      flex: 1; display: flex; flex-direction:column; align-items:center;
+      padding: 9px 4px 7px; gap: 3px; cursor: pointer;
+      color: #888; font-size: 10px; font-weight:500;
+      transition: color .2s, transform .2s;
+      position: relative; border-radius: 12px;
+    }
+    .nav-item:hover { color: #1a4b8c; transform: translateY(-3px); }
+    .nav-item:hover .nav-svg { filter: drop-shadow(0 3px 6px rgba(26,75,140,0.3)); transform: scale(1.18); }
+    .nav-item:active { transform: scale(.92); }
+    .nav-item.active { color: #1a4b8c; }
+    .nav-item.active::after {
+      content:''; position:absolute; bottom:2px;
+      width:4px; height:4px; background:#1a4b8c; border-radius:50%;
+    }
+    .nav-svg { width:22px; height:22px; transition: transform .2s, filter .2s; }
+    .nav-item.qr .qr-circle {
+      background:#2a7a2a; border-radius:50%;
+      width:50px; height:50px;
+      display:flex; align-items:center; justify-content:center;
+      margin-top:-16px; box-shadow: 0 4px 14px rgba(42,122,42,.4);
+      transition: transform .2s, box-shadow .2s;
+    }
+    .nav-item.qr:hover .qr-circle { transform: scale(1.12) translateY(-3px); box-shadow: 0 8px 20px rgba(42,122,42,.5); }
+    .nav-item.qr span { color:#555; }
 
-/* Badge flutuante */
-.hero-badge {
-  position: absolute; bottom: -14px; left: 8px;
-  background: var(--black); color: var(--cream);
-  padding: 12px 18px; border-radius: 12px;
-  font-size: 0.72rem; line-height: 1.5;
-  box-shadow: 0 20px 40px rgba(0,0,0,0.2);
-  animation: float 3s ease-in-out infinite;
-}
-.hero-badge strong { display: block; font-weight: 500; }
-.hero-badge span { color: var(--gray-light); font-size: 0.65rem; }
+    .zoom-container { overflow: hidden; width: 100%; cursor: grab; touch-action: none; position: relative; }
+    .zoom-container:active { cursor: grabbing; }
+    #doc-img { transform-origin: 0 0; transition: transform .1s; user-select: none; -webkit-user-drag: none; }
+    .zoom-btns { position: absolute; bottom: 12px; right: 12px; display: flex; flex-direction: column; gap: 6px; z-index: 10; }
+    .zoom-btn {
+      width: 36px; height: 36px; background: rgba(255,255,255,.9);
+      border: 1px solid #ddd; border-radius: 50%; font-size: 20px; font-weight: 700;
+      cursor: pointer; display: flex; align-items:center; justify-content:center;
+      box-shadow: 0 2px 8px rgba(0,0,0,.15); transition: background .15s, transform .15s;
+      color: #333; line-height: 1;
+    }
+    .zoom-btn:hover { background:#fff; transform:scale(1.1); }
+    .zoom-btn:active { transform:scale(.95); }
 
-@keyframes float { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-8px)} }
-@keyframes fadeUp { from{opacity:0;transform:translateY(24px)} to{opacity:1;transform:translateY(0)} }
+    #screen-doc { background: #fff; }
+    .doc-body { flex: 1; display: flex; flex-direction: column; align-items: center; overflow-y: auto; padding: 0; }
+    .rg-wrapper { flex: 1; width: 100%; display: flex; align-items: center; justify-content: center; padding: 12px; }
 
-/* SECTION BASE */
-section { position: relative; }
-.section-tag {
-  font-size: 0.65rem; letter-spacing: 4px; color: var(--gray);
-  text-transform: uppercase; margin-bottom: 16px; display: block;
-}
-.section-title {
-  font-family: var(--serif);
-  font-size: clamp(2rem, 4vw, 3.2rem);
-  font-weight: 700; line-height: 1.1;
-}
-.section-title em { font-style: italic; }
-
-/* SOBRE */
-#sobre {
-  padding: 120px 6%;
-  background: var(--black);
-  color: var(--cream);
-}
-#sobre .section-tag { color: var(--gray-light); }
-.sobre-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 80px; align-items: center; }
-.sobre-left .section-title { color: var(--cream); margin-bottom: 28px; }
-.sobre-desc { font-size: 0.9rem; color: var(--gray-light); line-height: 1.9; margin-bottom: 40px; }
-.sobre-stats { display: flex; gap: 40px; flex-wrap: wrap; }
-.stat-item { }
-.stat-num {
-  font-family: var(--serif);
-  font-size: 3rem; color: var(--cream); line-height: 1;
-  font-weight: 700;
-}
-.stat-label { font-size: 0.72rem; color: var(--gray-light); letter-spacing: 1px; margin-top: 4px; }
-.sobre-right { display: flex; flex-direction: column; gap: 20px; }
-.sobre-feature {
-  padding: 28px 32px;
-  border: 1px solid rgba(255,255,255,0.08);
-  border-radius: 12px; transition: all .3s;
-}
-.sobre-feature:hover { border-color: rgba(255,255,255,0.2); background: rgba(255,255,255,0.03); }
-.sobre-feature-icon { font-size: 1.5rem; margin-bottom: 12px; display: block; }
-.sobre-feature h3 { font-size: 0.9rem; font-weight: 500; margin-bottom: 8px; color: var(--cream); }
-.sobre-feature p { font-size: 0.8rem; color: var(--gray-light); line-height: 1.7; }
-
-/* TRABALHOS */
-#trabalhos { padding: 120px 6%; }
-.trabalhos-header {
-  display: flex; justify-content: space-between; align-items: flex-end;
-  margin-bottom: 60px; flex-wrap: wrap; gap: 20px;
-}
-.trabalhos-header .section-title { max-width: 500px; }
-.trabalhos-header p { font-size: 0.85rem; color: var(--gray); line-height: 1.8; max-width: 380px; }
-.projetos-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 24px; }
-.projeto-card {
-  border-radius: 16px; overflow: hidden;
-  position: relative; cursor: pointer;
-  transition: transform .4s;
-}
-.projeto-card:hover { transform: translateY(-6px); }
-.projeto-card:hover .projeto-overlay { opacity: 1; }
-.projeto-card:hover .projeto-img { transform: scale(1.04); }
-.projeto-img-wrap {
-  overflow: hidden; aspect-ratio: 4/3;
-  position: relative;
-}
-.projeto-img {
-  width: 100%; height: 100%;
-  transition: transform .6s ease;
-  display: flex; align-items: center; justify-content: center;
-  font-size: 2rem;
-}
-.projeto-overlay {
-  position: absolute; inset: 0;
-  background: rgba(0,0,0,0.5);
-  display: flex; align-items: center; justify-content: center;
-  opacity: 0; transition: opacity .3s;
-}
-.projeto-overlay span {
-  border: 1px solid rgba(255,255,255,0.5);
-  color: white; padding: 10px 24px; border-radius: 50px;
-  font-size: 0.75rem; letter-spacing: 2px; text-transform: uppercase;
-}
-.projeto-info {
-  padding: 20px 0;
-  display: flex; justify-content: space-between; align-items: center;
-}
-.projeto-tag { font-size: 0.65rem; letter-spacing: 2px; color: var(--gray); text-transform: uppercase; margin-bottom: 6px; }
-.projeto-name { font-family: var(--serif); font-size: 1.2rem; font-weight: 500; }
-.projeto-num { font-family: var(--serif); font-size: 1.5rem; color: var(--gray-light); }
-
-/* Projetos mockups — estilos bem diferentes */
-
-/* 1 — Arquitetura: branco clean minimalista */
-.proj-1 { background: #F8F6F2; }
-.proj-1 .proj-mini { background: #fff; border: 1px solid #E8E4DE; border-radius: 4px; }
-.proj-1 .proj-mini-nav { background: #E8E4DE; }
-.proj-1 .proj-mini-title { color: #1a1a1a; font-size: 0.85rem; }
-.proj-1 .proj-mini-sub { color: #888; }
-.proj-1 .proj-mini-btn { background: #1a1a1a; color: #fff; border-radius: 2px; }
-.proj-1 .proj-mini-accent { width: 30px; height: 2px; background: #C9A84C; margin-bottom: 8px; }
-
-/* 2 — Academia: vermelho vibrante brutal */
-.proj-2 { background: #0D0D0D; }
-.proj-2 .proj-mini { background: transparent; border: none; padding: 0; }
-.proj-2 .proj-mini-nav { background: #E63946; height: 3px; margin-bottom: 12px; }
-.proj-2 .proj-mini-title { color: #fff; font-size: 1rem; font-weight: 900; font-style: normal; text-transform: uppercase; letter-spacing: -1px; line-height: 1; }
-.proj-2 .proj-mini-sub { color: rgba(255,255,255,0.4); }
-.proj-2 .proj-mini-btn { background: #E63946; color: #fff; border-radius: 0; letter-spacing: 2px; }
-
-/* 3 — Beleza: rosa pastel delicado */
-.proj-3 { background: linear-gradient(135deg, #FDF0F0 0%, #F5E6E8 100%); }
-.proj-3 .proj-mini { background: rgba(255,255,255,0.7); border: 1px solid rgba(200,150,150,0.2); border-radius: 12px; }
-.proj-3 .proj-mini-nav { background: #E8B4B8; border-radius: 4px; }
-.proj-3 .proj-mini-title { color: #5C2D35; font-size: 0.8rem; }
-.proj-3 .proj-mini-sub { color: #9B6B72; }
-.proj-3 .proj-mini-btn { background: #E8B4B8; color: #5C2D35; border-radius: 20px; }
-
-/* 4 — Restaurante: verde escuro sofisticado */
-.proj-4 { background: #1B2D1E; }
-.proj-4 .proj-mini { background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.08); border-radius: 8px; }
-.proj-4 .proj-mini-nav { background: #4A7C59; }
-.proj-4 .proj-mini-title { color: #E8DCC8; font-size: 0.8rem; }
-.proj-4 .proj-mini-sub { color: rgba(232,220,200,0.5); }
-.proj-4 .proj-mini-btn { background: #4A7C59; color: #E8DCC8; border-radius: 4px; }
-.proj-4 .proj-mini-leaf { font-size: 1.2rem; display: block; margin-bottom: 6px; }
-
-/* 5 — Moda: preto total luxo */
-.proj-5 { background: #0A0A0A; }
-.proj-5 .proj-mini { background: transparent; border: 1px solid rgba(201,168,76,0.2); border-radius: 0; }
-.proj-5 .proj-mini-nav { background: rgba(201,168,76,0.3); height: 1px; margin-bottom: 14px; }
-.proj-5 .proj-mini-title { color: #F5F0E8; font-size: 0.9rem; font-style: italic; }
-.proj-5 .proj-mini-sub { color: rgba(245,240,232,0.3); }
-.proj-5 .proj-mini-btn { background: transparent; color: #C9A84C; border: 1px solid #C9A84C; border-radius: 0; letter-spacing: 2px; }
-
-/* 6 — Advocacia: azul marinho clássico */
-.proj-6 { background: linear-gradient(160deg, #0F1B2D 0%, #1A2D45 100%); }
-.proj-6 .proj-mini { background: rgba(255,255,255,0.04); border-top: 2px solid #C9A84C; border-radius: 0; }
-.proj-6 .proj-mini-nav { background: rgba(201,168,76,0.2); }
-.proj-6 .proj-mini-title { color: #E8E0D0; font-size: 0.8rem; font-style: italic; }
-.proj-6 .proj-mini-sub { color: rgba(232,224,208,0.4); }
-.proj-6 .proj-mini-btn { background: #C9A84C; color: #0F1B2D; border-radius: 2px; font-weight: 600; }
-
-.proj-mini {
-  width: 80%; padding: 12px;
-}
-.proj-mini-nav { height: 4px; border-radius: 2px; margin-bottom: 10px; }
-.proj-mini-title { font-family: var(--serif); font-size: 0.8rem; margin-bottom: 6px; line-height: 1.3; }
-.proj-mini-sub { font-size: 0.45rem; line-height: 1.4; margin-bottom: 8px; }
-.proj-mini-btn { display: inline-block; padding: 3px 8px; font-size: 0.4rem; letter-spacing: 1px; text-transform: uppercase; cursor: pointer; }
-
-/* SERVIÇOS */
-#servicos {
-  padding: 120px 6%;
-  background: var(--black); color: var(--cream);
-}
-#servicos .section-tag { color: var(--gray-light); }
-.servicos-header { text-align: center; margin-bottom: 70px; }
-.servicos-header .section-title { color: var(--cream); margin-bottom: 16px; }
-.servicos-header p { color: var(--gray-light); font-size: 0.88rem; max-width: 480px; margin: 0 auto; line-height: 1.8; }
-.servicos-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 2px; }
-.servico-card {
-  padding: 48px 36px;
-  background: var(--black-2);
-  position: relative; overflow: hidden;
-  transition: all .4s;
-}
-.servico-card::after {
-  content: ''; position: absolute;
-  bottom: 0; left: 0; right: 0; height: 2px;
-  background: var(--cream);
-  transform: scaleX(0); transform-origin: left;
-  transition: transform .4s;
-}
-.servico-card:hover { background: #222; }
-.servico-card:hover::after { transform: scaleX(1); }
-.servico-num {
-  font-family: var(--serif); font-size: 4rem;
-  color: rgba(255,255,255,0.05); position: absolute;
-  top: 20px; right: 24px; line-height: 1; font-weight: 700;
-}
-.servico-icon { font-size: 2rem; margin-bottom: 24px; display: block; }
-.servico-title {
-  font-family: var(--serif); font-size: 1.4rem;
-  color: var(--cream); margin-bottom: 16px; line-height: 1.2;
-}
-.servico-desc { font-size: 0.8rem; color: var(--gray-light); line-height: 1.8; margin-bottom: 20px; }
-.servico-list { list-style: none; display: flex; flex-direction: column; gap: 6px; }
-.servico-list li {
-  font-size: 0.75rem; color: rgba(255,255,255,0.4);
-  padding-left: 14px; position: relative;
-}
-.servico-list li::before { content: '→'; position: absolute; left: 0; color: rgba(255,255,255,0.2); font-size: 0.65rem; }
-
-/* QUESTIONÁRIO */
-#questionario { padding: 120px 6%; }
-.quiz-wrap {
-  display: grid; grid-template-columns: 1fr 1fr;
-  gap: 80px; align-items: start;
-}
-.quiz-left .section-title { margin-bottom: 20px; }
-.quiz-left p { font-size: 0.88rem; color: var(--gray); line-height: 1.8; margin-bottom: 30px; }
-.quiz-checklist { list-style: none; display: flex; flex-direction: column; gap: 12px; margin-bottom: 30px; }
-.quiz-checklist li {
-  display: flex; align-items: center; gap: 10px;
-  font-size: 0.82rem; color: var(--gray);
-}
-.quiz-checklist li::before {
-  content: '✓'; width: 22px; height: 22px;
-  background: var(--black); color: var(--cream);
-  border-radius: 50%; display: flex; align-items: center; justify-content: center;
-  font-size: 0.65rem; flex-shrink: 0;
-}
-.quiz-arrow {
-  font-size: 3rem; color: var(--black); opacity: 0.15;
-  transform: rotate(15deg); display: block; margin-top: 20px;
-}
-
-/* Quiz box */
-.quiz-box {
-  background: var(--black); border-radius: 20px;
-  padding: 40px; color: var(--cream);
-}
-.quiz-step-label {
-  font-size: 0.65rem; letter-spacing: 3px; color: var(--gray-light);
-  text-transform: uppercase; margin-bottom: 24px;
-}
-.quiz-progress {
-  height: 2px; background: rgba(255,255,255,0.1);
-  border-radius: 1px; margin-bottom: 32px; overflow: hidden;
-}
-.quiz-progress-bar {
-  height: 100%; background: var(--cream);
-  border-radius: 1px; transition: width .5s ease;
-}
-.quiz-question {
-  font-family: var(--serif); font-size: 1.4rem;
-  font-weight: 400; line-height: 1.3; margin-bottom: 28px;
-}
-.quiz-options { display: flex; flex-direction: column; gap: 10px; }
-.quiz-option {
-  padding: 14px 20px;
-  border: 1px solid rgba(255,255,255,0.1);
-  border-radius: 10px; cursor: pointer;
-  font-size: 0.82rem; color: var(--gray-light);
-  transition: all .25s; background: none;
-  text-align: left; font-family: var(--sans);
-  display: flex; align-items: center; gap: 12px;
-}
-.quiz-option:hover { border-color: rgba(255,255,255,0.4); color: var(--cream); }
-.quiz-option.selected { border-color: var(--cream); color: var(--cream); background: rgba(255,255,255,0.05); }
-.quiz-option-icon { font-size: 1.1rem; flex-shrink: 0; }
-.quiz-input {
-  width: 100%; background: rgba(255,255,255,0.05);
-  border: 1px solid rgba(255,255,255,0.1);
-  border-radius: 10px; padding: 14px 18px;
-  color: var(--cream); font-size: 0.85rem;
-  font-family: var(--sans); outline: none;
-  transition: border-color .25s;
-}
-.quiz-input:focus { border-color: rgba(255,255,255,0.4); }
-.quiz-input::placeholder { color: rgba(255,255,255,0.2); }
-.quiz-nav {
-  display: flex; justify-content: space-between; align-items: center;
-  margin-top: 28px;
-}
-.quiz-btn-back {
-  background: none; border: 1px solid rgba(255,255,255,0.15);
-  color: var(--gray-light); padding: 10px 20px; border-radius: 50px;
-  font-size: 0.75rem; letter-spacing: 1px; cursor: pointer;
-  font-family: var(--sans); transition: all .25s;
-}
-.quiz-btn-back:hover { border-color: rgba(255,255,255,0.4); color: var(--cream); }
-.quiz-btn-next {
-  background: var(--cream); color: var(--black);
-  border: none; padding: 12px 28px; border-radius: 50px;
-  font-size: 0.75rem; letter-spacing: 1.5px; text-transform: uppercase;
-  cursor: pointer; font-family: var(--sans); font-weight: 500;
-  transition: all .3s; display: flex; align-items: center; gap: 8px;
-}
-.quiz-btn-next:hover { transform: translateY(-2px); box-shadow: 0 10px 30px rgba(255,255,255,0.1); }
-
-/* Resultado do quiz */
-.quiz-result { display: none; }
-.quiz-result.show { display: block; }
-.quiz-result-title {
-  font-family: var(--serif); font-size: 1.6rem;
-  color: var(--cream); margin-bottom: 16px; line-height: 1.2;
-}
-.quiz-result-desc { font-size: 0.82rem; color: var(--gray-light); line-height: 1.8; margin-bottom: 24px; }
-.quiz-result-prompt {
-  background: rgba(255,255,255,0.05);
-  border: 1px solid rgba(255,255,255,0.1);
-  border-radius: 10px; padding: 16px;
-  font-size: 0.75rem; color: var(--gray-light);
-  line-height: 1.7; margin-bottom: 20px;
-  max-height: 150px; overflow-y: auto;
-  font-family: monospace;
-}
-.quiz-copy-btn {
-  width: 100%; background: var(--cream); color: var(--black);
-  border: none; padding: 14px; border-radius: 10px;
-  font-size: 0.78rem; letter-spacing: 2px; text-transform: uppercase;
-  cursor: pointer; font-family: var(--sans); font-weight: 500;
-  transition: all .3s; margin-bottom: 10px;
-}
-.quiz-copy-btn:hover { opacity: 0.9; }
-.quiz-wa-btn {
-  width: 100%; background: #25D366; color: white;
-  border: none; padding: 14px; border-radius: 10px;
-  font-size: 0.78rem; letter-spacing: 1px; text-transform: uppercase;
-  cursor: pointer; font-family: var(--sans); font-weight: 500;
-  transition: all .3s; text-decoration: none; display: block; text-align: center;
-}
-.quiz-wa-btn:hover { opacity: 0.9; }
-
-/* CONTATO */
-#contato {
-  padding: 120px 6%;
-  background: var(--black); color: var(--cream);
-}
-.contato-inner { text-align: center; max-width: 700px; margin: 0 auto; }
-#contato .section-tag { color: var(--gray-light); }
-#contato .section-title { color: var(--cream); margin-bottom: 20px; }
-#contato .section-title em { color: var(--gold); }
-.contato-desc { font-size: 0.9rem; color: var(--gray-light); line-height: 1.8; margin-bottom: 50px; }
-.contato-btns { display: flex; gap: 16px; justify-content: center; flex-wrap: wrap; margin-bottom: 60px; }
-.btn-cream {
-  display: inline-flex; align-items: center; gap: 10px;
-  background: var(--cream); color: var(--black);
-  padding: 16px 36px; border-radius: 50px;
-  font-size: 0.78rem; font-weight: 500; letter-spacing: 1.5px;
-  text-transform: uppercase; text-decoration: none;
-  font-family: var(--sans); transition: all .3s;
-}
-.btn-cream:hover { transform: translateY(-2px); box-shadow: 0 16px 40px rgba(255,255,255,0.1); }
-.btn-outline-cream {
-  display: inline-flex; align-items: center; gap: 10px;
-  border: 1px solid rgba(255,255,255,0.2); color: var(--cream);
-  padding: 16px 36px; border-radius: 50px;
-  font-size: 0.78rem; font-weight: 400; letter-spacing: 1.5px;
-  text-transform: uppercase; text-decoration: none;
-  font-family: var(--sans); transition: all .3s;
-}
-.btn-outline-cream:hover { border-color: var(--cream); transform: translateY(-2px); }
-.contato-info { display: flex; gap: 40px; justify-content: center; flex-wrap: wrap; }
-.contato-info-item { text-align: center; }
-.contato-info-label { font-size: 0.6rem; letter-spacing: 3px; color: var(--gray-light); text-transform: uppercase; margin-bottom: 6px; }
-.contato-info-value { font-size: 0.85rem; color: var(--cream); }
-.contato-info-value a { color: var(--cream); text-decoration: none; transition: color .2s; }
-.contato-info-value a:hover { color: var(--gold); }
-
-/* FOOTER */
-footer {
-  padding: 40px 6%;
-  background: var(--black-2);
-  border-top: 1px solid rgba(255,255,255,0.05);
-  display: flex; align-items: center; justify-content: space-between;
-  flex-wrap: wrap; gap: 16px;
-}
-.footer-logo {
-  font-family: var(--serif); font-size: 1.2rem;
-  color: var(--cream); letter-spacing: 2px;
-  font-style: italic;
-}
-.footer-copy { font-size: 0.72rem; color: var(--gray); }
-.footer-copy span { color: var(--gold); }
-
-/* RESPONSIVE */
-@media (max-width: 1024px) {
-  .hero { grid-template-columns: 1fr; text-align: center; }
-  .hero-bg-shape { display: none; }
-  .hero-right { justify-content: center; }
-  .hero-desc { margin: 0 auto 40px; }
-  .hero-btns { justify-content: center; }
-  .hero-social { justify-content: center; }
-  .sobre-grid { grid-template-columns: 1fr; gap: 50px; }
-  .trabalhos-header { flex-direction: column; }
-  .projetos-grid { grid-template-columns: repeat(2, 1fr); }
-  .servicos-grid { grid-template-columns: 1fr; }
-  .quiz-wrap { grid-template-columns: 1fr; gap: 40px; }
-}
-@media (max-width: 768px) {
-  nav { padding: 0 5%; }
-  .nav-links, .nav-cta { display: none; }
-  .hamburger { display: flex; }
-  .hero { padding: 100px 5% 60px; }
-  #sobre, #trabalhos, #servicos, #questionario, #contato { padding: 80px 5%; }
-  .projetos-grid { grid-template-columns: 1fr; }
-  .sobre-stats { gap: 24px; }
-  .hero-right { display: none; }
-  .contato-info { gap: 24px; }
-  body { cursor: auto; }
-  .cursor, .cursor-follower { display: none; }
-}
-
-/* REVEAL ANIMATION */
-.reveal {
-  opacity: 0; transform: translateY(30px);
-  transition: opacity .7s ease, transform .7s ease;
-}
-.reveal.visible { opacity: 1; transform: translateY(0); }
-
-/* TOUCH FEEDBACK */
-.projeto-card.is-touched .projeto-overlay { opacity: 1; }
-.projeto-card.is-touched .projeto-img    { transform: scale(1.04); }
-
-/* MODAL */
-.modal-overlay {
-  position: fixed; inset: 0; z-index: 2000;
-  background: rgba(0,0,0,0.82);
-  backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);
-  display: flex; align-items: center; justify-content: center;
-  padding: 16px; opacity: 0; pointer-events: none;
-  transition: opacity .32s ease;
-}
-.modal-overlay.open { opacity: 1; pointer-events: all; }
-.modal-card {
-  background: var(--white); border-radius: 22px;
-  width: 100%; max-width: 840px; max-height: 92vh;
-  overflow-y: auto; position: relative;
-  transform: scale(0.86) translateY(30px); opacity: 0;
-  transition: transform .42s cubic-bezier(0.34,1.46,0.64,1), opacity .32s ease;
-  box-shadow: 0 50px 120px rgba(0,0,0,0.5), 0 8px 32px rgba(0,0,0,0.25);
-}
-.modal-overlay.open .modal-card { transform: scale(1) translateY(0); opacity: 1; }
-.modal-close {
-  position: absolute; top: 16px; right: 16px;
-  width: 40px; height: 40px; border-radius: 50%;
-  background: rgba(0,0,0,0.07); border: none; cursor: pointer;
-  display: flex; align-items: center; justify-content: center;
-  font-size: 1rem; color: var(--gray); z-index: 10;
-  font-family: var(--sans);
-  transition: background .2s, color .2s, transform .3s;
-}
-.modal-close:hover, .modal-close:active {
-  background: rgba(0,0,0,0.14); color: var(--black); transform: rotate(90deg);
-}
-.modal-preview {
-  width: 100%; aspect-ratio: 4/3;
-  border-radius: 22px 22px 0 0;
-  overflow: hidden; position: relative; background: #f0ede8;
-}
-.modal-preview-scaler {
-  position: absolute; top: 0; left: 0; transform-origin: top left;
-}
-.modal-preview-scaler .projeto-img {
-  display: flex !important; flex-direction: column !important;
-  align-items: stretch !important; padding: 0 !important;
-}
-.modal-body { padding: 28px 38px 38px; }
-.modal-tag-label {
-  font-size: 0.62rem; letter-spacing: 3.5px; color: var(--gray);
-  text-transform: uppercase; display: block; margin-bottom: 10px;
-}
-.modal-project-title {
-  font-family: var(--serif);
-  font-size: clamp(1.7rem, 3.5vw, 2.4rem);
-  font-weight: 700; color: var(--black); line-height: 1.1;
-}
-.modal-divider { height: 1px; background: rgba(0,0,0,0.09); margin: 20px 0; }
-.modal-desc { font-size: 0.875rem; color: var(--gray); line-height: 1.95; margin-bottom: 22px; }
-.modal-techs-label {
-  font-size: 0.6rem; letter-spacing: 3px; color: var(--gray);
-  text-transform: uppercase; margin-bottom: 10px; display: block;
-}
-.modal-techs { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 30px; }
-.modal-tech {
-  background: var(--black); color: var(--cream);
-  padding: 5px 16px; border-radius: 50px;
-  font-size: 0.7rem; font-family: var(--sans); font-weight: 300;
-}
-.modal-actions { display: flex; gap: 12px; flex-wrap: wrap; }
-.modal-btn-live {
-  display: inline-flex; align-items: center; gap: 9px;
-  background: var(--black); color: var(--cream);
-  padding: 13px 28px; border-radius: 50px;
-  font-size: 0.75rem; letter-spacing: 1.5px; text-transform: uppercase;
-  text-decoration: none; font-family: var(--sans); transition: all .3s;
-}
-.modal-btn-live:hover { transform: translateY(-2px); box-shadow: 0 12px 30px rgba(0,0,0,0.22); }
-.modal-btn-wa {
-  display: inline-flex; align-items: center; gap: 9px;
-  background: #25D366; color: #fff;
-  padding: 13px 28px; border-radius: 50px;
-  font-size: 0.75rem; letter-spacing: 1.5px; text-transform: uppercase;
-  text-decoration: none; font-family: var(--sans); transition: all .3s;
-}
-.modal-btn-wa:hover { transform: translateY(-2px); box-shadow: 0 12px 30px rgba(37,211,102,0.32); }
-.modal-card::-webkit-scrollbar { width: 3px; }
-.modal-card::-webkit-scrollbar-thumb { background: rgba(0,0,0,0.12); border-radius: 2px; }
-@media (max-width: 600px) {
-  .modal-body { padding: 22px 20px 30px; }
-  .modal-actions { flex-direction: column; }
-  .modal-btn-live, .modal-btn-wa { justify-content: center; }
-}
-</style>
+    .doc-actions {
+      width: 100%; display: flex; align-items: center;
+      justify-content: space-between; padding: 10px 16px 4px; flex-shrink: 0;
+    }
+    .act-btn {
+      background: #e8e8e8; border: none; border-radius: 16px;
+      width: 54px; height: 54px; display: flex; align-items:center; justify-content:center;
+      cursor: pointer; font-size: 20px; transition: background .15s;
+    }
+    .act-btn:active { background: #d0d0d0; }
+    .dots-pagination { display: flex; gap: 7px; align-items:center; }
+    .dot { width: 8px; height: 8px; border-radius: 50%; background: #1a4b8c; }
+    .dot.inactive { background: #bbb; }
+    .act-arrow { background: none; border: none; font-size: 22px; color: #333; cursor: pointer; padding: 8px; }
+    .act-green {
+      background: #2a7a2a; border: none; border-radius: 50%;
+      width: 54px; height: 54px; display: flex; align-items:center; justify-content:center;
+      cursor: pointer; box-shadow: 0 4px 12px rgba(42,122,42,.4);
+    }
+  </style>
 </head>
 <body>
-
-<!-- CURSOR -->
-<div class="cursor" id="cursor"></div>
-<div class="cursor-follower" id="cursorFollower"></div>
-
-<!-- MOBILE NAV -->
-<div class="mobile-nav" id="mobileNav">
-  <button class="mobile-close" onclick="closeMobileNav()">✕ Fechar</button>
-  <a href="#sobre" onclick="closeMobileNav()">Sobre</a>
-  <a href="#trabalhos" onclick="closeMobileNav()">Trabalhos</a>
-  <a href="#servicos" onclick="closeMobileNav()">Serviços</a>
-  <a href="#questionario" onclick="closeMobileNav()">Orçamento</a>
-  <a href="#contato" onclick="closeMobileNav()">Contato</a>
+<div class="loading-overlay" id="loading">
+  <div class="loading-spinner"></div>
+  <div class="loading-text">Carregando documento<span class="loading-dots"></span></div>
 </div>
 
-<!-- NAV -->
-<nav>
-  <a href="#" class="nav-logo">
-    <div class="nav-logo-v">V</div>
-    <div class="nav-logo-text">
-      <span class="nav-logo-name">Variant</span>
-      <span class="nav-logo-sub">Agência de Marketing</span>
-    </div>
-  </a>
-  <ul class="nav-links">
-    <li><a href="#sobre">Sobre</a></li>
-    <li><a href="#trabalhos">Nossos trabalhos</a></li>
-    <li><a href="#servicos">Serviços</a></li>
-    <li><a href="#questionario">Orçamento</a></li>
-  </ul>
-  <a href="#contato" class="nav-cta">Fale conosco ↗</a>
-  <button class="hamburger" onclick="openMobileNav()">
-    <span></span><span></span><span></span>
-  </button>
-</nav>
+<div class="app">
 
-<!-- HERO -->
-<section class="hero">
-  <div class="hero-bg-shape"></div>
-  <div class="hero-left">
-    <span class="hero-tag">Sites que transformam</span>
-    <h1>Criamos sites que<br><em>geram resultados.</em></h1>
-    <p class="hero-desc">Design estratégico, experiência impecável e performance para o seu negócio crescer no digital.</p>
-    <div class="hero-btns">
-      <a href="#trabalhos" class="btn-dark">
-        Ver nossos trabalhos
-        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
-      </a>
+  <div class="screen active" id="screen-carteira">
+    <div class="top-bar">
+      <button class="back">&#8249;</button>
+      <h1>Carteira de documentos</h1>
     </div>
-    <div class="hero-social">
-      <div class="hero-avatars">
-        <span>M</span><span>J</span><span>A</span><span>+</span>
-      </div>
-      <span class="hero-social-text"><strong>+50 empresas</strong> transformadas em todo o Brasil</span>
-    </div>
-  </div>
-  <div class="hero-right">
-    <div class="mockup-wrap">
-
-      <!-- Laptop 3D -->
-      <div class="mockup-laptop">
-        <div class="mockup-camera-bar"><div class="mockup-camera-dot"></div></div>
-        <div class="mockup-screen">
-          <div class="mockup-nav-bar">
-            <div class="mockup-dots">
-              <span style="background:#ff5f57"></span>
-              <span style="background:#febc2e"></span>
-              <span style="background:#28c840"></span>
-            </div>
-            <div class="mockup-url-bar">variant.agencia</div>
-          </div>
-          <div class="mockup-content">
-            <div class="mockup-hero-text">Excelência<br><em>em cada<br>detalhe.</em></div>
-            <p class="mockup-sub">Design estratégico para marcas que querem ir além do comum.</p>
-            <div class="mockup-btn">Saiba mais →</div>
-            <div class="mockup-metrics">
-              <div class="mockup-metric">
-                <span class="mockup-metric-num">50+</span>
-                <span class="mockup-metric-label">Projetos</span>
-              </div>
-              <div class="mockup-metric">
-                <span class="mockup-metric-num">100%</span>
-                <span class="mockup-metric-label">Satisfação</span>
-              </div>
-              <div class="mockup-metric">
-                <span class="mockup-metric-num">48h</span>
-                <span class="mockup-metric-label">Entrega</span>
-              </div>
-            </div>
-          </div>
+    <div class="carteira-content">
+      <div class="doc-card" onclick="openDoc()">
+        <div class="card-header">
+          <div class="id-badge">ID</div>
+          <div class="card-title">Carteira de Identidade</div>
+          <svg class="brasao-mini" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+            <circle cx="50" cy="50" r="44" fill="none" stroke="#1a4b8c" stroke-width="2.5"/>
+            <circle cx="50" cy="50" r="36" fill="none" stroke="#1a4b8c" stroke-width="1.5"/>
+            <circle cx="50" cy="50" r="22" fill="none" stroke="#1a4b8c" stroke-width="1.5"/>
+            <polygon points="50,20 53,40 70,40 56,50 62,68 50,57 38,68 44,50 30,40 47,40" fill="#1a4b8c" opacity=".9"/>
+            <path d="M15,55 Q20,45 28,50 Q22,60 15,55Z" fill="#1a4b8c"/>
+            <path d="M12,65 Q18,55 26,60 Q20,70 12,65Z" fill="#1a4b8c"/>
+            <path d="M14,75 Q21,66 28,72 Q22,80 14,75Z" fill="#1a4b8c"/>
+            <path d="M85,55 Q80,45 72,50 Q78,60 85,55Z" fill="#1a4b8c"/>
+            <path d="M88,65 Q82,55 74,60 Q80,70 88,65Z" fill="#1a4b8c"/>
+            <path d="M86,75 Q79,66 72,72 Q78,80 86,75Z" fill="#1a4b8c"/>
+          </svg>
         </div>
-        <div class="mockup-base"><div class="mockup-base-line"></div></div>
+        <div class="card-footer">CPF</div>
       </div>
-
-      <!-- Phone 3D -->
-      <div class="mockup-phone">
-        <div class="mockup-phone-island"></div>
-        <div class="mockup-phone-screen">
-          <div class="mockup-phone-statusbar">
-            <span>9:41</span>
-            <span>●●● 🔋</span>
-          </div>
-          <div class="mockup-phone-content">
-            <div class="mockup-phone-tag">Variant Agência</div>
-            <div class="mockup-phone-title">Seu negócio<br><em>no digital.</em></div>
-            <div class="mockup-phone-desc">Sites que geram resultados reais para sua marca.</div>
-            <div class="mockup-phone-stats">
-              <div class="mockup-phone-stat">
-                <span>50+</span>
-                <p>projetos</p>
-              </div>
-              <div class="mockup-phone-stat">
-                <span>48h</span>
-                <p>entrega</p>
-              </div>
-            </div>
-            <div class="mockup-phone-cta">💬 Falar no WhatsApp</div>
-          </div>
+      <button class="add-btn">Adicionar Documento</button>
+    </div>
+    <div class="bottom-nav">
+      <div class="nav-item">
+        <svg class="nav-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9.5L12 3l9 6.5V20a1 1 0 01-1 1H4a1 1 0 01-1-1V9.5z"/><polyline points="9 21 9 12 15 12 15 21"/></svg>
+        <span>In&#237;cio</span>
+      </div>
+      <div class="nav-item">
+        <svg class="nav-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="2" width="14" height="20" rx="2"/><line x1="9" y1="7" x2="15" y2="7"/><line x1="9" y1="11" x2="15" y2="11"/><line x1="9" y1="15" x2="12" y2="15"/></svg>
+        <span>Dados</span>
+      </div>
+      <div class="nav-item qr">
+        <div class="qr-circle">
+          <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="3" height="3"/><rect x="18" y="14" width="3" height="3"/><rect x="14" y="18" width="3" height="3"/><rect x="18" y="18" width="3" height="3"/></svg>
         </div>
+        <span>QR Code</span>
       </div>
-
-      <div class="hero-badge">
-        <strong>🚀 Sites rápidos, modernos</strong>
-        <span>e otimizados para converter.</span>
+      <div class="nav-item active" onclick="openDoc()">
+        <svg class="nav-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="5" width="20" height="14" rx="2"/><path d="M16 12h.01"/><path d="M2 10h20"/></svg>
+        <span>Carteira</span>
+      </div>
+      <div class="nav-item">
+        <svg class="nav-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+        <span>Menu</span>
       </div>
     </div>
   </div>
-</section>
 
-<!-- SOBRE -->
-<section id="sobre">
-  <div class="sobre-grid reveal">
-    <div class="sobre-left">
-      <span class="section-tag">Nosso trabalho</span>
-      <h2 class="section-title">Sites feitos para marcas que querem <em>ir além.</em></h2>
-      <p class="sobre-desc">Cada projeto é único. Unimos design, estratégia e tecnologia para entregar sites que não apenas impressionam, mas que geram resultado de verdade.</p>
-      <div class="sobre-stats">
-        <div class="stat-item">
-          <div class="stat-num">50+</div>
-          <div class="stat-label">Projetos entregues</div>
+  <div class="screen" id="screen-doc">
+    <div style="background:#fff; height:14px; flex-shrink:0;"></div>
+    <div class="doc-body" style="padding:0; background:#fff;">
+      <div class="rg-wrapper" style="padding:0; align-items:flex-start; flex-direction:column;">
+        <div class="zoom-container" id="zoom-wrap">
+          <img id="doc-img" alt="Documento" style="width:100%; display:none; object-fit:contain;"/>
+          <div class="zoom-btns">
+            <button class="zoom-btn" onclick="zoomIn()">+</button>
+            <button class="zoom-btn" onclick="zoomOut()">&#8722;</button>
+          </div>
         </div>
-        <div class="stat-item">
-          <div class="stat-num">100%</div>
-          <div class="stat-label">Clientes satisfeitos</div>
-        </div>
-        <div class="stat-item">
-          <div class="stat-num">48h</div>
-          <div class="stat-label">Tempo médio de entrega</div>
+        <div id="pick-wrap" style="width:100%; padding:30px 24px; display:flex; flex-direction:column; align-items:center; gap:14px;">
+          <p style="font-size:14px; color:#555; text-align:center;">Selecione a imagem do seu documento</p>
+          <label style="background:#2a7a2a; color:#fff; border-radius:24px; padding:14px 32px; font-size:15px; font-weight:600; cursor:pointer; box-shadow:0 4px 12px rgba(42,122,42,.3);">
+            &#128206; Escolher imagem
+            <input type="file" accept="image/*" style="display:none;" onchange="loadDoc(event)"/>
+          </label>
         </div>
       </div>
     </div>
-    <div class="sobre-right">
-      <div class="sobre-feature">
-        <span class="sobre-feature-icon">⚡</span>
-        <h3>Performance e velocidade</h3>
-        <p>Sites rápidos, leves e otimizados para carregar em qualquer dispositivo e conexão.</p>
+    <div class="doc-actions">
+      <button class="act-btn">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#444" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.65" y2="16.65"/><circle cx="11" cy="11" r="3" stroke-dasharray="2 2"/></svg>
+      </button>
+      <div style="display:flex; align-items:center; gap:10px;">
+        <div class="dots-pagination">
+          <div class="dot"></div><div class="dot inactive"></div><div class="dot inactive"></div><div class="dot inactive"></div>
+        </div>
+        <button class="act-arrow">&#8250;</button>
       </div>
-      <div class="sobre-feature">
-        <span class="sobre-feature-icon">📱</span>
-        <h3>Design responsivo</h3>
-        <p>Experiência perfeita em celular, tablet e desktop — onde o seu cliente estiver.</p>
+      <button class="act-green">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5" stroke-linecap="round"><circle cx="12" cy="5" r="1.5" fill="white"/><circle cx="12" cy="12" r="1.5" fill="white"/><circle cx="12" cy="19" r="1.5" fill="white"/></svg>
+      </button>
+    </div>
+    <div class="bottom-nav">
+      <div class="nav-item" onclick="closeDoc()">
+        <svg class="nav-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9.5L12 3l9 6.5V20a1 1 0 01-1 1H4a1 1 0 01-1-1V9.5z"/><polyline points="9 21 9 12 15 12 15 21"/></svg>
+        <span>In&#237;cio</span>
       </div>
-      <div class="sobre-feature">
-        <span class="sobre-feature-icon">🎯</span>
-        <h3>Focado em conversão</h3>
-        <p>Cada detalhe pensado para transformar visitantes em clientes reais.</p>
+      <div class="nav-item">
+        <svg class="nav-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="2" width="14" height="20" rx="2"/><line x1="9" y1="7" x2="15" y2="7"/><line x1="9" y1="11" x2="15" y2="11"/><line x1="9" y1="15" x2="12" y2="15"/></svg>
+        <span>Dados</span>
+      </div>
+      <div class="nav-item qr">
+        <div class="qr-circle">
+          <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="3" height="3"/><rect x="18" y="14" width="3" height="3"/><rect x="14" y="18" width="3" height="3"/><rect x="18" y="18" width="3" height="3"/></svg>
+        </div>
+        <span>QR Code</span>
+      </div>
+      <div class="nav-item active">
+        <svg class="nav-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="5" width="20" height="14" rx="2"/><path d="M16 12h.01"/><path d="M2 10h20"/></svg>
+        <span>Carteira</span>
+      </div>
+      <div class="nav-item">
+        <svg class="nav-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+        <span>Menu</span>
       </div>
     </div>
   </div>
-</section>
 
-<!-- TRABALHOS -->
-<section id="trabalhos">
-  <div class="trabalhos-header reveal">
-    <div>
-      <span class="section-tag">Portfólio</span>
-      <h2 class="section-title">Projetos que<br><em>falam por si.</em></h2>
-    </div>
-    <p>Cada projeto é desenvolvido com atenção total aos objetivos do cliente e ao seu público.</p>
-  </div>
-
-  <div class="projetos-grid">
-    <!-- Projeto 1 — Arquitetura: branco minimalista -->
-    <div class="projeto-card reveal" onclick="openModal(0)">
-      <div class="projeto-img-wrap">
-        <div class="projeto-img proj-1" style="flex-direction:column;align-items:stretch;justify-content:flex-start;padding:0;overflow:hidden;">
-          <div style="display:flex;align-items:center;justify-content:space-between;padding:6px 12px;background:#fff;border-bottom:1px solid #ebe7e0;flex-shrink:0">
-            <div style="display:flex;align-items:center;gap:5px">
-              <div style="width:6px;height:6px;background:#C9A84C;border-radius:50%;flex-shrink:0"></div>
-              <span style="font-family:var(--serif);font-size:0.52rem;font-weight:700;letter-spacing:2.5px;color:#111">MORETTI</span>
-            </div>
-            <div style="display:flex;gap:10px">
-              <span style="font-size:0.28rem;color:#bbb;text-transform:uppercase;letter-spacing:0.5px">Sobre</span>
-              <span style="font-size:0.28rem;color:#bbb;text-transform:uppercase;letter-spacing:0.5px">Projetos</span>
-              <span style="font-size:0.28rem;color:#bbb;text-transform:uppercase;letter-spacing:0.5px">Contato</span>
-            </div>
-          </div>
-          <div style="padding:12px 12px 8px;flex:1;display:flex;flex-direction:column;background:#F8F6F2">
-            <div style="width:22px;height:2px;background:#C9A84C;margin-bottom:6px;flex-shrink:0"></div>
-            <div style="font-family:var(--serif);font-size:0.85rem;font-weight:700;color:#1a1a1a;line-height:1.15;margin-bottom:4px">Arquitetura que<br><em>transforma espaços.</em></div>
-            <div style="font-size:0.35rem;color:#888;line-height:1.6;margin-bottom:6px">Projetos exclusivos para quem valoriza design contemporâneo e sofisticação.</div>
-            <div style="display:flex;gap:4px;margin-bottom:7px">
-              <div style="background:#f0ece6;border:1px solid #e0dbd3;padding:1px 6px;font-size:0.26rem;color:#888;border-radius:3px">Todos</div>
-              <div style="background:#1a1a1a;color:#fff;padding:1px 6px;font-size:0.26rem;border-radius:3px">Residencial</div>
-              <div style="background:#f0ece6;border:1px solid #e0dbd3;padding:1px 6px;font-size:0.26rem;color:#888;border-radius:3px">Comercial</div>
-            </div>
-            <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:4px;margin-top:auto">
-              <div style="position:relative;border-radius:3px;overflow:hidden;aspect-ratio:1">
-                <div style="background:linear-gradient(135deg,#D8D2CA,#C8C2BA);width:100%;height:100%"></div>
-                <div style="position:absolute;bottom:0;left:0;right:0;background:rgba(0,0,0,0.45);padding:2px 3px;font-size:0.22rem;color:#fff">Casa Jardins</div>
-              </div>
-              <div style="position:relative;border-radius:3px;overflow:hidden;aspect-ratio:1">
-                <div style="background:linear-gradient(135deg,#CBC5BC,#BCB6AE);width:100%;height:100%"></div>
-                <div style="position:absolute;bottom:0;left:0;right:0;background:rgba(0,0,0,0.45);padding:2px 3px;font-size:0.22rem;color:#fff">Loft Vila</div>
-              </div>
-              <div style="position:relative;border-radius:3px;overflow:hidden;aspect-ratio:1">
-                <div style="background:linear-gradient(135deg,#BEB8B0,#B0AAA2);width:100%;height:100%"></div>
-                <div style="position:absolute;bottom:0;left:0;right:0;background:rgba(0,0,0,0.45);padding:2px 3px;font-size:0.22rem;color:#fff;display:flex;align-items:center;gap:2px"><span style="color:#C9A84C">★</span>Award</div>
-              </div>
-            </div>
-          </div>
-        </div>
-        <div class="projeto-overlay"><span>Ver projeto</span></div>
-      </div>
-      <div class="projeto-info">
-        <div>
-          <div class="projeto-tag">Site Institucional</div>
-          <div class="projeto-name">Moretti Arquitetura</div>
-        </div>
-        <div class="projeto-num">01</div>
-      </div>
-    </div>
-
-    <!-- Projeto 2 — Academia: vermelho brutal -->
-    <div class="projeto-card reveal" onclick="openModal(1)">
-      <div class="projeto-img-wrap">
-        <div class="projeto-img proj-2" style="flex-direction:column;align-items:stretch;justify-content:flex-start;padding:0;overflow:hidden;">
-          <div style="height:3px;background:#E63946;flex-shrink:0"></div>
-          <div style="display:flex;align-items:center;justify-content:space-between;padding:6px 12px;background:#111;flex-shrink:0">
-            <span style="font-size:0.55rem;font-weight:900;color:#fff;letter-spacing:1px">BLACK<span style="color:#E63946">FIT</span></span>
-            <div style="display:flex;gap:8px">
-              <span style="font-size:0.26rem;color:rgba(255,255,255,0.35);text-transform:uppercase">Planos</span>
-              <span style="font-size:0.26rem;color:rgba(255,255,255,0.35);text-transform:uppercase">Turmas</span>
-              <span style="font-size:0.26rem;color:#E63946;text-transform:uppercase">Matricular</span>
-            </div>
-          </div>
-          <div style="padding:12px 12px 8px;background:#0D0D0D;flex:1;display:flex;flex-direction:column">
-            <div style="font-size:0.26rem;color:#E63946;letter-spacing:3px;text-transform:uppercase;margin-bottom:4px">ALTO RENDIMENTO</div>
-            <div style="font-size:1.05rem;font-weight:900;color:#fff;line-height:1;text-transform:uppercase;letter-spacing:-1px;margin-bottom:5px">MAIS QUE<br>UMA<br>ACADEMIA.</div>
-            <div style="font-size:0.3rem;color:rgba(255,255,255,0.3);line-height:1.5;margin-bottom:8px">Treinos personalizados • Nutrição • Resultados reais</div>
-            <div style="display:flex;align-items:center;gap:6px;margin-bottom:7px">
-              <div style="background:#E63946;color:#fff;padding:3px 10px;font-size:0.3rem;letter-spacing:2px;text-transform:uppercase">MATRICULAR AGORA →</div>
-              <div style="background:#22c55e;color:#fff;padding:2px 6px;font-size:0.24rem;letter-spacing:1px;text-transform:uppercase;border-radius:2px;animation:float 2s ease-in-out infinite">VAGAS!</div>
-            </div>
-            <div style="border:1px solid rgba(255,255,255,0.07);border-radius:4px;padding:4px 6px;margin-bottom:4px">
-              <div style="font-size:0.24rem;color:#E63946;letter-spacing:1px;text-transform:uppercase;margin-bottom:3px">HOJE</div>
-              <div style="display:flex;flex-direction:column;gap:2px">
-                <div style="display:flex;justify-content:space-between;font-size:0.26rem;color:rgba(255,255,255,0.5)"><span>06:00</span><span style="color:rgba(255,255,255,0.7)">Funcional</span><span style="color:#E63946">●</span></div>
-                <div style="display:flex;justify-content:space-between;font-size:0.26rem;color:rgba(255,255,255,0.5)"><span>08:00</span><span style="color:rgba(255,255,255,0.7)">Body Pump</span><span style="color:rgba(255,255,255,0.2)">●</span></div>
-                <div style="display:flex;justify-content:space-between;font-size:0.26rem;color:rgba(255,255,255,0.5)"><span>19:00</span><span style="color:rgba(255,255,255,0.7)">HIIT</span><span style="color:rgba(255,255,255,0.2)">●</span></div>
-              </div>
-            </div>
-            <div style="display:flex;gap:4px;margin-top:auto;padding-top:6px">
-              <div style="flex:1;border:1px solid rgba(255,255,255,0.08);padding:4px 5px;border-radius:3px">
-                <div style="font-size:0.26rem;color:rgba(255,255,255,0.35);text-transform:uppercase;margin-bottom:2px">Basic</div>
-                <div style="font-size:0.48rem;font-weight:700;color:#fff">R$89<span style="font-size:0.26rem;font-weight:300;color:rgba(255,255,255,0.3)">/mês</span></div>
-              </div>
-              <div style="flex:1;border:1px solid #E63946;padding:4px 5px;border-radius:3px;background:rgba(230,57,70,0.08)">
-                <div style="font-size:0.26rem;color:#E63946;text-transform:uppercase;margin-bottom:2px">Pro ★</div>
-                <div style="font-size:0.48rem;font-weight:700;color:#fff">R$139<span style="font-size:0.26rem;font-weight:300;color:rgba(255,255,255,0.3)">/mês</span></div>
-              </div>
-              <div style="flex:1;border:1px solid rgba(255,255,255,0.08);padding:4px 5px;border-radius:3px">
-                <div style="font-size:0.26rem;color:rgba(255,255,255,0.35);text-transform:uppercase;margin-bottom:2px">Elite</div>
-                <div style="font-size:0.48rem;font-weight:700;color:#fff">R$199<span style="font-size:0.26rem;font-weight:300;color:rgba(255,255,255,0.3)">/mês</span></div>
-              </div>
-            </div>
-          </div>
-        </div>
-        <div class="projeto-overlay"><span>Ver projeto</span></div>
-      </div>
-      <div class="projeto-info">
-        <div>
-          <div class="projeto-tag">Landing Page</div>
-          <div class="projeto-name">BlackFit Studio</div>
-        </div>
-        <div class="projeto-num">02</div>
-      </div>
-    </div>
-
-    <!-- Projeto 3 — Beleza: rosa pastel delicado -->
-    <div class="projeto-card reveal" onclick="openModal(2)">
-      <div class="projeto-img-wrap">
-        <div class="projeto-img proj-3" style="flex-direction:column;align-items:stretch;justify-content:flex-start;padding:0;overflow:hidden;">
-          <div style="display:flex;align-items:center;justify-content:space-between;padding:6px 12px;background:rgba(255,255,255,0.9);border-bottom:1px solid rgba(200,150,150,0.15);flex-shrink:0">
-            <div style="display:flex;align-items:center;gap:5px">
-              <span style="font-size:0.6rem">🌸</span>
-              <span style="font-family:var(--serif);font-size:0.5rem;font-style:italic;color:#5C2D35;font-weight:700">Bloom Beauty</span>
-            </div>
-            <div style="display:flex;gap:8px">
-              <span style="font-size:0.26rem;color:#9B6B72">Serviços</span>
-              <span style="font-size:0.26rem;color:#E8B4B8;font-weight:500">Agendar</span>
-            </div>
-          </div>
-          <div style="padding:12px 12px 8px;flex:1;display:flex;flex-direction:column;background:linear-gradient(160deg,#FDF0F0,#F5E6E8)">
-            <div style="font-family:var(--serif);font-size:0.85rem;font-weight:700;color:#5C2D35;line-height:1.2;margin-bottom:3px">Realce sua<br><em>beleza natural.</em></div>
-            <div style="display:flex;align-items:center;gap:4px;margin-bottom:3px">
-              <span style="font-size:0.5rem;line-height:1;color:#E8B4B8">★★★★★</span>
-              <span style="font-size:0.28rem;color:#9B6B72;font-weight:500">4.9</span>
-              <span style="font-size:0.26rem;color:#C4A0A4">· 320 avaliações</span>
-            </div>
-            <div style="display:flex;align-items:center;gap:4px;margin-bottom:6px">
-              <div style="width:6px;height:6px;background:#22c55e;border-radius:50%;flex-shrink:0"></div>
-              <span style="font-size:0.28rem;color:#9B6B72">Próximo horário: <strong style="color:#5C2D35">14h30</strong></span>
-            </div>
-            <div style="background:#E8B4B8;color:#5C2D35;padding:3px 10px;font-size:0.3rem;border-radius:20px;font-weight:500;width:fit-content">Agendar horário →</div>
-            <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:5px;margin-top:auto;padding-top:10px">
-              <div style="background:rgba(255,255,255,0.75);border:1px solid rgba(200,150,150,0.2);border-radius:8px;padding:6px 4px;text-align:center">
-                <div style="font-size:0.6rem;margin-bottom:2px">💅</div>
-                <div style="font-size:0.26rem;color:#5C2D35;font-weight:500">Manicure</div>
-                <div style="font-size:0.24rem;color:#9B6B72">R$ 35</div>
-              </div>
-              <div style="background:rgba(255,255,255,0.75);border:1px solid rgba(200,150,150,0.2);border-radius:8px;padding:6px 4px;text-align:center">
-                <div style="font-size:0.6rem;margin-bottom:2px">✨</div>
-                <div style="font-size:0.26rem;color:#5C2D35;font-weight:500">Sobrancelha</div>
-                <div style="font-size:0.24rem;color:#9B6B72">R$ 45</div>
-              </div>
-              <div style="background:rgba(255,255,255,0.75);border:1px solid rgba(200,150,150,0.2);border-radius:8px;padding:6px 4px;text-align:center">
-                <div style="font-size:0.6rem;margin-bottom:2px">👁</div>
-                <div style="font-size:0.26rem;color:#5C2D35;font-weight:500">Lash</div>
-                <div style="font-size:0.24rem;color:#9B6B72">R$ 120</div>
-              </div>
-            </div>
-          </div>
-        </div>
-        <div class="projeto-overlay"><span>Ver projeto</span></div>
-      </div>
-      <div class="projeto-info">
-        <div>
-          <div class="projeto-tag">Catálogo + Agendamento</div>
-          <div class="projeto-name">Bloom Beauty</div>
-        </div>
-        <div class="projeto-num">03</div>
-      </div>
-    </div>
-
-    <!-- Projeto 4 — Restaurante: verde escuro sofisticado -->
-    <div class="projeto-card reveal" onclick="openModal(3)">
-      <div class="projeto-img-wrap">
-        <div class="projeto-img proj-4" style="flex-direction:column;align-items:stretch;justify-content:flex-start;padding:0;overflow:hidden;">
-          <div style="display:flex;align-items:center;justify-content:space-between;padding:6px 12px;background:#162718;border-bottom:1px solid rgba(255,255,255,0.06);flex-shrink:0">
-            <div style="display:flex;align-items:center;gap:5px">
-              <span style="font-size:0.55rem">🍃</span>
-              <span style="font-family:var(--serif);font-size:0.48rem;letter-spacing:2px;color:#E8DCC8;font-style:italic">TRATTORIA BELLA</span>
-            </div>
-            <div style="display:flex;gap:8px">
-              <span style="font-size:0.26rem;color:rgba(232,220,200,0.3)">Cardápio</span>
-              <span style="font-size:0.26rem;color:#4A7C59">Reservar</span>
-            </div>
-          </div>
-          <div style="padding:12px 12px 8px;background:#1B2D1E;flex:1;display:flex;flex-direction:column">
-            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px">
-              <div style="font-size:0.26rem;color:#4A7C59;letter-spacing:3px;text-transform:uppercase">CARDÁPIO DIGITAL</div>
-              <div style="display:flex;align-items:center;gap:3px">
-                <div style="width:5px;height:5px;background:#22c55e;border-radius:50%"></div>
-                <span style="font-size:0.24rem;color:rgba(232,220,200,0.5)">Aberto · fecha às 23h</span>
-              </div>
-            </div>
-            <div style="font-family:var(--serif);font-size:0.82rem;font-weight:700;color:#E8DCC8;line-height:1.2;margin-bottom:3px;font-style:italic">Sabor autêntico<br>em cada prato.</div>
-            <div style="font-size:0.3rem;color:rgba(232,220,200,0.35);line-height:1.5;margin-bottom:7px">Culinária italiana tradicional • Ingredientes frescos</div>
-            <div style="display:flex;gap:3px;margin-bottom:8px;flex-wrap:wrap">
-              <div style="background:#4A7C59;color:#E8DCC8;padding:2px 7px;font-size:0.26rem;border-radius:2px">Entradas</div>
-              <div style="border:1px solid rgba(255,255,255,0.1);color:rgba(232,220,200,0.4);padding:2px 7px;font-size:0.26rem;border-radius:2px">Massas</div>
-              <div style="border:1px solid rgba(255,255,255,0.1);color:rgba(232,220,200,0.4);padding:2px 7px;font-size:0.26rem;border-radius:2px">Carnes</div>
-              <div style="border:1px solid rgba(255,255,255,0.1);color:rgba(232,220,200,0.4);padding:2px 7px;font-size:0.26rem;border-radius:2px">Vinhos</div>
-            </div>
-            <div style="display:grid;grid-template-columns:1fr 1fr;gap:5px;margin-top:auto">
-              <div style="background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.07);border-radius:5px;padding:5px">
-                <div style="background:#2A4030;height:20px;border-radius:3px;margin-bottom:4px"></div>
-                <div style="font-size:0.28rem;color:#E8DCC8;font-weight:500">Bruschetta</div>
-                <div style="font-size:0.26rem;color:#4A7C59;margin-top:1px">R$ 28</div>
-              </div>
-              <div style="background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.07);border-radius:5px;padding:5px">
-                <div style="background:#2A4030;height:20px;border-radius:3px;margin-bottom:4px"></div>
-                <div style="font-size:0.28rem;color:#E8DCC8;font-weight:500">Carpaccio</div>
-                <div style="font-size:0.26rem;color:#4A7C59;margin-top:1px">R$ 45</div>
-              </div>
-            </div>
-          </div>
-        </div>
-        <div class="projeto-overlay"><span>Ver projeto</span></div>
-      </div>
-      <div class="projeto-info">
-        <div>
-          <div class="projeto-tag">Cardápio Digital</div>
-          <div class="projeto-name">Trattoria Bella</div>
-        </div>
-        <div class="projeto-num">04</div>
-      </div>
-    </div>
-
-    <!-- Projeto 5 — Moda: preto total luxo dourado -->
-    <div class="projeto-card reveal" onclick="openModal(4)">
-      <div class="projeto-img-wrap">
-        <div class="projeto-img proj-5" style="flex-direction:column;align-items:stretch;justify-content:flex-start;padding:0;overflow:hidden;">
-          <div style="display:flex;align-items:center;justify-content:space-between;padding:6px 12px;background:#0A0A0A;border-bottom:1px solid rgba(201,168,76,0.1);flex-shrink:0">
-            <span style="font-family:var(--serif);font-size:0.65rem;font-style:italic;color:#C9A84C;letter-spacing:3px;font-weight:700">NOIR</span>
-            <div style="display:flex;gap:8px">
-              <span style="font-size:0.26rem;color:rgba(245,240,232,0.25);letter-spacing:1px;text-transform:uppercase">Coleção</span>
-              <span style="font-size:0.26rem;color:rgba(245,240,232,0.25);letter-spacing:1px;text-transform:uppercase">Lookbook</span>
-            </div>
-          </div>
-          <div style="padding:10px 12px 6px;background:#0A0A0A;flex-shrink:0">
-            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:5px">
-              <div style="width:16px;height:1px;background:rgba(201,168,76,0.4)"></div>
-              <div style="background:#C9A84C;color:#0A0A0A;padding:1px 6px;font-size:0.22rem;letter-spacing:2px;text-transform:uppercase;font-weight:700;border-radius:2px">NOVA COLEÇÃO</div>
-            </div>
-            <div style="font-family:var(--serif);font-size:0.78rem;font-style:italic;color:#F5F0E8;line-height:1.2;margin-bottom:4px">Vista sua<br><em>essência.</em></div>
-            <div style="font-size:0.26rem;color:rgba(245,240,232,0.25);letter-spacing:1px;text-transform:uppercase;margin-bottom:6px">Outono 2025 — Edição Limitada</div>
-            <div style="display:inline-block;border:1px solid #C9A84C;color:#C9A84C;padding:2px 8px;font-size:0.26rem;letter-spacing:2px;text-transform:uppercase">VER CATÁLOGO</div>
-          </div>
-          <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:4px;padding:6px 12px 8px;background:#0A0A0A;flex:1;align-content:start">
-            <div style="background:#141414;border:1px solid rgba(201,168,76,0.08);border-radius:2px;overflow:hidden;position:relative">
-              <div style="background:linear-gradient(180deg,#1c1c1c,#242424);aspect-ratio:0.72"></div>
-              <div style="position:absolute;top:3px;right:3px;background:#C9A84C;color:#0A0A0A;padding:1px 4px;font-size:0.2rem;font-weight:700;letter-spacing:1px">NOVO</div>
-              <div style="padding:3px 4px">
-                <div style="font-size:0.26rem;color:rgba(245,240,232,0.55);margin-bottom:1px">Blazer Noir</div>
-                <div style="font-size:0.26rem;color:#C9A84C">R$ 389</div>
-              </div>
-            </div>
-            <div style="background:#141414;border:1px solid rgba(201,168,76,0.08);border-radius:2px;overflow:hidden">
-              <div style="background:linear-gradient(180deg,#1a1a1a,#222);aspect-ratio:0.72"></div>
-              <div style="padding:3px 4px">
-                <div style="font-size:0.26rem;color:rgba(245,240,232,0.55);margin-bottom:1px">Vestido Éden</div>
-                <div style="font-size:0.26rem;color:#C9A84C">R$ 520</div>
-              </div>
-            </div>
-            <div style="background:#141414;border:1px solid rgba(201,168,76,0.08);border-radius:2px;overflow:hidden">
-              <div style="background:linear-gradient(180deg,#181818,#202020);aspect-ratio:0.72"></div>
-              <div style="padding:3px 4px">
-                <div style="font-size:0.26rem;color:rgba(245,240,232,0.55);margin-bottom:1px">Calça Soie</div>
-                <div style="font-size:0.26rem;color:#C9A84C">R$ 295</div>
-              </div>
-            </div>
-          </div>
-        </div>
-        <div class="projeto-overlay"><span>Ver projeto</span></div>
-      </div>
-      <div class="projeto-info">
-        <div>
-          <div class="projeto-tag">Catálogo de Vendas</div>
-          <div class="projeto-name">NOIR Store</div>
-        </div>
-        <div class="projeto-num">05</div>
-      </div>
-    </div>
-
-    <!-- Projeto 6 — Advocacia: azul marinho clássico -->
-    <div class="projeto-card reveal" onclick="openModal(5)">
-      <div class="projeto-img-wrap">
-        <div class="projeto-img proj-6" style="flex-direction:column;align-items:stretch;justify-content:flex-start;padding:0;overflow:hidden;">
-          <div style="height:3px;background:linear-gradient(90deg,#C9A84C,#E5C96A);flex-shrink:0"></div>
-          <div style="display:flex;align-items:center;justify-content:space-between;padding:6px 12px;background:#0F1B2D;border-bottom:1px solid rgba(201,168,76,0.1);flex-shrink:0">
-            <div style="display:flex;align-items:center;gap:6px">
-              <div style="width:16px;height:16px;border:1px solid rgba(201,168,76,0.5);display:flex;align-items:center;justify-content:center;flex-shrink:0">
-                <span style="font-size:0.4rem;color:#C9A84C;font-weight:700">VT</span>
-              </div>
-              <div>
-                <div style="font-family:var(--serif);font-size:0.44rem;letter-spacing:2px;color:#E8E0D0;font-style:italic">VT ADVOGADOS</div>
-                <div style="font-size:0.24rem;color:rgba(232,224,208,0.3);letter-spacing:1px;text-transform:uppercase">Advocacia & Consultoria</div>
-              </div>
-            </div>
-            <div style="display:flex;gap:8px">
-              <span style="font-size:0.26rem;color:rgba(232,224,208,0.25)">Atuação</span>
-              <span style="font-size:0.26rem;color:#C9A84C">Consulta</span>
-            </div>
-          </div>
-          <div style="padding:12px 12px 8px;background:linear-gradient(160deg,#0F1B2D,#1A2D45);flex:1;display:flex;flex-direction:column">
-            <div style="display:flex;align-items:center;gap:6px;margin-bottom:4px">
-              <div style="font-size:0.26rem;color:#C9A84C;letter-spacing:2px;text-transform:uppercase">DESDE 1979</div>
-              <div style="font-size:0.4rem;color:#C9A84C;line-height:1">★★★★★</div>
-              <div style="font-size:0.22rem;color:rgba(232,224,208,0.35)">Google</div>
-            </div>
-            <div style="font-family:var(--serif);font-size:0.8rem;font-style:italic;color:#E8E0D0;line-height:1.2;margin-bottom:3px">Advocacia com tradição<br>e excelência.</div>
-            <div style="font-size:0.24rem;color:rgba(201,168,76,0.6);margin-bottom:3px">OAB/SP Nº 12.847 · 45 anos de atuação</div>
-            <div style="font-size:0.3rem;color:rgba(232,224,208,0.35);line-height:1.5;margin-bottom:8px">Atuação jurídica especializada para pessoas físicas e empresas</div>
-            <div style="background:#C9A84C;color:#0F1B2D;padding:3px 9px;font-size:0.28rem;letter-spacing:1.5px;text-transform:uppercase;font-weight:600;width:fit-content;border-radius:2px">Consulta gratuita →</div>
-            <div style="display:flex;gap:4px;margin-top:auto;padding-top:10px;flex-wrap:wrap">
-              <div style="border:1px solid rgba(201,168,76,0.2);padding:2px 7px;font-size:0.24rem;color:rgba(232,224,208,0.45);border-radius:2px">Direito Civil</div>
-              <div style="border:1px solid rgba(201,168,76,0.2);padding:2px 7px;font-size:0.24rem;color:rgba(232,224,208,0.45);border-radius:2px">Trabalhista</div>
-              <div style="border:1px solid rgba(201,168,76,0.2);padding:2px 7px;font-size:0.24rem;color:rgba(232,224,208,0.45);border-radius:2px">Empresarial</div>
-              <div style="border:1px solid rgba(201,168,76,0.2);padding:2px 7px;font-size:0.24rem;color:rgba(232,224,208,0.45);border-radius:2px">Criminal</div>
-            </div>
-          </div>
-        </div>
-        <div class="projeto-overlay"><span>Ver projeto</span></div>
-      </div>
-      <div class="projeto-info">
-        <div>
-          <div class="projeto-tag">Site Institucional</div>
-          <div class="projeto-name">VT Advogados</div>
-        </div>
-        <div class="projeto-num">06</div>
-      </div>
-    </div>
-  </div>
-</section>
-
-<!-- SERVIÇOS -->
-<section id="servicos">
-  <div class="servicos-header reveal">
-    <span class="section-tag">O que fazemos</span>
-    <h2 class="section-title" style="color:var(--cream)">Soluções digitais para<br><em>cada necessidade.</em></h2>
-    <p>Do catálogo de vendas ao site institucional — criamos a presença digital ideal para o seu negócio.</p>
-  </div>
-  <div class="servicos-grid reveal">
-    <div class="servico-card">
-      <span class="servico-num">01</span>
-      <span class="servico-icon">🛍️</span>
-      <div class="servico-title">Catálogo de Vendas</div>
-      <p class="servico-desc">Transforme seu Instagram em uma loja completa. Seus clientes encontram, se interessam e entram em contato em segundos.</p>
-      <ul class="servico-list">
-        <li>Grid de produtos com fotos</li>
-        <li>Botão "Tenho interesse" → WhatsApp/Instagram</li>
-        <li>Filtros por categoria</li>
-        <li>Design responsivo</li>
-      </ul>
-    </div>
-    <div class="servico-card">
-      <span class="servico-num">02</span>
-      <span class="servico-icon">🏢</span>
-      <div class="servico-title">Site Institucional</div>
-      <p class="servico-desc">Passe credibilidade e profissionalismo para seus clientes. Um site que representa a sua marca com excelência.</p>
-      <ul class="servico-list">
-        <li>Apresentação da empresa e equipe</li>
-        <li>Serviços e diferenciais</li>
-        <li>Depoimentos de clientes</li>
-        <li>Formulário de contato</li>
-      </ul>
-    </div>
-    <div class="servico-card">
-      <span class="servico-num">03</span>
-      <span class="servico-icon">🎯</span>
-      <div class="servico-title">Landing Page</div>
-      <p class="servico-desc">Focada em conversão. Ideal para lançamentos, promoções e captação de leads com máxima performance.</p>
-      <ul class="servico-list">
-        <li>Estrutura focada em conversão</li>
-        <li>Gatilhos mentais estratégicos</li>
-        <li>Integração com WhatsApp</li>
-        <li>Carregamento ultrarrápido</li>
-      </ul>
-    </div>
-  </div>
-</section>
-
-<!-- QUESTIONÁRIO -->
-<section id="questionario">
-  <div class="quiz-wrap">
-    <div class="quiz-left reveal">
-      <span class="section-tag">Vamos começar?</span>
-      <h2 class="section-title">Responda algumas perguntas e criamos a solução <em>ideal para você.</em></h2>
-      <p>Em menos de 2 minutos entendemos exatamente o que você precisa e geramos um briefing completo.</p>
-      <ul class="quiz-checklist">
-        <li>Entendemos suas necessidades</li>
-        <li>Analisamos seu negócio</li>
-        <li>Criamos a melhor estratégia</li>
-        <li>Você recebe uma proposta personalizada</li>
-      </ul>
-      <span class="quiz-arrow">↓</span>
-    </div>
-
-    <div class="quiz-box reveal" id="quizBox">
-      <div id="quizContent">
-        <div class="quiz-step-label" id="stepLabel">PASSO 1 DE 5</div>
-        <div class="quiz-progress">
-          <div class="quiz-progress-bar" id="progressBar" style="width:20%"></div>
-        </div>
-        <div class="quiz-question" id="quizQuestion">Qual o principal objetivo do seu novo site?</div>
-        <div class="quiz-options" id="quizOptions"></div>
-        <div class="quiz-nav">
-          <button class="quiz-btn-back" id="btnBack" onclick="quizBack()" style="visibility:hidden">← Voltar</button>
-          <button class="quiz-btn-next" id="btnNext" onclick="quizNext()">Próximo →</button>
-        </div>
-      </div>
-      <div class="quiz-result" id="quizResult">
-        <div class="quiz-result-title">✅ Seu briefing está pronto!</div>
-        <p class="quiz-result-desc">Copie o texto abaixo e envie para nós pelo WhatsApp ou Instagram para receber sua proposta personalizada.</p>
-        <div class="quiz-result-prompt" id="quizPrompt"></div>
-        <button class="quiz-copy-btn" onclick="copyPrompt()">📋 Copiar briefing</button>
-        <a class="quiz-wa-btn" id="quizWaBtn" href="#" target="_blank">💬 Enviar pelo WhatsApp</a>
-      </div>
-    </div>
-  </div>
-</section>
-
-<!-- CONTATO -->
-<section id="contato">
-  <div class="contato-inner reveal">
-    <span class="section-tag">Entre em contato</span>
-    <h2 class="section-title">Pronto para transformar<br><em>seu negócio?</em></h2>
-    <p class="contato-desc">Fale com a gente pelo WhatsApp ou Instagram. Respondemos rapidinho e criamos a solução ideal para você.</p>
-    <div class="contato-btns">
-      <a href="https://wa.me/5513996410149" target="_blank" class="btn-cream">
-        💬 Chamar no WhatsApp
-      </a>
-      <a href="https://instagram.com/variant.agencia" target="_blank" class="btn-outline-cream">
-        📱 Ver no Instagram
-      </a>
-    </div>
-    <div class="contato-info">
-      <div class="contato-info-item">
-        <div class="contato-info-label">WhatsApp</div>
-        <div class="contato-info-value"><a href="https://wa.me/5513996410149">(13) 99641-0149</a></div>
-      </div>
-      <div class="contato-info-item">
-        <div class="contato-info-label">Instagram</div>
-        <div class="contato-info-value"><a href="https://instagram.com/variant.agencia" target="_blank">@variant.agencia</a></div>
-      </div>
-      <div class="contato-info-item">
-        <div class="contato-info-label">Atendimento</div>
-        <div class="contato-info-value">Seg–Sex, 9h às 18h</div>
-      </div>
-    </div>
-  </div>
-</section>
-
-<!-- FOOTER -->
-<footer>
-  <div class="footer-logo">Variant</div>
-  <p class="footer-copy">© 2025 <span>Variant Agência de Marketing</span>. Todos os direitos reservados.</p>
-</footer>
-
-<script>
-// CURSOR
-const cursor = document.getElementById('cursor');
-const follower = document.getElementById('cursorFollower');
-let mouseX = 0, mouseY = 0, followerX = 0, followerY = 0;
-document.addEventListener('mousemove', e => {
-  mouseX = e.clientX; mouseY = e.clientY;
-  cursor.style.left = mouseX + 'px'; cursor.style.top = mouseY + 'px';
-});
-function animateFollower() {
-  followerX += (mouseX - followerX) * 0.12;
-  followerY += (mouseY - followerY) * 0.12;
-  follower.style.left = followerX + 'px'; follower.style.top = followerY + 'px';
-  requestAnimationFrame(animateFollower);
-}
-animateFollower();
-document.querySelectorAll('a, button, .projeto-card').forEach(el => {
-  el.addEventListener('mouseenter', () => { cursor.style.width = '20px'; cursor.style.height = '20px'; follower.style.width = '60px'; follower.style.height = '60px'; });
-  el.addEventListener('mouseleave', () => { cursor.style.width = '10px'; cursor.style.height = '10px'; follower.style.width = '36px'; follower.style.height = '36px'; });
-});
-
-// NAV
-function openMobileNav() { document.getElementById('mobileNav').classList.add('open'); }
-function closeMobileNav() { document.getElementById('mobileNav').classList.remove('open'); }
-
-// REVEAL
-const observer = new IntersectionObserver(entries => {
-  entries.forEach(e => { if (e.isIntersecting) e.target.classList.add('visible'); });
-}, { threshold: 0.1 });
-document.querySelectorAll('.reveal').forEach(el => observer.observe(el));
-
-// QUIZ
-const quizData = [
-  {
-    question: 'Qual o principal objetivo do seu novo site?',
-    type: 'options',
-    options: [
-      { icon: '📈', text: 'Aumentar vendas' },
-      { icon: '🎯', text: 'Gerar mais leads' },
-      { icon: '🏆', text: 'Fortalecer minha marca' },
-      { icon: '💡', text: 'Outros objetivos' },
-    ]
-  },
-  {
-    question: 'Qual é o tipo do seu negócio?',
-    type: 'options',
-    options: [
-      { icon: '🛍️', text: 'Loja / E-commerce' },
-      { icon: '🏢', text: 'Empresa / Escritório' },
-      { icon: '👤', text: 'Profissional autônomo' },
-      { icon: '🍕', text: 'Restaurante / Food' },
-    ]
-  },
-  {
-    question: 'Que tipo de site você precisa?',
-    type: 'options',
-    options: [
-      { icon: '🗂️', text: 'Catálogo de produtos' },
-      { icon: '🏛️', text: 'Site institucional' },
-      { icon: '🎯', text: 'Landing page' },
-      { icon: '💬', text: 'Não sei ainda' },
-    ]
-  },
-  {
-    question: 'Como seus clientes devem entrar em contato?',
-    type: 'options',
-    options: [
-      { icon: '💬', text: 'WhatsApp' },
-      { icon: '📱', text: 'Instagram' },
-      { icon: '📧', text: 'E-mail' },
-      { icon: '📞', text: 'Telefone' },
-    ]
-  },
-  {
-    question: 'Qual o nome do seu negócio?',
-    type: 'input',
-    placeholder: 'Ex: Minha Empresa LTDA'
-  }
-];
-
-let currentStep = 0;
-const answers = [];
-
-function renderStep() {
-  const step = quizData[currentStep];
-  document.getElementById('stepLabel').textContent = `PASSO ${currentStep + 1} DE ${quizData.length}`;
-  document.getElementById('progressBar').style.width = `${((currentStep + 1) / quizData.length) * 100}%`;
-  document.getElementById('quizQuestion').textContent = step.question;
-  document.getElementById('btnBack').style.visibility = currentStep === 0 ? 'hidden' : 'visible';
-  document.getElementById('btnNext').textContent = currentStep === quizData.length - 1 ? 'Gerar briefing ✓' : 'Próximo →';
-
-  const optionsEl = document.getElementById('quizOptions');
-  optionsEl.innerHTML = '';
-
-  if (step.type === 'options') {
-    step.options.forEach((opt, i) => {
-      const btn = document.createElement('button');
-      btn.className = 'quiz-option' + (answers[currentStep] === opt.text ? ' selected' : '');
-      btn.innerHTML = `<span class="quiz-option-icon">${opt.icon}</span>${opt.text}`;
-      btn.onclick = () => {
-        answers[currentStep] = opt.text;
-        document.querySelectorAll('.quiz-option').forEach(b => b.classList.remove('selected'));
-        btn.classList.add('selected');
-      };
-      optionsEl.appendChild(btn);
-    });
-  } else {
-    const input = document.createElement('input');
-    input.className = 'quiz-input';
-    input.placeholder = step.placeholder;
-    input.value = answers[currentStep] || '';
-    input.oninput = () => { answers[currentStep] = input.value; };
-    optionsEl.appendChild(input);
-  }
-}
-
-function quizNext() {
-  if (!answers[currentStep]) {
-    const step = quizData[currentStep];
-    if (step.type === 'input') {
-      const val = document.querySelector('.quiz-input')?.value;
-      if (!val) { alert('Por favor preencha este campo!'); return; }
-      answers[currentStep] = val;
-    } else {
-      alert('Por favor selecione uma opção!'); return;
-    }
-  }
-  if (currentStep < quizData.length - 1) {
-    currentStep++;
-    renderStep();
-  } else {
-    showResult();
-  }
-}
-
-function quizBack() {
-  if (currentStep > 0) { currentStep--; renderStep(); }
-}
-
-function showResult() {
-  document.getElementById('quizContent').style.display = 'none';
-  const result = document.getElementById('quizResult');
-  result.classList.add('show');
-
-  const prompt = `Olá, Variant! Tenho interesse em criar um site. Aqui estão minhas informações:
-
-🏢 Negócio: ${answers[4] || 'Não informado'}
-🎯 Objetivo: ${answers[0] || 'Não informado'}
-💼 Tipo de negócio: ${answers[1] || 'Não informado'}
-🌐 Tipo de site: ${answers[2] || 'Não informado'}
-📲 Contato preferido: ${answers[3] || 'Não informado'}
-
-Gostaria de receber uma proposta personalizada!`;
-
-  document.getElementById('quizPrompt').textContent = prompt;
-  const waMsg = encodeURIComponent(prompt);
-  document.getElementById('quizWaBtn').href = `https://wa.me/5513996410149?text=${waMsg}`;
-}
-
-function copyPrompt() {
-  const text = document.getElementById('quizPrompt').textContent;
-  navigator.clipboard.writeText(text).then(() => {
-    const btn = document.querySelector('.quiz-copy-btn');
-    btn.textContent = '✅ Copiado!';
-    setTimeout(() => btn.textContent = '📋 Copiar briefing', 2000);
-  });
-}
-
-renderStep();
-</script>
-
-<!-- MODAL DE PROJETOS -->
-<div class="modal-overlay" id="projectModal">
-  <div class="modal-card">
-    <button class="modal-close" id="modalClose" aria-label="Fechar">✕</button>
-    <div class="modal-preview" id="modalPreview"></div>
-    <div class="modal-body">
-      <span class="modal-tag-label" id="modalTag"></span>
-      <h3 class="modal-project-title" id="modalTitle"></h3>
-      <div class="modal-divider"></div>
-      <p class="modal-desc" id="modalDesc"></p>
-      <span class="modal-techs-label">Tecnologias utilizadas</span>
-      <div class="modal-techs" id="modalTechs"></div>
-      <div class="modal-actions">
-        <a href="#" class="modal-btn-live" id="modalBtnLive" target="_blank">
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
-          Pedir projeto similar
-        </a>
-        <a href="#" class="modal-btn-wa" id="modalBtnWa" target="_blank">
-          💬 Solicitar projeto similar
-        </a>
-      </div>
-    </div>
-  </div>
 </div>
 
 <script>
-// DADOS DOS 6 PROJETOS
-var projectsData = [
-  {
-    name: 'Moretti Arquitetura', tag: 'Site Institucional',
-    desc: 'Site institucional desenvolvido para um renomado escritório de arquitetura contemporânea. O projeto contempla uma galeria visual imersiva com os trabalhos do portfólio, organizada por categorias como residencial, comercial e corporativo. A navegação intuitiva e o design minimalista reforçam a sofisticação da marca, enquanto o formulário de contato integrado facilita a captação de leads qualificados.',
-    techs: ['HTML5 & CSS3','JavaScript','Design Responsivo','Galeria Interativa','Formulário de Contato','SEO On-page'],
-    wa: 'Olá! Vi o projeto Moretti Arquitetura no portfólio da Variant e gostaria de solicitar um projeto similar. Podem me ajudar?'
-  },
-  {
-    name: 'BlackFit Studio', tag: 'Landing Page',
-    desc: 'Landing page de alta conversão desenvolvida para uma academia moderna focada em resultados. A página apresenta os planos de assinatura com comparativo de benefícios, galeria das modalidades disponíveis e depoimentos reais de alunos. A integração direta com o WhatsApp permite que novos interessados entrem em contato instantaneamente, maximizando o número de matrículas.',
-    techs: ['HTML5 & CSS3','JavaScript','WhatsApp API','Design Responsivo','Otimização de Conversão','Animações CSS'],
-    wa: 'Olá! Vi o projeto BlackFit Studio no portfólio da Variant e gostaria de solicitar um projeto similar. Podem me ajudar?'
-  },
-  {
-    name: 'Bloom Beauty', tag: 'Catálogo + Agendamento',
-    desc: 'Plataforma digital completa para um estúdio de beleza premium. O site apresenta o catálogo de serviços com descrições, preços e duração estimada de cada procedimento. O sistema de agendamento integrado permite que clientes marquem horários diretamente pelo site ou WhatsApp, reduzindo o trabalho operacional e aumentando os agendamentos confirmados.',
-    techs: ['HTML5 & CSS3','JavaScript','Sistema de Agendamento','WhatsApp API','Catálogo de Serviços','Design Responsivo'],
-    wa: 'Olá! Vi o projeto Bloom Beauty no portfólio da Variant e gostaria de solicitar um projeto similar. Podem me ajudar?'
-  },
-  {
-    name: 'Trattoria Bella', tag: 'Cardápio Digital',
-    desc: 'Cardápio digital sofisticado para um restaurante italiano tradicional. O projeto apresenta todos os pratos organizados por categorias — entradas, massas, carnes e sobremesas — com fotos profissionais e descrições detalhadas dos ingredientes. O botão de pedido via WhatsApp permite que clientes façam reservas com agilidade, ampliando o volume de atendimentos.',
-    techs: ['HTML5 & CSS3','JavaScript','Cardápio Interativo','WhatsApp API','Filtros por Categoria','Design Responsivo'],
-    wa: 'Olá! Vi o projeto Trattoria Bella no portfólio da Variant e gostaria de solicitar um projeto similar. Podem me ajudar?'
-  },
-  {
-    name: 'NOIR Store', tag: 'Catálogo de Vendas',
-    desc: 'Catálogo de vendas online para uma loja de moda feminina de alto padrão. Grid de produtos visualmente impactante, filtros por categoria e botão de interesse que direciona o cliente ao WhatsApp ou Instagram. O design escuro e elegante reforça o posicionamento premium da marca.',
-    techs: ['HTML5 & CSS3','JavaScript','Grid de Produtos','Filtros por Categoria','WhatsApp API','Design Premium'],
-    wa: 'Olá! Vi o projeto NOIR Store no portfólio da Variant e gostaria de solicitar um projeto similar. Podem me ajudar?'
-  },
-  {
-    name: 'VT Advogados', tag: 'Site Institucional',
-    desc: 'Site institucional elegante para um tradicional escritório de advocacia com décadas de atuação. Destaca as áreas de atuação com descrições objetivas, apresenta a equipe com credenciais e especialidades, e disponibiliza formulário de consulta inicial. O design sóbrio transmite autoridade e confiança para novos clientes.',
-    techs: ['HTML5 & CSS3','JavaScript','Design Institucional','Formulário de Contato','Áreas de Atuação','SEO On-page'],
-    wa: 'Olá! Vi o projeto VT Advogados no portfólio da Variant e gostaria de solicitar um projeto similar. Podem me ajudar?'
+  function openDoc() {
+    const loading = document.getElementById('loading');
+    loading.classList.add('show');
+    setTimeout(() => {
+      loading.classList.remove('show');
+      document.getElementById('screen-carteira').classList.remove('active');
+      document.getElementById('screen-doc').classList.add('active');
+    }, 1800);
   }
-];
-
-// CLICK + TOUCH nos cards
-document.querySelectorAll('.projeto-card').forEach(function(card, idx) {
-  var startY = 0, moved = false, byTouch = false;
-
-  card.addEventListener('touchstart', function(e) {
-    startY = e.touches[0].clientY; moved = false;
-    card.classList.add('is-touched');
-  }, { passive: true });
-
-  card.addEventListener('touchmove', function(e) {
-    if (Math.abs(e.touches[0].clientY - startY) > 8) {
-      moved = true; card.classList.remove('is-touched');
-    }
-  }, { passive: true });
-
-  card.addEventListener('touchend', function(e) {
-    card.classList.remove('is-touched');
-    if (!moved) {
-      e.preventDefault();
-      byTouch = true; openModal(idx);
-      setTimeout(function(){ byTouch = false; }, 600);
+  function closeDoc() {
+    document.getElementById('screen-doc').classList.remove('active');
+    document.getElementById('screen-carteira').classList.add('active');
+  }
+  window.addEventListener('DOMContentLoaded', function() {
+    const saved = localStorage.getItem('doc-foto');
+    if (saved) {
+      document.getElementById('doc-img').src = saved;
+      document.getElementById('doc-img').style.display = 'block';
+      document.getElementById('pick-wrap').style.display = 'none';
     }
   });
-
-  card.addEventListener('touchcancel', function() {
-    card.classList.remove('is-touched'); moved = true;
-  }, { passive: true });
-});
-
-function openModal(idx) {
-  var d    = projectsData[idx];
-  var card = document.querySelectorAll('.projeto-card')[idx];
-  var src  = card.querySelector('.projeto-img');
-  var prev = document.getElementById('modalPreview');
-  var waHref = 'https://wa.me/5513996410149?text=' + encodeURIComponent(d.wa);
-
-  document.getElementById('modalTag').textContent   = d.tag;
-  document.getElementById('modalTitle').textContent = d.name;
-  document.getElementById('modalDesc').textContent  = d.desc;
-  document.getElementById('modalTechs').innerHTML =
-    d.techs.map(function(t){ return '<span class="modal-tech">'+t+'</span>'; }).join('');
-  document.getElementById('modalBtnWa').href   = waHref;
-  document.getElementById('modalBtnLive').href = waHref;
-
-  prev.innerHTML = '';
-  var scaler = document.createElement('div');
-  scaler.className = 'modal-preview-scaler';
-  var cloned = src.cloneNode(true);
-  scaler.appendChild(cloned);
-  prev.appendChild(scaler);
-
-  document.body.style.overflow = 'hidden';
-  document.getElementById('projectModal').classList.add('open');
-
-  requestAnimationFrame(function(){
-    requestAnimationFrame(function(){
-      var pw = prev.offsetWidth;
-      var ph = prev.offsetHeight;
-      /* pega dimensões do elemento original ou do wrapper (aspect-ratio 4/3) */
-      var wrap = src.parentElement;
-      var ow = src.offsetWidth  || wrap.offsetWidth  || pw   || 400;
-      var oh = src.offsetHeight || wrap.offsetHeight || (ow * 3 / 4);
-      if (!oh) oh = ow * 3 / 4;
-      var s = Math.min(pw / ow, ph / oh);
-      cloned.style.width     = ow + 'px';
-      cloned.style.height    = oh + 'px';
-      scaler.style.width     = ow + 'px';
-      scaler.style.height    = oh + 'px';
-      scaler.style.transform = 'scale(' + s + ')';
-      scaler.style.left      = Math.max(0, (pw - ow * s) / 2) + 'px';
-      scaler.style.top       = Math.max(0, (ph - oh * s) / 2) + 'px';
-    });
-  });
-}
-
-function closeModal() {
-  var ov = document.getElementById('projectModal');
-  ov.classList.remove('open');
-  document.body.style.overflow = '';
-  setTimeout(function(){
-    if (!ov.classList.contains('open'))
-      document.getElementById('modalPreview').innerHTML = '';
-  }, 450);
-}
-
-document.getElementById('projectModal').addEventListener('click', function(e){
-  if (e.target === this) closeModal();
-});
-document.getElementById('projectModal').addEventListener('touchend', function(e){
-  if (e.target === this){ e.preventDefault(); closeModal(); }
-});
-document.getElementById('modalClose').addEventListener('click', closeModal);
-document.getElementById('modalClose').addEventListener('touchend', function(e){
-  e.preventDefault(); closeModal();
-});
-document.addEventListener('keydown', function(e){
-  if (e.key === 'Escape') closeModal();
-});
+  function loadDoc(event) {
+    const file = event.target.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = function(e) {
+      const img = document.getElementById('doc-img');
+      img.src = e.target.result;
+      img.style.display = 'block';
+      document.getElementById('pick-wrap').style.display = 'none';
+      localStorage.setItem('doc-foto', e.target.result);
+    };
+    reader.readAsDataURL(file);
+  }
+  let scale = 1, posX = 0, posY = 0, lastDist = 0, isDragging = false, startX = 0, startY = 0;
+  function applyTransform() {
+    document.getElementById('doc-img').style.transform = `translate(${posX}px, ${posY}px) scale(${scale})`;
+  }
+  function clampPos() {
+    const img = document.getElementById('doc-img');
+    const maxX = img.offsetWidth * (scale - 1);
+    const maxY = img.offsetHeight * (scale - 1);
+    posX = Math.min(0, Math.max(-maxX, posX));
+    posY = Math.min(0, Math.max(-maxY, posY));
+  }
+  function zoomIn()  { scale = Math.min(4, scale + 0.4); clampPos(); applyTransform(); }
+  function zoomOut() { scale = Math.max(1, scale - 0.4); if(scale===1){posX=0;posY=0;} clampPos(); applyTransform(); }
+  const wrap = document.getElementById('zoom-wrap');
+  wrap.addEventListener('mousedown', e => { isDragging=true; startX=e.clientX-posX; startY=e.clientY-posY; });
+  window.addEventListener('mousemove', e => { if(!isDragging||scale<=1)return; posX=e.clientX-startX; posY=e.clientY-startY; clampPos(); applyTransform(); });
+  window.addEventListener('mouseup', () => isDragging=false);
+  wrap.addEventListener('wheel', e => { e.preventDefault(); scale=Math.min(4,Math.max(1,scale-e.deltaY*0.002)); if(scale===1){posX=0;posY=0;} clampPos(); applyTransform(); }, {passive:false});
+  wrap.addEventListener('touchstart', e => {
+    if(e.touches.length===2) lastDist=Math.hypot(e.touches[0].clientX-e.touches[1].clientX,e.touches[0].clientY-e.touches[1].clientY);
+    else if(e.touches.length===1){isDragging=true;startX=e.touches[0].clientX-posX;startY=e.touches[0].clientY-posY;}
+  },{passive:true});
+  wrap.addEventListener('touchmove', e => {
+    if(e.touches.length===2){e.preventDefault();const d=Math.hypot(e.touches[0].clientX-e.touches[1].clientX,e.touches[0].clientY-e.touches[1].clientY);scale=Math.min(4,Math.max(1,scale*(d/lastDist)));lastDist=d;if(scale===1){posX=0;posY=0;}clampPos();applyTransform();}
+    else if(e.touches.length===1&&isDragging&&scale>1){posX=e.touches[0].clientX-startX;posY=e.touches[0].clientY-startY;clampPos();applyTransform();}
+  },{passive:false});
+  wrap.addEventListener('touchend',()=>isDragging=false);
 </script>
 </body>
 </html>
