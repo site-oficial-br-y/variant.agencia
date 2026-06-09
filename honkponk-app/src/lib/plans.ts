@@ -41,7 +41,7 @@ export const PLANS: Record<Plan, PlanConfig> = {
   agency: {
     name: 'Agência',
     description: 'Para agências e equipes',
-    price: 8999,
+    price: 5990,
     searchesPerDay: null,
     maxResults: null,
     allContacts: true,
@@ -53,7 +53,7 @@ export const PLANS: Record<Plan, PlanConfig> = {
   enterprise: {
     name: 'Empresa',
     description: 'Para empresas com equipe',
-    price: 14999,
+    price: 9990,
     searchesPerDay: null,
     maxResults: null,
     allContacts: true,
