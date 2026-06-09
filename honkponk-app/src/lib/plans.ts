@@ -29,7 +29,7 @@ export const PLANS: Record<Plan, PlanConfig> = {
   freelancer: {
     name: 'Freelancer',
     description: 'Para profissionais autônomos',
-    price: 2999,
+    price: 1990,
     searchesPerDay: 10,
     maxResults: null,
     allContacts: true,
