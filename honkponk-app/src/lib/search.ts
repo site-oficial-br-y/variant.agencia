@@ -119,6 +119,7 @@ export interface PlaceResult {
   reviews: number
   isOpen: boolean | null
   instagram?: string
+  idealMatch?: boolean
 }
 
 export function hasContactInfo(place: PlaceResult): boolean {

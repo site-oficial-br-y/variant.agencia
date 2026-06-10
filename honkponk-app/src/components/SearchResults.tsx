@@ -113,6 +113,7 @@ export function SearchResults({ params, userId, plan = 'free', onLimitReached }:
   const [exported, setExported] = useState(false)
   const [progressCity, setProgressCity] = useState('')
   const [progressDone, setProgressDone] = useState(0)
+  const [aiFiltering, setAiFiltering] = useState(false)
 
   const meta = SERVICE_META[params.service] || SERVICE_META.outros
   const segQueries: string[] = Array.isArray(SEGMENT_QUERIES[params.segment])
@@ -129,6 +130,7 @@ export function SearchResults({ params, userId, plan = 'free', onLimitReached }:
     setResults([])
     setProgressCity('')
     setProgressDone(0)
+    setAiFiltering(false)
 
     try {
       const limitRes = await fetch('/api/search', {
@@ -164,6 +166,10 @@ export function SearchResults({ params, userId, plan = 'free', onLimitReached }:
 
       if (!raw.length) { setResults([]); setSearched(true); setLoading(false); return }
 
+      setAiFiltering(true)
+      await new Promise(r => setTimeout(r, 900))
+
+      const isIdealFilter = !!meta.filterFn && !meta.filterFn({ website: 'http://example.com' })
       const detailed: PlaceResult[] = raw.map((p: any) => ({
         name: p.name,
         address: p.vicinity || '',
@@ -172,6 +178,7 @@ export function SearchResults({ params, userId, plan = 'free', onLimitReached }:
         website: p.website || '',
         phone: p.formatted_phone_number || '',
         isOpen: p.opening_hours?.open_now ?? null,
+        idealMatch: isIdealFilter && (meta.filterFn ? meta.filterFn({ website: p.website || undefined }) : true),
       }))
 
       const filtered = meta.filterFn ? detailed.filter(p => meta.filterFn({ website: p.website || undefined })) : detailed
@@ -252,7 +259,7 @@ export function SearchResults({ params, userId, plan = 'free', onLimitReached }:
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 14 }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
               <div className="spinner" style={{ margin: 0 }} />
-              <span style={{ fontWeight: 700, fontSize: '.95rem' }}>Buscando leads…</span>
+              <span style={{ fontWeight: 700, fontSize: '.95rem' }}>{aiFiltering ? '🤖 IA filtrando os clientes ideais…' : 'Buscando leads…'}</span>
             </div>
             {params.allBrazil && (
               <span style={{ fontSize: '.75rem', color: '#e879a0', fontWeight: 700 }}>{progressDone}/{totalCities} cidades</span>
@@ -347,6 +354,11 @@ export function SearchResults({ params, userId, plan = 'free', onLimitReached }:
                 {hot && (
                   <div style={{ position: 'absolute', top: -10, right: 16, background: 'linear-gradient(135deg,#f59e0b,#d97706)', color: '#000', borderRadius: 20, padding: '2px 10px', fontSize: '.65rem', fontWeight: 800, letterSpacing: .5 }}>
                     🔥 LEAD QUENTE
+                  </div>
+                )}
+                {place.idealMatch && (
+                  <div style={{ position: 'absolute', top: -10, left: 16, background: 'linear-gradient(135deg,#a78bfa,#7c3aed)', color: '#fff', borderRadius: 20, padding: '2px 10px', fontSize: '.65rem', fontWeight: 800, letterSpacing: .5 }}>
+                    ✨ CLIENTE IDEAL
                   </div>
                 )}
                 <div style={{ display: 'flex', alignItems: 'flex-start', gap: 14, flex: 1, minWidth: 200 }}>
