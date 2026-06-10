@@ -5,12 +5,6 @@ import type { Plan } from '@/lib/plans'
 const MP_ACCESS_TOKEN = process.env.MP_ACCESS_TOKEN!
 const APP_URL = process.env.NEXT_PUBLIC_APP_URL || 'https://honkponk.com.br'
 
-const PLAN_PRICES: Record<string, number> = {
-  freelancer: 29.99,
-  agency: 89.99,
-  enterprise: 149.99,
-}
-
 export async function POST(request: NextRequest) {
   try {
     const { plan, userId, email } = await request.json()
@@ -20,7 +14,7 @@ export async function POST(request: NextRequest) {
     }
 
     const planConfig = PLANS[plan as Plan]
-    const unitPrice = PLAN_PRICES[plan] || planConfig.price / 100
+    const unitPrice = planConfig.price / 100
 
     const preferenceBody = {
       items: [{ id: plan, title: `Honk Ponk — Plano ${planConfig.name}`, description: planConfig.description, quantity: 1, unit_price: unitPrice, currency_id: 'BRL' }],
