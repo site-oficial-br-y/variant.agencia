@@ -36,7 +36,7 @@ export const PLANS: Record<Plan, PlanConfig> = {
     exportExcel: false,
     maxUsers: 1,
     dedicatedSupport: false,
-    features: ['10 buscas por dia','Resultados ilimitados','Todos os leads (com ou sem contato)','WhatsApp + Instagram + Telefone + Site','Filtro inteligente por serviço'],
+    features: ['10 buscas por dia (cada busca traz dezenas de leads)','Resultados ilimitados por busca','Todos os leads (com ou sem contato)','WhatsApp + Instagram + Telefone + Site','Filtro inteligente por serviço'],
   },
   agency: {
     name: 'Agência',
