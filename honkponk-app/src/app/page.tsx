@@ -7,6 +7,7 @@ import { canSearch } from '@/lib/plans'
 import type { Plan } from '@/lib/plans'
 import { QuizOverlay } from '@/components/QuizOverlay'
 import { SearchResults } from '@/components/SearchResults'
+import { DemoResults } from '@/components/DemoResults'
 import { PricingSection } from '@/components/PricingSection'
 import { Navbar } from '@/components/Navbar'
 
@@ -43,7 +44,6 @@ export default function HomePage() {
   }, [])
 
   function handleSearch(data: QuizData) {
-    if (!userId) { window.location.href = '/signup'; return }
     setQuizOpen(false)
     setSearchParams(data)
     setLimitMsg(false)
@@ -169,7 +169,9 @@ export default function HomePage() {
                 <Link href="/#precos" style={{ background: 'linear-gradient(135deg,#e879a0,#c2185b)', color: '#fff', borderRadius: 10, padding: '10px 20px', fontSize: '.85rem', fontWeight: 700, textDecoration: 'none' }}>Fazer upgrade</Link>
               </div>
             )}
-            <SearchResults params={searchParams} userId={userId} plan={userPlan} onLimitReached={() => setLimitMsg(true)} />
+            {userId
+              ? <SearchResults params={searchParams} userId={userId} plan={userPlan} onLimitReached={() => setLimitMsg(true)} />
+              : <DemoResults params={searchParams} />}
           </div>
         </section>
       )}
