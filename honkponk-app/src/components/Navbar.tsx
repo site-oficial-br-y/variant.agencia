@@ -55,9 +55,14 @@ export function Navbar({ onOpenQuiz }: NavbarProps) {
               Minha Conta
             </TransitionLink>
           ) : (
-            <button onClick={onOpenQuiz} style={{ background: 'linear-gradient(135deg,#e879a0,#c2185b)', color: '#fff', border: 'none', borderRadius: 10, padding: '8px 16px', fontSize: '.82rem', fontWeight: 700, cursor: 'pointer', boxShadow: '0 4px 15px rgba(232,121,160,.35)', fontFamily: 'inherit', whiteSpace: 'nowrap' }}>
-              Começar grátis →
-            </button>
+            <>
+              <Link href="/login" style={{ color: 'rgba(255,255,255,.7)', textDecoration: 'none', fontSize: '.82rem', fontWeight: 600, whiteSpace: 'nowrap' }}>
+                Entrar
+              </Link>
+              <Link href="/signup" style={{ background: 'linear-gradient(135deg,#e879a0,#c2185b)', color: '#fff', border: 'none', borderRadius: 10, padding: '8px 16px', fontSize: '.82rem', fontWeight: 700, textDecoration: 'none', boxShadow: '0 4px 15px rgba(232,121,160,.35)', whiteSpace: 'nowrap' }}>
+                Criar conta grátis →
+              </Link>
+            </>
           )}
         </div>
       </div>
