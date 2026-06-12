@@ -1,23 +1,13 @@
 'use client'
-import { useEffect, Suspense } from 'react'
+import { Suspense } from 'react'
 import { useSearchParams } from 'next/navigation'
 import Link from 'next/link'
-import { createClient } from '@/lib/supabase/client'
 import { PLANS } from '@/lib/plans'
 import type { Plan } from '@/lib/plans'
 
 function SuccessContent() {
   const searchParams = useSearchParams()
   const plan = searchParams.get('plan') as Plan
-  const userId = searchParams.get('user')
-  const supabase = createClient()
-
-  useEffect(() => {
-    if (userId && plan && PLANS[plan]) {
-      supabase.from('users_profiles').update({ plan }).eq('id', userId)
-        .then(() => supabase.from('subscriptions').upsert({ user_id: userId, plan, status: 'active' }, { onConflict: 'user_id' }))
-    }
-  }, [userId, plan, supabase])
 
   const planConfig = plan ? PLANS[plan] : null
 
