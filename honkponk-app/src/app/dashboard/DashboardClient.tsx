@@ -20,6 +20,10 @@ export function DashboardClient({ user, profile, teamMembers }: { user: User; pr
   const [limitMsg, setLimitMsg] = useState(false)
   const [loggingOut, setLoggingOut] = useState(false)
   const [hoveredCard, setHoveredCard] = useState<string | null>(null)
+  const [members, setMembers] = useState<TeamMember[]>(teamMembers)
+  const [inviteEmail, setInviteEmail] = useState('')
+  const [teamLoading, setTeamLoading] = useState(false)
+  const [teamError, setTeamError] = useState('')
   const router = useRouter()
   const supabase = createClient()
 
@@ -34,6 +38,41 @@ export function DashboardClient({ user, profile, teamMembers }: { user: User; pr
     setLoggingOut(true)
     await supabase.auth.signOut()
     router.push('/')
+  }
+
+  async function handleInvite(e: React.FormEvent) {
+    e.preventDefault()
+    setTeamError('')
+    if (!inviteEmail) return
+    setTeamLoading(true)
+    try {
+      const res = await fetch('/api/team/invite', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ ownerId: user.id, email: inviteEmail }),
+      })
+      const data = await res.json()
+      if (!res.ok) { setTeamError(data.error || 'Erro ao convidar.'); return }
+      setMembers(m => [...m, { id: crypto.randomUUID(), owner_id: user.id, member_email: inviteEmail.trim().toLowerCase(), status: 'pending' }])
+      setInviteEmail('')
+    } catch { setTeamError('Erro de conexão.') }
+    finally { setTeamLoading(false) }
+  }
+
+  async function handleRemoveMember(memberId: string) {
+    setTeamError('')
+    setTeamLoading(true)
+    try {
+      const res = await fetch('/api/team/remove', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ ownerId: user.id, memberId }),
+      })
+      const data = await res.json()
+      if (!res.ok) { setTeamError(data.error || 'Erro ao remover.'); return }
+      setMembers(m => m.filter(member => member.id !== memberId))
+    } catch { setTeamError('Erro de conexão.') }
+    finally { setTeamLoading(false) }
   }
 
   function handleSearch(data: QuizData) {
@@ -147,6 +186,51 @@ export function DashboardClient({ user, profile, teamMembers }: { user: User; pr
             </div>
           )}
         </div>
+
+        {/* Equipe (plano Empresa) */}
+        {plan === 'enterprise' && !profile?.team_owner_id && (
+          <div className="animate-pageIn" style={{ background: 'rgba(255,255,255,.02)', border: '1px solid rgba(248,182,200,.15)', borderRadius: 20, padding: '24px', marginBottom: 32, animationDelay: '.14s' }}>
+            <h2 style={{ fontSize: '1.05rem', fontWeight: 800, marginBottom: 4 }}>👥 Equipe</h2>
+            <p style={{ fontSize: '.8rem', color: 'rgba(255,255,255,.4)', marginBottom: 18 }}>
+              Adicione até {PLANS.enterprise.maxUsers - 1} membros para terem acesso ao plano Empresa.
+            </p>
+            <form onSubmit={handleInvite} style={{ display: 'flex', gap: 10, marginBottom: 18, flexWrap: 'wrap' as const }}>
+              <input
+                type="email"
+                value={inviteEmail}
+                onChange={e => setInviteEmail(e.target.value)}
+                placeholder="email@exemplo.com"
+                disabled={teamLoading || members.length >= PLANS.enterprise.maxUsers - 1}
+                style={{ flex: '1 1 220px', background: 'rgba(255,255,255,.06)', border: '1.5px solid rgba(255,255,255,.12)', borderRadius: 10, padding: '10px 14px', color: '#fff', fontSize: '.88rem', fontFamily: 'inherit', outline: 'none' }}
+              />
+              <button
+                type="submit"
+                disabled={teamLoading || !inviteEmail || members.length >= PLANS.enterprise.maxUsers - 1}
+                style={{ background: 'linear-gradient(135deg,#e879a0,#c2185b)', color: '#fff', border: 'none', borderRadius: 10, padding: '10px 20px', fontSize: '.85rem', fontWeight: 700, cursor: teamLoading ? 'not-allowed' : 'pointer', fontFamily: 'inherit', opacity: teamLoading ? 0.7 : 1 }}
+              >
+                Convidar
+              </button>
+            </form>
+            {teamError && <p style={{ color: '#fb923c', fontSize: '.82rem', marginBottom: 14 }}>{teamError}</p>}
+            {members.length > 0 ? (
+              <ul style={{ listStyle: 'none', display: 'flex', flexDirection: 'column', gap: 8 }}>
+                {members.map(member => (
+                  <li key={member.id} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', background: 'rgba(255,255,255,.03)', border: '1px solid rgba(255,255,255,.08)', borderRadius: 10, padding: '10px 14px', fontSize: '.85rem' }}>
+                    <span>{member.member_email}</span>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                      <span style={{ fontSize: '.72rem', fontWeight: 700, color: member.status === 'active' ? '#4ade80' : '#fbbf24', textTransform: 'uppercase' as const }}>
+                        {member.status === 'active' ? 'Ativo' : 'Pendente'}
+                      </span>
+                      <button onClick={() => handleRemoveMember(member.id)} disabled={teamLoading} style={{ background: 'none', border: 'none', color: 'rgba(255,255,255,.4)', cursor: 'pointer', fontSize: '.8rem' }}>✕</button>
+                    </div>
+                  </li>
+                ))}
+              </ul>
+            ) : (
+              <p style={{ fontSize: '.82rem', color: 'rgba(255,255,255,.35)' }}>Nenhum membro adicionado ainda.</p>
+            )}
+          </div>
+        )}
 
         {/* Área principal */}
         {!searchParams ? (
