@@ -66,10 +66,14 @@ async function fetchPlacesBrazil(
       onProgress(c.name, done)
     })
   )
+  // Intercala os resultados das cidades (em vez de concatenar) para variar as regiões do Brasil
   const seen = new Set<string>()
   const merged: any[] = []
-  for (const batch of results) {
-    for (const p of batch) {
+  const maxLen = Math.max(0, ...results.map(r => r.length))
+  for (let i = 0; i < maxLen; i++) {
+    for (const batch of results) {
+      const p = batch[i]
+      if (!p) continue
       const key = p.name + (p.vicinity || '')
       if (!seen.has(key)) { seen.add(key); merged.push(p) }
     }
