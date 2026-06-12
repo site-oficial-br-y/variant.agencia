@@ -19,6 +19,23 @@ export default function SignupPage() {
     if (!terms) { setError('Você precisa aceitar os Termos de Uso.'); return }
     setError('')
     setLoading(true)
+
+    try {
+      const res = await fetch('/api/validate-email', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email }),
+      })
+      const data = await res.json()
+      if (!data.valid) {
+        setError(data.reason || 'Esse e-mail parece não existir. Verifique e tente novamente.')
+        setLoading(false)
+        return
+      }
+    } catch {
+      // se a verificação falhar, segue com o cadastro normalmente
+    }
+
     const { error } = await supabase.auth.signUp({ email, password })
     if (error) {
       setError(error.message)
