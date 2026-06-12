@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
+import { createClient as createServerClient } from '@/lib/supabase/server'
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -11,6 +12,12 @@ export async function POST(request: NextRequest) {
     const { ownerId, memberId } = await request.json()
     if (!ownerId || !memberId) {
       return NextResponse.json({ error: 'Dados inválidos.' }, { status: 400 })
+    }
+
+    const authClient = createServerClient()
+    const { data: { user } } = await authClient.auth.getUser()
+    if (!user || user.id !== ownerId) {
+      return NextResponse.json({ error: 'Não autorizado.' }, { status: 401 })
     }
 
     const { data: member } = await supabase.from('team_members').select('id, member_email, status').eq('id', memberId).eq('owner_id', ownerId).single()
