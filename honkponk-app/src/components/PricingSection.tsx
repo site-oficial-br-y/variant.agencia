@@ -24,7 +24,7 @@ export function PricingSection({ onGetStarted }: { onGetStarted?: () => void }) 
           <h2 style={{ fontSize: 'clamp(1.8rem,4vw,2.8rem)', fontWeight: 800, letterSpacing: -1.5, lineHeight: 1.15, marginBottom: 14 }}>Planos para todos os tamanhos.</h2>
           <p style={{ color: 'rgba(255,255,255,.45)', fontSize: '1rem' }}>Comece grátis. Escale quando precisar.</p>
         </div>
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(240px,1fr))', gap: 20 }}>
+        <div className="stagger" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(240px,1fr))', gap: 20 }}>
           {plans.map(({ key, featured }, i) => {
             const plan = PLANS[key]
             const isHovered = hovered === key
@@ -64,11 +64,11 @@ export function PricingSection({ onGetStarted }: { onGetStarted?: () => void }) 
                   ))}
                 </ul>
                 {plan.price === 0 ? (
-                  <button onClick={onGetStarted} style={{ width: '100%', background: 'rgba(255,255,255,.08)', color: '#fff', border: '1px solid rgba(255,255,255,.15)', borderRadius: 12, padding: '13px 20px', fontSize: '.9rem', fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit', transition: 'background .2s' }}>
+                  <button onClick={onGetStarted} className="btn-primary" style={{ width: '100%', background: 'rgba(255,255,255,.08)', color: '#fff', border: '1px solid rgba(255,255,255,.15)', borderRadius: 12, padding: '13px 20px', fontSize: '.9rem', fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit', transition: 'background .2s' }}>
                     Começar grátis
                   </button>
                 ) : (
-                  <Link href={`/checkout/${key}`} style={{ display: 'block', width: '100%', background: featured ? 'linear-gradient(135deg,#e879a0,#c2185b)' : 'rgba(232,121,160,.15)', color: '#fff', border: featured ? 'none' : '1px solid rgba(232,121,160,.3)', borderRadius: 12, padding: '13px 20px', fontSize: '.9rem', fontWeight: 700, textDecoration: 'none', textAlign: 'center', boxShadow: featured ? '0 8px 30px rgba(232,121,160,.35)' : 'none', transition: 'all .2s' }}>
+                  <Link href={`/checkout/${key}`} className="btn-primary" style={{ display: 'block', width: '100%', background: featured ? 'linear-gradient(135deg,#e879a0,#c2185b)' : 'rgba(232,121,160,.15)', color: '#fff', border: featured ? 'none' : '1px solid rgba(232,121,160,.3)', borderRadius: 12, padding: '13px 20px', fontSize: '.9rem', fontWeight: 700, textDecoration: 'none', textAlign: 'center', boxShadow: featured ? '0 8px 30px rgba(232,121,160,.35)' : 'none', transition: 'all .2s' }}>
                     Assinar {plan.name}
                   </Link>
                 )}
@@ -85,7 +85,7 @@ export function PricingSection({ onGetStarted }: { onGetStarted?: () => void }) 
           <h2 style={{ fontSize: 'clamp(1.6rem,3.5vw,2.4rem)', fontWeight: 800, letterSpacing: -1, lineHeight: 1.15, marginBottom: 10 }}>🪙 Honk Coins</h2>
           <p style={{ color: 'rgba(255,255,255,.45)', fontSize: '1rem' }}>Pague só quando precisar. Sem assinatura.</p>
         </div>
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(200px,1fr))', gap: 20, maxWidth: 760, margin: '0 auto' }}>
+        <div className="stagger" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(200px,1fr))', gap: 20, maxWidth: 760, margin: '0 auto' }}>
           {[
             { id: 'coins_10', coins: 10, price: 'R$9,90', label: 'Ideal para testar' },
             { id: 'coins_30', coins: 30, price: 'R$19,90', label: 'Mais popular', featured: true },
@@ -107,7 +107,7 @@ export function PricingSection({ onGetStarted }: { onGetStarted?: () => void }) 
               <div style={{ fontSize: '2rem', fontWeight: 900, color: '#e879a0', marginBottom: 4 }}>{pkg.coins}</div>
               <div style={{ fontSize: '.78rem', color: 'rgba(255,255,255,.45)', marginBottom: 12 }}>coins · {pkg.label}</div>
               <div style={{ fontSize: '1.35rem', fontWeight: 800, marginBottom: 20 }}>{pkg.price}</div>
-              <Link href="/checkout/coins" style={{
+              <Link href="/checkout/coins" className="btn-primary" style={{
                 display: 'block',
                 background: pkg.featured ? 'linear-gradient(135deg,#e879a0,#c2185b)' : 'rgba(232,121,160,.15)',
                 color: '#fff',

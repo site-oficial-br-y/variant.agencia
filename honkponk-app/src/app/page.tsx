@@ -74,10 +74,10 @@ export default function HomePage() {
               Honk Ponk rastreia negócios por região e filtra leads que realmente precisam do seu serviço. Chega de prospectar empresas que já têm o que você vende.
             </p>
             <div style={{ display: 'flex', flexWrap: 'wrap', gap: 14 }}>
-              <button onClick={() => setQuizOpen(true)} style={{ display: 'inline-flex', alignItems: 'center', gap: 8, background: 'linear-gradient(135deg,#e879a0,#c2185b)', color: '#fff', border: 'none', borderRadius: 12, padding: '14px 28px', fontSize: '1rem', fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit', boxShadow: '0 8px 30px rgba(232,121,160,.35)' }}>
+              <button onClick={() => setQuizOpen(true)} className="btn-primary" style={{ display: 'inline-flex', alignItems: 'center', gap: 8, background: 'linear-gradient(135deg,#e879a0,#c2185b)', color: '#fff', border: 'none', borderRadius: 12, padding: '14px 28px', fontSize: '1rem', fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit', boxShadow: '0 8px 30px rgba(232,121,160,.35)' }}>
                 🔍 Buscar leads agora
               </button>
-              <a href="#como-funciona" style={{ display: 'inline-flex', alignItems: 'center', gap: 8, background: 'transparent', color: 'rgba(255,255,255,.75)', border: '1px solid rgba(255,255,255,.15)', borderRadius: 12, padding: '14px 28px', fontSize: '1rem', fontWeight: 600, textDecoration: 'none' }}>
+              <a href="#como-funciona" className="btn-ghost" style={{ display: 'inline-flex', alignItems: 'center', gap: 8, background: 'transparent', color: 'rgba(255,255,255,.75)', border: '1px solid rgba(255,255,255,.15)', borderRadius: 12, padding: '14px 28px', fontSize: '1rem', fontWeight: 600, textDecoration: 'none' }}>
                 Ver como funciona
               </a>
             </div>
@@ -184,7 +184,7 @@ export default function HomePage() {
             <span style={{ display: 'inline-block', background: 'rgba(248,182,200,.1)', border: '1px solid rgba(248,182,200,.2)', borderRadius: 100, padding: '4px 14px', fontSize: '.75rem', fontWeight: 700, color: '#f8b6c8', marginBottom: 16, letterSpacing: '.5px', textTransform: 'uppercase' as const }}>Como funciona</span>
             <h2 style={{ fontSize: 'clamp(1.8rem,4vw,2.8rem)', fontWeight: 800, letterSpacing: -1.5 }}>3 passos para encontrar clientes.</h2>
           </div>
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(260px,1fr))', gap: 24 }}>
+          <div className="stagger" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(260px,1fr))', gap: 24 }}>
             {[
               { n: '01', icon: '🎯', title: 'Diga o que você oferece', desc: 'Selecione seu serviço — criação de sites, marketing, design, e mais.' },
               { n: '02', icon: '📍', title: 'Escolha a cidade e o nicho', desc: 'Filtramos pelo segmento certo: restaurantes, clínicas, oficinas...' },
@@ -207,7 +207,7 @@ export default function HomePage() {
           <div className="reveal" style={{ textAlign: 'center', marginBottom: 60 }}>
             <h2 style={{ fontSize: 'clamp(1.8rem,4vw,2.8rem)', fontWeight: 800, letterSpacing: -1.5 }}>Tudo que você precisa para prospectar.</h2>
           </div>
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(220px,1fr))', gap: 20 }}>
+          <div className="stagger" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(220px,1fr))', gap: 20 }}>
             {[
               { icon: '🗺️', title: 'Google Maps real', desc: 'Dados atualizados diretamente do Google Places.' },
               { icon: '🎯', title: 'Filtros inteligentes', desc: 'Só aparecem empresas que precisam do seu serviço.' },
@@ -233,7 +233,7 @@ export default function HomePage() {
           <div className="reveal" style={{ textAlign: 'center', marginBottom: 60 }}>
             <h2 style={{ fontSize: 'clamp(1.8rem,4vw,2.6rem)', fontWeight: 800, letterSpacing: -1.5 }}>Quem já usa, aprova.</h2>
           </div>
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(260px,1fr))', gap: 20 }}>
+          <div className="stagger" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(260px,1fr))', gap: 20 }}>
             {[
               { name: 'Lucas Martins', role: 'Designer Freelancer • Santos, SP', avatar: 'LM', color: '#e879a0', text: 'Em 10 minutos encontrei 30 empresas sem identidade visual na minha cidade. Fechei 2 clientes na mesma semana. Melhor ferramenta que já usei para prospecção.', stars: 5, ago: '3 dias atrás' },
               { name: 'Ana Paula R.', role: 'Dona de Agência • Campinas, SP', avatar: 'AP', color: '#a855f7', text: 'A mensagem pronta no WhatsApp faz toda diferença. A taxa de resposta é muito maior do que cold email. Já indiquei para 4 amigos do ramo.', stars: 5, ago: '1 semana atrás' },
@@ -268,7 +268,7 @@ export default function HomePage() {
           <form action="https://api.web3forms.com/submit" method="POST" style={{ display: 'flex', gap: 10 }}>
             <input type="hidden" name="access_key" value="886d635d-f949-4a6d-b349-e11fdfa5463f" />
             <input type="email" name="email" required placeholder="seu@email.com" style={{ flex: 1, background: 'rgba(255,255,255,.06)', border: '1.5px solid rgba(255,255,255,.12)', borderRadius: 12, padding: '13px 18px', color: '#fff', fontSize: '.95rem', fontFamily: 'inherit', outline: 'none' }} />
-            <button type="submit" style={{ background: 'linear-gradient(135deg,#e879a0,#c2185b)', color: '#fff', border: 'none', borderRadius: 12, padding: '13px 22px', fontSize: '.9rem', fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit', whiteSpace: 'nowrap' }}>Inscrever →</button>
+            <button type="submit" className="btn-primary" style={{ background: 'linear-gradient(135deg,#e879a0,#c2185b)', color: '#fff', border: 'none', borderRadius: 12, padding: '13px 22px', fontSize: '.9rem', fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit', whiteSpace: 'nowrap' }}>Inscrever →</button>
           </form>
         </div>
       </section>
