@@ -13,6 +13,14 @@ export default async function DashboardPage() {
     profile = newProfile
   }
 
+  // Verifica expiração do plano (planos pagos expiram em 30 dias)
+  if (profile && profile.plan !== 'free' && !profile.team_owner_id && profile.plan_expires_at) {
+    if (new Date(profile.plan_expires_at) < new Date()) {
+      await supabase.from('users_profiles').update({ plan: 'free', plan_expires_at: null }).eq('id', user.id)
+      profile = { ...profile, plan: 'free', plan_expires_at: null }
+    }
+  }
+
   // Ativa convite de equipe pendente (plano Empresa)
   if (profile && profile.plan !== 'enterprise' && !profile.team_owner_id && user.email) {
     const { data: invite } = await supabase

@@ -37,9 +37,10 @@ export async function POST(request: NextRequest) {
         await supabase.from('users_profiles').update({ honk_coins: current + coins }).eq('id', userId)
       }
     } else {
-      // type is the plan name (old format: userId|plan)
       const plan = type
-      await supabase.from('users_profiles').update({ plan }).eq('id', userId)
+      const expiresAt = new Date()
+      expiresAt.setDate(expiresAt.getDate() + 30)
+      await supabase.from('users_profiles').update({ plan, plan_expires_at: expiresAt.toISOString() }).eq('id', userId)
       await supabase.from('subscriptions').upsert({ user_id: userId, plan, mp_subscription_id: String(paymentId), status: 'active' }, { onConflict: 'user_id' })
     }
     return NextResponse.json({ received: true })

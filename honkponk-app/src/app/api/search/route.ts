@@ -10,10 +10,18 @@ export async function POST(req: NextRequest) {
   const supabase = createClient()
   const { data: { user } } = await supabase.auth.getUser()
 
-  let profile: { id: string; plan: Plan; searches_today: number; searches_reset_at: string; honk_coins?: number } | null = null
+  let profile: { id: string; plan: Plan; searches_today: number; searches_reset_at: string; honk_coins?: number; plan_expires_at?: string | null; team_owner_id?: string | null } | null = null
   if (user) {
-    const { data } = await supabase.from('users_profiles').select('id,plan,searches_today,searches_reset_at,honk_coins').eq('id', user.id).single()
+    const { data } = await supabase.from('users_profiles').select('id,plan,searches_today,searches_reset_at,honk_coins,plan_expires_at,team_owner_id').eq('id', user.id).single()
     profile = data
+  }
+
+  // Expirou o plano pago → vira free
+  if (profile && profile.plan !== 'free' && !profile.team_owner_id && profile.plan_expires_at) {
+    if (new Date(profile.plan_expires_at) < new Date()) {
+      if (user) await supabase.from('users_profiles').update({ plan: 'free', plan_expires_at: null }).eq('id', user.id)
+      profile = { ...profile, plan: 'free', plan_expires_at: null }
+    }
   }
 
   const plan: Plan = profile?.plan ?? 'free'
