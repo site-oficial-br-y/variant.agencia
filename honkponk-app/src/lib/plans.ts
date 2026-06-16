@@ -1,9 +1,19 @@
 export type Plan = 'free' | 'freelancer' | 'agency' | 'enterprise'
 
+export type BillingPeriod = 1 | 3 | 6 | 12
+
+export interface PeriodPrice {
+  months: BillingPeriod
+  label: string
+  price: number // em centavos
+  badge?: string
+}
+
 export interface PlanConfig {
   name: string
   description: string
   price: number
+  periods: PeriodPrice[]
   searchesPerDay: number | null
   maxResults: number | null
   allContacts: boolean
@@ -18,6 +28,7 @@ export const PLANS: Record<Plan, PlanConfig> = {
     name: 'Grátis',
     description: 'Para experimentar',
     price: 0,
+    periods: [],
     searchesPerDay: 1,
     maxResults: 5,
     allContacts: false,
@@ -30,6 +41,12 @@ export const PLANS: Record<Plan, PlanConfig> = {
     name: 'Freelancer',
     description: 'Para profissionais autônomos',
     price: 1990,
+    periods: [
+      { months: 1,  label: '1 mês',   price:  1990 },
+      { months: 3,  label: '3 meses', price:  4990, badge: '-17%' },
+      { months: 6,  label: '6 meses', price:  8990, badge: '-25%' },
+      { months: 12, label: '1 ano',   price: 15990, badge: '-33%' },
+    ],
     searchesPerDay: 10,
     maxResults: null,
     allContacts: true,
@@ -42,6 +59,12 @@ export const PLANS: Record<Plan, PlanConfig> = {
     name: 'Agência',
     description: 'Para agências e equipes',
     price: 5990,
+    periods: [
+      { months: 1,  label: '1 mês',   price:  5990 },
+      { months: 3,  label: '3 meses', price: 15990, badge: '-11%' },
+      { months: 6,  label: '6 meses', price: 27990, badge: '-22%' },
+      { months: 12, label: '1 ano',   price: 49990, badge: '-30%' },
+    ],
     searchesPerDay: null,
     maxResults: null,
     allContacts: true,
@@ -54,6 +77,12 @@ export const PLANS: Record<Plan, PlanConfig> = {
     name: 'Empresa',
     description: 'Para empresas com equipe',
     price: 9990,
+    periods: [
+      { months: 1,  label: '1 mês',   price:  9990 },
+      { months: 3,  label: '3 meses', price: 26990, badge: '-10%' },
+      { months: 6,  label: '6 meses', price: 47990, badge: '-20%' },
+      { months: 12, label: '1 ano',   price: 83990, badge: '-30%' },
+    ],
     searchesPerDay: null,
     maxResults: null,
     allContacts: true,

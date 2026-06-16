@@ -7,17 +7,18 @@ const APP_URL = process.env.NEXT_PUBLIC_APP_URL || 'https://honkponk.com.br'
 
 export async function POST(request: NextRequest) {
   try {
-    const { plan, userId, email } = await request.json()
+    const { plan, months = 1, userId, email } = await request.json()
 
     if (!plan || !userId || !PLANS[plan as Plan] || plan === 'free') {
       return NextResponse.json({ error: 'Plano inválido.' }, { status: 400 })
     }
 
     const planConfig = PLANS[plan as Plan]
-    const unitPrice = planConfig.price / 100
+    const period = planConfig.periods.find((p) => p.months === months) || planConfig.periods[0]
+    const unitPrice = period.price / 100
 
     const preferenceBody = {
-      items: [{ id: plan, title: `Honk Ponk — Plano ${planConfig.name}`, description: planConfig.description, quantity: 1, unit_price: unitPrice, currency_id: 'BRL' }],
+      items: [{ id: plan, title: `Honk Ponk — Plano ${planConfig.name} (${period.label})`, description: planConfig.description, quantity: 1, unit_price: unitPrice, currency_id: 'BRL' }],
       payer: { email },
       back_urls: {
         success: `${APP_URL}/checkout/success?plan=${plan}&user=${userId}`,
@@ -25,7 +26,7 @@ export async function POST(request: NextRequest) {
         pending: `${APP_URL}/checkout/pending`,
       },
       auto_return: 'approved',
-      external_reference: `${userId}|${plan}`,
+      external_reference: `${userId}|${plan}|${period.months}`,
       notification_url: `${APP_URL}/api/webhook`,
       statement_descriptor: 'HONK PONK',
       metadata: { user_id: userId, plan },

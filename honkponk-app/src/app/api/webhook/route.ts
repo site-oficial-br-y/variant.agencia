@@ -38,8 +38,9 @@ export async function POST(request: NextRequest) {
       }
     } else {
       const plan = type
+      const months = parseInt(parts[2] || '1', 10) || 1
       const expiresAt = new Date()
-      expiresAt.setDate(expiresAt.getDate() + 30)
+      expiresAt.setMonth(expiresAt.getMonth() + months)
       await supabase.from('users_profiles').update({ plan, plan_expires_at: expiresAt.toISOString() }).eq('id', userId)
       await supabase.from('subscriptions').upsert({ user_id: userId, plan, mp_subscription_id: String(paymentId), status: 'active' }, { onConflict: 'user_id' })
     }
