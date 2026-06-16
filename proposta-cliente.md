@@ -98,7 +98,6 @@ Para **aparecer no topo do Google/Instagram rapidamente** e atrair clientes. É 
 ## 8. Prazo, revisões e investimento
 
 - **Prazo de entrega:** `[ 7 a 15 dias ]` após o recebimento de todo o material;
-- **Revisões incluídas:** `[ 2 ]` rodadas de ajustes. Alterações além disso são cobradas à parte;
 - **Investimento na criação do site:** `[ R$ ___ ]`;
 - **Forma de pagamento:** `[ 50% para iniciar + 50% na entrega ]` — via Pix `[chave: ___]`.
 
