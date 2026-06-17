@@ -35,6 +35,17 @@
   .label{font-size:11px;letter-spacing:.32em;text-transform:uppercase;color:var(--muted);font-weight:400}
   .bw{filter:grayscale(1) contrast(1.03)}
 
+  /* fundos com elementos reais (prédios) */
+  .bg-build{position:absolute;inset:0;z-index:0;overflow:hidden;pointer-events:none}
+  .bg-build img{position:absolute;object-fit:cover;filter:grayscale(1) contrast(1.08)}
+  /* linhas orgânicas espalhadas */
+  .organic{position:absolute;z-index:1;pointer-events:none}
+  .organic path{fill:none;stroke:currentColor;stroke-width:1.2;vector-effect:non-scaling-stroke}
+  .organic.light{color:rgba(0,0,0,.13)}
+  .organic.dark{color:rgba(255,255,255,.16)}
+  .floaty{animation:floaty 16s ease-in-out infinite}
+  @keyframes floaty{0%,100%{transform:translateY(0)}50%{transform:translateY(-14px)}}
+
   /* NAV */
   header{position:fixed;top:0;left:0;right:0;z-index:1000;transition:.4s}
   header.scrolled{background:rgba(243,242,239,.82);backdrop-filter:blur(12px);border-bottom:1px solid var(--line)}
@@ -46,7 +57,12 @@
   @media(max-width:860px){.nav-links{display:none}}
 
   /* HERO */
-  .hero{min-height:100vh;display:flex;flex-direction:column;justify-content:center;position:relative}
+  .hero{min-height:100vh;display:flex;flex-direction:column;justify-content:center;position:relative;overflow:hidden}
+  .hero .bg-build img.b1{top:-8%;right:-6%;width:60%;height:120%;opacity:.20;
+    -webkit-mask-image:linear-gradient(100deg,transparent,#000 58%);mask-image:linear-gradient(100deg,transparent,#000 58%)}
+  .hero .bg-build img.b2{bottom:-14%;left:-10%;width:34%;height:60%;opacity:.10;
+    -webkit-mask-image:radial-gradient(circle,#000,transparent 75%);mask-image:radial-gradient(circle,#000,transparent 75%)}
+  .hero .wrap{position:relative;z-index:2}
   .hero .label{margin-bottom:40px;opacity:0;animation:fade 1s .2s forwards}
   .hero h1{
     font-weight:200;font-size:clamp(46px,8.5vw,128px);line-height:1.02;letter-spacing:-.03em;
@@ -66,7 +82,8 @@
   .sec-head h2{font-weight:200;font-size:clamp(30px,4.4vw,56px);letter-spacing:-.02em;line-height:1}
 
   /* SOBRE */
-  .sobre{border-top:1px solid var(--line)}
+  .sobre{border-top:1px solid var(--line);position:relative;overflow:hidden}
+  .sobre .wrap{position:relative;z-index:2}
   .sobre-grid{display:grid;grid-template-columns:1.1fr 1fr;gap:90px;align-items:center}
   .sobre-grid .txt h3{font-weight:200;font-size:clamp(24px,3vw,40px);line-height:1.25;letter-spacing:-.02em;margin-bottom:32px}
   .sobre-grid .txt h3 em{font-style:italic}
@@ -77,7 +94,8 @@
   @media(max-width:860px){.sobre-grid{grid-template-columns:1fr;gap:48px}}
 
   /* CASOS */
-  .casos{border-top:1px solid var(--line)}
+  .casos{border-top:1px solid var(--line);position:relative;overflow:hidden}
+  .casos .wrap{position:relative;z-index:2}
   .case{display:grid;grid-template-columns:1fr 1fr;gap:64px;align-items:center;padding:80px 0;border-bottom:1px solid var(--line)}
   .case:first-of-type{border-top:1px solid var(--line)}
   .case.rev{direction:rtl}.case.rev>*{direction:ltr}
@@ -93,7 +111,10 @@
   @media(max-width:860px){.case,.case.rev{grid-template-columns:1fr;gap:32px;direction:ltr}}
 
   /* STATEMENT (dark) */
-  .statement{background:var(--dark);color:var(--ink-on-dark);padding:160px 0}
+  .statement{background:var(--dark);color:var(--ink-on-dark);padding:160px 0;position:relative;overflow:hidden}
+  .statement .bg-build img{top:-10%;right:-8%;width:52%;height:130%;opacity:.16;
+    -webkit-mask-image:linear-gradient(90deg,transparent,#000 60%);mask-image:linear-gradient(90deg,transparent,#000 60%)}
+  .statement .wrap{position:relative;z-index:2}
   .statement .label{color:var(--muted-dark);margin-bottom:48px}
   .statement blockquote{font-weight:200;font-size:clamp(28px,4.6vw,60px);line-height:1.22;letter-spacing:-.02em;max-width:18ch}
   .statement blockquote em{font-style:italic}
@@ -111,7 +132,10 @@
   @media(max-width:860px){.srv{grid-template-columns:40px 1fr}.srv .d{display:none}}
 
   /* CTA (dark) */
-  .cta{background:var(--dark);color:var(--ink-on-dark);text-align:center;padding:170px 0}
+  .cta{background:var(--dark);color:var(--ink-on-dark);text-align:center;padding:170px 0;position:relative;overflow:hidden}
+  .cta .bg-build img{top:-20%;left:50%;transform:translateX(-50%);width:90%;height:150%;opacity:.12;
+    -webkit-mask-image:radial-gradient(circle at 50% 45%,#000,transparent 68%);mask-image:radial-gradient(circle at 50% 45%,#000,transparent 68%)}
+  .cta .wrap{position:relative;z-index:2}
   .cta .label{color:var(--muted-dark);margin-bottom:40px}
   .cta h2{font-weight:200;font-size:clamp(40px,7vw,108px);line-height:1.02;letter-spacing:-.03em}
   .cta h2 em{font-style:italic}
@@ -149,6 +173,17 @@
 
 <!-- HERO -->
 <section class="hero">
+  <div class="bg-build">
+    <img class="b1" src="https://images.unsplash.com/photo-1600566753086-00f18fb6b3ea?auto=format&fit=crop&w=1200&q=80" alt="" />
+    <img class="b2" src="https://images.unsplash.com/photo-1600585154340-be6161a56a0c?auto=format&fit=crop&w=900&q=80" alt="" />
+  </div>
+  <svg class="organic light floaty" style="top:8%;left:-4%;width:46%;height:70%" viewBox="0 0 600 500" preserveAspectRatio="none">
+    <path d="M-20,260 C140,80 300,420 470,200 S720,140 860,300"/>
+    <path d="M-40,340 C150,200 320,460 520,280" style="opacity:.6"/>
+  </svg>
+  <svg class="organic light" style="bottom:6%;right:2%;width:38%;height:50%" viewBox="0 0 600 400" preserveAspectRatio="none">
+    <path d="M620,60 C460,180 320,40 180,220 S-40,300 -120,200"/>
+  </svg>
   <div class="wrap">
     <span class="label">Arquitetura autoral — desde 2014</span>
     <h1>Espaços em <em>preto</em> e branco.</h1>
@@ -163,6 +198,10 @@
 
 <!-- SOBRE -->
 <section class="sobre" id="sobre">
+  <svg class="organic light floaty" style="top:12%;right:-6%;width:40%;height:80%" viewBox="0 0 600 500" preserveAspectRatio="none">
+    <path d="M620,80 C440,200 360,60 200,260 S-20,360 -120,240"/>
+    <path d="M600,160 C460,260 320,140 160,340" style="opacity:.55"/>
+  </svg>
   <div class="wrap">
     <div class="sec-head reveal"><span class="n">01 —</span><h2>Sobre</h2></div>
     <div class="sobre-grid">
@@ -177,6 +216,9 @@
 
 <!-- CASOS -->
 <section class="casos" id="casos">
+  <svg class="organic light floaty" style="bottom:8%;left:-8%;width:44%;height:60%" viewBox="0 0 600 400" preserveAspectRatio="none">
+    <path d="M-40,200 C140,60 300,360 480,180 S720,120 860,280"/>
+  </svg>
   <div class="wrap">
     <div class="sec-head reveal"><span class="n">02 —</span><h2>Projetos</h2></div>
 
@@ -214,6 +256,12 @@
 
 <!-- STATEMENT -->
 <section class="statement reveal">
+  <div class="bg-build">
+    <img src="https://images.unsplash.com/photo-1600607687939-ce8a6c25118c?auto=format&fit=crop&w=1200&q=80" alt="" />
+  </div>
+  <svg class="organic dark floaty" style="bottom:4%;left:-4%;width:42%;height:70%" viewBox="0 0 600 500" preserveAspectRatio="none">
+    <path d="M-40,300 C140,160 320,420 500,240 S740,180 880,320"/>
+  </svg>
   <div class="wrap">
     <span class="label">Filosofia</span>
     <blockquote>“A arquitetura é o <em>jogo sábio</em>, correto e magnífico dos volumes sob a luz.”</blockquote>
@@ -236,6 +284,12 @@
 
 <!-- CTA -->
 <section class="cta" id="contato">
+  <div class="bg-build">
+    <img src="https://images.unsplash.com/photo-1600585154340-be6161a56a0c?auto=format&fit=crop&w=1300&q=80" alt="" />
+  </div>
+  <svg class="organic dark" style="top:10%;left:6%;width:30%;height:50%" viewBox="0 0 600 400" preserveAspectRatio="none">
+    <path d="M-20,120 C160,260 320,80 500,240"/>
+  </svg>
   <div class="wrap">
     <span class="label">Vamos conversar</span>
     <h2>Agora é a sua<br>hora de <em>projetar</em>.</h2>
