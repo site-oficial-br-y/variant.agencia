@@ -889,10 +889,44 @@ footer {
   .modal-actions { flex-direction: column; }
   .modal-btn-live, .modal-btn-wa { justify-content: center; }
 }
+
+/* ORGANIC BACKGROUND LINES */
+.hero, #sobre, #trabalhos, #servicos, #questionario, #contato { position: relative; }
+#sobre, #servicos, #contato, #trabalhos, #questionario { overflow: hidden; }
+svg.organic-lines {
+  position: absolute; inset: 0;
+  width: 100%; height: 100%;
+  pointer-events: none; z-index: 0;
+}
+#sobre > *:not(.organic-lines),
+#trabalhos > *:not(.organic-lines),
+#servicos > *:not(.organic-lines),
+#questionario > *:not(.organic-lines),
+#contato > *:not(.organic-lines) { position: relative; z-index: 1; }
+.hero .organic-lines      { color: var(--black); opacity: .34; }
+#trabalhos .organic-lines { color: var(--black); opacity: .26; }
+#questionario .organic-lines { color: var(--black); opacity: .26; }
+#sobre .organic-lines     { color: var(--gold);  opacity: .42; }
+#servicos .organic-lines  { color: var(--gold);  opacity: .34; }
+#contato .organic-lines   { color: var(--gold);  opacity: .46; }
+@media (max-width: 768px){ svg.organic-lines { opacity: .12 !important; } #sobre .organic-lines,#servicos .organic-lines,#contato .organic-lines{opacity:.18 !important;} }
 </style>
 </head>
 <body>
 
+<!-- ORGANIC LINES (reusable) -->
+<svg width="0" height="0" style="position:absolute" aria-hidden="true"><defs><g id="organicLines">
+<path d="M-80,42C-34,41 -22,41 -10,41C1,40 13,40 24,39C36,38 48,38 59,37C71,36 82,35 94,34C106,33 117,32 129,31C140,30 152,29 163,28C175,27 187,26 198,25C210,24 221,23 233,22C245,21 256,20 268,19C279,18 291,18 303,17C314,17 326,16 337,16C349,16 361,16 372,16C384,17 395,17 407,18C419,18 430,19 442,20C453,21 465,22 477,24C488,25 500,27 511,29C523,30 534,32 546,35C558,37 569,39 581,41C592,44 604,46 616,49C627,51 639,54 650,56C662,59 674,61 685,64C697,66 708,69 720,71C732,74 743,76 755,78C766,80 778,82 790,83C801,85 813,87 824,88C836,89 848,90 859,91C871,91 882,92 894,92C906,92 917,92 929,91C940,91 952,90 963,89C975,88 987,87 998,85C1010,84 1021,82 1033,80C1045,78 1056,76 1068,73C1079,71 1091,68 1103,66C1114,63 1126,60 1137,57C1149,54 1161,51 1172,48C1184,45 1195,42 1207,39C1219,36 1230,33 1242,31C1253,28 1265,25 1277,23C1288,20 1300,18 1311,16C1323,14 1334,12 1346,10C1358,8 1369,7 1381,6C1392,4 1404,3 1416,3C1427,2 1439,1 1450,1C1462,1 1474,1 1485,1" fill="none" stroke="currentColor" stroke-width="1.0" stroke-opacity="0.30" stroke-linecap="round"/>
+<path d="M-80,124C-34,151 -22,158 -10,164C1,171 13,177 24,182C36,188 48,193 59,197C71,202 82,206 94,209C106,212 117,214 129,215C140,217 152,217 163,217C175,217 187,216 198,214C210,212 221,210 233,207C245,204 256,200 268,196C279,192 291,188 303,183C314,179 326,174 337,169C349,164 361,159 372,154C384,150 395,145 407,141C419,137 430,133 442,129C453,126 465,123 477,120C488,118 500,116 511,114C523,113 534,112 546,111C558,111 569,111 581,111C592,112 604,113 616,114C627,115 639,117 650,118C662,120 674,122 685,123C697,125 708,127 720,129C732,130 743,132 755,133C766,134 778,135 790,136C801,137 813,137 824,137C836,137 848,137 859,136C871,136 882,135 894,133C906,132 917,130 929,128C940,126 952,124 963,122C975,119 987,117 998,114C1010,112 1021,109 1033,107C1045,105 1056,102 1068,100C1079,98 1091,96 1103,95C1114,93 1126,92 1137,91C1149,90 1161,90 1172,90C1184,90 1195,90 1207,91C1219,92 1230,93 1242,94C1253,96 1265,98 1277,100C1288,102 1300,105 1311,107C1323,110 1334,113 1346,116C1358,119 1369,122 1381,125C1392,128 1404,131 1416,133C1427,136 1439,139 1450,141C1462,144 1474,146 1485,148" fill="none" stroke="currentColor" stroke-width="1.5" stroke-opacity="0.41" stroke-linecap="round"/>
+<path d="M-80,242C-34,254 -22,256 -10,258C1,261 13,262 24,264C36,265 48,266 59,267C71,268 82,268 94,268C106,268 117,267 129,267C140,266 152,265 163,264C175,263 187,261 198,260C210,258 221,257 233,255C245,253 256,251 268,250C279,248 291,246 303,244C314,242 326,240 337,239C349,237 361,235 372,234C384,232 395,231 407,229C419,228 430,226 442,225C453,223 465,222 477,221C488,219 500,218 511,216C523,215 534,213 546,212C558,210 569,209 581,207C592,205 604,203 616,201C627,200 639,198 650,196C662,193 674,191 685,189C697,187 708,185 720,183C732,181 743,179 755,177C766,175 778,174 790,172C801,171 813,170 824,169C836,168 848,167 859,167C871,167 882,168 894,168C906,169 917,170 929,172C940,174 952,176 963,179C975,182 987,185 998,189C1010,192 1021,197 1033,201C1045,206 1056,211 1068,216C1079,221 1091,226 1103,232C1114,237 1126,243 1137,248C1149,254 1161,259 1172,265C1184,270 1195,275 1207,279C1219,284 1230,288 1242,292C1253,296 1265,299 1277,301C1288,304 1300,306 1311,307C1323,308 1334,309 1346,309C1358,308 1369,307 1381,306C1392,304 1404,302 1416,299C1427,296 1439,292 1450,288C1462,284 1474,280 1485,275" fill="none" stroke="currentColor" stroke-width="2.0" stroke-opacity="0.52" stroke-linecap="round"/>
+<path d="M-80,333C-34,312 -22,307 -10,302C1,297 13,291 24,287C36,282 48,277 59,273C71,269 82,265 94,261C106,258 117,254 129,251C140,249 152,246 163,244C175,242 187,241 198,240C210,238 221,238 233,238C245,238 256,238 268,239C279,240 291,241 303,243C314,244 326,247 337,249C349,252 361,255 372,258C384,261 395,265 407,269C419,273 430,277 442,281C453,285 465,290 477,294C488,299 500,304 511,308C523,313 534,318 546,322C558,327 569,332 581,336C592,340 604,344 616,348C627,352 639,356 650,359C662,363 674,366 685,369C697,371 708,374 720,375C732,377 743,379 755,380C766,381 778,382 790,382C801,382 813,382 824,381C836,381 848,380 859,378C871,377 882,375 894,373C906,370 917,368 929,365C940,362 952,359 963,356C975,352 987,348 998,345C1010,341 1021,337 1033,333C1045,329 1056,325 1068,320C1079,316 1091,312 1103,308C1114,304 1126,300 1137,296C1149,292 1161,289 1172,285C1184,282 1195,278 1207,275C1219,272 1230,270 1242,267C1253,265 1265,263 1277,261C1288,259 1300,258 1311,257C1323,256 1334,255 1346,255C1358,255 1369,255 1381,255C1392,256 1404,257 1416,258C1427,259 1439,261 1450,263C1462,264 1474,267 1485,269" fill="none" stroke="currentColor" stroke-width="1.0" stroke-opacity="0.63" stroke-linecap="round"/>
+<path d="M-80,529C-34,538 -22,539 -10,537C1,536 13,533 24,529C36,526 48,520 59,514C71,508 82,500 94,492C106,484 117,475 129,465C140,455 152,444 163,434C175,423 187,412 198,401C210,390 221,379 233,368C245,358 256,347 268,338C279,328 291,319 303,311C314,303 326,296 337,290C349,285 361,280 372,277C384,273 395,271 407,270C419,270 430,270 442,272C453,274 465,278 477,282C488,286 500,292 511,299C523,305 534,313 546,322C558,330 569,340 581,349C592,359 604,369 616,379C627,390 639,400 650,411C662,421 674,431 685,441C697,451 708,460 720,468C732,477 743,485 755,491C766,498 778,504 790,509C801,514 813,517 824,520C836,522 848,524 859,524C871,524 882,523 894,521C906,519 917,515 929,511C940,507 952,501 963,496C975,490 987,483 998,476C1010,468 1021,460 1033,452C1045,444 1056,436 1068,427C1079,419 1091,410 1103,402C1114,394 1126,386 1137,379C1149,371 1161,364 1172,358C1184,351 1195,345 1207,340C1219,335 1230,331 1242,328C1253,324 1265,322 1277,320C1288,318 1300,318 1311,318C1323,318 1334,319 1346,320C1358,322 1369,324 1381,327C1392,330 1404,333 1416,337C1427,341 1439,346 1450,351C1462,355 1474,361 1485,366" fill="none" stroke="currentColor" stroke-width="1.5" stroke-opacity="0.74" stroke-linecap="round"/>
+<path d="M-80,410C-34,423 -22,428 -10,433C1,438 13,443 24,449C36,455 48,462 59,468C71,475 82,482 94,489C106,496 117,503 129,510C140,517 152,524 163,530C175,537 187,543 198,549C210,555 221,561 233,566C245,571 256,576 268,580C279,584 291,587 303,590C314,592 326,594 337,595C349,596 361,597 372,596C384,596 395,594 407,592C419,590 430,588 442,584C453,581 465,577 477,572C488,567 500,562 511,556C523,551 534,544 546,538C558,531 569,524 581,517C592,511 604,503 616,496C627,489 639,482 650,475C662,468 674,461 685,455C697,448 708,442 720,437C732,431 743,426 755,421C766,417 778,413 790,409C801,406 813,403 824,401C836,399 848,398 859,398C871,397 882,398 894,399C906,400 917,401 929,404C940,406 952,409 963,413C975,416 987,421 998,425C1010,430 1021,435 1033,441C1045,446 1056,452 1068,458C1079,464 1091,471 1103,477C1114,483 1126,490 1137,496C1149,502 1161,509 1172,514C1184,520 1195,526 1207,532C1219,537 1230,542 1242,547C1253,551 1265,555 1277,559C1288,563 1300,566 1311,568C1323,571 1334,572 1346,574C1358,575 1369,576 1381,576C1392,576 1404,575 1416,574C1427,573 1439,571 1450,569C1462,567 1474,564 1485,561" fill="none" stroke="currentColor" stroke-width="2.0" stroke-opacity="0.30" stroke-linecap="round"/>
+<path d="M-80,551C-34,532 -22,528 -10,524C1,521 13,518 24,515C36,513 48,511 59,510C71,509 82,508 94,509C106,509 117,510 129,512C140,514 152,517 163,521C175,524 187,528 198,533C210,538 221,543 233,549C245,554 256,560 268,567C279,573 291,580 303,586C314,592 326,599 337,605C349,611 361,617 372,623C384,628 395,634 407,638C419,643 430,647 442,650C453,653 465,655 477,657C488,659 500,660 511,660C523,660 534,659 546,657C558,656 569,654 581,651C592,648 604,644 616,640C627,636 639,632 650,627C662,622 674,617 685,612C697,607 708,601 720,596C732,591 743,585 755,581C766,576 778,571 790,567C801,563 813,559 824,556C836,553 848,551 859,549C871,547 882,546 894,545C906,544 917,544 929,545C940,545 952,547 963,548C975,550 987,552 998,554C1010,556 1021,559 1033,562C1045,565 1056,568 1068,571C1079,574 1091,577 1103,580C1114,582 1126,585 1137,587C1149,590 1161,592 1172,593C1184,595 1195,596 1207,597C1219,597 1230,597 1242,597C1253,596 1265,596 1277,594C1288,593 1300,591 1311,589C1323,587 1334,584 1346,581C1358,579 1369,576 1381,573C1392,570 1404,566 1416,564C1427,561 1439,558 1450,555C1462,553 1474,550 1485,549" fill="none" stroke="currentColor" stroke-width="1.0" stroke-opacity="0.41" stroke-linecap="round"/>
+<path d="M-80,712C-34,680 -22,670 -10,661C1,651 13,641 24,632C36,622 48,612 59,604C71,595 82,586 94,579C106,572 117,565 129,560C140,555 152,551 163,549C175,546 187,545 198,546C210,547 221,549 233,552C245,556 256,561 268,567C279,573 291,580 303,588C314,596 326,606 337,615C349,624 361,635 372,644C384,654 395,665 407,674C419,684 430,694 442,702C453,711 465,719 477,726C488,733 500,739 511,744C523,749 534,753 546,756C558,758 569,760 581,760C592,760 604,760 616,758C627,756 639,754 650,750C662,747 674,743 685,739C697,735 708,730 720,725C732,721 743,716 755,711C766,707 778,702 790,699C801,695 813,691 824,689C836,686 848,684 859,682C871,681 882,680 894,680C906,680 917,680 929,681C940,682 952,684 963,685C975,687 987,689 998,692C1010,694 1021,696 1033,698C1045,701 1056,703 1068,705C1079,706 1091,708 1103,709C1114,709 1126,710 1137,710C1149,709 1161,709 1172,707C1184,706 1195,704 1207,701C1219,699 1230,695 1242,692C1253,688 1265,684 1277,680C1288,676 1300,672 1311,668C1323,663 1334,659 1346,655C1358,651 1369,647 1381,644C1392,641 1404,638 1416,636C1427,634 1439,632 1450,631C1462,630 1474,630 1485,631" fill="none" stroke="currentColor" stroke-width="1.5" stroke-opacity="0.52" stroke-linecap="round"/>
+<path d="M-80,717C-34,713 -22,713 -10,715C1,716 13,719 24,722C36,725 48,728 59,733C71,737 82,742 94,747C106,751 117,757 129,762C140,767 152,772 163,777C175,781 187,785 198,789C210,793 221,796 233,798C245,800 256,801 268,802C279,802 291,802 303,801C314,800 326,798 337,795C349,793 361,790 372,786C384,782 395,778 407,774C419,770 430,765 442,761C453,757 465,752 477,749C488,745 500,741 511,739C523,736 534,734 546,733C558,732 569,731 581,731C592,732 604,733 616,735C627,737 639,740 650,743C662,746 674,751 685,755C697,759 708,764 720,769C732,774 743,779 755,784C766,789 778,793 790,797C801,801 813,805 824,808C836,811 848,813 859,814C871,815 882,816 894,815C906,814 917,813 929,810C940,808 952,804 963,800C975,796 987,791 998,786C1010,781 1021,775 1033,769C1045,763 1056,757 1068,751C1079,745 1091,739 1103,734C1114,728 1126,723 1137,719C1149,715 1161,711 1172,709C1184,706 1195,705 1207,704C1219,704 1230,704 1242,705C1253,707 1265,709 1277,712C1288,715 1300,720 1311,724C1323,729 1334,734 1346,740C1358,745 1369,751 1381,757C1392,763 1404,769 1416,775C1427,780 1439,786 1450,790C1462,795 1474,799 1485,803" fill="none" stroke="currentColor" stroke-width="2.0" stroke-opacity="0.63" stroke-linecap="round"/>
+<path d="M-80,885C-34,873 -22,870 -10,867C1,863 13,860 24,857C36,853 48,850 59,847C71,843 82,840 94,837C106,833 117,830 129,827C140,824 152,820 163,817C175,814 187,812 198,809C210,806 221,804 233,801C245,799 256,797 268,795C279,793 291,791 303,790C314,788 326,787 337,786C349,785 361,785 372,784C384,784 395,784 407,784C419,784 430,784 442,785C453,786 465,787 477,788C488,789 500,791 511,793C523,794 534,796 546,799C558,801 569,803 581,806C592,809 604,811 616,815C627,818 639,821 650,824C662,827 674,831 685,834C697,838 708,842 720,845C732,849 743,853 755,856C766,860 778,864 790,867C801,871 813,875 824,878C836,882 848,885 859,889C871,892 882,895 894,898C906,901 917,904 929,907C940,909 952,912 963,914C975,916 987,918 998,920C1010,922 1021,923 1033,924C1045,926 1056,927 1068,927C1079,928 1091,928 1103,928C1114,928 1126,928 1137,928C1149,927 1161,927 1172,926C1184,925 1195,923 1207,922C1219,920 1230,918 1242,916C1253,914 1265,912 1277,910C1288,907 1300,905 1311,902C1323,899 1334,896 1346,893C1358,890 1369,887 1381,883C1392,880 1404,877 1416,873C1427,870 1439,866 1450,863C1462,859 1474,856 1485,852" fill="none" stroke="currentColor" stroke-width="1.0" stroke-opacity="0.74" stroke-linecap="round"/>
+</g></defs></svg>
 <!-- CURSOR -->
 <div class="cursor" id="cursor"></div>
 <div class="cursor-follower" id="cursorFollower"></div>
@@ -930,6 +964,7 @@ footer {
 
 <!-- HERO -->
 <section class="hero">
+  <svg class="organic-lines" viewBox="0 0 1440 900" preserveAspectRatio="xMidYMid slice" aria-hidden="true"><use href="#organicLines"/></svg>
   <div class="hero-bg-shape"></div>
   <div class="hero-left">
     <span class="hero-tag">Sites que transformam</span>
@@ -1023,6 +1058,7 @@ footer {
 
 <!-- SOBRE -->
 <section id="sobre">
+  <svg class="organic-lines" viewBox="0 0 1440 900" preserveAspectRatio="xMidYMid slice" aria-hidden="true"><use href="#organicLines"/></svg>
   <div class="sobre-grid reveal">
     <div class="sobre-left">
       <span class="section-tag">Nosso trabalho</span>
@@ -1065,6 +1101,7 @@ footer {
 
 <!-- TRABALHOS -->
 <section id="trabalhos">
+  <svg class="organic-lines" viewBox="0 0 1440 900" preserveAspectRatio="xMidYMid slice" aria-hidden="true"><use href="#organicLines"/></svg>
   <div class="trabalhos-header reveal">
     <div>
       <span class="section-tag">Portfólio</span>
@@ -1100,15 +1137,15 @@ footer {
             </div>
             <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:4px;margin-top:auto">
               <div style="position:relative;border-radius:3px;overflow:hidden;aspect-ratio:1">
-                <div style="background:linear-gradient(135deg,#D8D2CA,#C8C2BA);width:100%;height:100%"></div>
+                <img src="https://loremflickr.com/220/220/architecture?lock=211" onerror="this.onerror=null;this.src='https://picsum.photos/seed/211/220/220'" style="width:100%;height:100%;object-fit:cover;display:block" alt="" loading="lazy">
                 <div style="position:absolute;bottom:0;left:0;right:0;background:rgba(0,0,0,0.45);padding:2px 3px;font-size:0.22rem;color:#fff">Casa Jardins</div>
               </div>
               <div style="position:relative;border-radius:3px;overflow:hidden;aspect-ratio:1">
-                <div style="background:linear-gradient(135deg,#CBC5BC,#BCB6AE);width:100%;height:100%"></div>
+                <img src="https://loremflickr.com/220/220/interior?lock=212" onerror="this.onerror=null;this.src='https://picsum.photos/seed/212/220/220'" style="width:100%;height:100%;object-fit:cover;display:block" alt="" loading="lazy">
                 <div style="position:absolute;bottom:0;left:0;right:0;background:rgba(0,0,0,0.45);padding:2px 3px;font-size:0.22rem;color:#fff">Loft Vila</div>
               </div>
               <div style="position:relative;border-radius:3px;overflow:hidden;aspect-ratio:1">
-                <div style="background:linear-gradient(135deg,#BEB8B0,#B0AAA2);width:100%;height:100%"></div>
+                <img src="https://loremflickr.com/220/220/building?lock=213" onerror="this.onerror=null;this.src='https://picsum.photos/seed/213/220/220'" style="width:100%;height:100%;object-fit:cover;display:block" alt="" loading="lazy">
                 <div style="position:absolute;bottom:0;left:0;right:0;background:rgba(0,0,0,0.45);padding:2px 3px;font-size:0.22rem;color:#fff;display:flex;align-items:center;gap:2px"><span style="color:#C9A84C">★</span>Award</div>
               </div>
             </div>
@@ -1141,7 +1178,7 @@ footer {
           <div style="padding:12px 12px 8px;background:#0D0D0D;flex:1;display:flex;flex-direction:column">
             <div style="font-size:0.26rem;color:#E63946;letter-spacing:3px;text-transform:uppercase;margin-bottom:4px">ALTO RENDIMENTO</div>
             <div style="font-size:1.05rem;font-weight:900;color:#fff;line-height:1;text-transform:uppercase;letter-spacing:-1px;margin-bottom:5px">MAIS QUE<br>UMA<br>ACADEMIA.</div>
-            <div style="font-size:0.3rem;color:rgba(255,255,255,0.3);line-height:1.5;margin-bottom:8px">Treinos personalizados • Nutrição • Resultados reais</div>
+            <div style="font-size:0.3rem;color:rgba(255,255,255,0.3);line-height:1.5;margin-bottom:8px">Treinos personalizados • Nutrição • Resultados reais</div><img src="https://loremflickr.com/320/80/gym?lock=221" onerror="this.onerror=null;this.src='https://picsum.photos/seed/221/320/80'" style="width:100%;height:34px;object-fit:cover;border-radius:4px;margin-bottom:8px;display:block;border:1px solid rgba(255,255,255,0.08)" alt="" loading="lazy">
             <div style="display:flex;align-items:center;gap:6px;margin-bottom:7px">
               <div style="background:#E63946;color:#fff;padding:3px 10px;font-size:0.3rem;letter-spacing:2px;text-transform:uppercase">MATRICULAR AGORA →</div>
               <div style="background:#22c55e;color:#fff;padding:2px 6px;font-size:0.24rem;letter-spacing:1px;text-transform:uppercase;border-radius:2px;animation:float 2s ease-in-out infinite">VAGAS!</div>
@@ -1209,17 +1246,17 @@ footer {
             <div style="background:#E8B4B8;color:#5C2D35;padding:3px 10px;font-size:0.3rem;border-radius:20px;font-weight:500;width:fit-content">Agendar horário →</div>
             <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:5px;margin-top:auto;padding-top:10px">
               <div style="background:rgba(255,255,255,0.75);border:1px solid rgba(200,150,150,0.2);border-radius:8px;padding:6px 4px;text-align:center">
-                <div style="font-size:0.6rem;margin-bottom:2px">💅</div>
+                <img src="https://loremflickr.com/90/50/manicure?lock=231" onerror="this.onerror=null;this.src='https://picsum.photos/seed/231/90/50'" style="width:100%;height:18px;object-fit:cover;border-radius:5px;margin-bottom:3px;display:block" alt="" loading="lazy">
                 <div style="font-size:0.26rem;color:#5C2D35;font-weight:500">Manicure</div>
                 <div style="font-size:0.24rem;color:#9B6B72">R$ 35</div>
               </div>
               <div style="background:rgba(255,255,255,0.75);border:1px solid rgba(200,150,150,0.2);border-radius:8px;padding:6px 4px;text-align:center">
-                <div style="font-size:0.6rem;margin-bottom:2px">✨</div>
+                <img src="https://loremflickr.com/90/50/eyebrows?lock=232" onerror="this.onerror=null;this.src='https://picsum.photos/seed/232/90/50'" style="width:100%;height:18px;object-fit:cover;border-radius:5px;margin-bottom:3px;display:block" alt="" loading="lazy">
                 <div style="font-size:0.26rem;color:#5C2D35;font-weight:500">Sobrancelha</div>
                 <div style="font-size:0.24rem;color:#9B6B72">R$ 45</div>
               </div>
               <div style="background:rgba(255,255,255,0.75);border:1px solid rgba(200,150,150,0.2);border-radius:8px;padding:6px 4px;text-align:center">
-                <div style="font-size:0.6rem;margin-bottom:2px">👁</div>
+                <img src="https://loremflickr.com/90/50/eyelashes?lock=233" onerror="this.onerror=null;this.src='https://picsum.photos/seed/233/90/50'" style="width:100%;height:18px;object-fit:cover;border-radius:5px;margin-bottom:3px;display:block" alt="" loading="lazy">
                 <div style="font-size:0.26rem;color:#5C2D35;font-weight:500">Lash</div>
                 <div style="font-size:0.24rem;color:#9B6B72">R$ 120</div>
               </div>
@@ -1269,12 +1306,12 @@ footer {
             </div>
             <div style="display:grid;grid-template-columns:1fr 1fr;gap:5px;margin-top:auto">
               <div style="background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.07);border-radius:5px;padding:5px">
-                <div style="background:#2A4030;height:20px;border-radius:3px;margin-bottom:4px"></div>
+                <img src="https://loremflickr.com/140/80/pasta?lock=241" onerror="this.onerror=null;this.src='https://picsum.photos/seed/241/140/80'" style="width:100%;height:26px;object-fit:cover;border-radius:3px;margin-bottom:4px;display:block" alt="" loading="lazy">
                 <div style="font-size:0.28rem;color:#E8DCC8;font-weight:500">Bruschetta</div>
                 <div style="font-size:0.26rem;color:#4A7C59;margin-top:1px">R$ 28</div>
               </div>
               <div style="background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.07);border-radius:5px;padding:5px">
-                <div style="background:#2A4030;height:20px;border-radius:3px;margin-bottom:4px"></div>
+                <img src="https://loremflickr.com/140/80/steak?lock=242" onerror="this.onerror=null;this.src='https://picsum.photos/seed/242/140/80'" style="width:100%;height:26px;object-fit:cover;border-radius:3px;margin-bottom:4px;display:block" alt="" loading="lazy">
                 <div style="font-size:0.28rem;color:#E8DCC8;font-weight:500">Carpaccio</div>
                 <div style="font-size:0.26rem;color:#4A7C59;margin-top:1px">R$ 45</div>
               </div>
@@ -1314,7 +1351,7 @@ footer {
           </div>
           <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:4px;padding:6px 12px 8px;background:#0A0A0A;flex:1;align-content:start">
             <div style="background:#141414;border:1px solid rgba(201,168,76,0.08);border-radius:2px;overflow:hidden;position:relative">
-              <div style="background:linear-gradient(180deg,#1c1c1c,#242424);aspect-ratio:0.72"></div>
+              <img src="https://loremflickr.com/140/195/fashion?lock=251" onerror="this.onerror=null;this.src='https://picsum.photos/seed/251/140/195'" style="width:100%;aspect-ratio:0.72;object-fit:cover;display:block" alt="" loading="lazy">
               <div style="position:absolute;top:3px;right:3px;background:#C9A84C;color:#0A0A0A;padding:1px 4px;font-size:0.2rem;font-weight:700;letter-spacing:1px">NOVO</div>
               <div style="padding:3px 4px">
                 <div style="font-size:0.26rem;color:rgba(245,240,232,0.55);margin-bottom:1px">Blazer Noir</div>
@@ -1322,14 +1359,14 @@ footer {
               </div>
             </div>
             <div style="background:#141414;border:1px solid rgba(201,168,76,0.08);border-radius:2px;overflow:hidden">
-              <div style="background:linear-gradient(180deg,#1a1a1a,#222);aspect-ratio:0.72"></div>
+              <img src="https://loremflickr.com/140/195/dress?lock=252" onerror="this.onerror=null;this.src='https://picsum.photos/seed/252/140/195'" style="width:100%;aspect-ratio:0.72;object-fit:cover;display:block" alt="" loading="lazy">
               <div style="padding:3px 4px">
                 <div style="font-size:0.26rem;color:rgba(245,240,232,0.55);margin-bottom:1px">Vestido Éden</div>
                 <div style="font-size:0.26rem;color:#C9A84C">R$ 520</div>
               </div>
             </div>
             <div style="background:#141414;border:1px solid rgba(201,168,76,0.08);border-radius:2px;overflow:hidden">
-              <div style="background:linear-gradient(180deg,#181818,#202020);aspect-ratio:0.72"></div>
+              <img src="https://loremflickr.com/140/195/clothing?lock=253" onerror="this.onerror=null;this.src='https://picsum.photos/seed/253/140/195'" style="width:100%;aspect-ratio:0.72;object-fit:cover;display:block" alt="" loading="lazy">
               <div style="padding:3px 4px">
                 <div style="font-size:0.26rem;color:rgba(245,240,232,0.55);margin-bottom:1px">Calça Soie</div>
                 <div style="font-size:0.26rem;color:#C9A84C">R$ 295</div>
@@ -1376,7 +1413,7 @@ footer {
             </div>
             <div style="font-family:var(--serif);font-size:0.8rem;font-style:italic;color:#E8E0D0;line-height:1.2;margin-bottom:3px">Advocacia com tradição<br>e excelência.</div>
             <div style="font-size:0.24rem;color:rgba(201,168,76,0.6);margin-bottom:3px">OAB/SP Nº 12.847 · 45 anos de atuação</div>
-            <div style="font-size:0.3rem;color:rgba(232,224,208,0.35);line-height:1.5;margin-bottom:8px">Atuação jurídica especializada para pessoas físicas e empresas</div>
+            <div style="font-size:0.3rem;color:rgba(232,224,208,0.35);line-height:1.5;margin-bottom:8px">Atuação jurídica especializada para pessoas físicas e empresas</div><img src="https://loremflickr.com/320/80/office?lock=261" onerror="this.onerror=null;this.src='https://picsum.photos/seed/261/320/80'" style="width:100%;height:30px;object-fit:cover;border-radius:3px;margin-bottom:8px;display:block;border:1px solid rgba(201,168,76,0.15)" alt="" loading="lazy">
             <div style="background:#C9A84C;color:#0F1B2D;padding:3px 9px;font-size:0.28rem;letter-spacing:1.5px;text-transform:uppercase;font-weight:600;width:fit-content;border-radius:2px">Consulta gratuita →</div>
             <div style="display:flex;gap:4px;margin-top:auto;padding-top:10px;flex-wrap:wrap">
               <div style="border:1px solid rgba(201,168,76,0.2);padding:2px 7px;font-size:0.24rem;color:rgba(232,224,208,0.45);border-radius:2px">Direito Civil</div>
@@ -1401,6 +1438,7 @@ footer {
 
 <!-- SERVIÇOS -->
 <section id="servicos">
+  <svg class="organic-lines" viewBox="0 0 1440 900" preserveAspectRatio="xMidYMid slice" aria-hidden="true"><use href="#organicLines"/></svg>
   <div class="servicos-header reveal">
     <span class="section-tag">O que fazemos</span>
     <h2 class="section-title" style="color:var(--cream)">Soluções digitais para<br><em>cada necessidade.</em></h2>
@@ -1448,6 +1486,7 @@ footer {
 
 <!-- QUESTIONÁRIO -->
 <section id="questionario">
+  <svg class="organic-lines" viewBox="0 0 1440 900" preserveAspectRatio="xMidYMid slice" aria-hidden="true"><use href="#organicLines"/></svg>
   <div class="quiz-wrap">
     <div class="quiz-left reveal">
       <span class="section-tag">Vamos começar?</span>
@@ -1488,6 +1527,7 @@ footer {
 
 <!-- CONTATO -->
 <section id="contato">
+  <svg class="organic-lines" viewBox="0 0 1440 900" preserveAspectRatio="xMidYMid slice" aria-hidden="true"><use href="#organicLines"/></svg>
   <div class="contato-inner reveal">
     <span class="section-tag">Entre em contato</span>
     <h2 class="section-title">Pronto para transformar<br><em>seu negócio?</em></h2>
