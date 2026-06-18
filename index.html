@@ -1114,41 +1114,25 @@ svg.organic-lines {
     <!-- Projeto 1 — Arquitetura: branco minimalista -->
     <div class="projeto-card reveal" onclick="openModal(0)">
       <div class="projeto-img-wrap">
-        <div class="projeto-img proj-1" style="flex-direction:column;align-items:stretch;justify-content:flex-start;padding:0;overflow:hidden;">
-          <div style="display:flex;align-items:center;justify-content:space-between;padding:6px 12px;background:#fff;border-bottom:1px solid #ebe7e0;flex-shrink:0">
-            <div style="display:flex;align-items:center;gap:5px">
-              <div style="width:6px;height:6px;background:#C9A84C;border-radius:50%;flex-shrink:0"></div>
-              <span style="font-family:var(--serif);font-size:0.52rem;font-weight:700;letter-spacing:2.5px;color:#111">MORETTI</span>
+        <div class="projeto-img proj-1" style="position:relative;padding:0;overflow:hidden;">
+          <img src="https://images.unsplash.com/photo-1600585154340-be6161a56a0c?auto=format&fit=crop&w=700&q=80" onerror="this.onerror=null;this.src='https://picsum.photos/seed/arc201/600/400'" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;display:block" alt="" loading="lazy">
+          <div style="position:absolute;inset:0;background:linear-gradient(180deg,rgba(10,8,5,0.25) 0%,rgba(10,8,5,0.72) 100%)"></div>
+          <div style="position:absolute;top:0;left:0;right:0;display:flex;align-items:center;justify-content:space-between;padding:10px 14px;z-index:2">
+            <div style="display:flex;align-items:center;gap:6px">
+              <div style="width:5px;height:5px;background:#C9A84C;border-radius:50%"></div>
+              <span style="font-family:var(--serif);font-size:0.72rem;font-weight:700;letter-spacing:3px;color:#fff;text-shadow:0 1px 4px rgba(0,0,0,0.6)">MORETTI</span>
             </div>
-            <div style="display:flex;gap:10px">
-              <span style="font-size:0.28rem;color:#bbb;text-transform:uppercase;letter-spacing:0.5px">Sobre</span>
-              <span style="font-size:0.28rem;color:#bbb;text-transform:uppercase;letter-spacing:0.5px">Projetos</span>
-              <span style="font-size:0.28rem;color:#bbb;text-transform:uppercase;letter-spacing:0.5px">Contato</span>
+            <div style="display:flex;gap:10px;align-items:center">
+              <span style="font-size:0.48rem;color:rgba(255,255,255,0.65)">Projetos</span>
+              <span style="font-size:0.48rem;color:rgba(255,255,255,0.65)">Sobre</span>
+              <span style="background:rgba(201,168,76,0.9);color:#111;padding:2px 9px;font-size:0.44rem;letter-spacing:0.5px;border-radius:20px">Contato</span>
             </div>
           </div>
-          <div style="padding:12px 12px 8px;flex:1;display:flex;flex-direction:column;background:#F8F6F2">
-            <div style="width:22px;height:2px;background:#C9A84C;margin-bottom:6px;flex-shrink:0"></div>
-            <div style="font-family:var(--serif);font-size:0.85rem;font-weight:700;color:#1a1a1a;line-height:1.15;margin-bottom:4px">Arquitetura que<br><em>transforma espaços.</em></div>
-            <div style="font-size:0.35rem;color:#888;line-height:1.6;margin-bottom:6px">Projetos exclusivos para quem valoriza design contemporâneo e sofisticação.</div>
-            <div style="display:flex;gap:4px;margin-bottom:7px">
-              <div style="background:#f0ece6;border:1px solid #e0dbd3;padding:1px 6px;font-size:0.26rem;color:#888;border-radius:3px">Todos</div>
-              <div style="background:#1a1a1a;color:#fff;padding:1px 6px;font-size:0.26rem;border-radius:3px">Residencial</div>
-              <div style="background:#f0ece6;border:1px solid #e0dbd3;padding:1px 6px;font-size:0.26rem;color:#888;border-radius:3px">Comercial</div>
-            </div>
-            <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:4px;margin-top:auto">
-              <div style="position:relative;border-radius:3px;overflow:hidden;aspect-ratio:1">
-                <img src="https://loremflickr.com/220/220/architecture?lock=211" onerror="this.onerror=null;this.src='https://picsum.photos/seed/211/220/220'" style="width:100%;height:100%;object-fit:cover;display:block" alt="" loading="lazy">
-                <div style="position:absolute;bottom:0;left:0;right:0;background:rgba(0,0,0,0.45);padding:2px 3px;font-size:0.22rem;color:#fff">Casa Jardins</div>
-              </div>
-              <div style="position:relative;border-radius:3px;overflow:hidden;aspect-ratio:1">
-                <img src="https://loremflickr.com/220/220/interior?lock=212" onerror="this.onerror=null;this.src='https://picsum.photos/seed/212/220/220'" style="width:100%;height:100%;object-fit:cover;display:block" alt="" loading="lazy">
-                <div style="position:absolute;bottom:0;left:0;right:0;background:rgba(0,0,0,0.45);padding:2px 3px;font-size:0.22rem;color:#fff">Loft Vila</div>
-              </div>
-              <div style="position:relative;border-radius:3px;overflow:hidden;aspect-ratio:1">
-                <img src="https://loremflickr.com/220/220/building?lock=213" onerror="this.onerror=null;this.src='https://picsum.photos/seed/213/220/220'" style="width:100%;height:100%;object-fit:cover;display:block" alt="" loading="lazy">
-                <div style="position:absolute;bottom:0;left:0;right:0;background:rgba(0,0,0,0.45);padding:2px 3px;font-size:0.22rem;color:#fff;display:flex;align-items:center;gap:2px"><span style="color:#C9A84C">★</span>Award</div>
-              </div>
-            </div>
+          <div style="position:absolute;bottom:0;left:0;right:0;padding:14px 16px 18px;z-index:2">
+            <div style="width:24px;height:1.5px;background:#C9A84C;margin-bottom:7px"></div>
+            <div style="font-family:var(--serif);font-size:1.1rem;font-weight:700;color:#fff;line-height:1.15;margin-bottom:6px;text-shadow:0 2px 8px rgba(0,0,0,0.5)">Arquitetura que<br><em>transforma espaços.</em></div>
+            <div style="font-size:0.52rem;color:rgba(255,255,255,0.6);margin-bottom:10px">Projetos residenciais e comerciais exclusivos</div>
+            <div style="display:inline-flex;align-items:center;gap:6px;border:1px solid rgba(255,255,255,0.55);color:#fff;padding:5px 12px;font-size:0.5rem;letter-spacing:1.5px;text-transform:uppercase">Ver portfólio <span style="color:#C9A84C">→</span></div>
           </div>
         </div>
         <div class="projeto-overlay"><span>Ver projeto</span></div>
@@ -1165,46 +1149,22 @@ svg.organic-lines {
     <!-- Projeto 2 — Academia: vermelho brutal -->
     <div class="projeto-card reveal" onclick="openModal(1)">
       <div class="projeto-img-wrap">
-        <div class="projeto-img proj-2" style="flex-direction:column;align-items:stretch;justify-content:flex-start;padding:0;overflow:hidden;">
-          <div style="height:3px;background:#E63946;flex-shrink:0"></div>
-          <div style="display:flex;align-items:center;justify-content:space-between;padding:6px 12px;background:#111;flex-shrink:0">
-            <span style="font-size:0.55rem;font-weight:900;color:#fff;letter-spacing:1px">BLACK<span style="color:#E63946">FIT</span></span>
-            <div style="display:flex;gap:8px">
-              <span style="font-size:0.26rem;color:rgba(255,255,255,0.35);text-transform:uppercase">Planos</span>
-              <span style="font-size:0.26rem;color:rgba(255,255,255,0.35);text-transform:uppercase">Turmas</span>
-              <span style="font-size:0.26rem;color:#E63946;text-transform:uppercase">Matricular</span>
+        <div class="projeto-img proj-2" style="position:relative;padding:0;overflow:hidden;">
+          <img src="https://images.unsplash.com/photo-1534438327276-14e5300c3a48?auto=format&fit=crop&w=700&q=80" onerror="this.onerror=null;this.src='https://picsum.photos/seed/gym202/600/400'" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;display:block" alt="" loading="lazy">
+          <div style="position:absolute;inset:0;background:linear-gradient(180deg,rgba(0,0,0,0.55) 0%,rgba(8,3,3,0.85) 100%)"></div>
+          <div style="position:absolute;top:0;left:0;right:0;height:3px;background:#E63946;z-index:3"></div>
+          <div style="position:absolute;top:3px;left:0;right:0;display:flex;align-items:center;justify-content:space-between;padding:9px 14px;z-index:2">
+            <span style="font-size:0.8rem;font-weight:900;color:#fff;letter-spacing:1px;text-shadow:0 1px 4px rgba(0,0,0,0.5)">BLACK<span style="color:#E63946">FIT</span></span>
+            <div style="display:flex;gap:10px;align-items:center">
+              <span style="font-size:0.44rem;color:rgba(255,255,255,0.4);text-transform:uppercase;letter-spacing:0.5px">Planos</span>
+              <span style="font-size:0.44rem;color:rgba(255,255,255,0.4);text-transform:uppercase">Turmas</span>
+              <span style="background:#E63946;color:#fff;padding:3px 9px;font-size:0.44rem;text-transform:uppercase;letter-spacing:0.5px">Matricular</span>
             </div>
           </div>
-          <div style="padding:12px 12px 8px;background:#0D0D0D;flex:1;display:flex;flex-direction:column">
-            <div style="font-size:0.26rem;color:#E63946;letter-spacing:3px;text-transform:uppercase;margin-bottom:4px">ALTO RENDIMENTO</div>
-            <div style="font-size:1.05rem;font-weight:900;color:#fff;line-height:1;text-transform:uppercase;letter-spacing:-1px;margin-bottom:5px">MAIS QUE<br>UMA<br>ACADEMIA.</div>
-            <div style="font-size:0.3rem;color:rgba(255,255,255,0.3);line-height:1.5;margin-bottom:8px">Treinos personalizados • Nutrição • Resultados reais</div><img src="https://loremflickr.com/420/180/gym?lock=221" onerror="this.onerror=null;this.src='https://picsum.photos/seed/221/420/180'" style="width:100%;height:78px;object-fit:cover;border-radius:6px;margin-bottom:8px;display:block;border:1px solid rgba(255,255,255,0.10)" alt="" loading="lazy">
-            <div style="display:flex;align-items:center;gap:6px;margin-bottom:7px">
-              <div style="background:#E63946;color:#fff;padding:3px 10px;font-size:0.3rem;letter-spacing:2px;text-transform:uppercase">MATRICULAR AGORA →</div>
-              <div style="background:#22c55e;color:#fff;padding:2px 6px;font-size:0.24rem;letter-spacing:1px;text-transform:uppercase;border-radius:2px;animation:float 2s ease-in-out infinite">VAGAS!</div>
-            </div>
-            <div style="border:1px solid rgba(255,255,255,0.07);border-radius:4px;padding:4px 6px;margin-bottom:4px">
-              <div style="font-size:0.24rem;color:#E63946;letter-spacing:1px;text-transform:uppercase;margin-bottom:3px">HOJE</div>
-              <div style="display:flex;flex-direction:column;gap:2px">
-                <div style="display:flex;justify-content:space-between;font-size:0.26rem;color:rgba(255,255,255,0.5)"><span>06:00</span><span style="color:rgba(255,255,255,0.7)">Funcional</span><span style="color:#E63946">●</span></div>
-                <div style="display:flex;justify-content:space-between;font-size:0.26rem;color:rgba(255,255,255,0.5)"><span>08:00</span><span style="color:rgba(255,255,255,0.7)">Body Pump</span><span style="color:rgba(255,255,255,0.2)">●</span></div>
-                <div style="display:flex;justify-content:space-between;font-size:0.26rem;color:rgba(255,255,255,0.5)"><span>19:00</span><span style="color:rgba(255,255,255,0.7)">HIIT</span><span style="color:rgba(255,255,255,0.2)">●</span></div>
-              </div>
-            </div>
-            <div style="display:flex;gap:4px;margin-top:auto;padding-top:6px">
-              <div style="flex:1;border:1px solid rgba(255,255,255,0.08);padding:4px 5px;border-radius:3px">
-                <div style="font-size:0.26rem;color:rgba(255,255,255,0.35);text-transform:uppercase;margin-bottom:2px">Basic</div>
-                <div style="font-size:0.48rem;font-weight:700;color:#fff">R$89<span style="font-size:0.26rem;font-weight:300;color:rgba(255,255,255,0.3)">/mês</span></div>
-              </div>
-              <div style="flex:1;border:1px solid #E63946;padding:4px 5px;border-radius:3px;background:rgba(230,57,70,0.08)">
-                <div style="font-size:0.26rem;color:#E63946;text-transform:uppercase;margin-bottom:2px">Pro ★</div>
-                <div style="font-size:0.48rem;font-weight:700;color:#fff">R$139<span style="font-size:0.26rem;font-weight:300;color:rgba(255,255,255,0.3)">/mês</span></div>
-              </div>
-              <div style="flex:1;border:1px solid rgba(255,255,255,0.08);padding:4px 5px;border-radius:3px">
-                <div style="font-size:0.26rem;color:rgba(255,255,255,0.35);text-transform:uppercase;margin-bottom:2px">Elite</div>
-                <div style="font-size:0.48rem;font-weight:700;color:#fff">R$199<span style="font-size:0.26rem;font-weight:300;color:rgba(255,255,255,0.3)">/mês</span></div>
-              </div>
-            </div>
+          <div style="position:absolute;bottom:0;left:0;right:0;padding:14px 16px 18px;z-index:2">
+            <div style="font-size:0.5rem;color:#E63946;letter-spacing:3px;text-transform:uppercase;margin-bottom:6px">ALTO RENDIMENTO</div>
+            <div style="font-size:1.2rem;font-weight:900;color:#fff;line-height:0.95;text-transform:uppercase;letter-spacing:-1px;margin-bottom:10px">VOCÊ NÃO<br>NASCE FORTE.<br><span style="color:#E63946">VOCÊ SE TORNA.</span></div>
+            <div style="background:#E63946;color:#fff;padding:6px 14px;font-size:0.52rem;letter-spacing:2px;text-transform:uppercase;display:inline-block;font-weight:700">MATRICULAR AGORA →</div>
           </div>
         </div>
         <div class="projeto-overlay"><span>Ver projeto</span></div>
@@ -1221,46 +1181,27 @@ svg.organic-lines {
     <!-- Projeto 3 — Beleza: rosa pastel delicado -->
     <div class="projeto-card reveal" onclick="openModal(2)">
       <div class="projeto-img-wrap">
-        <div class="projeto-img proj-3" style="flex-direction:column;align-items:stretch;justify-content:flex-start;padding:0;overflow:hidden;">
-          <div style="display:flex;align-items:center;justify-content:space-between;padding:6px 12px;background:rgba(255,255,255,0.9);border-bottom:1px solid rgba(200,150,150,0.15);flex-shrink:0">
+        <div class="projeto-img proj-3" style="position:relative;padding:0;overflow:hidden;">
+          <img src="https://images.unsplash.com/photo-1560066984-138dadb4c035?auto=format&fit=crop&w=700&q=80" onerror="this.onerror=null;this.src='https://picsum.photos/seed/bty203/600/400'" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;display:block" alt="" loading="lazy">
+          <div style="position:absolute;inset:0;background:linear-gradient(160deg,rgba(255,210,220,0.25) 0%,rgba(70,18,28,0.75) 100%)"></div>
+          <div style="position:absolute;top:0;left:0;right:0;display:flex;align-items:center;justify-content:space-between;padding:10px 14px;z-index:2;background:rgba(255,255,255,0.12);backdrop-filter:blur(6px)">
             <div style="display:flex;align-items:center;gap:5px">
-              <span style="font-size:0.6rem">🌸</span>
-              <span style="font-family:var(--serif);font-size:0.5rem;font-style:italic;color:#5C2D35;font-weight:700">Bloom Beauty</span>
+              <span style="font-size:0.8rem;line-height:1">🌸</span>
+              <span style="font-family:var(--serif);font-size:0.65rem;font-style:italic;color:#fff;font-weight:700;text-shadow:0 1px 4px rgba(0,0,0,0.35)">Bloom Beauty</span>
             </div>
-            <div style="display:flex;gap:8px">
-              <span style="font-size:0.26rem;color:#9B6B72">Serviços</span>
-              <span style="font-size:0.26rem;color:#E8B4B8;font-weight:500">Agendar</span>
+            <div style="display:flex;gap:10px;align-items:center">
+              <span style="font-size:0.44rem;color:rgba(255,255,255,0.7)">Serviços</span>
+              <span style="background:#E8B4B8;color:#5C2D35;padding:3px 9px;font-size:0.44rem;border-radius:20px;font-weight:500">Agendar</span>
             </div>
           </div>
-          <div style="padding:12px 12px 8px;flex:1;display:flex;flex-direction:column;background:linear-gradient(160deg,#FDF0F0,#F5E6E8)">
-            <div style="font-family:var(--serif);font-size:0.85rem;font-weight:700;color:#5C2D35;line-height:1.2;margin-bottom:3px">Realce sua<br><em>beleza natural.</em></div>
-            <div style="display:flex;align-items:center;gap:4px;margin-bottom:3px">
-              <span style="font-size:0.5rem;line-height:1;color:#E8B4B8">★★★★★</span>
-              <span style="font-size:0.28rem;color:#9B6B72;font-weight:500">4.9</span>
-              <span style="font-size:0.26rem;color:#C4A0A4">· 320 avaliações</span>
+          <div style="position:absolute;bottom:0;left:0;right:0;padding:14px 16px 18px;z-index:2">
+            <div style="display:flex;align-items:center;gap:4px;margin-bottom:5px">
+              <span style="color:#ffb8c0;font-size:0.55rem">★★★★★</span>
+              <span style="font-size:0.45rem;color:rgba(255,255,255,0.6)">4.9 · 320 avaliações</span>
             </div>
-            <div style="display:flex;align-items:center;gap:4px;margin-bottom:6px">
-              <div style="width:6px;height:6px;background:#22c55e;border-radius:50%;flex-shrink:0"></div>
-              <span style="font-size:0.28rem;color:#9B6B72">Próximo horário: <strong style="color:#5C2D35">14h30</strong></span>
-            </div>
-            <div style="background:#E8B4B8;color:#5C2D35;padding:3px 10px;font-size:0.3rem;border-radius:20px;font-weight:500;width:fit-content">Agendar horário →</div>
-            <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:5px;margin-top:auto;padding-top:10px">
-              <div style="background:rgba(255,255,255,0.75);border:1px solid rgba(200,150,150,0.2);border-radius:8px;padding:6px 4px;text-align:center">
-                <img src="https://loremflickr.com/160/130/manicure?lock=231" onerror="this.onerror=null;this.src='https://picsum.photos/seed/231/160/130'" style="width:100%;height:48px;object-fit:cover;border-radius:7px;margin-bottom:4px;display:block" alt="" loading="lazy">
-                <div style="font-size:0.26rem;color:#5C2D35;font-weight:500">Manicure</div>
-                <div style="font-size:0.24rem;color:#9B6B72">R$ 35</div>
-              </div>
-              <div style="background:rgba(255,255,255,0.75);border:1px solid rgba(200,150,150,0.2);border-radius:8px;padding:6px 4px;text-align:center">
-                <img src="https://loremflickr.com/160/130/eyebrows?lock=232" onerror="this.onerror=null;this.src='https://picsum.photos/seed/232/160/130'" style="width:100%;height:48px;object-fit:cover;border-radius:7px;margin-bottom:4px;display:block" alt="" loading="lazy">
-                <div style="font-size:0.26rem;color:#5C2D35;font-weight:500">Sobrancelha</div>
-                <div style="font-size:0.24rem;color:#9B6B72">R$ 45</div>
-              </div>
-              <div style="background:rgba(255,255,255,0.75);border:1px solid rgba(200,150,150,0.2);border-radius:8px;padding:6px 4px;text-align:center">
-                <img src="https://loremflickr.com/160/130/eyelashes?lock=233" onerror="this.onerror=null;this.src='https://picsum.photos/seed/233/160/130'" style="width:100%;height:48px;object-fit:cover;border-radius:7px;margin-bottom:4px;display:block" alt="" loading="lazy">
-                <div style="font-size:0.26rem;color:#5C2D35;font-weight:500">Lash</div>
-                <div style="font-size:0.24rem;color:#9B6B72">R$ 120</div>
-              </div>
-            </div>
+            <div style="font-family:var(--serif);font-size:1.1rem;font-weight:700;color:#fff;line-height:1.15;margin-bottom:6px;text-shadow:0 2px 8px rgba(0,0,0,0.45)">Realce sua<br><em>beleza natural.</em></div>
+            <div style="font-size:0.5rem;color:rgba(255,255,255,0.65);margin-bottom:10px">Manicure · Lash · Sobrancelha · Skin care</div>
+            <div style="background:#E8B4B8;color:#5C2D35;padding:6px 16px;font-size:0.52rem;border-radius:24px;display:inline-block;font-weight:600">Agendar horário →</div>
           </div>
         </div>
         <div class="projeto-overlay"><span>Ver projeto</span></div>
@@ -1277,45 +1218,28 @@ svg.organic-lines {
     <!-- Projeto 4 — Restaurante: verde escuro sofisticado -->
     <div class="projeto-card reveal" onclick="openModal(3)">
       <div class="projeto-img-wrap">
-        <div class="projeto-img proj-4" style="flex-direction:column;align-items:stretch;justify-content:flex-start;padding:0;overflow:hidden;">
-          <div style="display:flex;align-items:center;justify-content:space-between;padding:6px 12px;background:#162718;border-bottom:1px solid rgba(255,255,255,0.06);flex-shrink:0">
-            <div style="display:flex;align-items:center;gap:5px">
-              <span style="font-size:0.55rem">🍃</span>
-              <span style="font-family:var(--serif);font-size:0.48rem;letter-spacing:2px;color:#E8DCC8;font-style:italic">TRATTORIA BELLA</span>
+        <div class="projeto-img proj-4" style="position:relative;padding:0;overflow:hidden;">
+          <img src="https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?auto=format&fit=crop&w=700&q=80" onerror="this.onerror=null;this.src='https://picsum.photos/seed/rst204/600/400'" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;display:block" alt="" loading="lazy">
+          <div style="position:absolute;inset:0;background:linear-gradient(180deg,rgba(22,39,24,0.5) 0%,rgba(12,20,13,0.88) 100%)"></div>
+          <div style="position:absolute;top:0;left:0;right:0;display:flex;align-items:center;justify-content:space-between;padding:10px 14px;z-index:2">
+            <div style="display:flex;align-items:center;gap:6px">
+              <span style="font-size:0.7rem">🍃</span>
+              <span style="font-family:var(--serif);font-size:0.6rem;letter-spacing:2px;color:#E8DCC8;font-style:italic;text-shadow:0 1px 4px rgba(0,0,0,0.5)">TRATTORIA BELLA</span>
             </div>
-            <div style="display:flex;gap:8px">
-              <span style="font-size:0.26rem;color:rgba(232,220,200,0.3)">Cardápio</span>
-              <span style="font-size:0.26rem;color:#4A7C59">Reservar</span>
+            <div style="display:flex;gap:10px;align-items:center">
+              <span style="font-size:0.44rem;color:rgba(232,220,200,0.45)">Cardápio</span>
+              <span style="border:1px solid rgba(74,124,89,0.8);color:#4A7C59;padding:3px 9px;font-size:0.44rem;border-radius:2px">Reservar</span>
             </div>
           </div>
-          <div style="padding:12px 12px 8px;background:#1B2D1E;flex:1;display:flex;flex-direction:column">
-            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px">
-              <div style="font-size:0.26rem;color:#4A7C59;letter-spacing:3px;text-transform:uppercase">CARDÁPIO DIGITAL</div>
-              <div style="display:flex;align-items:center;gap:3px">
-                <div style="width:5px;height:5px;background:#22c55e;border-radius:50%"></div>
-                <span style="font-size:0.24rem;color:rgba(232,220,200,0.5)">Aberto · fecha às 23h</span>
-              </div>
-            </div>
-            <div style="font-family:var(--serif);font-size:0.82rem;font-weight:700;color:#E8DCC8;line-height:1.2;margin-bottom:3px;font-style:italic">Sabor autêntico<br>em cada prato.</div>
-            <div style="font-size:0.3rem;color:rgba(232,220,200,0.35);line-height:1.5;margin-bottom:7px">Culinária italiana tradicional • Ingredientes frescos</div>
-            <div style="display:flex;gap:3px;margin-bottom:8px;flex-wrap:wrap">
-              <div style="background:#4A7C59;color:#E8DCC8;padding:2px 7px;font-size:0.26rem;border-radius:2px">Entradas</div>
-              <div style="border:1px solid rgba(255,255,255,0.1);color:rgba(232,220,200,0.4);padding:2px 7px;font-size:0.26rem;border-radius:2px">Massas</div>
-              <div style="border:1px solid rgba(255,255,255,0.1);color:rgba(232,220,200,0.4);padding:2px 7px;font-size:0.26rem;border-radius:2px">Carnes</div>
-              <div style="border:1px solid rgba(255,255,255,0.1);color:rgba(232,220,200,0.4);padding:2px 7px;font-size:0.26rem;border-radius:2px">Vinhos</div>
-            </div>
-            <div style="display:grid;grid-template-columns:1fr 1fr;gap:5px;margin-top:auto">
-              <div style="background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.07);border-radius:5px;padding:5px">
-                <img src="https://loremflickr.com/200/150/pasta?lock=241" onerror="this.onerror=null;this.src='https://picsum.photos/seed/241/200/150'" style="width:100%;height:54px;object-fit:cover;border-radius:5px;margin-bottom:4px;display:block" alt="" loading="lazy">
-                <div style="font-size:0.28rem;color:#E8DCC8;font-weight:500">Bruschetta</div>
-                <div style="font-size:0.26rem;color:#4A7C59;margin-top:1px">R$ 28</div>
-              </div>
-              <div style="background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.07);border-radius:5px;padding:5px">
-                <img src="https://loremflickr.com/200/150/steak?lock=242" onerror="this.onerror=null;this.src='https://picsum.photos/seed/242/200/150'" style="width:100%;height:54px;object-fit:cover;border-radius:5px;margin-bottom:4px;display:block" alt="" loading="lazy">
-                <div style="font-size:0.28rem;color:#E8DCC8;font-weight:500">Carpaccio</div>
-                <div style="font-size:0.26rem;color:#4A7C59;margin-top:1px">R$ 45</div>
-              </div>
-            </div>
+          <div style="position:absolute;top:40px;left:14px;display:flex;align-items:center;gap:4px;z-index:2">
+            <div style="width:5px;height:5px;background:#22c55e;border-radius:50%"></div>
+            <span style="font-size:0.42rem;color:rgba(232,220,200,0.55)">Aberto agora · fecha às 23h</span>
+          </div>
+          <div style="position:absolute;bottom:0;left:0;right:0;padding:14px 16px 18px;z-index:2">
+            <div style="font-size:0.48rem;color:#4A7C59;letter-spacing:3px;text-transform:uppercase;margin-bottom:6px">CULINÁRIA ITALIANA</div>
+            <div style="font-family:var(--serif);font-size:1.1rem;font-weight:700;color:#E8DCC8;line-height:1.15;margin-bottom:6px;font-style:italic;text-shadow:0 2px 8px rgba(0,0,0,0.5)">Sabor autêntico<br>em cada prato.</div>
+            <div style="font-size:0.5rem;color:rgba(232,220,200,0.5);margin-bottom:10px">Ingredientes frescos · Tradição italiana</div>
+            <div style="background:#4A7C59;color:#E8DCC8;padding:6px 14px;font-size:0.5rem;letter-spacing:1px;display:inline-block;border-radius:3px">Reservar mesa →</div>
           </div>
         </div>
         <div class="projeto-overlay"><span>Ver projeto</span></div>
@@ -1332,46 +1256,22 @@ svg.organic-lines {
     <!-- Projeto 5 — Moda: preto total luxo dourado -->
     <div class="projeto-card reveal" onclick="openModal(4)">
       <div class="projeto-img-wrap">
-        <div class="projeto-img proj-5" style="flex-direction:column;align-items:stretch;justify-content:flex-start;padding:0;overflow:hidden;">
-          <div style="display:flex;align-items:center;justify-content:space-between;padding:6px 12px;background:#0A0A0A;border-bottom:1px solid rgba(201,168,76,0.1);flex-shrink:0">
-            <span style="font-family:var(--serif);font-size:0.65rem;font-style:italic;color:#C9A84C;letter-spacing:3px;font-weight:700">NOIR</span>
-            <div style="display:flex;gap:8px">
-              <span style="font-size:0.26rem;color:rgba(245,240,232,0.25);letter-spacing:1px;text-transform:uppercase">Coleção</span>
-              <span style="font-size:0.26rem;color:rgba(245,240,232,0.25);letter-spacing:1px;text-transform:uppercase">Lookbook</span>
+        <div class="projeto-img proj-5" style="position:relative;padding:0;overflow:hidden;">
+          <img src="https://images.unsplash.com/photo-1490481651871-ab68de25d43d?auto=format&fit=crop&w=700&q=80" onerror="this.onerror=null;this.src='https://picsum.photos/seed/fsh205/600/400'" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;display:block" alt="" loading="lazy">
+          <div style="position:absolute;inset:0;background:linear-gradient(160deg,rgba(5,5,5,0.35) 0%,rgba(5,5,5,0.88) 100%)"></div>
+          <div style="position:absolute;top:0;left:0;right:0;display:flex;align-items:center;justify-content:space-between;padding:12px 16px;z-index:2;border-bottom:1px solid rgba(201,168,76,0.15)">
+            <span style="font-family:var(--serif);font-size:0.9rem;font-style:italic;color:#C9A84C;letter-spacing:4px;font-weight:700">NOIR</span>
+            <div style="display:flex;gap:12px;align-items:center">
+              <span style="font-size:0.44rem;color:rgba(245,240,232,0.4);letter-spacing:1.5px;text-transform:uppercase">Coleção</span>
+              <span style="font-size:0.44rem;color:rgba(245,240,232,0.4);letter-spacing:1.5px;text-transform:uppercase">Lookbook</span>
             </div>
           </div>
-          <div style="padding:10px 12px 6px;background:#0A0A0A;flex-shrink:0">
-            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:5px">
-              <div style="width:16px;height:1px;background:rgba(201,168,76,0.4)"></div>
-              <div style="background:#C9A84C;color:#0A0A0A;padding:1px 6px;font-size:0.22rem;letter-spacing:2px;text-transform:uppercase;font-weight:700;border-radius:2px">NOVA COLEÇÃO</div>
-            </div>
-            <div style="font-family:var(--serif);font-size:0.78rem;font-style:italic;color:#F5F0E8;line-height:1.2;margin-bottom:4px">Vista sua<br><em>essência.</em></div>
-            <div style="font-size:0.26rem;color:rgba(245,240,232,0.25);letter-spacing:1px;text-transform:uppercase;margin-bottom:6px">Outono 2025 — Edição Limitada</div>
-            <div style="display:inline-block;border:1px solid #C9A84C;color:#C9A84C;padding:2px 8px;font-size:0.26rem;letter-spacing:2px;text-transform:uppercase">VER CATÁLOGO</div>
-          </div>
-          <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:4px;padding:6px 12px 8px;background:#0A0A0A;flex:1;align-content:start">
-            <div style="background:#141414;border:1px solid rgba(201,168,76,0.08);border-radius:2px;overflow:hidden;position:relative">
-              <img src="https://loremflickr.com/140/195/fashion?lock=251" onerror="this.onerror=null;this.src='https://picsum.photos/seed/251/140/195'" style="width:100%;aspect-ratio:0.72;object-fit:cover;display:block" alt="" loading="lazy">
-              <div style="position:absolute;top:3px;right:3px;background:#C9A84C;color:#0A0A0A;padding:1px 4px;font-size:0.2rem;font-weight:700;letter-spacing:1px">NOVO</div>
-              <div style="padding:3px 4px">
-                <div style="font-size:0.26rem;color:rgba(245,240,232,0.55);margin-bottom:1px">Blazer Noir</div>
-                <div style="font-size:0.26rem;color:#C9A84C">R$ 389</div>
-              </div>
-            </div>
-            <div style="background:#141414;border:1px solid rgba(201,168,76,0.08);border-radius:2px;overflow:hidden">
-              <img src="https://loremflickr.com/140/195/dress?lock=252" onerror="this.onerror=null;this.src='https://picsum.photos/seed/252/140/195'" style="width:100%;aspect-ratio:0.72;object-fit:cover;display:block" alt="" loading="lazy">
-              <div style="padding:3px 4px">
-                <div style="font-size:0.26rem;color:rgba(245,240,232,0.55);margin-bottom:1px">Vestido Éden</div>
-                <div style="font-size:0.26rem;color:#C9A84C">R$ 520</div>
-              </div>
-            </div>
-            <div style="background:#141414;border:1px solid rgba(201,168,76,0.08);border-radius:2px;overflow:hidden">
-              <img src="https://loremflickr.com/140/195/clothing?lock=253" onerror="this.onerror=null;this.src='https://picsum.photos/seed/253/140/195'" style="width:100%;aspect-ratio:0.72;object-fit:cover;display:block" alt="" loading="lazy">
-              <div style="padding:3px 4px">
-                <div style="font-size:0.26rem;color:rgba(245,240,232,0.55);margin-bottom:1px">Calça Soie</div>
-                <div style="font-size:0.26rem;color:#C9A84C">R$ 295</div>
-              </div>
-            </div>
+          <div style="position:absolute;top:46px;left:16px;background:#C9A84C;color:#0A0A0A;padding:2px 8px;font-size:0.4rem;letter-spacing:2px;text-transform:uppercase;font-weight:700;z-index:2">NOVA COLEÇÃO</div>
+          <div style="position:absolute;bottom:0;left:0;right:0;padding:14px 16px 20px;z-index:2">
+            <div style="width:28px;height:1px;background:rgba(201,168,76,0.55);margin-bottom:8px"></div>
+            <div style="font-size:0.46rem;color:rgba(201,168,76,0.7);letter-spacing:2px;text-transform:uppercase;margin-bottom:6px">Outono 2025 — Edição Limitada</div>
+            <div style="font-family:var(--serif);font-size:1.15rem;font-style:italic;color:#F5F0E8;line-height:1.15;margin-bottom:10px;text-shadow:0 2px 8px rgba(0,0,0,0.5)">Vista sua<br><em>essência.</em></div>
+            <div style="display:inline-flex;align-items:center;gap:8px;border:1px solid #C9A84C;color:#C9A84C;padding:5px 12px;font-size:0.48rem;letter-spacing:2px;text-transform:uppercase">VER CATÁLOGO →</div>
           </div>
         </div>
         <div class="projeto-overlay"><span>Ver projeto</span></div>
@@ -1388,39 +1288,30 @@ svg.organic-lines {
     <!-- Projeto 6 — Advocacia: azul marinho clássico -->
     <div class="projeto-card reveal" onclick="openModal(5)">
       <div class="projeto-img-wrap">
-        <div class="projeto-img proj-6" style="flex-direction:column;align-items:stretch;justify-content:flex-start;padding:0;overflow:hidden;">
-          <div style="height:3px;background:linear-gradient(90deg,#C9A84C,#E5C96A);flex-shrink:0"></div>
-          <div style="display:flex;align-items:center;justify-content:space-between;padding:6px 12px;background:#0F1B2D;border-bottom:1px solid rgba(201,168,76,0.1);flex-shrink:0">
-            <div style="display:flex;align-items:center;gap:6px">
-              <div style="width:16px;height:16px;border:1px solid rgba(201,168,76,0.5);display:flex;align-items:center;justify-content:center;flex-shrink:0">
-                <span style="font-size:0.4rem;color:#C9A84C;font-weight:700">VT</span>
+        <div class="projeto-img proj-6" style="position:relative;padding:0;overflow:hidden;">
+          <img src="https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?auto=format&fit=crop&w=700&q=80" onerror="this.onerror=null;this.src='https://picsum.photos/seed/law206/600/400'" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;display:block" alt="" loading="lazy">
+          <div style="position:absolute;inset:0;background:linear-gradient(180deg,rgba(15,27,45,0.55) 0%,rgba(8,14,28,0.9) 100%)"></div>
+          <div style="position:absolute;top:0;left:0;right:0;height:3px;background:linear-gradient(90deg,#C9A84C,#E5C96A);z-index:3"></div>
+          <div style="position:absolute;top:3px;left:0;right:0;display:flex;align-items:center;justify-content:space-between;padding:9px 14px;z-index:2">
+            <div style="display:flex;align-items:center;gap:8px">
+              <div style="width:22px;height:22px;border:1px solid rgba(201,168,76,0.65);display:flex;align-items:center;justify-content:center;flex-shrink:0">
+                <span style="font-size:0.5rem;color:#C9A84C;font-weight:700">VT</span>
               </div>
               <div>
-                <div style="font-family:var(--serif);font-size:0.44rem;letter-spacing:2px;color:#E8E0D0;font-style:italic">VT ADVOGADOS</div>
-                <div style="font-size:0.24rem;color:rgba(232,224,208,0.3);letter-spacing:1px;text-transform:uppercase">Advocacia & Consultoria</div>
+                <div style="font-family:var(--serif);font-size:0.54rem;letter-spacing:2px;color:#E8E0D0;font-style:italic">VT ADVOGADOS</div>
+                <div style="font-size:0.36rem;color:rgba(232,224,208,0.35);letter-spacing:0.5px;text-transform:uppercase">Advocacia & Consultoria</div>
               </div>
             </div>
-            <div style="display:flex;gap:8px">
-              <span style="font-size:0.26rem;color:rgba(232,224,208,0.25)">Atuação</span>
-              <span style="font-size:0.26rem;color:#C9A84C">Consulta</span>
-            </div>
+            <span style="background:#C9A84C;color:#0F1B2D;padding:3px 9px;font-size:0.44rem;letter-spacing:0.5px;font-weight:600;border-radius:2px">Consulta Grátis</span>
           </div>
-          <div style="padding:12px 12px 8px;background:linear-gradient(160deg,#0F1B2D,#1A2D45);flex:1;display:flex;flex-direction:column">
-            <div style="display:flex;align-items:center;gap:6px;margin-bottom:4px">
-              <div style="font-size:0.26rem;color:#C9A84C;letter-spacing:2px;text-transform:uppercase">DESDE 1979</div>
-              <div style="font-size:0.4rem;color:#C9A84C;line-height:1">★★★★★</div>
-              <div style="font-size:0.22rem;color:rgba(232,224,208,0.35)">Google</div>
+          <div style="position:absolute;bottom:0;left:0;right:0;padding:14px 16px 18px;z-index:2">
+            <div style="display:flex;align-items:center;gap:6px;margin-bottom:5px">
+              <span style="font-size:0.52rem;color:#C9A84C">★★★★★</span>
+              <span style="font-size:0.42rem;color:rgba(232,224,208,0.4)">Google · OAB/SP Nº 12.847</span>
             </div>
-            <div style="font-family:var(--serif);font-size:0.8rem;font-style:italic;color:#E8E0D0;line-height:1.2;margin-bottom:3px">Advocacia com tradição<br>e excelência.</div>
-            <div style="font-size:0.24rem;color:rgba(201,168,76,0.6);margin-bottom:3px">OAB/SP Nº 12.847 · 45 anos de atuação</div>
-            <div style="font-size:0.3rem;color:rgba(232,224,208,0.35);line-height:1.5;margin-bottom:8px">Atuação jurídica especializada para pessoas físicas e empresas</div><img src="https://loremflickr.com/420/180/office?lock=261" onerror="this.onerror=null;this.src='https://picsum.photos/seed/261/420/180'" style="width:100%;height:66px;object-fit:cover;border-radius:5px;margin-bottom:8px;display:block;border:1px solid rgba(201,168,76,0.18)" alt="" loading="lazy">
-            <div style="background:#C9A84C;color:#0F1B2D;padding:3px 9px;font-size:0.28rem;letter-spacing:1.5px;text-transform:uppercase;font-weight:600;width:fit-content;border-radius:2px">Consulta gratuita →</div>
-            <div style="display:flex;gap:4px;margin-top:auto;padding-top:10px;flex-wrap:wrap">
-              <div style="border:1px solid rgba(201,168,76,0.2);padding:2px 7px;font-size:0.24rem;color:rgba(232,224,208,0.45);border-radius:2px">Direito Civil</div>
-              <div style="border:1px solid rgba(201,168,76,0.2);padding:2px 7px;font-size:0.24rem;color:rgba(232,224,208,0.45);border-radius:2px">Trabalhista</div>
-              <div style="border:1px solid rgba(201,168,76,0.2);padding:2px 7px;font-size:0.24rem;color:rgba(232,224,208,0.45);border-radius:2px">Empresarial</div>
-              <div style="border:1px solid rgba(201,168,76,0.2);padding:2px 7px;font-size:0.24rem;color:rgba(232,224,208,0.45);border-radius:2px">Criminal</div>
-            </div>
+            <div style="font-size:0.48rem;color:rgba(201,168,76,0.7);letter-spacing:2px;text-transform:uppercase;margin-bottom:6px">DESDE 1979</div>
+            <div style="font-family:var(--serif);font-size:1.1rem;font-style:italic;color:#E8E0D0;line-height:1.15;margin-bottom:10px;text-shadow:0 2px 8px rgba(0,0,0,0.5)">Tradição e excelência<br>em advocacia.</div>
+            <div style="background:#C9A84C;color:#0F1B2D;padding:6px 14px;font-size:0.5rem;letter-spacing:1px;font-weight:600;display:inline-block;border-radius:2px">Consulta gratuita →</div>
           </div>
         </div>
         <div class="projeto-overlay"><span>Ver projeto</span></div>
