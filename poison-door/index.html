@@ -98,18 +98,33 @@
       100% { opacity: 0.4; background-position: 200% 0; }
     }
 
-    .skull-row {
-      font-size: 2rem;
-      letter-spacing: 0.5rem;
+    .logo-img {
+      width: clamp(100px, 22vw, 170px);
+      height: clamp(100px, 22vw, 170px);
+      object-fit: contain;
       display: block;
-      margin-bottom: 14px;
-      filter: drop-shadow(0 0 12px var(--neon-purple));
-      animation: skulls-pulse 3s ease-in-out infinite;
+      margin: 0 auto 18px;
+      border-radius: 50%;
+      filter:
+        drop-shadow(0 0 18px rgba(153, 0, 255, 0.7))
+        drop-shadow(0 0 40px rgba(255, 0, 204, 0.4));
+      animation: logo-pulse 4s ease-in-out infinite;
     }
 
-    @keyframes skulls-pulse {
-      0%, 100% { opacity: 0.7; transform: scale(1); }
-      50%       { opacity: 1; transform: scale(1.05); }
+    @keyframes logo-pulse {
+      0%, 100% {
+        filter:
+          drop-shadow(0 0 14px rgba(153, 0, 255, 0.6))
+          drop-shadow(0 0 35px rgba(255, 0, 204, 0.3));
+        transform: scale(1);
+      }
+      50% {
+        filter:
+          drop-shadow(0 0 28px rgba(153, 0, 255, 1))
+          drop-shadow(0 0 70px rgba(255, 0, 204, 0.6))
+          drop-shadow(0 0 100px rgba(0, 238, 255, 0.2));
+        transform: scale(1.04);
+      }
     }
 
     .band-name {
@@ -602,7 +617,7 @@
   <!-- ── HEADER ── -->
   <header>
     <div class="deco-line top"></div>
-    <span class="skull-row" aria-hidden="true">☠️ 🎸 ☠️</span>
+    <img src="logo.png" alt="Poison Door logo" class="logo-img" />
     <h1 class="band-name">POISON DOOR</h1>
     <p class="tagline">Rock Psicodélico &nbsp;•&nbsp; <em>Contrate o Show</em> &nbsp;•&nbsp; Rock Psicodélico</p>
     <div class="deco-line bottom"></div>
