@@ -1,0 +1,937 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Poison Door 🚪☠️ — Marque Seu Show</title>
+  <meta name="description" content="Poison Door — banda de rock psicodélico. Marque um show direto pelo site." />
+  <link href="https://fonts.googleapis.com/css2?family=Metal+Mania&family=Rajdhani:wght@400;600;700&display=swap" rel="stylesheet" />
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg-deep:     #040008;
+      --bg-surface:  #0d0020;
+      --neon-pink:   #ff00cc;
+      --neon-green:  #00ff88;
+      --neon-purple: #9900ff;
+      --neon-cyan:   #00eeff;
+      --neon-red:    #ff1144;
+      --wa-green:    #25d366;
+      --text-main:   #e8d5ff;
+      --text-dim:    rgba(232, 213, 255, 0.5);
+      --border-glow: rgba(255, 0, 204, 0.25);
+    }
+
+    html { scroll-behavior: smooth; }
+
+    body {
+      background: var(--bg-deep);
+      color: var(--text-main);
+      font-family: 'Rajdhani', sans-serif;
+      font-size: 16px;
+      line-height: 1.6;
+      min-height: 100vh;
+      overflow-x: hidden;
+      position: relative;
+    }
+
+    /* Psychedelic animated background */
+    body::before {
+      content: '';
+      position: fixed;
+      inset: 0;
+      background:
+        radial-gradient(ellipse 80% 50% at 15% 25%, rgba(153, 0, 255, 0.18) 0%, transparent 60%),
+        radial-gradient(ellipse 60% 45% at 85% 75%, rgba(255, 0, 204, 0.13) 0%, transparent 60%),
+        radial-gradient(ellipse 50% 60% at 50% 50%, rgba(0, 238, 255, 0.06) 0%, transparent 70%);
+      animation: bg-pulse 9s ease-in-out infinite alternate;
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    /* CRT scanlines */
+    body::after {
+      content: '';
+      position: fixed;
+      inset: 0;
+      background-image: repeating-linear-gradient(
+        0deg,
+        transparent,
+        transparent 3px,
+        rgba(120, 0, 220, 0.025) 3px,
+        rgba(120, 0, 220, 0.025) 4px
+      );
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    @keyframes bg-pulse {
+      0%   { opacity: 1; transform: scale(1) rotate(0deg); }
+      50%  { opacity: 0.85; transform: scale(1.04) rotate(0.5deg); }
+      100% { opacity: 0.7; transform: scale(1.08) rotate(-0.5deg); }
+    }
+
+    /* ── HEADER ─────────────────────────────────────────────────── */
+    header {
+      position: relative;
+      z-index: 1;
+      text-align: center;
+      padding: 64px 20px 48px;
+      border-bottom: 1px solid var(--border-glow);
+      overflow: hidden;
+    }
+
+    header .deco-line {
+      position: absolute;
+      left: 0; right: 0;
+      height: 1px;
+      background: linear-gradient(90deg, transparent, var(--neon-purple), var(--neon-pink), var(--neon-purple), transparent);
+      animation: line-travel 4s linear infinite;
+    }
+    header .deco-line.top    { top: 0; }
+    header .deco-line.bottom { bottom: 0; }
+
+    @keyframes line-travel {
+      0%   { opacity: 0.4; background-position: -200% 0; }
+      50%  { opacity: 1; }
+      100% { opacity: 0.4; background-position: 200% 0; }
+    }
+
+    .skull-row {
+      font-size: 2rem;
+      letter-spacing: 0.5rem;
+      display: block;
+      margin-bottom: 14px;
+      filter: drop-shadow(0 0 12px var(--neon-purple));
+      animation: skulls-pulse 3s ease-in-out infinite;
+    }
+
+    @keyframes skulls-pulse {
+      0%, 100% { opacity: 0.7; transform: scale(1); }
+      50%       { opacity: 1; transform: scale(1.05); }
+    }
+
+    .band-name {
+      font-family: 'Metal Mania', cursive;
+      font-size: clamp(3.2rem, 11vw, 8.5rem);
+      letter-spacing: 0.04em;
+      background: linear-gradient(135deg, var(--neon-pink) 0%, var(--neon-purple) 45%, var(--neon-cyan) 100%);
+      -webkit-background-clip: text;
+      background-clip: text;
+      color: transparent;
+      position: relative;
+      display: inline-block;
+      animation: glitch 7s infinite;
+    }
+
+    @keyframes glitch {
+      0%,  88%, 100% {
+        transform: none;
+        filter: drop-shadow(0 0 18px rgba(255,0,204,0.7)) drop-shadow(0 0 60px rgba(153,0,255,0.35));
+      }
+      89% { transform: translate(-4px, 1px) skewX(-3deg);
+            filter: drop-shadow(-4px 0 var(--neon-cyan)) drop-shadow(4px 0 var(--neon-red)); }
+      90% { transform: translate(4px, -1px) skewX(3deg);
+            filter: drop-shadow(4px 0 var(--neon-pink)) drop-shadow(-4px 0 var(--neon-green)); }
+      91% { transform: none;
+            filter: drop-shadow(0 0 18px rgba(255,0,204,0.7)); }
+      92% { transform: translate(-2px, 2px); }
+      93% { transform: none;
+            filter: drop-shadow(0 0 35px rgba(0,238,255,0.8)); }
+    }
+
+    .tagline {
+      font-size: clamp(0.75rem, 2vw, 1rem);
+      color: var(--text-dim);
+      letter-spacing: 0.3em;
+      text-transform: uppercase;
+      margin-top: 10px;
+    }
+
+    .tagline em {
+      font-style: normal;
+      color: var(--neon-green);
+      text-shadow: 0 0 10px var(--neon-green);
+    }
+
+    /* ── MAIN ──────────────────────────────────────────────────── */
+    main {
+      position: relative;
+      z-index: 1;
+      max-width: 860px;
+      margin: 0 auto;
+      padding: 64px 20px 40px;
+    }
+
+    .section-title {
+      font-family: 'Metal Mania', cursive;
+      font-size: clamp(1.7rem, 4vw, 2.6rem);
+      text-align: center;
+      color: var(--neon-green);
+      text-shadow: 0 0 22px var(--neon-green);
+      margin-bottom: 10px;
+      letter-spacing: 0.1em;
+    }
+
+    .section-sub {
+      text-align: center;
+      color: var(--text-dim);
+      font-size: 0.9rem;
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+      margin-bottom: 50px;
+    }
+
+    /* ── SETUP BANNER ──────────────────────────────────────────── */
+    .setup-banner {
+      background: rgba(255, 200, 0, 0.07);
+      border: 1px solid rgba(255, 200, 0, 0.3);
+      border-radius: 12px;
+      padding: 14px 20px;
+      margin-bottom: 36px;
+      font-size: 0.85rem;
+      color: rgba(255, 230, 100, 0.85);
+      line-height: 1.6;
+    }
+    .setup-banner strong { color: #ffe066; }
+    .setup-banner code {
+      background: rgba(0, 0, 0, 0.35);
+      padding: 1px 5px;
+      border-radius: 4px;
+      font-size: 0.8rem;
+    }
+    .setup-banner.hidden { display: none; }
+
+    /* ── CALENDAR ──────────────────────────────────────────────── */
+    .calendar-wrapper {
+      background: rgba(13, 0, 32, 0.75);
+      border: 1px solid var(--border-glow);
+      border-radius: 20px;
+      padding: 30px;
+      margin-bottom: 40px;
+      backdrop-filter: blur(12px);
+      box-shadow:
+        0 0 50px rgba(255, 0, 204, 0.08),
+        inset 0 0 50px rgba(153, 0, 255, 0.04);
+    }
+
+    .calendar-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 24px;
+    }
+
+    .cal-nav-btn {
+      background: rgba(255, 0, 204, 0.08);
+      border: 1px solid rgba(255, 0, 204, 0.4);
+      color: var(--neon-pink);
+      border-radius: 8px;
+      width: 42px;
+      height: 42px;
+      font-size: 1.4rem;
+      cursor: pointer;
+      transition: all 0.2s;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-family: 'Rajdhani', sans-serif;
+    }
+
+    .cal-nav-btn:hover {
+      background: rgba(255, 0, 204, 0.22);
+      box-shadow: 0 0 16px rgba(255, 0, 204, 0.5);
+    }
+
+    .cal-nav-btn:disabled {
+      opacity: 0.3;
+      cursor: not-allowed;
+    }
+
+    .cal-month-label {
+      font-family: 'Metal Mania', cursive;
+      font-size: 1.45rem;
+      color: var(--neon-purple);
+      text-shadow: 0 0 15px var(--neon-purple);
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      text-align: center;
+    }
+
+    .calendar-grid {
+      display: grid;
+      grid-template-columns: repeat(7, 1fr);
+      gap: 5px;
+      transition: opacity 0.2s;
+    }
+
+    .cal-day-header {
+      text-align: center;
+      font-size: 0.72rem;
+      font-weight: 700;
+      letter-spacing: 0.08em;
+      color: var(--text-dim);
+      padding: 6px 0 10px;
+      text-transform: uppercase;
+    }
+
+    .cal-day {
+      aspect-ratio: 1;
+      border: 1px solid transparent;
+      border-radius: 10px;
+      background: transparent;
+      color: var(--text-main);
+      font-family: 'Rajdhani', sans-serif;
+      font-size: 0.88rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.18s;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-direction: column;
+      gap: 1px;
+      position: relative;
+      outline: none;
+    }
+
+    .cal-day:hover:not(:disabled):not(.busy) {
+      background: rgba(0, 255, 136, 0.1);
+      border-color: rgba(0, 255, 136, 0.45);
+      color: var(--neon-green);
+      box-shadow: 0 0 14px rgba(0, 255, 136, 0.28);
+    }
+
+    .cal-day.today {
+      border-color: rgba(255, 0, 204, 0.55);
+      background: rgba(255, 0, 204, 0.07);
+    }
+
+    .cal-day.selected {
+      background: rgba(0, 255, 136, 0.18) !important;
+      border-color: var(--neon-green) !important;
+      color: var(--neon-green) !important;
+      box-shadow: 0 0 22px rgba(0, 255, 136, 0.5) !important;
+    }
+
+    .cal-day.busy {
+      background: rgba(255, 17, 68, 0.06);
+      border-color: rgba(255, 17, 68, 0.2);
+      color: rgba(255, 100, 120, 0.45);
+      cursor: not-allowed;
+    }
+
+    .cal-day:disabled {
+      color: rgba(255, 255, 255, 0.14);
+      cursor: not-allowed;
+      border-color: transparent;
+      background: transparent;
+    }
+
+    .cal-day.empty {
+      cursor: default;
+      background: transparent;
+      border: none;
+      pointer-events: none;
+    }
+
+    .busy-label {
+      font-size: 0.42rem;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      color: rgba(255, 100, 120, 0.55);
+      line-height: 1;
+    }
+
+    .calendar-legend {
+      display: flex;
+      gap: 22px;
+      justify-content: center;
+      margin-top: 22px;
+      flex-wrap: wrap;
+    }
+
+    .legend-item {
+      display: flex;
+      align-items: center;
+      gap: 7px;
+      font-size: 0.78rem;
+      color: var(--text-dim);
+      letter-spacing: 0.05em;
+    }
+
+    .legend-dot {
+      width: 12px;
+      height: 12px;
+      border-radius: 3px;
+      flex-shrink: 0;
+    }
+
+    .legend-dot.avail  { background: rgba(0, 255, 136, 0.2); border: 1px solid rgba(0,255,136,0.5); }
+    .legend-dot.busy   { background: rgba(255, 17, 68, 0.12); border: 1px solid rgba(255,17,68,0.35); }
+    .legend-dot.today  { background: rgba(255, 0, 204, 0.12); border: 1px solid rgba(255,0,204,0.5); }
+
+    #loading-calendar {
+      text-align: center;
+      padding: 10px 0 6px;
+      font-size: 0.85rem;
+      letter-spacing: 0.12em;
+      color: var(--neon-purple);
+      animation: pulse-text 1s ease-in-out infinite alternate;
+      display: none;
+    }
+
+    @keyframes pulse-text {
+      from { opacity: 0.4; }
+      to   { opacity: 1; }
+    }
+
+    /* ── BOOKING SECTION ───────────────────────────────────────── */
+    #booking-section { margin-top: 10px; }
+
+    .no-date-msg {
+      text-align: center;
+      padding: 60px 20px;
+      color: var(--text-dim);
+      font-size: 1rem;
+      letter-spacing: 0.06em;
+    }
+
+    .no-date-msg .arrow {
+      font-size: 2.8rem;
+      display: block;
+      margin-bottom: 14px;
+      animation: arrow-float 1.6s ease-in-out infinite;
+    }
+
+    @keyframes arrow-float {
+      0%, 100% { transform: translateY(0); }
+      50%       { transform: translateY(-12px); }
+    }
+
+    .booking-form-wrapper {
+      background: rgba(13, 0, 32, 0.75);
+      border: 1px solid var(--border-glow);
+      border-radius: 20px;
+      padding: 36px;
+      backdrop-filter: blur(12px);
+      box-shadow: 0 0 50px rgba(255, 0, 204, 0.07), inset 0 0 40px rgba(153, 0, 255, 0.03);
+      animation: form-appear 0.35s ease-out;
+    }
+
+    @keyframes form-appear {
+      from { opacity: 0; transform: translateY(24px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+
+    .date-display {
+      text-align: center;
+      margin-bottom: 32px;
+      padding: 16px 20px;
+      border: 1px solid rgba(0, 255, 136, 0.3);
+      border-radius: 12px;
+      background: rgba(0, 255, 136, 0.04);
+    }
+
+    .date-display .lbl {
+      font-size: 0.75rem;
+      letter-spacing: 0.2em;
+      text-transform: uppercase;
+      color: var(--text-dim);
+      margin-bottom: 5px;
+    }
+
+    .date-display .val {
+      font-family: 'Metal Mania', cursive;
+      font-size: 1.4rem;
+      color: var(--neon-green);
+      text-shadow: 0 0 12px var(--neon-green);
+      letter-spacing: 0.05em;
+    }
+
+    .form-group {
+      margin-bottom: 20px;
+    }
+
+    .form-group label {
+      display: block;
+      font-size: 0.8rem;
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+      color: var(--neon-purple);
+      margin-bottom: 8px;
+      font-weight: 700;
+    }
+
+    .form-group input,
+    .form-group textarea {
+      width: 100%;
+      background: rgba(255, 255, 255, 0.035);
+      border: 1px solid rgba(153, 0, 255, 0.28);
+      border-radius: 10px;
+      color: var(--text-main);
+      font-family: 'Rajdhani', sans-serif;
+      font-size: 1rem;
+      font-weight: 600;
+      padding: 14px 18px;
+      transition: all 0.2s;
+      outline: none;
+      -webkit-appearance: none;
+    }
+
+    .form-group input:focus,
+    .form-group textarea:focus {
+      border-color: var(--neon-pink);
+      box-shadow: 0 0 16px rgba(255, 0, 204, 0.2);
+      background: rgba(255, 0, 204, 0.03);
+    }
+
+    .form-group input::placeholder,
+    .form-group textarea::placeholder {
+      color: rgba(255, 255, 255, 0.18);
+      font-weight: 400;
+    }
+
+    .form-group textarea {
+      resize: vertical;
+      min-height: 80px;
+      line-height: 1.5;
+    }
+
+    .wa-btn {
+      width: 100%;
+      padding: 18px 24px;
+      margin-top: 8px;
+      background: linear-gradient(135deg, #25d366 0%, #128c7e 100%);
+      border: none;
+      border-radius: 14px;
+      color: #fff;
+      font-family: 'Rajdhani', sans-serif;
+      font-size: 1.15rem;
+      font-weight: 700;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      cursor: pointer;
+      transition: all 0.22s;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      box-shadow: 0 4px 24px rgba(37, 211, 102, 0.28);
+    }
+
+    .wa-btn:hover {
+      transform: translateY(-3px);
+      box-shadow: 0 8px 36px rgba(37, 211, 102, 0.5);
+    }
+
+    .wa-btn:active {
+      transform: translateY(-1px);
+    }
+
+    .wa-btn svg {
+      flex-shrink: 0;
+    }
+
+    /* ── SETUP GUIDE ───────────────────────────────────────────── */
+    .setup-guide {
+      margin-top: 72px;
+      padding: 32px;
+      background: rgba(0, 0, 0, 0.35);
+      border: 1px solid rgba(255, 255, 255, 0.06);
+      border-radius: 18px;
+    }
+
+    .setup-guide h3 {
+      font-family: 'Metal Mania', cursive;
+      font-size: 1.25rem;
+      color: var(--neon-purple);
+      letter-spacing: 0.1em;
+      margin-bottom: 20px;
+    }
+
+    .setup-guide p, .setup-guide ol, .setup-guide li {
+      color: var(--text-dim);
+      font-size: 0.88rem;
+      line-height: 1.85;
+    }
+
+    .setup-guide ol { padding-left: 22px; }
+    .setup-guide p { margin-bottom: 14px; }
+
+    .setup-guide strong { color: var(--text-main); }
+
+    .setup-guide code {
+      background: rgba(0, 0, 0, 0.5);
+      padding: 2px 6px;
+      border-radius: 4px;
+      font-size: 0.78rem;
+      color: var(--neon-cyan);
+    }
+
+    /* ── FOOTER ────────────────────────────────────────────────── */
+    footer {
+      position: relative;
+      z-index: 1;
+      text-align: center;
+      padding: 44px 20px;
+      border-top: 1px solid var(--border-glow);
+      color: var(--text-dim);
+      font-size: 0.82rem;
+      letter-spacing: 0.1em;
+    }
+
+    footer p + p { margin-top: 6px; }
+
+    /* ── RESPONSIVE ────────────────────────────────────────────── */
+    @media (max-width: 600px) {
+      header { padding: 48px 16px 36px; }
+      main { padding: 48px 14px 30px; }
+      .calendar-wrapper, .booking-form-wrapper { padding: 20px 14px; }
+      .calendar-grid { gap: 3px; }
+      .cal-day { font-size: 0.78rem; border-radius: 7px; }
+      .cal-day-header { font-size: 0.62rem; }
+      .calendar-legend { gap: 14px; }
+      .setup-guide { padding: 22px 16px; }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- ── HEADER ── -->
+  <header>
+    <div class="deco-line top"></div>
+    <span class="skull-row" aria-hidden="true">☠️ 🎸 ☠️</span>
+    <h1 class="band-name">POISON DOOR</h1>
+    <p class="tagline">Rock Psicodélico &nbsp;•&nbsp; <em>Contrate o Show</em> &nbsp;•&nbsp; Rock Psicodélico</p>
+    <div class="deco-line bottom"></div>
+  </header>
+
+  <!-- ── MAIN ── -->
+  <main>
+    <h2 class="section-title">⚡ MARQUE SEU SHOW ⚡</h2>
+    <p class="section-sub">Escolha uma data disponível e envie a proposta direto no WhatsApp</p>
+    <p style="text-align:center; margin-top:-36px; margin-bottom:48px; font-size:0.85rem; color: var(--neon-pink); text-shadow: 0 0 10px rgba(255,0,204,0.5); letter-spacing:0.12em;">📍 SHOWS APENAS EM SÃO PAULO</p>
+
+    <!-- Setup warning (hidden once configured) -->
+    <div class="setup-banner" id="setup-banner">
+      ⚙️ <strong>Falta configurar:</strong> edite o arquivo <code>index.html</code> e preencha
+      <code>CONFIG.whatsapp</code> com o número da banda (e opcionalmente o Google Calendar).
+      <a href="#setup-guide" style="color:#ffe066; margin-left:4px;">Ver instruções ↓</a>
+    </div>
+
+    <!-- ── CALENDAR ── -->
+    <div class="calendar-wrapper">
+      <div class="calendar-header">
+        <button class="cal-nav-btn" id="btn-prev" aria-label="Mês anterior">&#8249;</button>
+        <div class="cal-month-label" id="month-label"></div>
+        <button class="cal-nav-btn" id="btn-next" aria-label="Próximo mês">&#8250;</button>
+      </div>
+      <div id="loading-calendar">carregando disponibilidade...</div>
+      <div class="calendar-grid" id="calendar-grid"></div>
+      <div class="calendar-legend">
+        <div class="legend-item"><div class="legend-dot avail"></div>Disponível</div>
+        <div class="legend-item"><div class="legend-dot busy"></div>Ocupado</div>
+        <div class="legend-item"><div class="legend-dot today"></div>Hoje</div>
+      </div>
+    </div>
+
+    <!-- ── BOOKING SECTION ── -->
+    <div id="booking-section">
+      <div class="no-date-msg">
+        <span class="arrow">☝️</span>
+        Selecione uma data disponível no calendário para liberar o formulário de proposta.
+      </div>
+    </div>
+
+    <!-- ── SETUP GUIDE ── -->
+    <div class="setup-guide" id="setup-guide">
+      <h3>⚙️ COMO CONFIGURAR ESTE SITE</h3>
+
+      <p><strong>1. Número de WhatsApp da banda</strong><br>
+      Abra <code>index.html</code>, localize <code>CONFIG.whatsapp</code> e substitua
+      <code>'SEU_NUMERO_AQUI'</code> pelo número com código do país, sem espaços ou traços.<br>
+      Exemplo: <code>whatsapp: '5511999887766'</code></p>
+
+      <p><strong>2. Google Calendar (mostrar datas ocupadas)</strong></p>
+      <ol>
+        <li>Crie um Google Calendar chamado "Poison Door – Shows" (ou use um existente)</li>
+        <li>Vá em Configurações → marque <strong>Tornar público</strong></li>
+        <li>Copie o <strong>Calendar ID</strong> (parece com <code>abc123@group.calendar.google.com</code>)</li>
+        <li>No <a href="https://console.cloud.google.com/" style="color:var(--neon-cyan);" target="_blank" rel="noopener">Google Cloud Console</a>, crie um projeto, habilite a <strong>Google Calendar API</strong> e gere uma <strong>API Key</strong> restrita ao seu domínio GitHub Pages</li>
+        <li>Cole os valores em <code>CONFIG.googleCalendarId</code> e <code>CONFIG.googleApiKey</code></li>
+        <li>Adicione eventos no Google Calendar — o site bloqueia as datas automaticamente</li>
+      </ol>
+
+      <p style="margin-top:14px;"><strong>3. Hospedar no GitHub Pages</strong><br>
+      Crie um repositório no GitHub, coloque este arquivo como <code>index.html</code> na raiz,
+      depois vá em <strong>Settings → Pages → Source: main branch / (root)</strong> e salve.<br>
+      O site ficará disponível em <code>https://SEU-USUARIO.github.io/NOME-DO-REPO</code></p>
+    </div>
+  </main>
+
+  <!-- ── FOOTER ── -->
+  <footer>
+    <p>☠️ &nbsp;POISON DOOR&nbsp; ☠️ &nbsp;—&nbsp; Todos os direitos reservados</p>
+    <p>Mandou a proposta? A gente responde em breve 🤘🎸</p>
+  </footer>
+
+  <script>
+    // =====================================================================
+    //  ⚙️  CONFIG — edite estes valores
+    // =====================================================================
+    const CONFIG = {
+      // Número de WhatsApp da banda com código do país, sem espaços/traços
+      whatsapp: '5513996806044',
+
+      // Google Calendar público da banda (deixe '' para desativar)
+      googleCalendarId: '',
+
+      // Chave de API do Google (com Google Calendar API habilitada)
+      googleApiKey: '',
+    };
+    // =====================================================================
+
+    // Oculta setup banner se número configurado
+    if (CONFIG.whatsapp !== 'SEU_NUMERO_AQUI') {
+      document.getElementById('setup-banner').classList.add('hidden');
+    }
+
+    // ── State ─────────────────────────────────────────────────────────────
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
+    let viewYear  = today.getFullYear();
+    let viewMonth = today.getMonth();
+    let selectedDate = null;
+
+    const busyCache = {}; // "YYYY-MM" → Set<number>
+
+    const MONTHS = [
+      'Janeiro','Fevereiro','Março','Abril','Maio','Junho',
+      'Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'
+    ];
+    const DAYS = ['Dom','Seg','Ter','Qua','Qui','Sex','Sáb'];
+
+    // ── Google Calendar fetch ─────────────────────────────────────────────
+    async function fetchBusy(year, month) {
+      const key = `${year}-${month}`;
+      if (busyCache[key]) return busyCache[key];
+
+      const busy = new Set();
+
+      if (CONFIG.googleCalendarId && CONFIG.googleApiKey) {
+        const tMin = new Date(year, month, 1).toISOString();
+        const tMax = new Date(year, month + 1, 0, 23, 59, 59).toISOString();
+        const url =
+          `https://www.googleapis.com/calendar/v3/calendars/` +
+          `${encodeURIComponent(CONFIG.googleCalendarId)}/events` +
+          `?key=${CONFIG.googleApiKey}` +
+          `&timeMin=${encodeURIComponent(tMin)}` +
+          `&timeMax=${encodeURIComponent(tMax)}` +
+          `&singleEvents=true&maxResults=100`;
+
+        try {
+          const res  = await fetch(url);
+          const data = await res.json();
+          (data.items || []).forEach(ev => {
+            const start = new Date(ev.start.date || ev.start.dateTime);
+            const end   = new Date(ev.end.date   || ev.end.dateTime);
+            for (let d = new Date(start); d < end; d.setDate(d.getDate() + 1)) {
+              if (d.getFullYear() === year && d.getMonth() === month) {
+                busy.add(d.getDate());
+              }
+            }
+          });
+        } catch (e) {
+          console.warn('Erro ao carregar Google Calendar:', e);
+        }
+      }
+
+      busyCache[key] = busy;
+      return busy;
+    }
+
+    // ── Render calendar ───────────────────────────────────────────────────
+    async function renderCalendar(year, month) {
+      const grid    = document.getElementById('calendar-grid');
+      const label   = document.getElementById('month-label');
+      const loading = document.getElementById('loading-calendar');
+      const btnPrev = document.getElementById('btn-prev');
+
+      label.textContent = `${MONTHS[month]} ${year}`;
+
+      // Disable "prev" if already on current month
+      const isCurrentMonth = year === today.getFullYear() && month === today.getMonth();
+      btnPrev.disabled = isCurrentMonth;
+
+      if (CONFIG.googleCalendarId && CONFIG.googleApiKey) {
+        loading.style.display = 'block';
+      }
+      grid.style.opacity = '0.35';
+
+      const busy = await fetchBusy(year, month);
+
+      loading.style.display = 'none';
+      grid.style.opacity = '1';
+      grid.innerHTML = '';
+
+      // Day-of-week headers
+      DAYS.forEach(d => {
+        const el = document.createElement('div');
+        el.className = 'cal-day-header';
+        el.textContent = d;
+        grid.appendChild(el);
+      });
+
+      const firstDow     = new Date(year, month, 1).getDay();
+      const daysInMonth  = new Date(year, month + 1, 0).getDate();
+
+      // Empty leading cells
+      for (let i = 0; i < firstDow; i++) {
+        const el = document.createElement('div');
+        el.className = 'cal-day empty';
+        grid.appendChild(el);
+      }
+
+      // Day cells
+      for (let day = 1; day <= daysInMonth; day++) {
+        const cellDate = new Date(year, month, day);
+        const isToday    = cellDate.getTime() === today.getTime();
+        const isPast     = cellDate < today;
+        const isBusy     = busy.has(day);
+        const isSelected = selectedDate &&
+          selectedDate.getDate() === day &&
+          selectedDate.getMonth() === month &&
+          selectedDate.getFullYear() === year;
+
+        const btn = document.createElement('button');
+        btn.className = 'cal-day';
+        if (isToday)    btn.classList.add('today');
+        if (isBusy)     btn.classList.add('busy');
+        if (isSelected) btn.classList.add('selected');
+
+        btn.innerHTML = `<span>${day}</span>${isBusy ? '<span class="busy-label">ocupado</span>' : ''}`;
+        btn.disabled  = isPast || isBusy;
+
+        const label2 = isBusy ? 'ocupado' : isPast ? 'data passada' : 'disponível';
+        btn.setAttribute('aria-label', `${day} de ${MONTHS[month]} — ${label2}`);
+
+        if (!isPast && !isBusy) {
+          btn.addEventListener('click', () => selectDate(new Date(year, month, day)));
+        }
+
+        grid.appendChild(btn);
+      }
+    }
+
+    // ── Select date ───────────────────────────────────────────────────────
+    function selectDate(date) {
+      selectedDate = date;
+      renderCalendar(viewYear, viewMonth);
+      renderForm(date);
+    }
+
+    // ── Render booking form ───────────────────────────────────────────────
+    function renderForm(date) {
+      const section = document.getElementById('booking-section');
+      const fmt = date.toLocaleDateString('pt-BR', {
+        weekday: 'long', day: 'numeric', month: 'long', year: 'numeric'
+      });
+
+      section.innerHTML = `
+        <div class="booking-form-wrapper">
+          <div class="date-display">
+            <div class="lbl">Data selecionada</div>
+            <div class="val">${fmt}</div>
+          </div>
+
+          <div class="form-group">
+            <label for="f-name">Seu nome (contratante)</label>
+            <input type="text" id="f-name" placeholder="Ex: João Silva" autocomplete="name" />
+          </div>
+
+          <div class="form-group">
+            <label for="f-venue">Nome do local / evento</label>
+            <input type="text" id="f-venue" placeholder="Ex: Bar da Vila, Festa de Formatura..." />
+          </div>
+
+          <div class="form-group">
+            <label for="f-city">Cidade (SP)</label>
+            <input type="text" id="f-city" placeholder="Ex: Santos, São Paulo, Campinas..." />
+          </div>
+
+          <div class="form-group">
+            <label for="f-extra">Detalhes extras (opcional)</label>
+            <textarea id="f-extra" placeholder="Tipo de evento, público esperado, horário aproximado..."></textarea>
+          </div>
+
+          <button class="wa-btn" onclick="sendWhatsApp()">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="white" aria-hidden="true">
+              <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413Z"/>
+            </svg>
+            Mandar Proposta via WhatsApp
+          </button>
+        </div>
+      `;
+
+      setTimeout(() => section.scrollIntoView({ behavior: 'smooth', block: 'nearest' }), 80);
+    }
+
+    // ── Build & open WhatsApp link ────────────────────────────────────────
+    function sendWhatsApp() {
+      const name  = document.getElementById('f-name').value.trim();
+      const venue = document.getElementById('f-venue').value.trim();
+      const city  = document.getElementById('f-city').value.trim();
+      const extra = document.getElementById('f-extra').value.trim();
+
+      if (!name)  { alert('Por favor, preencha seu nome.'); return; }
+      if (!venue) { alert('Por favor, preencha o nome do local ou evento.'); return; }
+      if (!city)  { alert('Por favor, preencha a cidade.'); return; }
+
+      if (CONFIG.whatsapp === 'SEU_NUMERO_AQUI') {
+        alert('⚠️ Número de WhatsApp ainda não configurado no arquivo index.html.');
+        return;
+      }
+
+      const fmt = selectedDate.toLocaleDateString('pt-BR', {
+        weekday: 'long', day: 'numeric', month: 'long', year: 'numeric'
+      });
+
+      let msg =
+        `Olá, Poison Door! 🤘🎸\n\n` +
+        `Gostaria de fazer uma proposta de show para a banda:\n\n` +
+        `📅 *Data:* ${fmt}\n` +
+        `👤 *Contratante:* ${name}\n` +
+        `🏠 *Local / Evento:* ${venue}\n` +
+        `📍 *Cidade:* ${city} — SP`;
+
+      if (extra) msg += `\n\n📝 *Detalhes:* ${extra}`;
+
+      msg += `\n\nAguardo o contato de vocês para combinarmos os detalhes! 🙏`;
+
+      window.open(`https://wa.me/${CONFIG.whatsapp}?text=${encodeURIComponent(msg)}`, '_blank');
+    }
+
+    // ── Navigation ────────────────────────────────────────────────────────
+    document.getElementById('btn-prev').addEventListener('click', () => {
+      const d = new Date(viewYear, viewMonth - 1, 1);
+      if (d < new Date(today.getFullYear(), today.getMonth(), 1)) return;
+      viewYear  = d.getFullYear();
+      viewMonth = d.getMonth();
+      renderCalendar(viewYear, viewMonth);
+    });
+
+    document.getElementById('btn-next').addEventListener('click', () => {
+      const d = new Date(viewYear, viewMonth + 1, 1);
+      viewYear  = d.getFullYear();
+      viewMonth = d.getMonth();
+      renderCalendar(viewYear, viewMonth);
+    });
+
+    // ── Init ──────────────────────────────────────────────────────────────
+    renderCalendar(viewYear, viewMonth);
+  </script>
+</body>
+</html>
