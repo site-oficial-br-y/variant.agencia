@@ -85,9 +85,16 @@
   .scene-num{position:absolute;top:13vh;right:6vw;font-size:.72rem;letter-spacing:3px;color:var(--w25);
     font-weight:600}
 
+  /* per-character spans for the staggered CTA headline */
+  .wd-w{display:inline-block;white-space:nowrap}
+  .ch{display:inline-block;will-change:transform}
+  .grad .ch{background:linear-gradient(115deg,var(--pink),var(--magenta));
+    -webkit-background-clip:text;background-clip:text;color:transparent}
+
   /* fallback if libs fail to load */
   .libs-failed .mask>span{transform:none!important}
   .libs-failed .reveal{opacity:1!important;transform:none!important}
+  .libs-failed .plan,.libs-failed .feat,.libs-failed #cta h2{opacity:1!important;transform:none!important}
 
   /* ---- 01 hero ---- */
   #hero{justify-content:center;max-width:1400px;margin:0 auto}
@@ -286,13 +293,6 @@
   .gcard .ph{animation:ken 16s ease-in-out infinite alternate}
   @keyframes ken{from{transform:scale(1.12)}to{transform:scale(1.32) translate(-3%,-2%)}}
 
-  /* zoom-portal scene */
-  #portal{height:100vh;overflow:hidden;padding:0;display:flex;align-items:center;justify-content:center;text-align:center}
-  #portal .pinner{height:100vh;width:100%;display:flex;align-items:center;justify-content:center;position:relative}
-  #portal .zoomword{font-weight:900;letter-spacing:-.04em;font-size:10vw;line-height:.9;
-    will-change:font-size,opacity;transform-origin:center;white-space:nowrap}
-  #portal .sub{position:absolute;bottom:16vh;left:0;right:0;color:var(--w40);font-size:.8rem;
-    letter-spacing:3px;text-transform:uppercase}
 
   @media(max-width:860px){
     .nav-links{display:none}
@@ -395,14 +395,6 @@
     </div>
   </section>
 
-  <!-- zoom portal transition -->
-  <section id="portal">
-    <div class="pinner">
-      <div class="zoomword grad" id="zoomword">BUSCAR</div>
-      <div class="sub">um clique · dezenas de leads</div>
-    </div>
-  </section>
-
   <!-- second infinite marquee -->
   <div class="marquee rev" id="marqueeB"><div class="row" data-marq="são paulo,rio de janeiro,belo horizonte,salvador,curitiba,recife,fortaleza,porto alegre,brasília,manaus,belém,goiânia"></div></div>
 
@@ -463,13 +455,13 @@
       <h2 class="display reveal">Comece <span class="grad">grátis.</span> Cresça quando quiser.</h2>
     </div>
     <div class="price-grid">
-      <div class="plan reveal"><h3>GRÁTIS</h3><div class="pdesc">Para experimentar</div><div class="pprice">R$0<small>/mês</small></div>
+      <div class="plan"><h3>GRÁTIS</h3><div class="pdesc">Para experimentar</div><div class="pprice">R$0<small>/mês</small></div>
         <ul><li>1 busca por dia</li><li>Até 5 leads por busca</li><li>WhatsApp + Instagram</li></ul></div>
-      <div class="plan pop reveal"><span class="badge">Mais popular</span><h3>FREELANCER</h3><div class="pdesc">Para profissionais autônomos</div><div class="pprice">R$19,90<small>/mês</small></div>
+      <div class="plan pop"><span class="badge">Mais popular</span><h3>FREELANCER</h3><div class="pdesc">Para profissionais autônomos</div><div class="pprice">R$19,90<small>/mês</small></div>
         <ul><li>10 buscas por dia</li><li>Resultados ilimitados</li><li>Todos os contatos</li><li>Filtro inteligente</li></ul></div>
-      <div class="plan reveal"><h3>AGÊNCIA</h3><div class="pdesc">Para agências e equipes</div><div class="pprice">R$59,90<small>/mês</small></div>
+      <div class="plan"><h3>AGÊNCIA</h3><div class="pdesc">Para agências e equipes</div><div class="pprice">R$59,90<small>/mês</small></div>
         <ul><li>Buscas ilimitadas</li><li>Exportar pra Excel</li><li>Todos os contatos</li><li>Acesso prioritário</li></ul></div>
-      <div class="plan reveal"><h3>EMPRESA</h3><div class="pdesc">Para empresas com equipe</div><div class="pprice">R$99,90<small>/mês</small></div>
+      <div class="plan"><h3>EMPRESA</h3><div class="pdesc">Para empresas com equipe</div><div class="pprice">R$99,90<small>/mês</small></div>
         <ul><li>Tudo do Agência</li><li>Até 5 usuários</li><li>Suporte dedicado</li><li>Relatórios da equipe</li></ul></div>
     </div>
   </section>
@@ -477,7 +469,7 @@
   <!-- 08 CTA -->
   <section class="scene" id="cta" data-idx="08">
     <span class="label reveal">Comece agora</span>
-    <h2 class="display reveal">Seus próximos clientes <span class="grad">já existem.</span></h2>
+    <h2 class="display">Seus próximos clientes <span class="grad">já existem.</span></h2>
     <p class="reveal">Eles só ainda não te conhecem. O Honk Ponk te entrega o contato deles hoje.</p>
     <div class="reveal" style="margin-top:38px"><button class="btn-primary" onclick="goTo('#demo')">🔍 Buscar meus leads</button></div>
   </section>
@@ -579,7 +571,7 @@ const GAL=[
   const clock=new THREE.Clock();
   (function loop(){requestAnimationFrame(loop);const t=clock.getElapsedTime();
     mx+=(tmx-mx)*.05;my+=(tmy-my)*.05;
-    group.rotation.y+=.0016;group.rotation.z=mx*.12;group.rotation.x=.35+my*.3;
+    group.rotation.y+=.0016+(window.__sv||0)*0.000018;group.rotation.z=mx*.12;group.rotation.x=.35+my*.3;
     leadMat.size=.45+Math.sin(t*2.2)*.12;leadMat.opacity=.7+Math.sin(t*2.2)*.25;
     arcs.forEach(a=>{a.t+=a.speed;if(a.t>1)a.t=0;const p=a.curve.getPoint(a.t);
       a.dot.geometry.attributes.position.setXYZ(0,p.x,p.y,p.z);a.dot.geometry.attributes.position.needsUpdate=true;});
@@ -644,26 +636,6 @@ const GAL=[
       scrollTrigger:{trigger:'#coverage',start:'top bottom',end:'center center',scrub:1}});
   }
 
-  // marquee also reacts to scroll for the cinematic feel
-  $$('.marquee').forEach(m=>{
-    gsap.fromTo(m.querySelector('.row'),{x:0},{x:m.classList.contains('rev')?120:-120,ease:'none',
-      scrollTrigger:{trigger:m,start:'top bottom',end:'bottom top',scrub:1}});
-  });
-
-  // ZOOM PORTAL: scale via font-size (stays vector-crisp, never blurs) and slower so it reads
-  const zw=$('#zoomword'), psub=$('#portal .sub');
-  zw.style.fontSize='10vw';
-  ScrollTrigger.create({trigger:'#portal',start:'top top',end:'+=2200',scrub:.8,pin:'#portal .pinner',
-    onUpdate:s=>{
-      const p=s.progress;
-      // ease the growth so it lingers readable early, then accelerates in
-      const grow=p*p;                                  // 0 → 1, slow start
-      zw.style.fontSize=(10+grow*150)+'vw';            // crisp: font-size, not transform
-      // keep it fully legible until 65%, then fade out smoothly
-      zw.style.opacity=p<.65?1:Math.max(0,1-(p-.65)/.35);
-      if(psub) psub.style.opacity=p<.22?1-p/.22:0;
-    }});
-
   // manifesto word-by-word
   const mt=$('#manifestoText');
   const words=mt.textContent.trim().split(' ');
@@ -705,7 +677,89 @@ const GAL=[
   const dist=()=>track.scrollWidth-innerWidth+ (innerWidth*0.06);
   gsap.to(track,{x:()=>-dist(),ease:'none',
     scrollTrigger:{trigger:'#gallery',start:'top top',end:()=>'+='+dist(),scrub:.8,pin:true,invalidateOnRefresh:true}});
-  // gallery photos keep their infinite Ken Burns zoom (CSS); track movement provides the parallax
+  // gallery COVERFLOW: each card rotates & scales by its distance from screen center
+  function coverflow(){
+    const vw=innerWidth;
+    $$('.gcard').forEach(c=>{const r=c.getBoundingClientRect();
+      if(r.right<-50||r.left>vw+50)return;
+      const d=((r.left+r.width/2)-vw/2)/vw;          // -0.5 (left) .. 0.5 (right)
+      c.style.transform=`perspective(1100px) rotateY(${-d*20}deg) scale(${1-Math.min(Math.abs(d),.55)*.14})`;
+    });
+  }
+  ScrollTrigger.create({trigger:'#gallery',start:'top top',end:()=>'+='+dist(),scrub:true,onUpdate:coverflow,onRefresh:coverflow});
+
+  /* ---------- a grab-bag of VARIED, creative motions ---------- */
+
+  // shared scroll velocity (px/s) with decay, fed to globe + marquees
+  let scrollVel=0;
+  ScrollTrigger.create({onUpdate:self=>{scrollVel=self.getVelocity();}});
+
+  // 1) MARQUEES — JS-driven: infinite loop + speed boost & skew from scroll velocity
+  const marqs=$$('.marquee').map(m=>({row:m.querySelector('.row'),
+    dir:m.classList.contains('rev')?1:-1, off:Math.random()*-200, half:0}));
+  const measure=()=>marqs.forEach(o=>o.half=o.row.scrollWidth/2);
+  measure(); addEventListener('resize',()=>{measure();ScrollTrigger.refresh();});
+
+  // 2) GLOBE spins faster with scroll velocity
+  // 3) BG glow drifts with the mouse (depth parallax)
+  let bgx=0,bgy=0,tbx=0,tby=0;
+  addEventListener('mousemove',e=>{tbx=(e.clientX/innerWidth-.5)*-34;tby=(e.clientY/innerHeight-.5)*-34;});
+
+  gsap.ticker.add(()=>{
+    scrollVel*=0.9; window.__sv=scrollVel;
+    const skew=gsap.utils.clamp(-10,10,scrollVel*0.005);
+    const boost=Math.min(Math.abs(scrollVel)*0.004,9);
+    marqs.forEach(o=>{ o.off+=o.dir*(0.55+boost);
+      if(o.half){ if(o.off<=-o.half)o.off+=o.half; if(o.off>=0)o.off-=o.half; }
+      o.row.style.transform=`translateX(${o.off}px) skewX(${skew}deg)`; });
+    bgx+=(tbx-bgx)*.06; bgy+=(tby-bgy)*.06;
+    const bg=$('#bg-fx'); if(bg) bg.style.transform=`translate(${bgx}px,${bgy}px)`;
+  });
+
+  // 4) PARALLAX depth: big scene numbers drift opposite to scroll
+  $$('.scene-num').forEach(n=>gsap.to(n,{yPercent:90,ease:'none',
+    scrollTrigger:{trigger:n.closest('section'),start:'top bottom',end:'bottom top',scrub:1.5}}));
+
+  // 5) MAGNETIC buttons — pull toward the cursor, snap back with elastic
+  $$('.btn-primary,.nav-cta,#searchBtn').forEach(btn=>{
+    btn.addEventListener('mousemove',e=>{const r=btn.getBoundingClientRect();
+      gsap.to(btn,{x:(e.clientX-r.left-r.width/2)*.4,y:(e.clientY-r.top-r.height/2)*.5,
+        duration:.4,ease:'power3.out'});});
+    btn.addEventListener('mouseleave',()=>gsap.to(btn,{x:0,y:0,duration:.7,ease:'elastic.out(1,.4)'}));
+  });
+
+  // 6) CHARACTER stagger on the final CTA headline (different from the word/mask reveals)
+  const ctaH=$('#cta h2');
+  if(ctaH){
+    (function split(node){[...node.childNodes].forEach(n=>{
+      if(n.nodeType===3){const f=document.createDocumentFragment();
+        n.textContent.split(/(\s+)/).forEach(part=>{
+          if(part==='' )return;
+          if(/^\s+$/.test(part)){f.appendChild(document.createTextNode(part));return;}
+          const w=document.createElement('span');w.className='wd-w';        // keeps a word from breaking mid-letter
+          part.split('').forEach(c=>{const s=document.createElement('span');s.className='ch';s.textContent=c;w.appendChild(s);});
+          f.appendChild(w);
+        });
+        node.replaceChild(f,n);
+      } else if(n.nodeType===1){split(n);} });})(ctaH);
+    const chs=ctaH.querySelectorAll('.ch');
+    gsap.set(chs,{yPercent:130,opacity:0,rotation:9});
+    gsap.to(chs,{yPercent:0,opacity:1,rotation:0,duration:.7,ease:'back.out(1.7)',stagger:.022,
+      scrollTrigger:{trigger:'#cta',start:'top 72%'}});
+  }
+
+  // 7) PRICING cards rise in 3D, staggered, with a slight rotationX flip
+  gsap.set('.plan',{yPercent:18,opacity:0,rotationX:-22,transformOrigin:'center bottom'});
+  gsap.to('.plan',{yPercent:0,opacity:1,rotationX:0,duration:.8,ease:'power3.out',stagger:.1,
+    scrollTrigger:{trigger:'#pricing .price-grid',start:'top 82%'}});
+
+  // 8) FEATURE cards: alternate slide-in from left / right
+  $$('.feat').forEach((f,i)=>{gsap.set(f,{x:i%2?70:-70,opacity:0});
+    gsap.to(f,{x:0,opacity:1,duration:.8,ease:'power3.out',scrollTrigger:{trigger:f,start:'top 88%'}});});
+
+  // 9) MANIFESTO drifts sideways a touch as it scrolls (subtle motion variety)
+  gsap.fromTo('#manifestoText',{x:-30},{x:30,ease:'none',
+    scrollTrigger:{trigger:'#manifesto',start:'top bottom',end:'bottom top',scrub:1.2}});
 
   bindSearch();
   setTimeout(()=>ScrollTrigger.refresh(),400);
