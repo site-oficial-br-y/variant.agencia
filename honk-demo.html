@@ -1,0 +1,712 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Honk Ponk — Apresentação Interativa</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet" />
+<style>
+  :root{
+    --bg:#0f0f1a; --bg2:#14142a; --ink:#0a0a12;
+    --pink:#e879a0; --magenta:#c2185b;
+    --green:#4ade80; --orange:#fb923c; --amber:#fbbf24;
+    --w70:rgba(255,255,255,.7); --w55:rgba(255,255,255,.55);
+    --w40:rgba(255,255,255,.4); --w25:rgba(255,255,255,.25);
+    --w12:rgba(255,255,255,.12); --w06:rgba(255,255,255,.06);
+  }
+  *{margin:0;padding:0;box-sizing:border-box}
+  html,body{background:var(--bg);color:#fff}
+  body{
+    font-family:'Inter',system-ui,sans-serif;line-height:1.5;overflow-x:hidden;
+    -webkit-font-smoothing:antialiased;
+  }
+  a{color:inherit;text-decoration:none}
+  ::selection{background:var(--magenta);color:#fff}
+  /* lenis */
+  html.lenis,html.lenis body{height:auto}
+  .lenis.lenis-smooth{scroll-behavior:auto!important}
+
+  /* ---- fixed cinematic backdrop ---- */
+  #bg-fx{position:fixed;inset:0;z-index:0;pointer-events:none;
+    background:
+      radial-gradient(1100px 700px at 80% -5%, rgba(232,121,160,.18), transparent 60%),
+      radial-gradient(900px 800px at 5% 55%, rgba(194,24,91,.16), transparent 60%),
+      radial-gradient(800px 600px at 95% 100%, rgba(74,222,128,.06), transparent 60%);}
+  #globe-canvas{position:fixed;inset:0;z-index:1;pointer-events:none}
+  /* film grain + vignette for the cinematic feel */
+  #grain{position:fixed;inset:0;z-index:60;pointer-events:none;opacity:.05;mix-blend-mode:overlay;
+    background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='120'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E")}
+  #vignette{position:fixed;inset:0;z-index:59;pointer-events:none;
+    box-shadow:inset 0 0 280px 60px rgba(0,0,0,.65)}
+
+  .content{position:relative;z-index:5}
+
+  /* ---- progress + scene index ---- */
+  #progress{position:fixed;top:0;left:0;height:2px;width:0;z-index:70;
+    background:linear-gradient(90deg,var(--pink),var(--magenta))}
+  #scene-idx{position:fixed;left:6vw;bottom:30px;z-index:55;font-size:.7rem;letter-spacing:3px;
+    color:var(--w40);font-weight:600;font-variant-numeric:tabular-nums}
+  #scene-idx b{color:#fff}
+
+  /* ---- nav ---- */
+  nav{position:fixed;top:0;left:0;right:0;z-index:65;display:flex;align-items:center;
+    justify-content:space-between;padding:22px 6vw;transition:.4s;mix-blend-mode:difference}
+  nav.scrolled{mix-blend-mode:normal;backdrop-filter:blur(14px);
+    background:rgba(15,15,26,.55);border-bottom:1px solid var(--w06);padding:14px 6vw}
+  .brand{display:flex;align-items:center;gap:11px;font-weight:800;font-size:.95rem;
+    letter-spacing:3px;text-transform:uppercase}
+  .brand .dot{width:30px;height:30px;border-radius:9px;display:grid;place-items:center;font-size:1rem;
+    background:linear-gradient(135deg,var(--pink),var(--magenta));box-shadow:0 0 22px rgba(232,121,160,.55)}
+  .nav-links{display:flex;gap:36px}
+  .nav-links a{font-size:.7rem;letter-spacing:2px;text-transform:uppercase;color:var(--w70);transition:.25s}
+  .nav-links a:hover{color:#fff}
+  .nav-cta{padding:9px 18px;border-radius:100px;font-weight:700;font-size:.68rem;letter-spacing:1.5px;
+    text-transform:uppercase;border:1px solid var(--w25);transition:.25s;cursor:pointer;color:#fff;
+    background:transparent;font-family:inherit}
+  .nav-cta:hover{background:#fff;color:var(--ink);border-color:#fff}
+
+  /* ---- editorial primitives ---- */
+  .label{display:flex;align-items:center;gap:12px;font-size:.7rem;letter-spacing:3px;
+    text-transform:uppercase;color:var(--pink);font-weight:600}
+  .label::before{content:'';width:34px;height:1px;background:var(--pink);opacity:.7}
+  .mask{overflow:hidden;display:block}
+  .mask>span{display:block;transform:translateY(110%)}
+  .grad{background:linear-gradient(115deg,var(--pink),var(--magenta));-webkit-background-clip:text;
+    background-clip:text;color:transparent}
+  .display{font-weight:900;letter-spacing:-3px;line-height:.95}
+
+  .scene{position:relative;min-height:100vh;display:flex;flex-direction:column;justify-content:center;
+    padding:14vh 6vw}
+  .scene-num{position:absolute;top:13vh;right:6vw;font-size:.72rem;letter-spacing:3px;color:var(--w25);
+    font-weight:600}
+
+  /* fallback if libs fail to load */
+  .libs-failed .mask>span{transform:none!important}
+  .libs-failed .reveal{opacity:1!important;transform:none!important}
+
+  /* ---- 01 hero ---- */
+  #hero{justify-content:center;max-width:1400px;margin:0 auto}
+  #hero .label{margin-bottom:30px}
+  #hero h1{font-size:clamp(2.8rem,8.5vw,7.5rem);max-width:15ch}
+  #hero h1 .thin{font-weight:300}
+  #hero .sub{margin-top:34px;max-width:520px;color:var(--w55);font-size:clamp(1rem,1.5vw,1.18rem);line-height:1.7}
+  .hero-actions{margin-top:42px;display:flex;gap:16px;flex-wrap:wrap;align-items:center}
+  .btn-primary{padding:17px 32px;border-radius:100px;font-weight:700;font-size:.95rem;cursor:pointer;
+    background:linear-gradient(135deg,var(--pink),var(--magenta));border:none;color:#fff;font-family:inherit;
+    box-shadow:0 16px 44px rgba(194,24,91,.45);transition:.3s}
+  .btn-primary:hover{transform:translateY(-3px) scale(1.02);box-shadow:0 22px 54px rgba(194,24,91,.6)}
+  .btn-ghost{padding:17px 30px;border-radius:100px;font-weight:600;color:var(--w70);cursor:pointer;
+    border:1px solid var(--w25);background:transparent;font-family:inherit;font-size:.95rem;transition:.3s}
+  .btn-ghost:hover{border-color:#fff;color:#fff}
+  .scroll-hint{position:absolute;bottom:30px;right:6vw;color:var(--w40);font-size:.66rem;letter-spacing:2px;
+    text-transform:uppercase;display:flex;align-items:center;gap:12px;writing-mode:vertical-rl}
+  .scroll-hint .ln{width:1px;height:46px;background:linear-gradient(var(--pink),transparent);
+    animation:drop 1.8s infinite}
+  @keyframes drop{0%{transform:scaleY(0);transform-origin:top}50%{transform:scaleY(1);transform-origin:top}
+    50.1%{transform-origin:bottom}100%{transform:scaleY(0);transform-origin:bottom}}
+
+  /* ---- 02 manifesto (word reveal) ---- */
+  #manifesto{align-items:flex-start}
+  .manifesto-text{font-size:clamp(1.8rem,5vw,4.2rem);font-weight:700;letter-spacing:-1.5px;line-height:1.18;
+    max-width:18ch;margin-top:30px}
+  .manifesto-text .wd{color:var(--w12);transition:color .3s}
+  .manifesto-text .wd.on{color:#fff}
+  .manifesto-text .wd.hl.on{color:transparent;background:linear-gradient(115deg,var(--pink),var(--magenta));
+    -webkit-background-clip:text;background-clip:text}
+
+  /* ---- 03 how (pinned dashboard scrub) ---- */
+  #how{min-height:auto;padding:0}
+  .how-inner{min-height:100vh;display:grid;grid-template-columns:.85fr 1.15fr;gap:5vw;align-items:center;
+    padding:14vh 6vw}
+  .how-left .label{margin-bottom:26px}
+  .how-left h2{font-size:clamp(2rem,4.5vw,3.4rem)}
+  .steps{margin-top:40px;display:flex;flex-direction:column;gap:6px}
+  .step{display:grid;grid-template-columns:auto 1fr;gap:22px;padding:22px 0;border-top:1px solid var(--w06);
+    transition:.4s;opacity:.32}
+  .step:last-child{border-bottom:1px solid var(--w06)}
+  .step.active{opacity:1}
+  .step .n{font-size:1.05rem;font-weight:800;color:var(--pink);font-variant-numeric:tabular-nums;
+    letter-spacing:2px;padding-top:3px}
+  .step h3{font-size:1.15rem;font-weight:700;margin-bottom:5px;letter-spacing:-.3px}
+  .step p{color:var(--w55);font-size:.9rem;line-height:1.55;max-width:38ch;
+    max-height:0;overflow:hidden;opacity:0;transition:.4s}
+  .step.active p{max-height:80px;opacity:1}
+  /* dashboard mockup */
+  .console{border-radius:22px;border:1px solid var(--w12);overflow:hidden;
+    background:linear-gradient(180deg,#15152b,#0d0d1c);box-shadow:0 50px 110px rgba(0,0,0,.6)}
+  .console-bar{display:flex;align-items:center;gap:8px;padding:14px 18px;border-bottom:1px solid var(--w06)}
+  .console-bar .b{width:11px;height:11px;border-radius:50%}
+  .console-bar .url{margin-left:14px;font-size:.72rem;color:var(--w40);background:var(--w06);
+    padding:5px 14px;border-radius:8px;letter-spacing:.5px}
+  .console-body{padding:28px}
+  .pick{display:flex;gap:12px;margin-bottom:14px}
+  .pick .field{flex:1;background:var(--w06);border:1.5px solid var(--w12);border-radius:12px;padding:13px 16px;transition:.35s}
+  .pick .field.lit{border-color:var(--pink);box-shadow:0 0 0 3px rgba(232,121,160,.15)}
+  .pick .field .flbl{font-size:.62rem;color:var(--w40);text-transform:uppercase;letter-spacing:1.5px}
+  .pick .field .fval{font-size:.95rem;font-weight:700;margin-top:5px}
+  .scan{height:5px;border-radius:4px;background:var(--w06);overflow:hidden;margin:18px 0 22px}
+  .scan i{display:block;height:100%;width:0;background:linear-gradient(90deg,var(--pink),var(--magenta))}
+  .clead{display:flex;align-items:center;gap:14px;padding:13px;border-radius:13px;margin-bottom:10px;
+    border:1px solid var(--w06);background:var(--w06);opacity:0;transform:translateX(28px)}
+  .clead .av{width:40px;height:40px;border-radius:11px;display:grid;place-items:center;font-weight:800;flex-shrink:0;
+    background:linear-gradient(135deg,var(--pink),var(--magenta))}
+  .clead .meta{flex:1;min-width:0}
+  .clead .meta .nm{font-weight:700;font-size:.92rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .clead .meta .tg{font-size:.72rem;color:var(--orange);margin-top:2px}
+  .clead .sc b{font-size:1.15rem;color:var(--green);font-weight:900}
+  .clead .sc span{display:block;font-size:.58rem;color:var(--w40);text-align:center}
+
+  /* ---- 04 horizontal gallery ---- */
+  #gallery{height:100vh;overflow:hidden;padding:0;display:block}
+  .gal-track{display:flex;align-items:center;height:100vh;gap:34px;padding:0 6vw;will-change:transform}
+  .gal-intro{flex:0 0 auto;width:min(40vw,460px);padding-right:30px}
+  .gal-intro .label{margin-bottom:24px}
+  .gal-intro h2{font-size:clamp(1.9rem,4vw,3rem)}
+  .gal-intro p{color:var(--w55);margin-top:18px;max-width:34ch;line-height:1.7}
+  .gcard{flex:0 0 auto;width:340px;height:62vh;border-radius:22px;overflow:hidden;position:relative;
+    border:1px solid var(--w12);box-shadow:0 40px 80px rgba(0,0,0,.5)}
+  .gcard .ph{position:absolute;inset:0;background-size:cover;background-position:center;transform:scale(1.15);
+    will-change:transform}
+  .gcard::after{content:'';position:absolute;inset:0;background:linear-gradient(180deg,rgba(10,10,18,.1) 30%,rgba(10,10,18,.92))}
+  .gcard .body{position:absolute;left:0;right:0;bottom:0;padding:26px;z-index:2}
+  .gcard .gtag{font-size:.62rem;letter-spacing:2px;text-transform:uppercase;color:var(--orange);font-weight:700}
+  .gcard .gname{font-size:1.3rem;font-weight:800;letter-spacing:-.5px;margin:8px 0 4px}
+  .gcard .gloc{font-size:.8rem;color:var(--w55)}
+  .gcard .gscore{position:absolute;top:18px;right:18px;z-index:2;background:rgba(74,222,128,.16);
+    border:1px solid rgba(74,222,128,.4);color:var(--green);font-weight:800;font-size:.78rem;
+    padding:6px 12px;border-radius:100px}
+
+  /* ---- 05 live demo ---- */
+  #demo{align-items:center}
+  .demo-head{text-align:center;margin-bottom:42px}
+  .demo-head .label{justify-content:center}.demo-head .label::after{content:'';width:34px;height:1px;background:var(--pink);opacity:.7}
+  .demo-head h2{font-size:clamp(2rem,5vw,3.4rem);margin-top:18px}
+  .demo-card{width:100%;max-width:1080px;border-radius:26px;border:1px solid var(--w12);
+    background:linear-gradient(180deg,rgba(22,22,44,.8),rgba(14,14,28,.9));backdrop-filter:blur(16px);
+    box-shadow:0 50px 120px rgba(0,0,0,.6);overflow:hidden}
+  .demo-body{padding:32px}
+  .controls{display:grid;grid-template-columns:1fr 1fr auto;gap:14px;align-items:end}
+  .control label{display:block;font-size:.66rem;color:var(--w40);text-transform:uppercase;letter-spacing:2px;
+    font-weight:600;margin-bottom:9px}
+  .control select{width:100%;appearance:none;background:var(--w06);border:1.5px solid var(--w12);border-radius:13px;
+    padding:15px 18px;color:#fff;font-family:inherit;font-size:1rem;font-weight:600;cursor:pointer;outline:none;transition:.25s;
+    background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='14' fill='%23e879a0' viewBox='0 0 16 16'%3E%3Cpath d='M8 11L3 6h10z'/%3E%3C/svg%3E");
+    background-repeat:no-repeat;background-position:right 16px center}
+  .control select:hover,.control select:focus{border-color:var(--pink)}
+  #searchBtn{padding:0 26px;height:54px;border-radius:13px;font-weight:700;font-size:1rem;white-space:nowrap;
+    background:linear-gradient(135deg,var(--pink),var(--magenta));border:none;color:#fff;cursor:pointer;
+    font-family:inherit;box-shadow:0 10px 30px rgba(194,24,91,.4);transition:.25s}
+  #searchBtn:hover{transform:translateY(-2px)}
+  #searchBtn:disabled{opacity:.6;cursor:wait;transform:none}
+  .results-meta{display:none;margin-top:26px;color:var(--w40);font-size:.85rem;align-items:center;gap:10px}
+  .results-meta b{color:var(--green)}
+  .live-grid{margin-top:18px;display:grid;grid-template-columns:repeat(auto-fill,minmax(290px,1fr));gap:16px}
+  .lead{position:relative;border-radius:18px;border:1px solid var(--w12);padding:20px;
+    background:linear-gradient(160deg,rgba(255,255,255,.05),rgba(255,255,255,.01));
+    transform-style:preserve-3d;transition:transform .15s ease-out,border-color .3s;will-change:transform}
+  .lead:hover{border-color:rgba(232,121,160,.5)}
+  .lead .glow{position:absolute;inset:0;border-radius:18px;opacity:0;transition:.3s;pointer-events:none;
+    background:radial-gradient(400px at var(--mx,50%) var(--my,50%),rgba(232,121,160,.18),transparent 60%)}
+  .lead:hover .glow{opacity:1}
+  .lead-top{display:flex;align-items:center;gap:13px;margin-bottom:16px}
+  .lead-av{width:46px;height:46px;border-radius:13px;display:grid;place-items:center;font-weight:800;font-size:1.1rem;flex-shrink:0}
+  .lead-name{font-weight:800;font-size:1rem;letter-spacing:-.3px}
+  .lead-cat{font-size:.78rem;color:var(--w40);margin-top:2px}
+  .lead-tags{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:16px}
+  .tag{font-size:.7rem;font-weight:600;padding:4px 10px;border-radius:8px}
+  .tag.warn{background:rgba(251,146,60,.14);color:var(--orange)}
+  .tag.score{background:rgba(74,222,128,.14);color:var(--green)}
+  .lead-contacts{display:flex;gap:9px;flex-wrap:wrap}
+  .cbtn{display:flex;align-items:center;gap:7px;font-size:.8rem;font-weight:700;padding:9px 13px;border-radius:10px;
+    cursor:pointer;transition:.2s;border:1px solid var(--w12);background:var(--w06);color:var(--w70)}
+  .cbtn:hover{transform:translateY(-2px);color:#fff;border-color:transparent}
+  .cbtn.wa:hover{background:#25d366;box-shadow:0 8px 20px rgba(37,211,102,.4)}
+  .cbtn.ig:hover{background:linear-gradient(135deg,#f09433,#dc2743,#bc1888);box-shadow:0 8px 20px rgba(220,39,67,.4)}
+  .cbtn.tel:hover{background:var(--pink)}
+  .cbtn.site:hover{background:#3b82f6}
+  .empty{margin-top:26px;text-align:center;color:var(--w40);padding:46px 20px;border:1px dashed var(--w12);border-radius:18px}
+
+  /* ---- 06 coverage / stats ---- */
+  #coverage{align-items:flex-start;max-width:1300px;margin:0 auto}
+  #coverage h2{font-size:clamp(2rem,5vw,3.6rem);max-width:16ch}
+  .stats{display:flex;gap:clamp(28px,6vw,90px);flex-wrap:wrap;margin-top:60px}
+  .stat .num{font-size:clamp(2.6rem,6vw,4.4rem);font-weight:900;letter-spacing:-2.5px;
+    font-variant-numeric:tabular-nums;
+    background:linear-gradient(135deg,#fff,var(--pink));-webkit-background-clip:text;background-clip:text;color:transparent}
+  .stat .lbl{color:var(--w40);font-size:.82rem;margin-top:6px;letter-spacing:1px;text-transform:uppercase}
+
+  /* ---- 07 pricing ---- */
+  #pricing{align-items:center}
+  #pricing .demo-head{margin-bottom:0}
+  .price-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(248px,1fr));gap:18px;max-width:1180px;margin:46px auto 0;width:100%}
+  .plan{position:relative;padding:32px 26px;border-radius:22px;border:1px solid var(--w12);
+    background:linear-gradient(180deg,rgba(255,255,255,.04),rgba(255,255,255,.01));transition:.3s;
+    transform-style:preserve-3d;will-change:transform}
+  .plan:hover{border-color:rgba(232,121,160,.4);box-shadow:0 30px 70px rgba(0,0,0,.45)}
+  .plan.pop{border-color:var(--pink);background:linear-gradient(180deg,rgba(232,121,160,.12),rgba(194,24,91,.04))}
+  .plan .badge{position:absolute;top:-11px;right:20px;font-size:.62rem;font-weight:800;letter-spacing:1.5px;
+    padding:6px 13px;border-radius:100px;background:linear-gradient(135deg,var(--pink),var(--magenta));text-transform:uppercase}
+  .plan h3{font-size:1.15rem;font-weight:800;letter-spacing:.5px}
+  .plan .pdesc{color:var(--w40);font-size:.8rem;margin-top:4px;min-height:32px}
+  .plan .pprice{font-size:2.3rem;font-weight:900;letter-spacing:-1.5px;margin:14px 0 4px}
+  .plan .pprice small{font-size:.85rem;font-weight:500;color:var(--w40)}
+  .plan ul{list-style:none;margin-top:18px;display:flex;flex-direction:column;gap:10px}
+  .plan li{font-size:.84rem;color:var(--w70);display:flex;gap:9px;align-items:flex-start;line-height:1.45}
+  .plan li::before{content:'✓';color:var(--green);font-weight:900;flex-shrink:0}
+
+  /* ---- 08 cta ---- */
+  #cta{text-align:center;align-items:center;justify-content:center}
+  #cta .label{justify-content:center;margin-bottom:26px}
+  #cta .label::after{content:'';width:34px;height:1px;background:var(--pink);opacity:.7}
+  #cta h2{font-size:clamp(2.4rem,7vw,5.5rem);max-width:14ch}
+  #cta p{color:var(--w55);margin:26px auto 0;max-width:480px;font-size:1.1rem;line-height:1.7}
+  footer{text-align:center;padding:46px 6vw 60px;color:var(--w40);font-size:.78rem;letter-spacing:1px;
+    border-top:1px solid var(--w06)}
+
+  @media(max-width:860px){
+    .nav-links{display:none}
+    .how-inner{grid-template-columns:1fr;gap:40px}
+    .controls{grid-template-columns:1fr}#searchBtn{width:100%}
+    .gcard{width:74vw;height:56vh}.gal-intro{width:84vw}
+    #scene-idx{display:none}
+  }
+</style>
+</head>
+<body>
+
+<div id="bg-fx"></div>
+<canvas id="globe-canvas"></canvas>
+<div id="vignette"></div>
+<div id="grain"></div>
+<div id="progress"></div>
+<div id="scene-idx"><b>01</b> / 08</div>
+
+<nav id="nav">
+  <a href="#hero" class="brand"><span class="dot">🦆</span> Honk Ponk</a>
+  <div class="nav-links">
+    <a href="#how">Como funciona</a>
+    <a href="#demo">Demo ao vivo</a>
+    <a href="#pricing">Planos</a>
+  </div>
+  <button class="nav-cta" onclick="goTo('#demo')">Testar grátis</button>
+</nav>
+
+<div class="content">
+
+  <!-- 01 HERO -->
+  <header class="scene" id="hero" data-idx="01">
+    <span class="scene-num">01 — 08</span>
+    <span class="label reveal">Prospecção de leads B2B · 2026</span>
+    <h1 class="display">
+      <span class="mask"><span>Encontre</span></span>
+      <span class="mask"><span class="thin grad">clientes</span></span>
+      <span class="mask"><span>que já precisam</span></span>
+      <span class="mask"><span class="thin">de você.</span></span>
+    </h1>
+    <p class="sub reveal">O Honk Ponk rastreia negócios por região e filtra leads que <b>realmente</b> precisam do seu serviço. Chega de prospectar empresas que já têm o que você vende.</p>
+    <div class="hero-actions reveal">
+      <button class="btn-primary" onclick="goTo('#demo')">Buscar leads agora</button>
+      <button class="btn-ghost" onclick="goTo('#how')">Ver como funciona</button>
+    </div>
+    <div class="scroll-hint">role para começar<span class="ln"></span></div>
+  </header>
+
+  <!-- 02 MANIFESTO -->
+  <section class="scene" id="manifesto" data-idx="02">
+    <span class="scene-num">02 — 08</span>
+    <span class="label reveal">O problema</span>
+    <p class="manifesto-text" id="manifestoText">Você perde horas no Google atrás de empresas que já têm site, já têm agência, já têm tudo. O Honk Ponk vira esse jogo: só aparece quem precisa de você.</p>
+  </section>
+
+  <!-- 03 HOW (pinned) -->
+  <section id="how" data-idx="03">
+    <div class="how-inner">
+      <div class="how-left">
+        <span class="scene-num">03 — 08</span>
+        <span class="label reveal">Como funciona</span>
+        <h2 class="display reveal">3 passos.<br><span class="grad">Zero pesquisa manual.</span></h2>
+        <div class="steps">
+          <div class="step" data-step="0"><div class="n">01</div><div><h3>Escolha o que você vende</h3><p>Sites, identidade visual, marketing, reforma… o seu nicho.</p></div></div>
+          <div class="step" data-step="1"><div class="n">02</div><div><h3>Escolha a cidade ou “Todo o Brasil”</h3><p>Filtramos pelo segmento certo: restaurantes, clínicas, oficinas e mais.</p></div></div>
+          <div class="step" data-step="2"><div class="n">03</div><div><h3>Receba leads com contato pronto</h3><p>WhatsApp, Instagram, telefone e site — só quem precisa de você.</p></div></div>
+        </div>
+      </div>
+      <div class="console reveal" id="console">
+        <div class="console-bar">
+          <span class="b" style="background:#ff5f57"></span><span class="b" style="background:#febc2e"></span>
+          <span class="b" style="background:#28c840"></span>
+          <span class="url">app.honkponk.com.br/buscar</span>
+        </div>
+        <div class="console-body">
+          <div class="pick">
+            <div class="field" id="cf-serv"><div class="flbl">Serviço</div><div class="fval" id="cf-serv-v">—</div></div>
+            <div class="field" id="cf-city"><div class="flbl">Cidade</div><div class="fval" id="cf-city-v">—</div></div>
+          </div>
+          <div class="scan"><i id="scanbar"></i></div>
+          <div id="console-leads"></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 04 GALLERY (horizontal) -->
+  <section id="gallery" data-idx="04">
+    <div class="gal-track" id="galTrack">
+      <div class="gal-intro">
+        <span class="label">Leads reais</span>
+        <h2 class="display" style="margin-top:18px">Contato<br>pronto.<br><span class="grad">É só falar.</span></h2>
+        <p>Cada lead vem com nicho, motivo do match e os canais de contato. Role para o lado →</p>
+      </div>
+      <!-- gcards injected by JS -->
+    </div>
+  </section>
+
+  <!-- 05 LIVE DEMO -->
+  <section class="scene" id="demo" data-idx="05">
+    <span class="scene-num">05 — 08</span>
+    <div class="demo-head">
+      <span class="label reveal">Demo ao vivo</span>
+      <h2 class="display reveal">Faça uma busca <span class="grad">de verdade.</span></h2>
+    </div>
+    <div class="demo-card reveal">
+      <div class="demo-body">
+        <div class="controls">
+          <div class="control"><label>O que você vende?</label>
+            <select id="selServ">
+              <option value="web">Criação de sites</option>
+              <option value="brand">Identidade visual / Design</option>
+              <option value="mkt">Marketing digital / Social media</option>
+              <option value="reforma">Reforma / Pintura</option>
+              <option value="contab">Contabilidade</option>
+            </select></div>
+          <div class="control"><label>Onde?</label>
+            <select id="selCity">
+              <option value="São Paulo, SP">São Paulo, SP</option>
+              <option value="Rio de Janeiro, RJ">Rio de Janeiro, RJ</option>
+              <option value="Belo Horizonte, MG">Belo Horizonte, MG</option>
+              <option value="Curitiba, PR">Curitiba, PR</option>
+              <option value="Santos, SP">Santos, SP</option>
+              <option value="Todo o Brasil">🇧🇷 Todo o Brasil</option>
+            </select></div>
+          <button id="searchBtn">Buscar leads</button>
+        </div>
+        <div class="results-meta" id="resultsMeta"></div>
+        <div class="live-grid" id="liveGrid"></div>
+        <div class="empty" id="emptyState">Selecione um serviço e uma cidade e clique em <b>Buscar leads</b>.</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 06 COVERAGE -->
+  <section class="scene" id="coverage" data-idx="06">
+    <span class="scene-num">06 — 08</span>
+    <span class="label reveal">Cobertura nacional</span>
+    <h2 class="display reveal" style="margin-top:20px">O Brasil inteiro <span class="grad">mapeado</span> pra você.</h2>
+    <div class="stats">
+      <div class="stat reveal"><div class="num" data-target="180" data-suffix="k+">0</div><div class="lbl">negócios mapeados</div></div>
+      <div class="stat reveal"><div class="num" data-target="340" data-suffix="+">0</div><div class="lbl">cidades cobertas</div></div>
+      <div class="stat reveal"><div class="num" data-target="94" data-suffix="%">0</div><div class="lbl">taxa de contato</div></div>
+      <div class="stat reveal"><div class="num" data-prefix="R$" data-target="12" data-suffix="k">0</div><div class="lbl">em negócios / dia</div></div>
+    </div>
+  </section>
+
+  <!-- 07 PRICING -->
+  <section class="scene" id="pricing" data-idx="07">
+    <span class="scene-num">07 — 08</span>
+    <div class="demo-head">
+      <span class="label reveal">Planos</span>
+      <h2 class="display reveal">Comece <span class="grad">grátis.</span> Cresça quando quiser.</h2>
+    </div>
+    <div class="price-grid">
+      <div class="plan reveal"><h3>GRÁTIS</h3><div class="pdesc">Para experimentar</div><div class="pprice">R$0<small>/mês</small></div>
+        <ul><li>1 busca por dia</li><li>Até 5 leads por busca</li><li>WhatsApp + Instagram</li></ul></div>
+      <div class="plan pop reveal"><span class="badge">Mais popular</span><h3>FREELANCER</h3><div class="pdesc">Para profissionais autônomos</div><div class="pprice">R$19,90<small>/mês</small></div>
+        <ul><li>10 buscas por dia</li><li>Resultados ilimitados</li><li>Todos os contatos</li><li>Filtro inteligente</li></ul></div>
+      <div class="plan reveal"><h3>AGÊNCIA</h3><div class="pdesc">Para agências e equipes</div><div class="pprice">R$59,90<small>/mês</small></div>
+        <ul><li>Buscas ilimitadas</li><li>Exportar pra Excel</li><li>Todos os contatos</li><li>Acesso prioritário</li></ul></div>
+      <div class="plan reveal"><h3>EMPRESA</h3><div class="pdesc">Para empresas com equipe</div><div class="pprice">R$99,90<small>/mês</small></div>
+        <ul><li>Tudo do Agência</li><li>Até 5 usuários</li><li>Suporte dedicado</li><li>Relatórios da equipe</li></ul></div>
+    </div>
+  </section>
+
+  <!-- 08 CTA -->
+  <section class="scene" id="cta" data-idx="08">
+    <span class="label reveal">Comece agora</span>
+    <h2 class="display reveal">Seus próximos clientes <span class="grad">já existem.</span></h2>
+    <p class="reveal">Eles só ainda não te conhecem. O Honk Ponk te entrega o contato deles hoje.</p>
+    <div class="reveal" style="margin-top:38px"><button class="btn-primary" onclick="goTo('#demo')">🦆 Buscar meus leads</button></div>
+  </section>
+
+  <footer>HONK PONK · honkponk.com.br · protótipo de apresentação</footer>
+</div>
+
+<!-- libs -->
+<script src="vendor/three.min.js"></script>
+<script src="vendor/gsap.min.js"></script>
+<script src="vendor/ScrollTrigger.min.js"></script>
+<script src="vendor/lenis.min.js"></script>
+<script>
+const $=s=>document.querySelector(s),$$=s=>[...document.querySelectorAll(s)];
+function goTo(sel){const el=$(sel);if(window.__lenis)window.__lenis.scrollTo(el);else el.scrollIntoView({behavior:'smooth'});}
+
+/* ====== shared lead data ====== */
+const NAMES={
+  web:[['Restaurante Sabor Caseiro','Restaurante'],['Auto Center Silva','Oficina mecânica'],
+    ['Padaria Pão Quente','Padaria'],['Pet Shop Amigo Fiel','Pet shop'],
+    ['Academia Corpo em Forma','Academia'],['Salão Beleza Pura','Salão de beleza'],
+    ['Borracharia do Zé','Borracharia'],['Ótica Visão Clara','Ótica']],
+  brand:[['Hamburgueria Brasa','Hamburgueria'],['Studio Pilates Equilíbrio','Estúdio'],
+    ['Doceria Açúcar & Arte','Doceria'],['Barbearia Navalha','Barbearia'],
+    ['Floricultura Pétala','Floricultura'],['Cafeteria Grão Nobre','Cafeteria']],
+  mkt:[['Clínica Odontológica Sorriso','Clínica'],['Imobiliária Lar Ideal','Imobiliária'],
+    ['Escola de Idiomas Fluency','Escola'],['Loja de Móveis Conforto','Loja'],
+    ['Buffet Festa & Cia','Buffet'],['Pousada Mar Azul','Hotelaria']],
+  reforma:[['Condomínio Jardim das Flores','Condomínio'],['Mercado Bom Preço','Mercado'],
+    ['Consultório Dr. Andrade','Consultório'],['Escritório Contábil Lima','Escritório'],
+    ['Loja de Roupas Trend','Varejo'],['Cantina Italiana','Restaurante']],
+  contab:[['Marcenaria Madeira Nobre','Marcenaria'],['Transportadora RapidLog','Transporte'],
+    ['Distribuidora Bebidas Top','Distribuidora'],['Lava-Rápido Brilho','Serviços'],
+    ['Gráfica Express','Gráfica'],['Construtora Alicerce','Construção']]
+};
+const TAGS={web:'Sem site',brand:'Sem identidade visual',mkt:'Sem presença digital',
+  reforma:'Fachada precisa reforma',contab:'Sem contador fixo'};
+const COLORS=['#e879a0','#fb923c','#4ade80','#3b82f6','#a78bfa','#fbbf24'];
+const CITIES_BR=['São Paulo, SP','Rio de Janeiro, RJ','Belo Horizonte, MG','Salvador, BA',
+  'Curitiba, PR','Recife, PE','Fortaleza, CE','Porto Alegre, RS'];
+// Unsplash signed images for the cinematic gallery (storefronts / businesses)
+const GAL=[
+  {n:'Restaurante Sabor Caseiro',c:'Restaurante · sem site',loc:'São Paulo, SP',s:97,grad:'135deg,#c2185b,#7a0f3a',img:'https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?auto=format&fit=crop&w=800&q=70'},
+  {n:'Barbearia Navalha',c:'Barbearia · sem identidade visual',loc:'Santos, SP',s:93,grad:'135deg,#3b2f4a,#1a1230',img:'https://images.unsplash.com/photo-1503951914875-452162b0f3f1?auto=format&fit=crop&w=800&q=70'},
+  {n:'Cafeteria Grão Nobre',c:'Cafeteria · sem presença digital',loc:'Curitiba, PR',s:90,grad:'135deg,#8a5a2b,#3a2410',img:'https://images.unsplash.com/photo-1554118811-1e0d58224f24?auto=format&fit=crop&w=800&q=70'},
+  {n:'Pet Shop Amigo Fiel',c:'Pet shop · sem site',loc:'Belo Horizonte, MG',s:88,grad:'135deg,#1e6e4a,#0d2e20',img:'https://images.unsplash.com/photo-1601758228041-f3b2795255f1?auto=format&fit=crop&w=800&q=70'},
+  {n:'Studio Pilates Equilíbrio',c:'Estúdio · sem social media',loc:'Rio de Janeiro, RJ',s:86,grad:'135deg,#e879a0,#7a2348',img:'https://images.unsplash.com/photo-1518611012118-696072aa579a?auto=format&fit=crop&w=800&q=70'},
+  {n:'Auto Center Silva',c:'Oficina · sem site',loc:'São Paulo, SP',s:91,grad:'135deg,#2b4a8a,#101f3a',img:'https://images.unsplash.com/photo-1486262715619-67b85e0b08d3?auto=format&fit=crop&w=800&q=70'},
+];
+
+/* ============================================================
+   3D GLOBE
+   ============================================================ */
+(function(){
+  if(typeof THREE==='undefined')return;
+  const canvas=$('#globe-canvas');
+  const renderer=new THREE.WebGLRenderer({canvas,alpha:true,antialias:true});
+  renderer.setPixelRatio(Math.min(devicePixelRatio,2));
+  const scene=new THREE.Scene();
+  const camera=new THREE.PerspectiveCamera(45,innerWidth/innerHeight,0.1,100);
+  camera.position.z=16;
+  const group=new THREE.Group();scene.add(group);
+  const R=5.4;
+  function sprite(c){const cv=document.createElement('canvas');cv.width=cv.height=64;
+    const x=cv.getContext('2d');const g=x.createRadialGradient(32,32,0,32,32,32);
+    g.addColorStop(0,c);g.addColorStop(.4,c);g.addColorStop(1,'rgba(0,0,0,0)');
+    x.fillStyle=g;x.beginPath();x.arc(32,32,32,0,7);x.fill();return new THREE.CanvasTexture(cv);}
+  const texP=sprite('rgba(232,121,160,1)'),texM=sprite('rgba(255,122,176,1)'),texG=sprite('rgba(74,222,128,1)');
+  group.add(new THREE.Mesh(new THREE.SphereGeometry(R,30,30),
+    new THREE.MeshBasicMaterial({color:0xe879a0,wireframe:true,transparent:true,opacity:.06})));
+  group.add(new THREE.Mesh(new THREE.SphereGeometry(R*0.985,32,32),
+    new THREE.MeshBasicMaterial({color:0x0f0f1a,transparent:true,opacity:.55})));
+  function fib(n){const p=[],off=2/n,inc=Math.PI*(3-Math.sqrt(5));
+    for(let i=0;i<n;i++){const y=i*off-1+off/2,r=Math.sqrt(1-y*y),phi=i*inc;
+      p.push(new THREE.Vector3(Math.cos(phi)*r,y,Math.sin(phi)*r).multiplyScalar(R));}return p;}
+  const dots=fib(620);
+  group.add(new THREE.Points(new THREE.BufferGeometry().setFromPoints(dots),
+    new THREE.PointsMaterial({map:texP,color:0xe879a0,size:.13,transparent:true,opacity:.5,blending:THREE.AdditiveBlending,depthWrite:false})));
+  const leads=fib(46);
+  const leadMat=new THREE.PointsMaterial({map:texG,color:0x4ade80,size:.55,transparent:true,opacity:.95,blending:THREE.AdditiveBlending,depthWrite:false});
+  group.add(new THREE.Points(new THREE.BufferGeometry().setFromPoints(leads),leadMat));
+  const arcs=[];
+  for(let i=0;i<14;i++){const a=leads[(Math.random()*leads.length)|0],b=leads[(Math.random()*leads.length)|0];
+    if(a.equals(b))continue;
+    const mid=a.clone().add(b).multiplyScalar(.5).normalize().multiplyScalar(R*1.5);
+    const curve=new THREE.QuadraticBezierCurve3(a,mid,b);
+    group.add(new THREE.Line(new THREE.BufferGeometry().setFromPoints(curve.getPoints(40)),
+      new THREE.LineBasicMaterial({color:0xe879a0,transparent:true,opacity:.2})));
+    const dot=new THREE.Points(new THREE.BufferGeometry().setFromPoints([curve.getPoint(0)]),
+      new THREE.PointsMaterial({map:texM,color:0xff7ab0,size:.45,transparent:true,blending:THREE.AdditiveBlending,depthWrite:false}));
+    group.add(dot);arcs.push({curve,dot,t:Math.random(),speed:.0025+Math.random()*.004});}
+  let tmx=0,tmy=0,mx=0,my=0;
+  addEventListener('mousemove',e=>{tmx=e.clientX/innerWidth-.5;tmy=e.clientY/innerHeight-.5;});
+  function resize(){renderer.setSize(innerWidth,innerHeight);camera.aspect=innerWidth/innerHeight;camera.updateProjectionMatrix();
+    group.position.x=innerWidth>900?4.4:0;group.position.y=innerWidth>900?.4:-1.5;}
+  addEventListener('resize',resize);resize();
+  const clock=new THREE.Clock();
+  (function loop(){requestAnimationFrame(loop);const t=clock.getElapsedTime();
+    mx+=(tmx-mx)*.05;my+=(tmy-my)*.05;
+    group.rotation.y+=.0016;group.rotation.z=mx*.12;group.rotation.x=.35+my*.3;
+    leadMat.size=.45+Math.sin(t*2.2)*.12;leadMat.opacity=.7+Math.sin(t*2.2)*.25;
+    arcs.forEach(a=>{a.t+=a.speed;if(a.t>1)a.t=0;const p=a.curve.getPoint(a.t);
+      a.dot.geometry.attributes.position.setXYZ(0,p.x,p.y,p.z);a.dot.geometry.attributes.position.needsUpdate=true;});
+    renderer.render(scene,camera);})();
+  window.__globe={group,canvas};
+})();
+
+/* ============================================================
+   LENIS + GSAP scroll
+   ============================================================ */
+(function(){
+  const hasG=typeof gsap!=='undefined';
+  if(!hasG){document.body.classList.add('libs-failed');buildStuff();bindSearch();return;}
+  gsap.registerPlugin(ScrollTrigger);
+
+  // smooth scroll
+  if(typeof Lenis!=='undefined'){
+    const lenis=new Lenis({lerp:.09,wheelMultiplier:1});window.__lenis=lenis;
+    lenis.on('scroll',ScrollTrigger.update);
+    gsap.ticker.add(t=>lenis.raf(t*1000));gsap.ticker.lagSmoothing(0);
+  }
+
+  // progress bar + scene index + nav
+  const nav=$('#nav'),idx=$('#scene-idx'),prog=$('#progress');
+  ScrollTrigger.create({start:0,end:'max',onUpdate:s=>{prog.style.width=(s.progress*100)+'%';}});
+  ScrollTrigger.create({start:60,onUpdate:s=>nav.classList.toggle('scrolled',s.scroll()>60)});
+  $$('[data-idx]').forEach(sec=>{
+    ScrollTrigger.create({trigger:sec,start:'top 55%',end:'bottom 55%',
+      onToggle:self=>{if(self.isActive)idx.innerHTML=`<b>${sec.dataset.idx}</b> / 08`;}});
+  });
+
+  // hero masked headline
+  gsap.to('#hero .mask>span',{y:'0%',duration:1.1,ease:'power4.out',stagger:.1,delay:.25});
+  // generic masked reveals in other scenes
+  $$('.scene:not(#hero) .mask>span, #gallery .mask>span').forEach(s=>{
+    gsap.to(s,{y:'0%',duration:1,ease:'power4.out',
+      scrollTrigger:{trigger:s,start:'top 88%'}});
+  });
+  // reveal fade-ups
+  gsap.utils.toArray('.reveal').forEach(el=>{
+    gsap.set(el,{opacity:0,y:42});
+    gsap.to(el,{opacity:1,y:0,duration:.9,ease:'power3.out',scrollTrigger:{trigger:el,start:'top 88%'}});
+  });
+
+  // globe choreography
+  if(window.__globe){
+    gsap.to(window.__globe.group.scale,{x:1.3,y:1.3,z:1.3,
+      scrollTrigger:{trigger:'#manifesto',start:'top bottom',end:'bottom top',scrub:1}});
+    gsap.to(window.__globe.canvas,{opacity:.12,
+      scrollTrigger:{trigger:'#how',start:'top center',end:'top top',scrub:1}});
+    gsap.to(window.__globe.canvas,{opacity:1,
+      scrollTrigger:{trigger:'#coverage',start:'top center',end:'center center',scrub:1}});
+    gsap.fromTo(window.__globe.group.position,{x:innerWidth>900?-4:0},
+      {x:innerWidth>900?4.4:0,scrollTrigger:{trigger:'#coverage',start:'top bottom',end:'bottom top',scrub:1}});
+  }
+
+  // manifesto word-by-word
+  const mt=$('#manifestoText');
+  const words=mt.textContent.trim().split(' ');
+  mt.innerHTML=words.map(w=>{
+    const hl=/Honk|Ponk|precisa|você\.?/i.test(w);
+    return `<span class="wd${hl?' hl':''}">${w}</span>`;}).join(' ');
+  const wds=$$('#manifestoText .wd');
+  ScrollTrigger.create({trigger:'#manifesto',start:'top 70%',end:'bottom 75%',scrub:.5,
+    onUpdate:s=>{const n=Math.round(s.progress*wds.length);wds.forEach((w,i)=>w.classList.toggle('on',i<n));}});
+
+  // counters
+  gsap.utils.toArray('.stat .num').forEach(el=>{
+    const target=+el.dataset.target,pre=el.dataset.prefix||'',suf=el.dataset.suffix||'';
+    ScrollTrigger.create({trigger:'#coverage',start:'top 70%',once:true,onEnter:()=>{
+      gsap.to({v:0},{v:target,duration:1.8,ease:'power2.out',
+        onUpdate:function(){el.textContent=pre+Math.round(this.targets()[0].v)+suf;}});}});
+  });
+
+  buildStuff();
+
+  // pinned HOW dashboard scrub
+  const stepEls=$$('.step');
+  const cf={serv:$('#cf-serv'),servV:$('#cf-serv-v'),city:$('#cf-city'),cityV:$('#cf-city-v'),scan:$('#scanbar')};
+  const cLeadEls=$$('#console-leads .clead');
+  const setStep=i=>stepEls.forEach((s,k)=>s.classList.toggle('active',k===i));setStep(0);
+  const tl=gsap.timeline({scrollTrigger:{trigger:'#how',start:'top top',end:'+=2400',scrub:.6,pin:'.how-inner'}});
+  tl.call(()=>{setStep(0);cf.serv.classList.add('lit');cf.servV.textContent='Criação de sites';},[],0);
+  tl.to({},{duration:1},0);
+  tl.call(()=>{setStep(1);cf.serv.classList.remove('lit');cf.city.classList.add('lit');cf.cityV.textContent='São Paulo, SP';},[],1);
+  tl.to({},{duration:1},1);
+  tl.call(()=>{cf.city.classList.remove('lit');cf.scan.style.width='0';},[],2);
+  tl.to(cf.scan,{width:'100%',ease:'none',duration:1},2);
+  tl.call(()=>setStep(2),[],3);
+  cLeadEls.forEach((el,k)=>tl.to(el,{opacity:1,x:0,duration:.5,ease:'power2.out'},3+k*.25));
+  tl.to({},{duration:.9},3.9);
+
+  // horizontal gallery
+  const track=$('#galTrack');
+  const dist=()=>track.scrollWidth-innerWidth+ (innerWidth*0.06);
+  gsap.to(track,{x:()=>-dist(),ease:'none',
+    scrollTrigger:{trigger:'#gallery',start:'top top',end:()=>'+='+dist(),scrub:.8,pin:true,invalidateOnRefresh:true}});
+  // parallax inside gallery photos
+  $$('.gcard .ph').forEach(ph=>{gsap.to(ph,{x:-40,ease:'none',
+    scrollTrigger:{trigger:'#gallery',start:'top top',end:()=>'+='+dist(),scrub:1}});});
+
+  bindSearch();
+  setTimeout(()=>ScrollTrigger.refresh(),400);
+})();
+
+/* ====== build console leads + gallery cards ====== */
+function buildStuff(){
+  const consoleLeads=[
+    {n:'Restaurante Sabor Caseiro',t:'Sem site',s:97,c:'#e879a0'},
+    {n:'Auto Center Silva',t:'Sem site',s:91,c:'#fb923c'},
+    {n:'Clínica Vida & Saúde',t:'Site desatualizado',s:88,c:'#4ade80'}];
+  const cl=$('#console-leads');
+  if(cl)consoleLeads.forEach(l=>{const d=document.createElement('div');d.className='clead';
+    d.innerHTML=`<div class="av" style="background:linear-gradient(135deg,${l.c},#c2185b)">${l.n[0]}</div>
+      <div class="meta"><div class="nm">${l.n}</div><div class="tg">⚠ ${l.t}</div></div>
+      <div class="sc"><b>${l.s}</b><span>match</span></div>`;cl.appendChild(d);});
+  const track=$('#galTrack');
+  if(track)GAL.forEach(g=>{const c=document.createElement('div');c.className='gcard';
+    c.innerHTML=`<div class="ph" style="background-image:url('${g.img}'),linear-gradient(${g.grad})"></div>
+      <div class="gscore">${g.s}% match</div>
+      <div class="body"><div class="gtag">${g.c}</div><div class="gname">${g.n}</div><div class="gloc">📍 ${g.loc}</div></div>`;
+    track.appendChild(c);});
+}
+
+/* ====== 3D tilt ====== */
+function bindTilt(el){const max=8;
+  el.addEventListener('mousemove',e=>{const r=el.getBoundingClientRect();
+    const px=(e.clientX-r.left)/r.width,py=(e.clientY-r.top)/r.height;
+    el.style.transform=`perspective(900px) rotateY(${(px-.5)*max*2}deg) rotateX(${-(py-.5)*max*2}deg) translateZ(6px)`;
+    el.style.setProperty('--mx',px*100+'%');el.style.setProperty('--my',py*100+'%');});
+  el.addEventListener('mouseleave',()=>el.style.transform='');}
+$$('.plan').forEach(bindTilt);
+
+/* ====== live search ====== */
+function bindSearch(){
+  const btn=$('#searchBtn'),grid=$('#liveGrid'),meta=$('#resultsMeta'),empty=$('#emptyState');
+  if(!btn)return;
+  const phone=()=>`(${11+((Math.random()*70)|0)}) 9${(1000+Math.random()*8999|0)}-${(1000+Math.random()*8999|0)}`;
+  function makeLead(name,cat,serv,city){
+    const score=78+((Math.random()*21)|0),color=COLORS[(Math.random()*COLORS.length)|0];
+    const loc=city==='Todo o Brasil'?CITIES_BR[(Math.random()*CITIES_BR.length)|0]:city;
+    const hasIg=Math.random()>.25,hasTel=Math.random()>.15,hasSite=Math.random()>.8;
+    const el=document.createElement('div');el.className='lead';
+    el.innerHTML=`<div class="glow"></div>
+      <div class="lead-top"><div class="lead-av" style="background:linear-gradient(135deg,${color},#c2185b)">${name[0]}</div>
+        <div><div class="lead-name">${name}</div><div class="lead-cat">${cat} · ${loc}</div></div></div>
+      <div class="lead-tags"><span class="tag warn">⚠ ${TAGS[serv]}</span><span class="tag score">${score}% match</span></div>
+      <div class="lead-contacts"><span class="cbtn wa">🟢 WhatsApp</span>
+        ${hasIg?'<span class="cbtn ig">📸 Instagram</span>':''}
+        ${hasTel?`<span class="cbtn tel">📞 ${phone()}</span>`:''}
+        ${hasSite?'<span class="cbtn site">🌐 Site</span>':''}</div>`;
+    bindTilt(el);return el;}
+  let running=false;
+  btn.addEventListener('click',()=>{
+    if(running)return;running=true;
+    const serv=$('#selServ').value,city=$('#selCity').value;
+    btn.disabled=true;btn.textContent='⏳ Rastreando...';
+    empty.style.display='none';grid.innerHTML='';meta.style.display='none';
+    const pool=NAMES[serv].slice().sort(()=>Math.random()-.5);
+    const count=city==='Todo o Brasil'?6:4+((Math.random()*2)|0);
+    let i=0;
+    const iv=setInterval(()=>{
+      if(i>=count||i>=pool.length){clearInterval(iv);
+        running=false;btn.disabled=false;btn.textContent='Buscar novamente';
+        meta.style.display='flex';
+        meta.innerHTML=`✅ <b>${grid.children.length} leads qualificados</b> em ${city} · taxa de contato 94%`;return;}
+      const [name,cat]=pool[i];const el=makeLead(name,cat,serv,city);
+      el.style.opacity=0;el.style.transform='translateY(24px)';grid.appendChild(el);
+      requestAnimationFrame(()=>{el.style.transition='.5s cubic-bezier(.2,.7,.3,1)';el.style.opacity=1;el.style.transform='translateY(0)';});
+      i++;},260);
+  });
+}
+</script>
+</body>
+</html>
