@@ -1,0 +1,437 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Flappy Face 🐦</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+  html, body {
+    height: 100%;
+    background: #1a1a2e;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Inter, sans-serif;
+    overflow: hidden;
+    user-select: none;
+  }
+  #wrap {
+    position: fixed; inset: 0;
+    display: flex; align-items: center; justify-content: center;
+    background: radial-gradient(circle at 50% 30%, #2a2a4a, #12121f);
+  }
+  #stage {
+    position: relative;
+    box-shadow: 0 30px 80px rgba(0,0,0,.6);
+    border-radius: 14px;
+    overflow: hidden;
+    background: #4ec0ca;
+  }
+  canvas { display: block; touch-action: none; }
+
+  .overlay {
+    position: absolute; inset: 0;
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    gap: 14px; text-align: center; color: #fff;
+    background: rgba(10,10,25,.55);
+    backdrop-filter: blur(2px);
+    padding: 24px;
+  }
+  .overlay.hidden { display: none; }
+  .overlay h1 {
+    font-size: 34px; font-weight: 900; letter-spacing: -1px;
+    text-shadow: 0 3px 0 rgba(0,0,0,.35);
+  }
+  .overlay p { font-size: 15px; opacity: .85; max-width: 280px; line-height: 1.5; }
+  .big-score { font-size: 64px; font-weight: 900; line-height: 1; }
+  .best { font-size: 14px; opacity: .8; }
+
+  button.play {
+    margin-top: 4px;
+    border: none; cursor: pointer;
+    background: linear-gradient(180deg,#ffd24a,#ffb01f);
+    color: #6b3b00; font-weight: 800; font-size: 18px;
+    padding: 14px 36px; border-radius: 999px;
+    box-shadow: 0 6px 0 #c98800, 0 10px 20px rgba(0,0,0,.3);
+    transition: transform .05s;
+  }
+  button.play:active { transform: translateY(3px); box-shadow: 0 3px 0 #c98800, 0 6px 12px rgba(0,0,0,.3); }
+
+  .face-pick {
+    display: flex; align-items: center; gap: 10px;
+    background: rgba(255,255,255,.12); border: 1px solid rgba(255,255,255,.2);
+    padding: 8px 8px 8px 14px; border-radius: 999px; font-size: 13px;
+  }
+  .face-pick label {
+    cursor: pointer; background: #fff; color: #222; font-weight: 700;
+    padding: 7px 14px; border-radius: 999px;
+  }
+  #facePreview {
+    width: 34px; height: 34px; border-radius: 50%;
+    object-fit: cover; border: 2px solid #fff; display: none;
+  }
+  input[type=file] { display: none; }
+  .hint { position: absolute; bottom: 10px; left: 0; right: 0; text-align: center; color: rgba(255,255,255,.5); font-size: 11px; }
+</style>
+</head>
+<body>
+<div id="wrap">
+  <div id="stage">
+    <canvas id="game"></canvas>
+
+    <!-- Tela inicial -->
+    <div id="startScreen" class="overlay">
+      <h1>FLAPPY FACE 🐦</h1>
+      <p>Toque, clique ou aperte <b>espaço</b> pra voar. Desvie dos canos!</p>
+      <div class="face-pick">
+        <img id="facePreview" alt="">
+        <span id="facePickText">Seu rosto vira o pássaro</span>
+        <label for="faceInput">Escolher foto</label>
+      </div>
+      <input type="file" id="faceInput" accept="image/*">
+      <button class="play" id="startBtn">JOGAR</button>
+      <div class="hint">Dica: solte uma imagem aqui pra usar como rosto</div>
+    </div>
+
+    <!-- Game over -->
+    <div id="overScreen" class="overlay hidden">
+      <h1>GAME OVER</h1>
+      <div class="big-score" id="finalScore">0</div>
+      <div class="best" id="bestScore">Recorde: 0</div>
+      <button class="play" id="retryBtn">JOGAR DE NOVO</button>
+    </div>
+  </div>
+</div>
+
+<script>
+(() => {
+  const canvas = document.getElementById('game');
+  const ctx = canvas.getContext('2d');
+
+  // ---- Dimensões (retrato, estilo celular) ----
+  const W = 400, H = 600;
+  function fitCanvas() {
+    const dpr = Math.min(window.devicePixelRatio || 1, 2);
+    canvas.width = W * dpr;
+    canvas.height = H * dpr;
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    // escala visual pra caber na tela mantendo proporção
+    const scale = Math.min(window.innerWidth / W, window.innerHeight / H, 1);
+    canvas.style.width = (W * scale) + 'px';
+    canvas.style.height = (H * scale) + 'px';
+  }
+  fitCanvas();
+  window.addEventListener('resize', fitCanvas);
+
+  // ---- Parâmetros do jogo ----
+  const GRAVITY = 0.45;
+  const FLAP = -7.6;
+  const PIPE_W = 64;
+  const GAP = 165;
+  const PIPE_SPEED = 2.4;
+  const PIPE_INTERVAL = 1500; // ms
+  const GROUND_H = 90;
+  const BIRD_R = 24; // raio do rosto
+  const BIRD_X = 110;
+
+  // ---- Estado ----
+  let state = 'start'; // start | playing | over
+  let bird, pipes, score, lastPipe, frame;
+  let best = +(localStorage.getItem('flappyFaceBest') || 0);
+
+  function reset() {
+    bird = { x: BIRD_X, y: H / 2, vy: 0, rot: 0 };
+    pipes = [];
+    score = 0;
+    lastPipe = 0;
+    frame = 0;
+  }
+  reset();
+
+  // ---- Imagem do rosto (recortada em círculo) ----
+  let faceImg = null;          // canvas com rosto já recortado em círculo
+  let faceLoaded = false;
+
+  function makeCircularFace(img) {
+    const size = 256;
+    const off = document.createElement('canvas');
+    off.width = size; off.height = size;
+    const o = off.getContext('2d');
+    // crop central quadrado da foto
+    const s = Math.min(img.width, img.height);
+    const sx = (img.width - s) / 2;
+    const sy = (img.height - s) / 2;
+    o.save();
+    o.beginPath();
+    o.arc(size/2, size/2, size/2, 0, Math.PI*2);
+    o.closePath();
+    o.clip();
+    o.drawImage(img, sx, sy, s, s, 0, 0, size, size);
+    o.restore();
+    faceImg = off;
+    faceLoaded = true;
+  }
+
+  function loadFaceFromSrc(src) {
+    const img = new Image();
+    img.crossOrigin = 'anonymous';
+    img.onload = () => {
+      makeCircularFace(img);
+      const prev = document.getElementById('facePreview');
+      prev.src = src; prev.style.display = 'block';
+      document.getElementById('facePickText').textContent = 'Rosto carregado! 🎉';
+    };
+    img.src = src;
+  }
+
+  // tenta carregar face.png na mesma pasta (só via http/https; em file:// daria erro de CORS)
+  if (location.protocol === 'http:' || location.protocol === 'https:') {
+    loadFaceFromSrc('face.png');
+  }
+
+  // upload manual
+  document.getElementById('faceInput').addEventListener('change', e => {
+    const file = e.target.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = ev => loadFaceFromSrc(ev.target.result);
+    reader.readAsDataURL(file);
+  });
+
+  // drag & drop
+  const stage = document.getElementById('stage');
+  ['dragover','drop'].forEach(t => stage.addEventListener(t, e => e.preventDefault()));
+  stage.addEventListener('drop', e => {
+    const file = e.dataTransfer.files[0];
+    if (!file || !file.type.startsWith('image/')) return;
+    const reader = new FileReader();
+    reader.onload = ev => loadFaceFromSrc(ev.target.result);
+    reader.readAsDataURL(file);
+  });
+
+  // ---- Desenho do pássaro ----
+  function drawBird() {
+    ctx.save();
+    ctx.translate(bird.x, bird.y);
+    ctx.rotate(bird.rot);
+
+    if (faceLoaded) {
+      // sombra/borda
+      ctx.beginPath();
+      ctx.arc(0, 0, BIRD_R + 2, 0, Math.PI*2);
+      ctx.fillStyle = 'rgba(0,0,0,.18)';
+      ctx.fill();
+      ctx.drawImage(faceImg, -BIRD_R, -BIRD_R, BIRD_R*2, BIRD_R*2);
+      // contorno
+      ctx.beginPath();
+      ctx.arc(0, 0, BIRD_R, 0, Math.PI*2);
+      ctx.lineWidth = 2.5;
+      ctx.strokeStyle = '#fff';
+      ctx.stroke();
+    } else {
+      // pássaro padrão (carinha) até carregar a foto
+      ctx.beginPath();
+      ctx.arc(0, 0, BIRD_R, 0, Math.PI*2);
+      ctx.fillStyle = '#ffd24a';
+      ctx.fill();
+      ctx.strokeStyle = '#e0a500'; ctx.lineWidth = 2.5; ctx.stroke();
+      // olho
+      ctx.beginPath(); ctx.arc(8, -7, 5, 0, Math.PI*2); ctx.fillStyle = '#fff'; ctx.fill();
+      ctx.beginPath(); ctx.arc(10, -7, 2.4, 0, Math.PI*2); ctx.fillStyle = '#000'; ctx.fill();
+      // bico
+      ctx.beginPath(); ctx.moveTo(BIRD_R-4,0); ctx.lineTo(BIRD_R+10,-4); ctx.lineTo(BIRD_R+10,5); ctx.closePath();
+      ctx.fillStyle = '#ff8c1a'; ctx.fill();
+    }
+    // asinha simples
+    const flapY = Math.sin(frame * 0.3) * 5;
+    ctx.beginPath();
+    ctx.ellipse(-BIRD_R + 6, 4 + flapY, 12, 8, 0, 0, Math.PI*2);
+    ctx.fillStyle = faceLoaded ? 'rgba(255,255,255,.85)' : '#fff';
+    ctx.fill();
+    ctx.strokeStyle = 'rgba(0,0,0,.25)'; ctx.lineWidth = 1.5; ctx.stroke();
+
+    ctx.restore();
+  }
+
+  // ---- Canos ----
+  function spawnPipe() {
+    const minTop = 50;
+    const maxTop = H - GROUND_H - GAP - 50;
+    const top = minTop + Math.random() * (maxTop - minTop);
+    pipes.push({ x: W + PIPE_W, top, passed: false });
+  }
+
+  function drawPipe(p) {
+    const grad = ctx.createLinearGradient(p.x, 0, p.x + PIPE_W, 0);
+    grad.addColorStop(0, '#73c93b');
+    grad.addColorStop(0.5, '#9be25b');
+    grad.addColorStop(1, '#5aa82a');
+    ctx.fillStyle = grad;
+    ctx.strokeStyle = '#3d7a1a'; ctx.lineWidth = 3;
+
+    const lip = 18, lipW = 10;
+    // cano de cima
+    ctx.fillRect(p.x, 0, PIPE_W, p.top);
+    ctx.strokeRect(p.x, 0, PIPE_W, p.top);
+    ctx.fillRect(p.x - lipW/2, p.top - lip, PIPE_W + lipW, lip);
+    ctx.strokeRect(p.x - lipW/2, p.top - lip, PIPE_W + lipW, lip);
+    // cano de baixo
+    const by = p.top + GAP;
+    const bh = H - GROUND_H - by;
+    ctx.fillRect(p.x, by, PIPE_W, bh);
+    ctx.strokeRect(p.x, by, PIPE_W, bh);
+    ctx.fillRect(p.x - lipW/2, by, PIPE_W + lipW, lip);
+    ctx.strokeRect(p.x - lipW/2, by, PIPE_W + lipW, lip);
+  }
+
+  // ---- Cenário ----
+  let groundX = 0;
+  function drawBackground() {
+    // céu
+    const sky = ctx.createLinearGradient(0,0,0,H);
+    sky.addColorStop(0, '#4ec0ca');
+    sky.addColorStop(1, '#9fe6d0');
+    ctx.fillStyle = sky;
+    ctx.fillRect(0,0,W,H);
+    // nuvens
+    ctx.fillStyle = 'rgba(255,255,255,.55)';
+    for (let i=0;i<3;i++){
+      const cx = ((i*180 - frame*0.3) % (W+120)) + (W+120);
+      const x = cx % (W+120) - 60;
+      const y = 80 + i*60;
+      ctx.beginPath();
+      ctx.arc(x, y, 22, 0, Math.PI*2);
+      ctx.arc(x+24, y+4, 18, 0, Math.PI*2);
+      ctx.arc(x-22, y+6, 16, 0, Math.PI*2);
+      ctx.fill();
+    }
+  }
+  function drawGround() {
+    const gy = H - GROUND_H;
+    ctx.fillStyle = '#ded895';
+    ctx.fillRect(0, gy, W, GROUND_H);
+    ctx.fillStyle = '#c4bd6e';
+    ctx.fillRect(0, gy, W, 14);
+    // textura rolando
+    ctx.fillStyle = '#b5ad5e';
+    const step = 26;
+    groundX = (groundX - PIPE_SPEED) % step;
+    for (let x = groundX; x < W; x += step) {
+      ctx.beginPath();
+      ctx.moveTo(x, gy+14); ctx.lineTo(x+13, gy+14); ctx.lineTo(x+6, gy+24);
+      ctx.closePath(); ctx.fill();
+    }
+    ctx.fillStyle = '#7aa53a';
+    ctx.fillRect(0, gy, W, 4);
+  }
+
+  function drawScore() {
+    if (state !== 'playing') return;
+    ctx.font = '900 48px -apple-system, sans-serif';
+    ctx.textAlign = 'center';
+    ctx.lineWidth = 6; ctx.strokeStyle = 'rgba(0,0,0,.45)';
+    ctx.strokeText(score, W/2, 80);
+    ctx.fillStyle = '#fff';
+    ctx.fillText(score, W/2, 80);
+  }
+
+  // ---- Colisão ----
+  function hits() {
+    // chão / teto
+    if (bird.y + BIRD_R >= H - GROUND_H) return true;
+    if (bird.y - BIRD_R <= 0) return true;
+    // canos (círculo vs retângulo)
+    for (const p of pipes) {
+      if (bird.x + BIRD_R < p.x || bird.x - BIRD_R > p.x + PIPE_W) continue;
+      const r = BIRD_R * 0.85; // hitbox um pouco mais generosa
+      const topRect = { x:p.x, y:0, w:PIPE_W, h:p.top };
+      const botY = p.top + GAP;
+      const botRect = { x:p.x, y:botY, w:PIPE_W, h:H-GROUND_H-botY };
+      if (circleRect(bird.x, bird.y, r, topRect) || circleRect(bird.x, bird.y, r, botRect))
+        return true;
+    }
+    return false;
+  }
+  function circleRect(cx, cy, r, rect) {
+    const nx = Math.max(rect.x, Math.min(cx, rect.x + rect.w));
+    const ny = Math.max(rect.y, Math.min(cy, rect.y + rect.h));
+    const dx = cx - nx, dy = cy - ny;
+    return dx*dx + dy*dy < r*r;
+  }
+
+  // ---- Loop ----
+  let last = performance.now();
+  function loop(now) {
+    const dt = now - last; last = now;
+    frame++;
+
+    drawBackground();
+
+    if (state === 'playing') {
+      // física
+      bird.vy += GRAVITY;
+      bird.y += bird.vy;
+      bird.rot = Math.max(-0.5, Math.min(1.2, bird.vy * 0.06));
+
+      // canos
+      lastPipe += dt;
+      if (lastPipe >= PIPE_INTERVAL) { spawnPipe(); lastPipe = 0; }
+      for (const p of pipes) {
+        p.x -= PIPE_SPEED;
+        if (!p.passed && p.x + PIPE_W < bird.x) { p.passed = true; score++; }
+      }
+      pipes = pipes.filter(p => p.x + PIPE_W > -20);
+
+      if (hits()) gameOver();
+    }
+
+    for (const p of pipes) drawPipe(p);
+    drawGround();
+    drawBird();
+    drawScore();
+
+    requestAnimationFrame(loop);
+  }
+  requestAnimationFrame(loop);
+
+  // ---- Controles de estado ----
+  const startScreen = document.getElementById('startScreen');
+  const overScreen  = document.getElementById('overScreen');
+
+  function startGame() {
+    reset();
+    state = 'playing';
+    startScreen.classList.add('hidden');
+    overScreen.classList.add('hidden');
+    flap();
+  }
+  function gameOver() {
+    state = 'over';
+    if (score > best) { best = score; localStorage.setItem('flappyFaceBest', best); }
+    document.getElementById('finalScore').textContent = score;
+    document.getElementById('bestScore').textContent = 'Recorde: ' + best;
+    overScreen.classList.remove('hidden');
+  }
+  function flap() {
+    if (state === 'playing') bird.vy = FLAP;
+  }
+
+  document.getElementById('startBtn').addEventListener('click', startGame);
+  document.getElementById('retryBtn').addEventListener('click', startGame);
+
+  // input geral
+  function onTap(e) {
+    if (state === 'playing') { e.preventDefault(); flap(); }
+  }
+  canvas.addEventListener('mousedown', onTap);
+  canvas.addEventListener('touchstart', onTap, { passive:false });
+  window.addEventListener('keydown', e => {
+    if (e.code === 'Space' || e.code === 'ArrowUp') {
+      e.preventDefault();
+      if (state === 'playing') flap();
+      else if (state === 'start') startGame();
+      else if (state === 'over') startGame();
+    }
+  });
+})();
+</script>
+</body>
+</html>
