@@ -265,6 +265,32 @@
   footer{text-align:center;padding:46px 6vw 60px;color:var(--w40);font-size:.78rem;letter-spacing:1px;
     border-top:1px solid var(--w06)}
 
+  /* ---- infinite marquee ---- */
+  .marquee{overflow:hidden;padding:46px 0;border-top:1px solid var(--w06);border-bottom:1px solid var(--w06);
+    white-space:nowrap;position:relative;background:rgba(20,20,42,.25);
+    -webkit-mask-image:linear-gradient(90deg,transparent,#000 10%,#000 90%,transparent);
+            mask-image:linear-gradient(90deg,transparent,#000 10%,#000 90%,transparent)}
+  .marquee .row{display:inline-flex;gap:46px;align-items:center;will-change:transform;animation:marq 32s linear infinite}
+  .marquee.rev .row{animation-direction:reverse;animation-duration:38s}
+  .marquee .item{font-size:clamp(1.7rem,4vw,3.2rem);font-weight:900;letter-spacing:-1.5px;text-transform:uppercase;
+    color:transparent;-webkit-text-stroke:1px rgba(255,255,255,.22)}
+  .marquee .item.fill{-webkit-text-stroke:0;background:linear-gradient(115deg,var(--pink),var(--magenta));
+    -webkit-background-clip:text;background-clip:text}
+  .marquee .star{color:var(--pink);font-size:1.3rem;-webkit-text-stroke:0}
+  @keyframes marq{to{transform:translateX(-50%)}}
+
+  /* ---- Ken Burns infinite zoom on gallery photos ---- */
+  .gcard .ph{animation:ken 16s ease-in-out infinite alternate}
+  @keyframes ken{from{transform:scale(1.12)}to{transform:scale(1.32) translate(-3%,-2%)}}
+
+  /* zoom-portal scene */
+  #portal{height:100vh;overflow:hidden;padding:0;display:flex;align-items:center;justify-content:center;text-align:center}
+  #portal .pinner{height:100vh;width:100%;display:flex;align-items:center;justify-content:center;position:relative}
+  #portal .zoomword{font-weight:900;letter-spacing:-4px;font-size:clamp(3rem,13vw,12rem);line-height:.9;
+    will-change:transform;transform-origin:center}
+  #portal .sub{position:absolute;bottom:16vh;left:0;right:0;color:var(--w40);font-size:.8rem;
+    letter-spacing:3px;text-transform:uppercase}
+
   @media(max-width:860px){
     .nav-links{display:none}
     .how-inner{grid-template-columns:1fr;gap:40px}
@@ -320,6 +346,9 @@
     <p class="manifesto-text" id="manifestoText">Você perde horas no Google atrás de empresas que já têm site, já têm agência, já têm tudo. O Honk Ponk vira esse jogo: só aparece quem precisa de você.</p>
   </section>
 
+  <!-- infinite marquee -->
+  <div class="marquee" id="marqueeA"><div class="row" data-marq="encanador,dentista,restaurante,advogado,oficina,pet shop,academia,salão,padaria,barbearia,clínica,mercado"></div></div>
+
   <!-- 03 HOW (pinned) -->
   <section id="how" data-idx="03">
     <div class="how-inner">
@@ -362,6 +391,17 @@
       <!-- gcards injected by JS -->
     </div>
   </section>
+
+  <!-- zoom portal transition -->
+  <section id="portal">
+    <div class="pinner">
+      <div class="zoomword grad" id="zoomword">BUSCAR</div>
+      <div class="sub">um clique · dezenas de leads</div>
+    </div>
+  </section>
+
+  <!-- second infinite marquee -->
+  <div class="marquee rev" id="marqueeB"><div class="row" data-marq="são paulo,rio de janeiro,belo horizonte,salvador,curitiba,recife,fortaleza,porto alegre,brasília,manaus,belém,goiânia"></div></div>
 
   <!-- 05 LIVE DEMO -->
   <section class="scene" id="demo" data-idx="05">
@@ -539,7 +579,7 @@ const GAL=[
     arcs.forEach(a=>{a.t+=a.speed;if(a.t>1)a.t=0;const p=a.curve.getPoint(a.t);
       a.dot.geometry.attributes.position.setXYZ(0,p.x,p.y,p.z);a.dot.geometry.attributes.position.needsUpdate=true;});
     renderer.render(scene,camera);})();
-  window.__globe={group,canvas};
+  window.__globe={group,canvas,camera};
 })();
 
 /* ============================================================
@@ -573,23 +613,47 @@ const GAL=[
     gsap.to(s,{y:'0%',duration:1,ease:'power4.out',
       scrollTrigger:{trigger:s,start:'top 88%'}});
   });
-  // reveal fade-ups
+  // reveal fade-ups (with subtle zoom-in)
   gsap.utils.toArray('.reveal').forEach(el=>{
-    gsap.set(el,{opacity:0,y:42});
-    gsap.to(el,{opacity:1,y:0,duration:.9,ease:'power3.out',scrollTrigger:{trigger:el,start:'top 88%'}});
+    gsap.set(el,{opacity:0,y:42,scale:.96});
+    gsap.to(el,{opacity:1,y:0,scale:1,duration:.95,ease:'power3.out',scrollTrigger:{trigger:el,start:'top 88%'}});
   });
 
-  // globe choreography
+  // HERO zoom-out: headline scales up & fades as you leave
+  gsap.to('#hero h1',{scale:1.22,opacity:0,y:-40,ease:'none',transformOrigin:'left center',
+    scrollTrigger:{trigger:'#hero',start:'top top',end:'bottom top',scrub:.8}});
+
+  // globe choreography + ZOOM into the planet
   if(window.__globe){
-    gsap.to(window.__globe.group.scale,{x:1.3,y:1.3,z:1.3,
+    const G=window.__globe;
+    gsap.to(G.group.scale,{x:1.3,y:1.3,z:1.3,
       scrollTrigger:{trigger:'#manifesto',start:'top bottom',end:'bottom top',scrub:1}});
-    gsap.to(window.__globe.canvas,{opacity:.12,
+    gsap.to(G.canvas,{opacity:.1,
       scrollTrigger:{trigger:'#how',start:'top center',end:'top top',scrub:1}});
-    gsap.to(window.__globe.canvas,{opacity:1,
+    gsap.to(G.canvas,{opacity:1,
       scrollTrigger:{trigger:'#coverage',start:'top center',end:'center center',scrub:1}});
-    gsap.fromTo(window.__globe.group.position,{x:innerWidth>900?-4:0},
+    gsap.fromTo(G.group.position,{x:innerWidth>900?-4:0},
       {x:innerWidth>900?4.4:0,scrollTrigger:{trigger:'#coverage',start:'top bottom',end:'bottom top',scrub:1}});
+    // dramatic camera zoom INTO the globe across the coverage scene
+    if(G.camera) gsap.fromTo(G.camera.position,{z:16},{z:9,ease:'none',
+      scrollTrigger:{trigger:'#coverage',start:'top bottom',end:'center center',scrub:1}});
   }
+
+  // marquee also reacts to scroll for the cinematic feel
+  $$('.marquee').forEach(m=>{
+    gsap.fromTo(m.querySelector('.row'),{x:0},{x:m.classList.contains('rev')?120:-120,ease:'none',
+      scrollTrigger:{trigger:m,start:'top bottom',end:'bottom top',scrub:1}});
+  });
+
+  // ZOOM PORTAL: the word scales from small to filling the screen (infinite-zoom feel)
+  $('#zoomword').style.transform='scale(.4)';
+  ScrollTrigger.create({trigger:'#portal',start:'top top',end:'+=1600',scrub:.7,pin:'#portal .pinner',
+    onUpdate:s=>{const p=s.progress;
+      const zw=$('#zoomword');
+      zw.style.transform=`scale(${0.4+p*9})`;
+      zw.style.opacity=p<.85?1:(1-(p-.85)/.15);
+      const sub=$('#portal .sub');if(sub)sub.style.opacity=p<.3?1-p/.3:0;
+    }});
 
   // manifesto word-by-word
   const mt=$('#manifestoText');
@@ -632,9 +696,7 @@ const GAL=[
   const dist=()=>track.scrollWidth-innerWidth+ (innerWidth*0.06);
   gsap.to(track,{x:()=>-dist(),ease:'none',
     scrollTrigger:{trigger:'#gallery',start:'top top',end:()=>'+='+dist(),scrub:.8,pin:true,invalidateOnRefresh:true}});
-  // parallax inside gallery photos
-  $$('.gcard .ph').forEach(ph=>{gsap.to(ph,{x:-40,ease:'none',
-    scrollTrigger:{trigger:'#gallery',start:'top top',end:()=>'+='+dist(),scrub:1}});});
+  // gallery photos keep their infinite Ken Burns zoom (CSS); track movement provides the parallax
 
   bindSearch();
   setTimeout(()=>ScrollTrigger.refresh(),400);
@@ -642,6 +704,12 @@ const GAL=[
 
 /* ====== build console leads + gallery cards ====== */
 function buildStuff(){
+  // infinite marquees: duplicate items so the -50% loop is seamless
+  document.querySelectorAll('.marquee .row').forEach(row=>{
+    const items=row.dataset.marq.split(',');
+    const html=items.map(w=>`<span class="item${Math.random()>.6?' fill':''}">${w.trim()}</span><span class="star">✳</span>`).join('');
+    row.innerHTML=html+html;
+  });
   const consoleLeads=[
     {n:'Restaurante Sabor Caseiro',t:'Sem site',s:97,c:'#e879a0'},
     {n:'Auto Center Silva',t:'Sem site',s:91,c:'#fb923c'},
