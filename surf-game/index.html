@@ -1,0 +1,363 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Endless Surf 🏄</title>
+<style>
+  * { margin:0; padding:0; box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
+  html,body { height:100%; background:#0b2a3a; font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Inter,sans-serif; overflow:hidden; user-select:none; }
+  #wrap { position:fixed; inset:0; display:flex; align-items:center; justify-content:center; background:radial-gradient(circle at 50% 20%,#13405a,#07151f); }
+  #stage { position:relative; border-radius:14px; overflow:hidden; box-shadow:0 30px 80px rgba(0,0,0,.6); background:#3aa9d6; }
+  canvas { display:block; touch-action:none; }
+
+  .overlay { position:absolute; inset:0; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:14px; text-align:center; color:#fff; background:rgba(6,20,30,.5); backdrop-filter:blur(2px); padding:24px; }
+  .overlay.hidden { display:none; }
+  .overlay h1 { font-size:32px; font-weight:900; letter-spacing:-1px; text-shadow:0 3px 0 rgba(0,0,0,.35); }
+  .overlay p { font-size:15px; opacity:.9; max-width:300px; line-height:1.5; }
+  .big-score { font-size:60px; font-weight:900; line-height:1; }
+  .best { font-size:14px; opacity:.85; }
+
+  button.play { margin-top:4px; border:none; cursor:pointer; background:linear-gradient(180deg,#ffd24a,#ffb01f); color:#6b3b00; font-weight:800; font-size:18px; padding:14px 36px; border-radius:999px; box-shadow:0 6px 0 #c98800,0 10px 20px rgba(0,0,0,.3); transition:transform .05s; }
+  button.play:active { transform:translateY(3px); box-shadow:0 3px 0 #c98800,0 6px 12px rgba(0,0,0,.3); }
+
+  .face-pick { display:flex; align-items:center; gap:10px; background:rgba(255,255,255,.12); border:1px solid rgba(255,255,255,.2); padding:8px 8px 8px 14px; border-radius:999px; font-size:13px; }
+  .face-pick label { cursor:pointer; background:#fff; color:#222; font-weight:700; padding:7px 14px; border-radius:999px; }
+  #facePreview { width:34px; height:34px; border-radius:50%; object-fit:cover; border:2px solid #fff; display:none; }
+  input[type=file] { display:none; }
+  .hint { position:absolute; bottom:10px; left:0; right:0; text-align:center; color:rgba(255,255,255,.55); font-size:11px; }
+</style>
+</head>
+<body>
+<div id="wrap">
+  <div id="stage">
+    <canvas id="game"></canvas>
+
+    <div id="startScreen" class="overlay">
+      <h1>ENDLESS SURF 🏄</h1>
+      <p>Toque, clique ou aperte <b>espaço</b> pra pular. Desvie das pedras 🪨 e dos tubarões 🦈!</p>
+      <div class="face-pick">
+        <img id="facePreview" alt="">
+        <span id="facePickText">Seu rosto no surfista (opcional)</span>
+        <label for="faceInput">Escolher foto</label>
+      </div>
+      <input type="file" id="faceInput" accept="image/*">
+      <button class="play" id="startBtn">SURFAR</button>
+      <div class="hint">Quanto mais longe, mais rápido fica 🌊</div>
+    </div>
+
+    <div id="overScreen" class="overlay hidden">
+      <h1>WIPEOUT! 🌊</h1>
+      <div class="big-score" id="finalScore">0</div>
+      <div class="best" id="bestScore">Recorde: 0</div>
+      <button class="play" id="retryBtn">SURFAR DE NOVO</button>
+    </div>
+  </div>
+</div>
+
+<script>
+(() => {
+  const canvas = document.getElementById('game');
+  const ctx = canvas.getContext('2d');
+  const W = 440, H = 620;
+
+  function fitCanvas() {
+    const dpr = Math.min(window.devicePixelRatio || 1, 2);
+    canvas.width = W*dpr; canvas.height = H*dpr;
+    ctx.setTransform(dpr,0,0,dpr,0,0);
+    const scale = Math.min(window.innerWidth/W, window.innerHeight/H, 1);
+    canvas.style.width = (W*scale)+'px';
+    canvas.style.height = (H*scale)+'px';
+  }
+  fitCanvas();
+  window.addEventListener('resize', fitCanvas);
+
+  // ---- Parâmetros ----
+  const GRAVITY = 0.6;
+  const JUMP = -11;
+  const SURFER_X = 130;
+  const SEA_BASE = H * 0.58;        // altura média do mar
+  const WAVE_AMP = 26;              // amplitude da ondulação
+  const WAVE_LEN = 220;             // comprimento de onda (px)
+  let speed = 3.2;
+  const SPEED_MAX = 7.5;
+
+  // ---- Estado ----
+  let state = 'start';
+  let surfer, obstacles, score, dist, lastObs, frame, waveOff;
+  let best = +(localStorage.getItem('surfBest') || 0);
+
+  function waveY(x) {
+    // superfície do mar como soma de 2 senos pra parecer natural
+    return SEA_BASE
+      + Math.sin((x + waveOff) / WAVE_LEN * Math.PI*2) * WAVE_AMP
+      + Math.sin((x + waveOff) / (WAVE_LEN*0.43) * Math.PI*2) * (WAVE_AMP*0.35);
+  }
+
+  function reset() {
+    surfer = { y: SEA_BASE, vy:0, onWater:true, rot:0 };
+    obstacles = [];
+    score = 0; dist = 0; lastObs = 0; frame = 0; waveOff = 0;
+    speed = 3.2;
+  }
+  reset();
+
+  // ---- Rosto (opcional) ----
+  let faceImg = null, faceLoaded = false;
+  function makeCircularFace(img) {
+    const size = 128, off = document.createElement('canvas');
+    off.width = size; off.height = size;
+    const o = off.getContext('2d');
+    const s = Math.min(img.width, img.height);
+    o.save(); o.beginPath(); o.arc(size/2,size/2,size/2,0,Math.PI*2); o.clip();
+    o.drawImage(img,(img.width-s)/2,(img.height-s)/2,s,s,0,0,size,size); o.restore();
+    faceImg = off; faceLoaded = true;
+  }
+  function loadFace(src) {
+    const img = new Image(); img.crossOrigin='anonymous';
+    img.onload = () => { makeCircularFace(img);
+      const p=document.getElementById('facePreview'); p.src=src; p.style.display='block';
+      document.getElementById('facePickText').textContent='Rosto carregado! 🤙'; };
+    img.src = src;
+  }
+  if (location.protocol==='http:'||location.protocol==='https:') loadFace('face.png');
+  document.getElementById('faceInput').addEventListener('change', e=>{
+    const f=e.target.files[0]; if(!f) return;
+    const r=new FileReader(); r.onload=ev=>loadFace(ev.target.result); r.readAsDataURL(f);
+  });
+  const stage=document.getElementById('stage');
+  ['dragover','drop'].forEach(t=>stage.addEventListener(t,e=>e.preventDefault()));
+  stage.addEventListener('drop', e=>{
+    const f=e.dataTransfer.files[0]; if(!f||!f.type.startsWith('image/')) return;
+    const r=new FileReader(); r.onload=ev=>loadFace(ev.target.result); r.readAsDataURL(f);
+  });
+
+  // ---- Desenho ----
+  function drawBackground() {
+    const sky = ctx.createLinearGradient(0,0,0,SEA_BASE);
+    sky.addColorStop(0,'#ffd89b'); sky.addColorStop(.5,'#ff9a6c'); sky.addColorStop(1,'#ff6f91');
+    ctx.fillStyle = sky; ctx.fillRect(0,0,W,SEA_BASE+40);
+    // sol
+    ctx.beginPath(); ctx.arc(W*0.72, SEA_BASE*0.42, 52, 0, Math.PI*2);
+    ctx.fillStyle='rgba(255,247,210,.95)'; ctx.fill();
+    ctx.beginPath(); ctx.arc(W*0.72, SEA_BASE*0.42, 70, 0, Math.PI*2);
+    ctx.fillStyle='rgba(255,240,180,.25)'; ctx.fill();
+    // nuvens
+    ctx.fillStyle='rgba(255,255,255,.5)';
+    for(let i=0;i<3;i++){
+      const x=((i*200 - frame*0.4)%(W+160)+(W+160))%(W+160)-80;
+      const y=60+i*42;
+      ctx.beginPath(); ctx.arc(x,y,20,0,Math.PI*2); ctx.arc(x+22,y+4,16,0,Math.PI*2); ctx.arc(x-20,y+5,14,0,Math.PI*2); ctx.fill();
+    }
+  }
+
+  function drawSea() {
+    // corpo do mar seguindo a superfície
+    ctx.beginPath();
+    ctx.moveTo(0,H);
+    ctx.lineTo(0, waveY(0));
+    for(let x=0;x<=W;x+=8) ctx.lineTo(x, waveY(x));
+    ctx.lineTo(W,H); ctx.closePath();
+    const sea = ctx.createLinearGradient(0,SEA_BASE-WAVE_AMP,0,H);
+    sea.addColorStop(0,'#37c4e8'); sea.addColorStop(.5,'#1f9fd1'); sea.addColorStop(1,'#136a9e');
+    ctx.fillStyle = sea; ctx.fill();
+    // linha de espuma na crista
+    ctx.beginPath();
+    ctx.moveTo(0, waveY(0));
+    for(let x=0;x<=W;x+=8) ctx.lineTo(x, waveY(x));
+    ctx.lineWidth=4; ctx.strokeStyle='rgba(255,255,255,.7)'; ctx.stroke();
+    // brilho na água
+    ctx.strokeStyle='rgba(255,255,255,.18)'; ctx.lineWidth=2;
+    for(let k=1;k<=3;k++){
+      ctx.beginPath();
+      for(let x=0;x<=W;x+=10) ctx.lineTo(x, waveY(x)+k*22 + Math.sin((x+waveOff)/60+k)*3);
+      ctx.stroke();
+    }
+  }
+
+  function drawSurfer() {
+    const x = SURFER_X, y = surfer.y;
+    ctx.save();
+    ctx.translate(x, y);
+    ctx.rotate(surfer.rot);
+
+    // prancha
+    ctx.beginPath();
+    ctx.ellipse(2, 16, 34, 9, 0, 0, Math.PI*2);
+    ctx.fillStyle='#ffcf3f'; ctx.fill();
+    ctx.lineWidth=2; ctx.strokeStyle='#e08a00'; ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(2,16); ctx.lineTo(2,7); ctx.lineWidth=2; ctx.strokeStyle='#e08a00'; ctx.stroke();
+
+    // corpo (agachado de surf)
+    ctx.strokeStyle='#1f2937'; ctx.lineCap='round';
+    ctx.lineWidth=6;
+    // pernas
+    ctx.beginPath(); ctx.moveTo(-12,12); ctx.lineTo(-4,0); ctx.lineTo(6,10); ctx.stroke();
+    // tronco
+    ctx.beginPath(); ctx.moveTo(-4,0); ctx.lineTo(2,-16); ctx.stroke();
+    // braços abertos pra equilíbrio
+    ctx.lineWidth=5;
+    ctx.beginPath(); ctx.moveTo(2,-12); ctx.lineTo(-16,-18); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(2,-12); ctx.lineTo(18,-22); ctx.stroke();
+
+    // cabeça / rosto
+    const hy = -26;
+    if (faceLoaded) {
+      ctx.save();
+      ctx.beginPath(); ctx.arc(2, hy, 13, 0, Math.PI*2); ctx.clip();
+      ctx.drawImage(faceImg, 2-13, hy-13, 26, 26);
+      ctx.restore();
+      ctx.beginPath(); ctx.arc(2, hy, 13, 0, Math.PI*2); ctx.lineWidth=2.5; ctx.strokeStyle='#fff'; ctx.stroke();
+    } else {
+      ctx.beginPath(); ctx.arc(2, hy, 11, 0, Math.PI*2);
+      ctx.fillStyle='#f6c79a'; ctx.fill();
+      ctx.lineWidth=2; ctx.strokeStyle='#c98e5e'; ctx.stroke();
+      // cabelo
+      ctx.beginPath(); ctx.arc(2, hy-2, 11, Math.PI*1.05, Math.PI*1.95); ctx.fillStyle='#5b3a1e'; ctx.fill();
+    }
+    ctx.restore();
+
+    // respingo se na água
+    if (surfer.onWater) {
+      ctx.fillStyle='rgba(255,255,255,.85)';
+      for(let i=0;i<4;i++){
+        const sp = (frame*4 + i*30) % 60;
+        ctx.beginPath(); ctx.arc(x-30-sp*0.6, y+14-Math.sin(sp/10)*8, 3-sp*0.03, 0, Math.PI*2); ctx.fill();
+      }
+    }
+  }
+
+  // ---- Obstáculos ----
+  function spawnObstacle() {
+    const type = Math.random() < 0.5 ? 'rock' : 'shark';
+    obstacles.push({ x: W + 40, type, r: type==='rock'?20:22, passed:false });
+  }
+  function drawObstacle(o) {
+    const surf = waveY(o.x);
+    if (o.type === 'rock') {
+      ctx.save();
+      ctx.translate(o.x, surf - 6);
+      ctx.beginPath();
+      ctx.moveTo(-20,12); ctx.lineTo(-12,-12); ctx.lineTo(0,-18); ctx.lineTo(12,-10); ctx.lineTo(20,12);
+      ctx.closePath();
+      ctx.fillStyle='#6b6b78'; ctx.fill();
+      ctx.fillStyle='#8a8a98';
+      ctx.beginPath(); ctx.moveTo(-12,-12); ctx.lineTo(0,-18); ctx.lineTo(2,-4); ctx.closePath(); ctx.fill();
+      ctx.restore();
+    } else {
+      // barbatana de tubarão deslizando na superfície
+      ctx.save();
+      ctx.translate(o.x, surf);
+      ctx.beginPath();
+      ctx.moveTo(-16,2); ctx.quadraticCurveTo(2,-30,18,2); ctx.closePath();
+      ctx.fillStyle='#37495a'; ctx.fill();
+      ctx.lineWidth=2; ctx.strokeStyle='#22303d'; ctx.stroke();
+      // rastro
+      ctx.strokeStyle='rgba(255,255,255,.6)'; ctx.lineWidth=2;
+      ctx.beginPath(); ctx.moveTo(16,3); ctx.lineTo(34,3); ctx.stroke();
+      ctx.restore();
+    }
+  }
+  function obstacleCenter(o) {
+    const surf = waveY(o.x);
+    return o.type==='rock' ? { cx:o.x, cy:surf-12 } : { cx:o.x, cy:surf-10 };
+  }
+
+  function drawScore() {
+    if (state!=='playing') return;
+    ctx.font='900 40px -apple-system,sans-serif'; ctx.textAlign='center';
+    ctx.lineWidth=6; ctx.strokeStyle='rgba(0,0,0,.4)';
+    ctx.strokeText(score, W/2, 64); ctx.fillStyle='#fff'; ctx.fillText(score, W/2, 64);
+  }
+
+  // ---- Colisão ----
+  function hit() {
+    const sr = 13; // raio do surfista (cabeça/corpo)
+    const sx = SURFER_X, sy = surfer.y - 14;
+    for (const o of obstacles) {
+      const { cx, cy } = obstacleCenter(o);
+      const dx = sx-cx, dy = sy-cy;
+      if (dx*dx + dy*dy < (sr+o.r)*(sr+o.r)) return true;
+    }
+    return false;
+  }
+
+  // ---- Loop ----
+  let last = performance.now();
+  function loop(now) {
+    const dt = now-last; last=now; frame++;
+    drawBackground();
+
+    if (state==='playing') {
+      waveOff += speed;
+      dist += speed;
+      score = Math.floor(dist/40);
+      speed = Math.min(SPEED_MAX, 3.2 + dist/2500);
+
+      // física do surfista
+      const surf = waveY(SURFER_X);
+      if (!surfer.onWater) {
+        surfer.vy += GRAVITY;
+        surfer.y += surfer.vy;
+        if (surfer.y >= surf) { surfer.y = surf; surfer.vy = 0; surfer.onWater = true; }
+      } else {
+        surfer.y = surf; // gruda na superfície
+      }
+      // inclinação acompanha a onda
+      const slope = waveY(SURFER_X+6) - waveY(SURFER_X-6);
+      surfer.rot = surfer.onWater ? Math.atan2(slope, 12) : Math.max(-0.5, Math.min(0.6, surfer.vy*0.04));
+
+      // obstáculos
+      lastObs += dt;
+      const interval = Math.max(900, 1500 - dist/8);
+      if (lastObs >= interval) { spawnObstacle(); lastObs = 0; }
+      for (const o of obstacles) {
+        o.x -= speed;
+        if (!o.passed && o.x < SURFER_X) { o.passed = true; }
+      }
+      obstacles = obstacles.filter(o => o.x > -50);
+
+      if (hit()) gameOver();
+    } else {
+      // anima mar de fundo nas telas
+      waveOff += 1.2;
+      surfer.y = waveY(SURFER_X);
+      surfer.rot = Math.atan2(waveY(SURFER_X+6)-waveY(SURFER_X-6),12);
+    }
+
+    drawSea();
+    for (const o of obstacles) drawObstacle(o);
+    drawSurfer();
+    drawScore();
+    requestAnimationFrame(loop);
+  }
+  requestAnimationFrame(loop);
+
+  // ---- Estado / controles ----
+  const startScreen=document.getElementById('startScreen');
+  const overScreen=document.getElementById('overScreen');
+  function startGame(){ reset(); state='playing'; startScreen.classList.add('hidden'); overScreen.classList.add('hidden'); }
+  function gameOver(){
+    state='over';
+    if(score>best){ best=score; localStorage.setItem('surfBest',best); }
+    document.getElementById('finalScore').textContent=score;
+    document.getElementById('bestScore').textContent='Recorde: '+best;
+    overScreen.classList.remove('hidden');
+  }
+  function jump(){ if(state==='playing' && surfer.onWater){ surfer.onWater=false; surfer.vy=JUMP; } }
+
+  document.getElementById('startBtn').addEventListener('click', startGame);
+  document.getElementById('retryBtn').addEventListener('click', startGame);
+  function onTap(e){ if(state==='playing'){ e.preventDefault(); jump(); } }
+  canvas.addEventListener('mousedown', onTap);
+  canvas.addEventListener('touchstart', onTap, { passive:false });
+  window.addEventListener('keydown', e=>{
+    if(e.code==='Space'||e.code==='ArrowUp'){ e.preventDefault();
+      if(state==='playing') jump();
+      else startGame();
+    }
+  });
+})();
+</script>
+</body>
+</html>
