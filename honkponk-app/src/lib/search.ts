@@ -38,7 +38,7 @@ export interface ServiceMeta {
   name: string
   icon: string
   filterLabel: string
-  filterFn: (place: { website?: string }) => boolean
+  filterFn: (place: { website?: string; reviews?: number }) => boolean
   showSiteTag: boolean
   waMsg: (name: string) => string
 }
@@ -55,15 +55,15 @@ export const SERVICE_META: Record<string, ServiceMeta> = {
   marketing: {
     name: 'Marketing Digital',
     icon: '📱',
-    filterLabel: 'Empresas sem presença digital (sem site, Instagram ou Facebook)',
-    filterFn: (p) => !p.website,
+    filterLabel: 'Presença online fraca (sem site ou com poucas avaliações)',
+    filterFn: (p) => !p.website || (p.reviews ?? 0) < 30,
     showSiteTag: false,
     waMsg: (name) => `Olá, ${name}! Trabalho com marketing digital e percebi que seu negócio pode crescer muito mais online. Posso te mostrar como atrair mais clientes pela internet?`,
   },
   design: {
     name: 'Design Gráfico',
     icon: '🎨',
-    filterLabel: 'Todos os negócios (qualquer empresa pode precisar de design)',
+    filterLabel: 'Todos os negócios',
     filterFn: () => true,
     showSiteTag: true,
     waMsg: (name) => `Olá, ${name}! Sou designer gráfico e gostaria de propor uma identidade visual profissional para seu negócio. Posso te enviar alguns exemplos do meu trabalho?`,
@@ -71,15 +71,15 @@ export const SERVICE_META: Record<string, ServiceMeta> = {
   contabilidade: {
     name: 'Contabilidade',
     icon: '📊',
-    filterLabel: 'Micro e pequenas empresas',
-    filterFn: () => true,
+    filterLabel: 'Empresas menores (até 50 avaliações)',
+    filterFn: (p) => (p.reviews ?? 0) < 50,
     showSiteTag: true,
     waMsg: (name) => `Olá, ${name}! Sou contador e ofereço serviços de contabilidade para pequenas empresas com preço justo. Posso te apresentar minha proposta?`,
   },
   software: {
     name: 'Software / Sistemas',
     icon: '💻',
-    filterLabel: 'Negócios que podem precisar de sistema de gestão',
+    filterLabel: 'Todos os negócios',
     filterFn: () => true,
     showSiteTag: true,
     waMsg: (name) => `Olá, ${name}! Desenvolvo sistemas de gestão para negócios como o seu — controle de estoque, vendas e agendamentos. Posso te mostrar como funciona?`,
@@ -87,7 +87,7 @@ export const SERVICE_META: Record<string, ServiceMeta> = {
   foto: {
     name: 'Foto / Vídeo',
     icon: '📷',
-    filterLabel: 'Todos os negócios com apelo visual',
+    filterLabel: 'Todos os negócios',
     filterFn: () => true,
     showSiteTag: true,
     waMsg: (name) => `Olá, ${name}! Sou fotógrafo profissional e adoraria fazer um ensaio para o seu negócio. Fotos de qualidade fazem toda a diferença para atrair clientes. Posso te enviar meu portfólio?`,

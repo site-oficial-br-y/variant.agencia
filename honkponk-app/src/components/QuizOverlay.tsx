@@ -5,14 +5,14 @@ import { SERVICE_META, SEGMENT_NAMES } from '@/lib/search'
 interface QuizData { service: string; city: string; segment: string; allBrazil: boolean }
 
 const SERVICES = [
-  { key: 'sites', icon: '🌐', name: 'Criação de Sites', desc: 'Só mostra empresas sem site' },
-  { key: 'marketing', icon: '📱', name: 'Marketing Digital', desc: 'Foco em baixa presença online' },
-  { key: 'design', icon: '🎨', name: 'Design Gráfico', desc: 'Negócios com identidade visual' },
-  { key: 'contabilidade', icon: '📊', name: 'Contabilidade', desc: 'Micro e pequenas empresas' },
-  { key: 'software', icon: '💻', name: 'Software / Sistemas', desc: 'Negócios que precisam de gestão' },
-  { key: 'foto', icon: '📷', name: 'Foto / Vídeo', desc: 'Empresas visuais e eventos' },
-  { key: 'rh', icon: '👥', name: 'RH / Recrutamento', desc: 'Empresas em crescimento' },
-  { key: 'outros', icon: '✨', name: 'Outro serviço', desc: 'Todos os resultados disponíveis' },
+  { key: 'sites', icon: '🌐', name: 'Criação de Sites', desc: 'Só empresas sem site' },
+  { key: 'marketing', icon: '📱', name: 'Marketing Digital', desc: 'Presença online fraca' },
+  { key: 'design', icon: '🎨', name: 'Design Gráfico', desc: 'Todos os negócios' },
+  { key: 'contabilidade', icon: '📊', name: 'Contabilidade', desc: 'Empresas menores' },
+  { key: 'software', icon: '💻', name: 'Software / Sistemas', desc: 'Todos os negócios' },
+  { key: 'foto', icon: '📷', name: 'Foto / Vídeo', desc: 'Todos os negócios' },
+  { key: 'rh', icon: '👥', name: 'RH / Recrutamento', desc: 'Todos os negócios' },
+  { key: 'outros', icon: '✨', name: 'Outro serviço', desc: 'Todos os resultados' },
 ]
 
 const SEGMENTS = [

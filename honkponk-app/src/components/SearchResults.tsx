@@ -173,7 +173,7 @@ export function SearchResults({ params, userId, plan = 'free', onLimitReached }:
       setAiFiltering(true)
       await new Promise(r => setTimeout(r, 900))
 
-      const isIdealFilter = !!meta.filterFn && !meta.filterFn({ website: 'http://example.com' })
+      const isIdealFilter = !!meta.filterFn && !meta.filterFn({ website: 'http://example.com', reviews: 999 })
       const detailed: PlaceResult[] = raw.map((p: any) => ({
         name: p.name,
         address: p.vicinity || '',
@@ -182,10 +182,10 @@ export function SearchResults({ params, userId, plan = 'free', onLimitReached }:
         website: p.website || '',
         phone: p.formatted_phone_number || '',
         isOpen: p.opening_hours?.open_now ?? null,
-        idealMatch: isIdealFilter && (meta.filterFn ? meta.filterFn({ website: p.website || undefined }) : true),
+        idealMatch: isIdealFilter && (meta.filterFn ? meta.filterFn({ website: p.website || undefined, reviews: p.user_ratings_total || 0 }) : true),
       }))
 
-      const filtered = meta.filterFn ? detailed.filter(p => meta.filterFn({ website: p.website || undefined })) : detailed
+      const filtered = meta.filterFn ? detailed.filter(p => meta.filterFn({ website: p.website || undefined, reviews: p.reviews || 0 })) : detailed
       const limit = maxResults === null ? filtered.length : maxResults
       const minGuarantee = maxResults !== null ? maxResults : 0
 
