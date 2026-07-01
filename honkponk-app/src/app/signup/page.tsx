@@ -36,11 +36,19 @@ export default function SignupPage() {
       // se a verificação falhar, segue com o cadastro normalmente
     }
 
-    const { error } = await supabase.auth.signUp({ email, password })
+    const { data: signUpData, error } = await supabase.auth.signUp({
+      email,
+      password,
+      options: { emailRedirectTo: `${window.location.origin}/auth/callback` },
+    })
     if (error) {
       setError(error.message)
-    } else {
+    } else if (signUpData.session) {
+      // confirmação desativada — já logou
       router.push('/dashboard')
+    } else {
+      // precisa confirmar o e-mail
+      router.push('/signup/confirmar')
     }
     setLoading(false)
   }
