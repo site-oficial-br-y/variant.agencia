@@ -24,6 +24,11 @@ export function DashboardClient({ user, profile, teamMembers }: { user: User; pr
   const [inviteEmail, setInviteEmail] = useState('')
   const [teamLoading, setTeamLoading] = useState(false)
   const [teamError, setTeamError] = useState('')
+  const [feedbackOpen, setFeedbackOpen] = useState(false)
+  const [feedbackRating, setFeedbackRating] = useState(0)
+  const [feedbackMsg, setFeedbackMsg] = useState('')
+  const [feedbackLoading, setFeedbackLoading] = useState(false)
+  const [feedbackSent, setFeedbackSent] = useState(false)
   const router = useRouter()
   const supabase = createClient()
 
@@ -57,6 +62,23 @@ export function DashboardClient({ user, profile, teamMembers }: { user: User; pr
       setInviteEmail('')
     } catch { setTeamError('Erro de conexão.') }
     finally { setTeamLoading(false) }
+  }
+
+  async function handleFeedback() {
+    if (feedbackRating === 0 && !feedbackMsg.trim()) return
+    setFeedbackLoading(true)
+    try {
+      const res = await fetch('/api/feedback', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ rating: feedbackRating, message: feedbackMsg.trim() }),
+      })
+      if (res.ok) {
+        setFeedbackSent(true)
+        setTimeout(() => { setFeedbackOpen(false); setFeedbackSent(false); setFeedbackRating(0); setFeedbackMsg('') }, 1800)
+      }
+    } catch { /* silencioso */ }
+    finally { setFeedbackLoading(false) }
   }
 
   async function handleRemoveMember(memberId: string) {
@@ -116,11 +138,46 @@ export function DashboardClient({ user, profile, teamMembers }: { user: User; pr
           <a href="/checkout/coins" style={{ background: 'rgba(232,121,160,.1)', border: '1px solid rgba(232,121,160,.2)', borderRadius: 8, padding: '4px 10px', fontSize: '.76rem', fontWeight: 700, color: '#f8b6c8', display: 'flex', alignItems: 'center', gap: 5, textDecoration: 'none', cursor: 'pointer' }}>
             🪙 {profile?.honk_coins ?? 0}
           </a>
+          <button onClick={() => setFeedbackOpen(true)} style={{ background: 'rgba(255,255,255,.05)', color: 'rgba(255,255,255,.5)', border: '1px solid rgba(255,255,255,.08)', borderRadius: 8, padding: '6px 14px', fontSize: '.78rem', fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit', transition: 'all .2s' }}>
+            💬 Feedback
+          </button>
           <button onClick={handleLogout} disabled={loggingOut} style={{ background: 'rgba(255,255,255,.05)', color: 'rgba(255,255,255,.5)', border: '1px solid rgba(255,255,255,.08)', borderRadius: 8, padding: '6px 14px', fontSize: '.78rem', fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit', transition: 'all .2s' }}>
             {loggingOut ? 'Saindo...' : 'Sair'}
           </button>
         </div>
       </nav>
+
+      {/* Modal de feedback */}
+      {feedbackOpen && (
+        <div onClick={() => !feedbackLoading && setFeedbackOpen(false)} style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,.6)', backdropFilter: 'blur(4px)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 24, zIndex: 100 }}>
+          <div onClick={e => e.stopPropagation()} style={{ background: '#16162a', border: '1px solid rgba(248,182,200,.18)', borderRadius: 20, padding: 32, width: '100%', maxWidth: 420 }}>
+            {feedbackSent ? (
+              <div style={{ textAlign: 'center', padding: '20px 0' }}>
+                <div style={{ fontSize: '2.5rem', marginBottom: 12 }}>🙏</div>
+                <p style={{ fontSize: '1.05rem', fontWeight: 700, color: '#4ade80' }}>Obrigado pelo feedback!</p>
+              </div>
+            ) : (
+              <>
+                <h2 style={{ fontSize: '1.2rem', fontWeight: 800, marginBottom: 6 }}>Deixe seu feedback</h2>
+                <p style={{ fontSize: '.82rem', color: 'rgba(255,255,255,.5)', marginBottom: 20 }}>Sua opinião ajuda a melhorar o Honk Ponk.</p>
+                <div style={{ display: 'flex', gap: 8, marginBottom: 18, justifyContent: 'center' }}>
+                  {[1,2,3,4,5].map(i => (
+                    <button key={i} onClick={() => setFeedbackRating(i)} style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: '1.8rem', color: i <= feedbackRating ? '#fbbf24' : 'rgba(255,255,255,.2)', padding: 0, lineHeight: 1 }}>★</button>
+                  ))}
+                </div>
+                <textarea value={feedbackMsg} onChange={e => setFeedbackMsg(e.target.value)} placeholder="Conte o que achou, o que faltou, sugestões..." rows={4}
+                  style={{ width: '100%', background: 'rgba(255,255,255,.06)', border: '1.5px solid rgba(255,255,255,.12)', borderRadius: 12, padding: '12px 14px', color: '#fff', fontSize: '.9rem', fontFamily: 'inherit', outline: 'none', resize: 'vertical', marginBottom: 18 }} />
+                <div style={{ display: 'flex', gap: 10 }}>
+                  <button onClick={() => setFeedbackOpen(false)} style={{ flex: 1, background: 'rgba(255,255,255,.06)', color: 'rgba(255,255,255,.6)', border: '1px solid rgba(255,255,255,.1)', borderRadius: 12, padding: '12px', fontSize: '.9rem', fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit' }}>Cancelar</button>
+                  <button onClick={handleFeedback} disabled={feedbackLoading || (feedbackRating === 0 && !feedbackMsg.trim())} style={{ flex: 2, background: 'linear-gradient(135deg,#e879a0,#c2185b)', color: '#fff', border: 'none', borderRadius: 12, padding: '12px', fontSize: '.9rem', fontWeight: 700, cursor: feedbackLoading ? 'not-allowed' : 'pointer', fontFamily: 'inherit', opacity: (feedbackLoading || (feedbackRating === 0 && !feedbackMsg.trim())) ? 0.6 : 1 }}>
+                    {feedbackLoading ? 'Enviando...' : 'Enviar feedback'}
+                  </button>
+                </div>
+              </>
+            )}
+          </div>
+        </div>
+      )}
 
       <div style={{ maxWidth: 960, margin: '0 auto', padding: '36px 20px', position: 'relative', zIndex: 1 }}>
 
