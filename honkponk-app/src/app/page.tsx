@@ -235,13 +235,13 @@ export default function HomePage() {
           </div>
           <div className="stagger" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(260px,1fr))', gap: 20 }}>
             {[
-              { name: 'Lucas Martins', role: 'Designer Freelancer • Santos, SP', avatar: 'LM', color: '#e879a0', text: 'Em 10 minutos encontrei 30 empresas sem identidade visual na minha cidade. Fechei 2 clientes na mesma semana. Melhor ferramenta que já usei para prospecção.', stars: 5, ago: '3 dias atrás' },
-              { name: 'Ana Paula R.', role: 'Dona de Agência • Campinas, SP', avatar: 'AP', color: '#a855f7', text: 'A mensagem pronta no WhatsApp faz toda diferença. A taxa de resposta é muito maior do que cold email. Já indiquei para 4 amigos do ramo.', stars: 5, ago: '1 semana atrás' },
-              { name: 'Rafael Souza', role: 'Dev Web Freelancer • São Paulo, SP', avatar: 'RS', color: '#3b82f6', text: 'O filtro de empresas sem site é simplesmente perfeito. Só aparecem leads que realmente precisam do meu serviço. Economizo horas de pesquisa manual.', stars: 5, ago: '2 semanas atrás' },
+              { name: 'Lucas Martins', role: 'Designer Freelancer • Santos, SP', avatar: 'LM', color: '#e879a0', text: 'Uso pra achar comércios locais que ainda não têm presença online. Não fecho todo mundo, mas já saiu uns contatos bons que viraram cliente.', stars: 5, ago: '3 dias atrás' },
+              { name: 'Ana Paula R.', role: 'Dona de Agência • Campinas, SP', avatar: 'AP', color: '#a855f7', text: 'O que me ajudou foi ter o contato já na mão pra abordar no WhatsApp. Economiza aquele tempo de ficar caçando no Google e no Instagram.', stars: 5, ago: '1 semana atrás' },
+              { name: 'Rafael Souza', role: 'Dev Web Freelancer • São Paulo, SP', avatar: 'RS', color: '#3b82f6', text: 'O filtro de empresas sem site é o que mais uso. Facilita bastante focar só em quem realmente pode precisar do meu trabalho.', stars: 4, ago: '2 semanas atrás' },
             ].map(t => (
               <div key={t.name} className="reveal" style={{ background: 'rgba(255,255,255,.04)', border: '1px solid rgba(248,182,200,0.18)', borderRadius: 20, padding: 28, display: 'flex', flexDirection: 'column', gap: 16 }}>
                 <div style={{ display: 'flex', gap: 4 }}>
-                  {[1,2,3,4,5].map(i => <span key={i} style={{ color: '#fbbf24', fontSize: '1rem' }}>★</span>)}
+                  {[1,2,3,4,5].map(i => <span key={i} style={{ color: i <= t.stars ? '#fbbf24' : 'rgba(255,255,255,.15)', fontSize: '1rem' }}>★</span>)}
                 </div>
                 <p style={{ fontSize: '.88rem', color: 'rgba(255,255,255,.75)', lineHeight: 1.75, flex: 1 }}>"{t.text}"</p>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 12, borderTop: '1px solid rgba(255,255,255,.06)', paddingTop: 16 }}>
