@@ -5,7 +5,7 @@ import { SERVICE_META, SEGMENT_NAMES } from '@/lib/search'
 interface QuizData { service: string; city: string; segment: string; allBrazil: boolean }
 
 const SERVICES = [
-  { key: 'sites', icon: '🌐', name: 'Criação de Sites', desc: 'Só empresas sem site' },
+  { key: 'sites', icon: '🌐', name: 'Criação de Sites', desc: 'Sem site no Google' },
   { key: 'marketing', icon: '📱', name: 'Marketing Digital', desc: 'Presença online fraca' },
   { key: 'design', icon: '🎨', name: 'Design Gráfico', desc: 'Todos os negócios' },
   { key: 'contabilidade', icon: '📊', name: 'Contabilidade', desc: 'Empresas menores' },

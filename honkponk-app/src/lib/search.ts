@@ -47,7 +47,7 @@ export const SERVICE_META: Record<string, ServiceMeta> = {
   sites: {
     name: 'Criação de Sites',
     icon: '🌐',
-    filterLabel: 'Somente empresas SEM site cadastrado',
+    filterLabel: 'Empresas sem site cadastrado no Google',
     filterFn: (p) => !p.website,
     showSiteTag: false,
     waMsg: (name) => `Olá, ${name}! Vi que seu negócio ainda não tem um site. Posso criar um para você com ótimo custo-benefício e ajudar a atrair mais clientes online. Posso te mostrar um exemplo?`,
