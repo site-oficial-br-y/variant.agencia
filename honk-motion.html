@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Honk — Motion</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800;900&display=swap" rel="stylesheet" />
+<style>
+  *{margin:0;padding:0;box-sizing:border-box}
+  html,body{height:100%;background:#050509;font-family:"Inter",system-ui,sans-serif;overflow:hidden}
+  body{display:flex;align-items:center;justify-content:center}
+
+  /* moldura 9:16 pra TikTok */
+  .phone{position:relative;aspect-ratio:9/16;height:100vh;max-height:100vh;overflow:hidden;
+    background:radial-gradient(120% 80% at 50% 15%,#181832,#0f0f1a 55%,#090912);}
+  .grid{position:absolute;inset:0;opacity:.35;
+    background-image:linear-gradient(rgba(255,255,255,.04) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,.04) 1px,transparent 1px);
+    background-size:100% 7%,7% 100%;mask-image:radial-gradient(circle at 50% 40%,#000,transparent 75%)}
+  .glow{position:absolute;width:80%;height:40%;left:10%;top:22%;border-radius:50%;
+    background:radial-gradient(circle,rgba(226,121,160,.45),rgba(194,24,91,.15) 45%,transparent 70%);
+    filter:blur(50px);animation:pulse 3s ease-in-out infinite}
+  @keyframes pulse{0%,100%{opacity:.6;transform:scale(1)}50%{opacity:1;transform:scale(1.08)}}
+
+  .scene{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;
+    padding:0 8%;opacity:0;transition:opacity .5s ease}
+  .scene.active{opacity:1}
+
+  /* SCENE 1 */
+  .s1 h1{color:#fff;font-weight:900;font-size:clamp(28px,7vw,58px);text-align:center;line-height:1.05;letter-spacing:-.03em}
+  .s1 .sub{margin-top:18px;color:rgba(255,255,255,.55);font-size:clamp(14px,3.4vw,20px);font-weight:500}
+  .s1.active h1{animation:rise .7s cubic-bezier(.16,1,.3,1) both}
+  .s1.active .sub{animation:rise .7s .15s cubic-bezier(.16,1,.3,1) both}
+
+  /* SCENE 2 */
+  .searchbar{width:100%;max-width:520px;background:rgba(255,255,255,.06);border:1.5px solid rgba(232,121,160,.6);
+    border-radius:18px;padding:22px 24px;display:flex;align-items:center;gap:14px;
+    box-shadow:0 0 40px rgba(226,121,160,.25)}
+  .searchbar .ico{width:22px;height:22px;border-radius:50%;border:2px solid #e879a0;flex:0 0 auto}
+  .searchbar .typed{color:#fff;font-size:clamp(18px,4.4vw,26px);font-weight:600;white-space:nowrap;overflow:hidden}
+  .searchbar .caret{display:inline-block;width:2px;height:1.1em;background:#e879a0;vertical-align:middle;margin-left:2px;animation:blink 1s step-end infinite}
+  @keyframes blink{50%{opacity:0}}
+  .btn-buscar{margin-top:22px;background:linear-gradient(135deg,#e879a0,#c2185b);color:#fff;font-weight:800;
+    font-size:clamp(16px,4vw,22px);padding:16px 44px;border-radius:14px;box-shadow:0 12px 30px rgba(194,24,91,.4)}
+  .s2.active .btn-buscar{animation:pop2 .6s .9s cubic-bezier(.34,1.56,.64,1) both}
+
+  /* SCENE 3 */
+  .counter{color:#fff;font-weight:900;font-size:clamp(30px,8vw,64px);letter-spacing:-.03em;margin-bottom:26px;text-align:center}
+  .counter b{background:linear-gradient(135deg,#e879a0,#c2185b);-webkit-background-clip:text;background-clip:text;color:transparent}
+  .counter .cap{display:block;font-size:clamp(13px,3.2vw,18px);font-weight:600;color:rgba(255,255,255,.5);margin-top:4px;letter-spacing:0}
+  .leads{width:100%;max-width:540px;display:flex;flex-direction:column;gap:14px}
+  .lead{background:rgba(255,255,255,.055);border:1px solid rgba(255,255,255,.10);border-radius:16px;
+    padding:16px 18px;display:flex;align-items:center;justify-content:space-between;
+    box-shadow:0 20px 40px -24px rgba(0,0,0,.7);opacity:0}
+  .s3.active .lead{animation:pop2 .55s cubic-bezier(.34,1.56,.64,1) forwards}
+  .s3.active .lead:nth-child(1){animation-delay:.1s}
+  .s3.active .lead:nth-child(2){animation-delay:.28s}
+  .s3.active .lead:nth-child(3){animation-delay:.46s}
+  .s3.active .lead:nth-child(4){animation-delay:.64s}
+  .lead .name{color:#fff;font-weight:700;font-size:clamp(14px,3.4vw,19px)}
+  .lead .name span{display:block;font-weight:500;font-size:.72em;color:rgba(255,255,255,.4);margin-top:2px}
+  .chips{display:flex;gap:8px}
+  .chip{width:34px;height:34px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:16px}
+  .chip.wa{background:rgba(74,222,128,.16)}
+  .chip.ig{background:linear-gradient(135deg,rgba(232,121,160,.22),rgba(251,146,60,.22))}
+  .chip.ph{background:rgba(255,255,255,.10)}
+
+  /* SCENE 4 */
+  .logo{font-weight:900;font-size:clamp(46px,13vw,104px);letter-spacing:-.04em;
+    background:linear-gradient(135deg,#e879a0,#c2185b);-webkit-background-clip:text;background-clip:text;color:transparent}
+  .s4.active .logo{animation:pop2 .7s cubic-bezier(.34,1.56,.64,1) both}
+  .tagline{margin-top:14px;color:#fff;font-weight:700;font-size:clamp(18px,4.6vw,30px);text-align:center;letter-spacing:-.02em}
+  .s4.active .tagline{animation:rise .6s .25s cubic-bezier(.16,1,.3,1) both}
+
+  /* SCENE 5 */
+  .s5 .url{color:#fff;font-weight:800;font-size:clamp(22px,5.5vw,38px);letter-spacing:-.02em}
+  .s5 .cta{margin-top:26px;background:linear-gradient(135deg,#e879a0,#c2185b);color:#fff;font-weight:800;
+    font-size:clamp(16px,4.2vw,24px);padding:18px 46px;border-radius:16px;box-shadow:0 0 40px rgba(226,121,160,.5)}
+  .s5.active .url{animation:rise .6s both}
+  .s5.active .cta{animation:pop2 .6s .2s cubic-bezier(.34,1.56,.64,1) both}
+
+  @keyframes rise{from{opacity:0;transform:translateY(26px)}to{opacity:1;transform:none}}
+  @keyframes pop2{0%{opacity:0;transform:scale(.8) translateY(14px)}100%{opacity:1;transform:scale(1) translateY(0)}}
+
+  /* dica de gravação (some ao gravar area do phone) */
+  .hint{position:fixed;bottom:14px;left:50%;transform:translateX(-50%);color:rgba(255,255,255,.35);
+    font-size:12px;font-weight:500;text-align:center;z-index:50}
+</style>
+</head>
+<body>
+<div class="phone" id="phone">
+  <div class="grid"></div>
+  <div class="glow"></div>
+
+  <section class="scene s1">
+    <h1>Cansado de<br>procurar cliente?</h1>
+    <div class="sub">existe um jeito mais rápido 👇</div>
+  </section>
+
+  <section class="scene s2">
+    <div class="searchbar">
+      <div class="ico"></div>
+      <div class="typed"><span id="typed"></span><span class="caret"></span></div>
+    </div>
+    <div class="btn-buscar">Buscar</div>
+  </section>
+
+  <section class="scene s3">
+    <div class="counter"><b id="count">0</b><span class="cap">leads encontrados</span></div>
+    <div class="leads">
+      <div class="lead"><div class="name">Clínica Sorriso<span>São Paulo, SP</span></div><div class="chips"><div class="chip wa">💬</div><div class="chip ig">📷</div><div class="chip ph">📞</div></div></div>
+      <div class="lead"><div class="name">Estúdio Bella<span>São Paulo, SP</span></div><div class="chips"><div class="chip wa">💬</div><div class="chip ig">📷</div><div class="chip ph">📞</div></div></div>
+      <div class="lead"><div class="name">Dr. Marcos Odonto<span>São Paulo, SP</span></div><div class="chips"><div class="chip wa">💬</div><div class="chip ig">📷</div><div class="chip ph">📞</div></div></div>
+      <div class="lead"><div class="name">OdontoVida<span>São Paulo, SP</span></div><div class="chips"><div class="chip wa">💬</div><div class="chip ig">📷</div><div class="chip ph">📞</div></div></div>
+    </div>
+  </section>
+
+  <section class="scene s4">
+    <div class="logo">HONK</div>
+    <div class="tagline">Seus clientes estão<br>esperando.</div>
+  </section>
+
+  <section class="scene s5">
+    <div class="url">honkponk.com.br</div>
+    <div class="cta">Teste grátis</div>
+  </section>
+</div>
+<div class="hint">▶ deixa rodar e grave a tela (só a moldura) • 9:16 • loop automático</div>
+
+<script>
+  const scenes=[...document.querySelectorAll('.scene')];
+  const typedEl=document.getElementById('typed');
+  const countEl=document.getElementById('count');
+  const TERM="dentista em São Paulo";
+
+  function show(i){scenes.forEach((s,j)=>s.classList.toggle('active',j===i));}
+
+  function typeTerm(){
+    typedEl.textContent="";let k=0;
+    const iv=setInterval(()=>{typedEl.textContent=TERM.slice(0,++k);if(k>=TERM.length)clearInterval(iv);},70);
+  }
+  function runCounter(){
+    let n=0;const target=23;
+    const iv=setInterval(()=>{n++;countEl.textContent=n;if(n>=target)clearInterval(iv);},45);
+  }
+
+  function loop(){
+    show(0);                                   // 0s  cena 1
+    typedEl.textContent="";countEl.textContent="0";
+    setTimeout(()=>{show(1);typeTerm();},3000); // 3s  cena 2 (busca)
+    setTimeout(()=>{show(2);runCounter();},6800);// 6.8s cena 3 (leads)
+    setTimeout(()=>show(3),12200);              // 12.2s cena 4 (logo)
+    setTimeout(()=>show(4),15200);              // 15.2s cena 5 (CTA)
+    setTimeout(loop,18000);                     // 18s  reinicia
+  }
+  loop();
+</script>
+</body>
+</html>
