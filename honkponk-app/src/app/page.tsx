@@ -235,9 +235,8 @@ export default function HomePage() {
           </div>
           <div className="stagger" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(260px,1fr))', gap: 20 }}>
             {[
-              { name: 'Lucas Martins', role: 'Designer Freelancer • Santos, SP', avatar: 'LM', color: '#e879a0', text: 'Uso pra achar comércios locais que ainda não têm presença online. Não fecho todo mundo, mas já saiu uns contatos bons que viraram cliente.', stars: 5, ago: '3 dias atrás' },
-              { name: 'Ana Paula R.', role: 'Dona de Agência • Campinas, SP', avatar: 'AP', color: '#a855f7', text: 'O que me ajudou foi ter o contato já na mão pra abordar no WhatsApp. Economiza aquele tempo de ficar caçando no Google e no Instagram.', stars: 5, ago: '1 semana atrás' },
-              { name: 'Rafael Souza', role: 'Dev Web Freelancer • São Paulo, SP', avatar: 'RS', color: '#3b82f6', text: 'O filtro de empresas sem site é o que mais uso. Facilita bastante focar só em quem realmente pode precisar do meu trabalho.', stars: 4, ago: '2 semanas atrás' },
+              { name: 'Freelancer de Sites', role: 'Comentário no TikTok', avatar: '🌐', color: '#e879a0', text: 'Valeu, mano! Me salvou — já vendi 3 sites de R$100 só hoje.', stars: 5, ago: 'há 4 dias' },
+              { name: 'Designer', role: 'Comentário no TikTok', avatar: '🎨', color: '#a855f7', text: 'Trampo com design e, por causa do Honk Ponk, achei uma sorveteria que não tinha identidade visual. Fechei com o dono e agora produzo toda a parte de marketing da empresa.', stars: 5, ago: 'há 1 semana' },
             ].map(t => (
               <div key={t.name} className="reveal" style={{ background: 'rgba(255,255,255,.04)', border: '1px solid rgba(248,182,200,0.18)', borderRadius: 20, padding: 28, display: 'flex', flexDirection: 'column', gap: 16 }}>
                 <div style={{ display: 'flex', gap: 4 }}>
@@ -245,7 +244,7 @@ export default function HomePage() {
                 </div>
                 <p style={{ fontSize: '.88rem', color: 'rgba(255,255,255,.75)', lineHeight: 1.75, flex: 1 }}>"{t.text}"</p>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 12, borderTop: '1px solid rgba(255,255,255,.06)', paddingTop: 16 }}>
-                  <div style={{ width: 38, height: 38, borderRadius: '50%', background: t.color, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '.75rem', fontWeight: 800, color: '#fff', flexShrink: 0 }}>{t.avatar}</div>
+                  <div style={{ width: 38, height: 38, borderRadius: '50%', background: t.color, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1.1rem', fontWeight: 800, color: '#fff', flexShrink: 0 }}>{t.avatar}</div>
                   <div>
                     <div style={{ fontWeight: 700, fontSize: '.88rem' }}>{t.name}</div>
                     <div style={{ fontSize: '.72rem', color: 'rgba(255,255,255,.4)' }}>{t.role}</div>
