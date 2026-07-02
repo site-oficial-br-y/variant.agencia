@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Cronômetro — Honk</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@700;800;900&display=swap" rel="stylesheet" />
+<style>
+  *{margin:0;padding:0;box-sizing:border-box}
+  html,body{height:100%}
+  body{display:flex;align-items:center;justify-content:center;font-family:"Inter",sans-serif;
+    /* FUNDO VERDE pra chroma key no CapCut. Troque para #000 se quiser fundo preto. */
+    background:#00e000;}
+  body.dark{background:#0f0f1a}
+
+  .timer{position:relative;display:flex;flex-direction:column;align-items:center;gap:10px}
+  .label{font-size:22px;font-weight:800;letter-spacing:.35em;text-transform:uppercase;
+    color:#fff;text-shadow:0 2px 14px rgba(0,0,0,.4)}
+  .clock{font-weight:900;font-size:120px;letter-spacing:-.02em;line-height:1;
+    font-variant-numeric:tabular-nums;
+    color:#fff;
+    background:linear-gradient(135deg,#ffffff,#ffe3ee);
+    -webkit-background-clip:text;background-clip:text;color:transparent;
+    text-shadow:none;filter:drop-shadow(0 6px 26px rgba(226,121,160,.55));}
+  .ms{font-size:.5em;opacity:.85}
+  .ring{position:absolute;top:-38px;left:50%;transform:translateX(-50%);
+    width:8px;height:8px;border-radius:50%;background:#e879a0;box-shadow:0 0 18px 6px rgba(226,121,160,.8);
+    animation:blink 1s step-end infinite}
+  @keyframes blink{50%{opacity:.25}}
+
+  .controls{position:fixed;bottom:18px;left:50%;transform:translateX(-50%);display:flex;gap:10px;z-index:10}
+  .controls button{font-family:inherit;font-weight:700;font-size:13px;border:0;border-radius:10px;
+    padding:10px 16px;cursor:pointer;background:rgba(0,0,0,.55);color:#fff}
+  .controls button:hover{background:rgba(0,0,0,.75)}
+</style>
+</head>
+<body>
+  <div class="timer">
+    <div class="ring"></div>
+    <div class="label">Buscando clientes</div>
+    <div class="clock"><span id="t">00.00</span></div>
+  </div>
+
+  <div class="controls">
+    <button onclick="start()">▶ Iniciar</button>
+    <button onclick="reset()">⟲ Zerar</button>
+    <button onclick="document.body.classList.toggle('dark')">🎨 Verde / Preto</button>
+  </div>
+
+<script>
+  let running=false,startT=0,raf;
+  const el=document.getElementById('t');
+  function fmt(ms){
+    const s=Math.floor(ms/1000), cs=Math.floor((ms%1000)/10);
+    return String(s).padStart(2,'0')+'.'+String(cs).padStart(2,'0');
+  }
+  function tick(now){
+    if(!running)return;
+    el.textContent=fmt(now-startT);
+    raf=requestAnimationFrame(tick);
+  }
+  function start(){
+    if(running)return;
+    running=true;startT=performance.now()-(parseFloat(el.textContent.replace('.',''))?0:0);
+    startT=performance.now();
+    raf=requestAnimationFrame(tick);
+  }
+  function reset(){running=false;cancelAnimationFrame(raf);el.textContent="00.00";}
+</script>
+</body>
+</html>
