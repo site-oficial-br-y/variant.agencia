@@ -82,7 +82,7 @@ export default function HomePage() {
               </a>
             </div>
             <div style={{ display: 'flex', gap: 28, marginTop: 40 }}>
-              {[['+ 180k', 'negócios mapeados'], ['340+', 'cidades cobertas'], ['94%', 'taxa de contato']].map(([num, lbl]) => (
+              {[['Todo o BR', 'busca em qualquer cidade'], ['4 canais', 'WhatsApp, Insta, tel e site'], ['Grátis', 'para começar hoje']].map(([num, lbl]) => (
                 <div key={lbl}>
                   <div style={{ fontSize: '1.6rem', fontWeight: 800 }}>{num}</div>
                   <div style={{ fontSize: '.78rem', color: 'rgba(255,255,255,.4)', marginTop: 2 }}>{lbl}</div>
