@@ -1,0 +1,631 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<title>Surfe! 🏄</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { background: #061420; overflow: hidden; font-family: system-ui, -apple-system, sans-serif; color: #fff; }
+  canvas { display: block; touch-action: none; }
+  .overlay {
+    position: fixed; inset: 0; display: flex; align-items: center; justify-content: center;
+    background: rgba(4,14,24,.55); backdrop-filter: blur(4px); z-index: 10; padding: 24px;
+  }
+  .card {
+    background: rgba(6,20,32,.94); border: 1px solid rgba(56,189,248,.25); border-radius: 20px;
+    padding: 40px 36px; max-width: 480px; width: 100%; text-align: center;
+    box-shadow: 0 20px 60px rgba(0,0,0,.5);
+  }
+  h1 { font-size: 2.4rem; font-weight: 900; letter-spacing: -1.5px; margin-bottom: 8px; }
+  h2 { font-size: 1.9rem; font-weight: 900; letter-spacing: -1px; margin-bottom: 6px; }
+  .grad { background: linear-gradient(135deg,#38bdf8,#fbbf24); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+  .sub { color: rgba(255,255,255,.55); font-size: .95rem; margin-bottom: 24px; }
+  .rules {
+    text-align: left; background: rgba(255,255,255,.04); border: 1px solid rgba(255,255,255,.08);
+    border-radius: 14px; padding: 18px 20px; margin-bottom: 28px; font-size: .88rem;
+    color: rgba(255,255,255,.7); line-height: 2;
+  }
+  .rules .hl { color: #38bdf8; font-weight: 700; }
+  .rules .ok { color: #4ade80; font-weight: 700; }
+  .btn {
+    background: linear-gradient(135deg,#0ea5e9,#0369a1); color: #fff; border: none; border-radius: 12px;
+    padding: 14px 32px; font-size: 1.05rem; font-weight: 700; cursor: pointer; font-family: inherit;
+    box-shadow: 0 8px 30px rgba(14,165,233,.35);
+  }
+  .btn:hover { filter: brightness(1.1); }
+  .scorebox {
+    background: rgba(255,255,255,.04); border: 1px solid rgba(255,255,255,.08); border-radius: 14px;
+    padding: 20px; margin-bottom: 24px;
+  }
+  .scorebox .label { font-size: .8rem; font-weight: 700; color: rgba(255,255,255,.5); letter-spacing: 1px; }
+  .scorebox .pts {
+    font-size: 2.6rem; font-weight: 900;
+    background: linear-gradient(135deg,#38bdf8,#fbbf24); -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+  }
+  .record { color: #4ade80; font-weight: 700; font-size: .9rem; }
+  .muted { color: rgba(255,255,255,.45); font-size: .85rem; }
+  .best { margin-top: 18px; font-size: .85rem; color: rgba(125,211,252,.85); font-weight: 600; }
+  .hidden { display: none; }
+</style>
+</head>
+<body>
+<canvas id="game"></canvas>
+
+<div id="menu" class="overlay">
+  <div class="card">
+    <h1>🏄 Sur<span class="grad">fe!</span></h1>
+    <p class="sub">Dropa, manda snap na crista e acerta o tubo — sem deixar a espuma te engolir.</p>
+    <div class="rules">
+      <div>⬆️⬇️ ou <b>W/S</b> — sobe e desce na onda <span class="muted">(no celular: toca em cima/embaixo)</span></div>
+      <div>🏂 Desce a parede pra ganhar <span class="hl">velocidade</span></div>
+      <div>💥 Sobe até a crista e corta pra baixo = <span class="hl">SNAP</span></div>
+      <div>🚀 Crista com muita velocidade = <span class="hl">AÉREO</span></div>
+      <div>🌊 Quando vier o tubo, <span class="ok">fica na parte de baixo</span></div>
+    </div>
+    <button class="btn" onclick="startGame()">Começar a surfar 🤙</button>
+    <p id="menuBest" class="best hidden"></p>
+  </div>
+</div>
+
+<div id="gameover" class="overlay hidden">
+  <div class="card">
+    <div style="font-size:3rem;margin-bottom:8px">🌊💥</div>
+    <h2>Caldo!</h2>
+    <p id="reason" class="sub"></p>
+    <div class="scorebox">
+      <div class="label">PONTUAÇÃO</div>
+      <div id="finalScore" class="pts"></div>
+      <div id="recordLine"></div>
+    </div>
+    <button class="btn" onclick="startGame()">Surfar de novo 🏄</button>
+  </div>
+</div>
+
+<script>
+const BEST_KEY = 'surf_best'
+const clamp = (v, a, b) => Math.max(a, Math.min(b, v))
+
+const canvas = document.getElementById('game')
+const ctx = canvas.getContext('2d')
+const menuEl = document.getElementById('menu')
+const overEl = document.getElementById('gameover')
+
+let W = 0, H = 0, last = performance.now()
+let phase = 'menu'
+let best = Number(localStorage.getItem(BEST_KEY) || 0)
+const key = { up: false, down: false }
+const ptr = { active: false, up: false, down: false }
+
+if (best > 0) {
+  const el = document.getElementById('menuBest')
+  el.textContent = 'Seu recorde: ' + best.toLocaleString('pt-BR') + ' pontos'
+  el.classList.remove('hidden')
+}
+
+const g = {
+  h: 0.45, vh: 0, speed: 6, lead: 0.7, waveSpeed: 5,
+  score: 0, combo: 1, comboT: 0, t: 0, snapCd: 0, lastDir: 0,
+  air: 0, airDur: 0.8, shake: 0, tubeT: 0,
+  barrelIn: 0, barrelWarn: 0, nextBarrel: 9,
+  popups: [], parts: [],
+}
+
+function resize() {
+  const dpr = Math.min(window.devicePixelRatio || 1, 2)
+  W = window.innerWidth
+  H = window.innerHeight
+  canvas.width = W * dpr
+  canvas.height = H * dpr
+  canvas.style.width = W + 'px'
+  canvas.style.height = H + 'px'
+  ctx.setTransform(dpr, 0, 0, dpr, 0, 0)
+}
+resize()
+window.addEventListener('resize', resize)
+
+const bottomY = () => H * 0.92
+const px = () => W * 0.44
+const crestY = x => H * 0.26 + (x / W) * H * 0.28 + Math.sin(x * 0.006 + g.t * 2) * 6 + Math.sin(x * 0.013 - g.t * 3.1) * 3
+const playerY = () => bottomY() - g.h * (bottomY() - crestY(px()))
+const foamX = () => px() - 40 - g.lead * W * 0.32
+
+function popup(text, big) { g.popups.push({ text, x: px(), y: playerY() - 50, t: 0, big }) }
+
+function sprayBurst(n) {
+  const y = playerY()
+  for (let i = 0; i < n; i++) {
+    g.parts.push({
+      x: px() + (Math.random() - 0.5) * 20, y: y + 8,
+      vx: -60 - Math.random() * 160, vy: -120 - Math.random() * 180,
+      life: 0.5 + Math.random() * 0.5, size: 2 + Math.random() * 4,
+    })
+  }
+}
+
+function addTrick(name, basePts) {
+  const pts = Math.round(basePts * g.combo)
+  g.score += pts
+  popup(name + ' +' + pts, true)
+  g.combo = Math.min(8, g.combo + 1)
+  g.comboT = 5
+  g.shake = Math.max(g.shake, 0.25)
+}
+
+function wipe(reason) {
+  phase = 'over'
+  sprayBurst(50)
+  g.shake = 0.6
+  const s = Math.floor(g.score)
+  const rec = s > best
+  if (rec) { best = s; localStorage.setItem(BEST_KEY, String(s)) }
+  document.getElementById('reason').textContent = reason
+  document.getElementById('finalScore').textContent = s.toLocaleString('pt-BR')
+  document.getElementById('recordLine').innerHTML = rec
+    ? '<div class="record">🏆 Novo recorde!</div>'
+    : '<div class="muted">Recorde: ' + best.toLocaleString('pt-BR') + '</div>'
+  overEl.classList.remove('hidden')
+}
+
+function startGame() {
+  g.h = 0.45; g.vh = 0; g.speed = 7; g.lead = 0.7; g.waveSpeed = 5
+  g.score = 0; g.combo = 1; g.comboT = 0; g.t = 0; g.snapCd = 0; g.lastDir = 0
+  g.air = 0; g.shake = 0; g.tubeT = 0
+  g.barrelIn = 0; g.barrelWarn = 0; g.nextBarrel = 9
+  g.popups = []; g.parts = []
+  phase = 'playing'
+  menuEl.classList.add('hidden')
+  overEl.classList.add('hidden')
+}
+
+function update(dt) {
+  g.t += dt
+  g.waveSpeed = 5 + Math.min(4.5, g.t * 0.045)
+  const up = key.up || ptr.up
+  const down = key.down || ptr.down
+
+  if (g.air > 0) {
+    g.air -= dt
+    const p = 1 - g.air / g.airDur
+    g.h = 1.12 + Math.sin(p * Math.PI) * 0.22 - p * 0.4
+    if (g.air <= 0) {
+      g.h = 0.72
+      addTrick('AÉREO!', 260)
+      sprayBurst(30)
+    }
+  } else {
+    const dir = up ? 1 : down ? -1 : 0
+    const target = dir === 1 ? 1.25 : dir === -1 ? -2.2 : -0.3
+    g.vh += (target - g.vh) * Math.min(1, dt * 8)
+    const prev = g.h
+    g.h = clamp(g.h + g.vh * dt * 0.9, 0.04, 1.14)
+    const dhdt = (g.h - prev) / dt
+    if (dhdt < 0) g.speed += -dhdt * dt * 7 * (0.4 + prev)
+    else g.speed -= dhdt * dt * 3.2
+    if (g.h < 0.12) g.speed -= dt * 1.2
+    if (g.lead < 0.45) g.speed += dt * 1.6
+    g.speed += (5.5 - g.speed) * dt * 0.35
+    g.speed = clamp(g.speed, 1.5, 15)
+
+    g.snapCd -= dt
+    if (g.h > 0.78 && down && g.lastDir === 1 && g.snapCd <= 0 && g.speed > 6) {
+      g.snapCd = 0.9
+      addTrick('SNAP!', 120)
+      g.speed = Math.min(15, g.speed + 1.2)
+      sprayBurst(26)
+    }
+    if (dir !== 0) g.lastDir = dir
+
+    if (g.h >= 1.14) {
+      if (g.speed >= 8.5 && g.barrelIn <= 0) {
+        g.air = g.airDur
+        sprayBurst(30)
+      } else {
+        g.h = 0.95
+        g.vh = -0.6
+        g.speed = Math.max(1.5, g.speed - 2)
+        if (g.snapCd <= 0) {
+          popup('quase passou da crista! 😅', false)
+          g.snapCd = 0.9
+        }
+      }
+    }
+  }
+
+  g.lead += (g.speed - g.waveSpeed) * dt * 0.075
+  g.lead = Math.min(g.lead, 1.15)
+  if (g.lead <= 0) { wipe('A espuma te engoliu 🌊'); return }
+
+  g.score += g.speed * dt * 2
+
+  if (g.combo > 1) {
+    g.comboT -= dt
+    if (g.comboT <= 0) g.combo = 1
+  }
+
+  if (g.barrelIn > 0) {
+    g.barrelIn -= dt
+    if (g.h > 0.8 && g.air <= 0) { wipe('Levou a lipada na cabeça dentro do tubo 🤕'); return }
+    if (g.h >= 0.12 && g.h <= 0.52) {
+      g.tubeT += dt
+      g.score += dt * 90 * g.combo
+    }
+    if (g.barrelIn <= 0) {
+      if (g.tubeT > 0.8) addTrick('TUBO ' + g.tubeT.toFixed(1) + 's!', Math.round(g.tubeT * 150))
+      g.nextBarrel = 8 + Math.random() * 8
+      g.tubeT = 0
+    }
+  } else if (g.barrelWarn > 0) {
+    g.barrelWarn -= dt
+    if (g.barrelWarn <= 0) {
+      g.barrelIn = 4 + Math.random() * 2
+      g.tubeT = 0
+    }
+  } else {
+    g.nextBarrel -= dt
+    if (g.nextBarrel <= 0) g.barrelWarn = 1.6
+  }
+
+  if (g.speed > 7.5 || Math.abs(g.vh) > 1) {
+    const y = playerY()
+    g.parts.push({
+      x: px() - 16, y: y + 8,
+      vx: -80 - g.speed * 12, vy: -40 - Math.random() * 90,
+      life: 0.35 + Math.random() * 0.3, size: 1.5 + Math.random() * 3,
+    })
+  }
+}
+
+function updateFx(dt) {
+  g.shake = Math.max(0, g.shake - dt)
+  for (const p of g.parts) {
+    p.x += p.vx * dt
+    p.y += p.vy * dt
+    p.vy += 380 * dt
+    p.life -= dt
+  }
+  g.parts = g.parts.filter(p => p.life > 0)
+  for (const p of g.popups) { p.t += dt; p.y -= 32 * dt }
+  g.popups = g.popups.filter(p => p.t < 1.4)
+}
+
+function updateDemo(dt) {
+  g.t += dt
+  g.h = 0.45 + Math.sin(g.t * 1.1) * 0.28
+  g.vh = Math.cos(g.t * 1.1) * 0.6
+  g.lead = 0.7 + Math.sin(g.t * 0.5) * 0.08
+  g.speed = 7
+  if (Math.random() < 0.5) {
+    g.parts.push({
+      x: px() - 16, y: playerY() + 8,
+      vx: -140, vy: -60 - Math.random() * 80,
+      life: 0.4, size: 1.5 + Math.random() * 3,
+    })
+  }
+}
+
+function drawSurfer() {
+  const x = px()
+  const y = playerY()
+  ctx.save()
+  ctx.translate(x, y)
+  let tilt = -0.12 + g.vh * -0.25
+  if (g.air > 0) tilt += (1 - g.air / g.airDur) * Math.PI * 2
+  ctx.rotate(tilt)
+  const grad = ctx.createLinearGradient(-26, 0, 26, 0)
+  grad.addColorStop(0, '#fbbf24')
+  grad.addColorStop(1, '#ea580c')
+  ctx.fillStyle = grad
+  ctx.beginPath()
+  ctx.ellipse(0, 9, 26, 5.5, 0, 0, Math.PI * 2)
+  ctx.fill()
+  ctx.strokeStyle = '#10222e'
+  ctx.lineWidth = 4.5
+  ctx.lineCap = 'round'
+  ctx.lineJoin = 'round'
+  ctx.beginPath()
+  ctx.moveTo(-10, 6)
+  ctx.lineTo(-5, -6)
+  ctx.lineTo(3, -6)
+  ctx.lineTo(8, 6)
+  ctx.moveTo(-1, -6)
+  ctx.lineTo(2, -17)
+  ctx.moveTo(2, -14)
+  ctx.lineTo(-9, -19)
+  ctx.moveTo(2, -14)
+  ctx.lineTo(11, -9)
+  ctx.stroke()
+  ctx.fillStyle = '#e8b08a'
+  ctx.beginPath()
+  ctx.arc(3.5, -22, 4.5, 0, Math.PI * 2)
+  ctx.fill()
+  ctx.restore()
+}
+
+function draw() {
+  const bY = bottomY()
+  const x0 = px()
+  const pY = playerY()
+  const fx = foamX()
+
+  ctx.save()
+  if (g.shake > 0) {
+    ctx.translate((Math.random() - 0.5) * g.shake * 14, (Math.random() - 0.5) * g.shake * 14)
+  }
+
+  const sky = ctx.createLinearGradient(0, 0, 0, H * 0.55)
+  sky.addColorStop(0, '#061420')
+  sky.addColorStop(0.6, '#1c3050')
+  sky.addColorStop(1, '#c2571f')
+  ctx.fillStyle = sky
+  ctx.fillRect(0, 0, W, H * 0.55)
+
+  for (let i = 0; i < 40; i++) {
+    const sx = ((i * 97) % 100) / 100 * W
+    const sy = ((i * 53) % 37) / 37 * H * 0.3
+    ctx.fillStyle = 'rgba(255,255,255,' + (0.15 + 0.2 * Math.abs(Math.sin(g.t * 1.5 + i))) + ')'
+    ctx.fillRect(sx, sy, 2, 2)
+  }
+
+  const sunX = W * 0.72, sunY = H * 0.15
+  const glow = ctx.createRadialGradient(sunX, sunY, 10, sunX, sunY, 180)
+  glow.addColorStop(0, 'rgba(251,191,36,.5)')
+  glow.addColorStop(1, 'rgba(251,191,36,0)')
+  ctx.fillStyle = glow
+  ctx.fillRect(sunX - 180, sunY - 180, 360, 360)
+  const sun = ctx.createLinearGradient(sunX, sunY - 50, sunX, sunY + 50)
+  sun.addColorStop(0, '#fde68a')
+  sun.addColorStop(1, '#ea580c')
+  ctx.fillStyle = sun
+  ctx.beginPath()
+  ctx.arc(sunX, sunY, 50, 0, Math.PI * 2)
+  ctx.fill()
+
+  ctx.fillStyle = '#0c2438'
+  ctx.fillRect(0, H * 0.5, W, H * 0.5)
+
+  ctx.beginPath()
+  ctx.moveTo(0, crestY(0))
+  for (let x = 0; x <= W; x += 16) ctx.lineTo(x, crestY(x))
+  ctx.lineTo(W, H)
+  ctx.lineTo(0, H)
+  ctx.closePath()
+  const water = ctx.createLinearGradient(0, H * 0.26, 0, H)
+  water.addColorStop(0, '#2b8aa8')
+  water.addColorStop(0.45, '#155a7d')
+  water.addColorStop(1, '#0a2440')
+  ctx.fillStyle = water
+  ctx.fill()
+
+  ctx.strokeStyle = 'rgba(255,255,255,.1)'
+  ctx.lineWidth = 2
+  for (let k = 1; k <= 4; k++) {
+    ctx.beginPath()
+    for (let x = 0; x <= W; x += 24) {
+      const y = crestY(x) + k * (bY - crestY(x)) * 0.22 + Math.sin(x * 0.01 + g.t * 4 + k) * 4
+      if (x === 0) ctx.moveTo(x, y)
+      else ctx.lineTo(x, y)
+    }
+    ctx.stroke()
+  }
+
+  ctx.strokeStyle = 'rgba(255,255,255,.4)'
+  ctx.lineWidth = 3.5
+  ctx.beginPath()
+  ctx.moveTo(0, crestY(0))
+  for (let x = 0; x <= W; x += 16) ctx.lineTo(x, crestY(x))
+  ctx.stroke()
+
+  if (fx > -100) {
+    ctx.beginPath()
+    ctx.moveTo(0, crestY(0))
+    for (let x = 0; x <= fx; x += 16) ctx.lineTo(x, crestY(x))
+    ctx.lineTo(fx, H)
+    ctx.lineTo(0, H)
+    ctx.closePath()
+    ctx.fillStyle = 'rgba(225,238,248,.22)'
+    ctx.fill()
+
+    for (let y = crestY(Math.max(0, fx)); y < bY + 20; y += 20) {
+      const wob = Math.sin(y * 0.08 + g.t * 6) * 9
+      ctx.fillStyle = 'rgba(240,248,255,' + (0.55 - (y / H) * 0.25) + ')'
+      ctx.beginPath()
+      ctx.arc(fx + wob, y, 11 + Math.sin(y + g.t * 8) * 4, 0, Math.PI * 2)
+      ctx.fill()
+    }
+    for (let x = Math.max(-20, fx - W * 0.5); x < fx; x += 28) {
+      ctx.fillStyle = 'rgba(240,248,255,.45)'
+      ctx.beginPath()
+      ctx.arc(x, crestY(x) + 6 + Math.sin(x * 0.2 + g.t * 5) * 4, 12, 0, Math.PI * 2)
+      ctx.fill()
+    }
+  }
+
+  if (g.barrelWarn > 0 && phase === 'playing') {
+    ctx.strokeStyle = 'rgba(251,146,60,' + (0.4 + 0.4 * Math.sin(g.t * 12)) + ')'
+    ctx.lineWidth = 6
+    ctx.beginPath()
+    for (let x = x0 - 60; x <= x0 + 200; x += 16) ctx.lineTo(x, crestY(x) - 4)
+    ctx.stroke()
+  }
+
+  if (g.barrelIn > 0 && phase === 'playing') {
+    const c0 = crestY(x0)
+    const zoneTop = bY - 0.52 * (bY - c0)
+    const zoneBot = bY - 0.12 * (bY - c0)
+    ctx.fillStyle = 'rgba(74,222,128,.08)'
+    ctx.fillRect(x0 - 130, zoneTop, 260, zoneBot - zoneTop)
+    ctx.setLineDash([8, 8])
+    ctx.strokeStyle = 'rgba(74,222,128,.35)'
+    ctx.lineWidth = 2
+    ctx.strokeRect(x0 - 130, zoneTop, 260, zoneBot - zoneTop)
+    ctx.setLineDash([])
+    const sx = x0 - 60
+    const sy = crestY(sx)
+    const ex = x0 + 170
+    const ey = sy + (bY - sy) * 0.42
+    ctx.lineCap = 'round'
+    ctx.strokeStyle = 'rgba(10,45,70,.55)'
+    ctx.lineWidth = 34
+    ctx.beginPath()
+    ctx.moveTo(sx - 90, sy + 6)
+    ctx.bezierCurveTo(sx + 30, sy - 75, ex - 40, sy - 60, ex, ey)
+    ctx.stroke()
+    ctx.strokeStyle = 'rgba(215,238,248,.92)'
+    ctx.lineWidth = 22
+    ctx.beginPath()
+    ctx.moveTo(sx - 90, sy + 2)
+    ctx.bezierCurveTo(sx + 30, sy - 80, ex - 40, sy - 65, ex, ey - 6)
+    ctx.stroke()
+    for (let i = 0; i < 3; i++) {
+      ctx.fillStyle = 'rgba(240,248,255,.6)'
+      ctx.beginPath()
+      ctx.arc(ex - 6 + Math.sin(g.t * 9 + i * 2) * 8, ey + 8 + i * 16 + ((g.t * 140 + i * 40) % 50), 6, 0, Math.PI * 2)
+      ctx.fill()
+    }
+    const dark = ctx.createRadialGradient(x0, pY, 70, x0, pY, W * 0.55)
+    dark.addColorStop(0, 'rgba(2,10,24,0)')
+    dark.addColorStop(1, 'rgba(2,10,24,.5)')
+    ctx.fillStyle = dark
+    ctx.fillRect(0, 0, W, H)
+  }
+
+  if (phase !== 'over' && g.lead < 0.45) {
+    const pocket = ctx.createRadialGradient(x0, pY, 5, x0, pY, 90)
+    pocket.addColorStop(0, 'rgba(74,222,128,.18)')
+    pocket.addColorStop(1, 'rgba(74,222,128,0)')
+    ctx.fillStyle = pocket
+    ctx.fillRect(x0 - 90, pY - 90, 180, 180)
+  }
+
+  if (phase !== 'over') drawSurfer()
+
+  for (const p of g.parts) {
+    ctx.fillStyle = 'rgba(240,248,255,' + Math.min(0.85, p.life * 1.6) + ')'
+    ctx.beginPath()
+    ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2)
+    ctx.fill()
+  }
+
+  for (const p of g.popups) {
+    const a = 1 - p.t / 1.4
+    ctx.font = p.big ? '900 32px system-ui, sans-serif' : '800 20px system-ui, sans-serif'
+    ctx.textAlign = 'center'
+    ctx.lineWidth = 5
+    ctx.strokeStyle = 'rgba(6,20,32,' + a + ')'
+    ctx.strokeText(p.text, p.x, p.y)
+    ctx.fillStyle = p.big ? 'rgba(125,211,252,' + a + ')' : 'rgba(255,255,255,' + a + ')'
+    ctx.fillText(p.text, p.x, p.y)
+  }
+
+  if (phase === 'playing') drawHud()
+  ctx.restore()
+}
+
+function drawHud() {
+  ctx.textAlign = 'left'
+  ctx.font = '700 12px system-ui, sans-serif'
+  ctx.fillStyle = 'rgba(255,255,255,.5)'
+  ctx.fillText('PONTOS', 24, 38)
+  ctx.font = '900 32px system-ui, sans-serif'
+  ctx.fillStyle = '#fff'
+  ctx.fillText(Math.floor(g.score).toLocaleString('pt-BR'), 24, 70)
+
+  ctx.textAlign = 'right'
+  ctx.font = '700 12px system-ui, sans-serif'
+  ctx.fillStyle = 'rgba(255,255,255,.5)'
+  ctx.fillText('RECORDE', W - 24, 38)
+  ctx.font = '800 20px system-ui, sans-serif'
+  ctx.fillStyle = 'rgba(125,211,252,.9)'
+  ctx.fillText(Math.max(best, Math.floor(g.score)).toLocaleString('pt-BR'), W - 24, 62)
+
+  const bw = Math.min(220, W * 0.4)
+  ctx.textAlign = 'left'
+  ctx.font = '700 11px system-ui, sans-serif'
+  ctx.fillStyle = 'rgba(255,255,255,.5)'
+  ctx.fillText('VELOCIDADE', 24, H - 52)
+  ctx.fillStyle = 'rgba(255,255,255,.12)'
+  ctx.beginPath()
+  ctx.roundRect(24, H - 42, bw, 12, 6)
+  ctx.fill()
+  const sp = ctx.createLinearGradient(24, 0, 24 + bw, 0)
+  sp.addColorStop(0, '#38bdf8')
+  sp.addColorStop(1, '#0369a1')
+  ctx.fillStyle = sp
+  ctx.beginPath()
+  ctx.roundRect(24, H - 42, bw * clamp(g.speed / 15, 0.04, 1), 12, 6)
+  ctx.fill()
+
+  ctx.fillStyle = 'rgba(255,255,255,.5)'
+  ctx.fillText('ESPUMA', 24, H - 88)
+  ctx.fillStyle = 'rgba(255,255,255,.12)'
+  ctx.beginPath()
+  ctx.roundRect(24, H - 78, bw, 12, 6)
+  ctx.fill()
+  ctx.fillStyle = g.lead < 0.25 ? '#fb923c' : '#4ade80'
+  ctx.beginPath()
+  ctx.roundRect(24, H - 78, bw * clamp(g.lead / 1.15, 0.02, 1), 12, 6)
+  ctx.fill()
+
+  if (g.combo > 1) {
+    ctx.textAlign = 'center'
+    ctx.font = '900 26px system-ui, sans-serif'
+    ctx.fillStyle = '#7dd3fc'
+    ctx.fillText('COMBO x' + g.combo, W / 2, 46)
+    ctx.fillStyle = 'rgba(125,211,252,.3)'
+    ctx.fillRect(W / 2 - 60, 54, 120, 4)
+    ctx.fillStyle = '#38bdf8'
+    ctx.fillRect(W / 2 - 60, 54, 120 * (g.comboT / 5), 4)
+  }
+
+  ctx.textAlign = 'center'
+  if (g.barrelWarn > 0) {
+    ctx.font = '900 30px system-ui, sans-serif'
+    ctx.fillStyle = 'rgba(251,146,60,' + (0.6 + 0.4 * Math.sin(g.t * 12)) + ')'
+    ctx.fillText('VEM TUBO! DESCE! 🌊', W / 2, H * 0.22)
+  } else if (g.barrelIn > 0 && g.h >= 0.12 && g.h <= 0.52) {
+    ctx.font = '900 24px system-ui, sans-serif'
+    ctx.fillStyle = '#4ade80'
+    ctx.fillText('DENTRO DO TUBO ' + g.tubeT.toFixed(1) + 's', W / 2, H * 0.22)
+  }
+  if (g.lead < 0.25) {
+    ctx.font = '900 22px system-ui, sans-serif'
+    ctx.fillStyle = 'rgba(251,146,60,' + (0.6 + 0.4 * Math.sin(g.t * 14)) + ')'
+    ctx.fillText('A ESPUMA TÁ CHEGANDO! ACELERA! ⚠️', W / 2, H * 0.3)
+  }
+}
+
+function loop(now) {
+  const dt = Math.min((now - last) / 1000, 0.033)
+  last = now
+  if (phase === 'playing') update(dt)
+  else updateDemo(dt)
+  updateFx(dt)
+  draw()
+  requestAnimationFrame(loop)
+}
+requestAnimationFrame(loop)
+
+window.addEventListener('keydown', e => {
+  if (e.key === 'ArrowUp' || e.key === 'w' || e.key === 'W') { key.up = true; e.preventDefault() }
+  if (e.key === 'ArrowDown' || e.key === 's' || e.key === 'S') { key.down = true; e.preventDefault() }
+  if ((e.key === ' ' || e.key === 'Enter') && phase !== 'playing') { startGame(); e.preventDefault() }
+})
+window.addEventListener('keyup', e => {
+  if (e.key === 'ArrowUp' || e.key === 'w' || e.key === 'W') key.up = false
+  if (e.key === 'ArrowDown' || e.key === 's' || e.key === 'S') key.down = false
+})
+function setPtr(clientY) {
+  ptr.up = clientY < window.innerHeight / 2
+  ptr.down = !ptr.up
+}
+canvas.addEventListener('pointerdown', e => {
+  if (phase !== 'playing') return
+  ptr.active = true
+  setPtr(e.clientY)
+})
+window.addEventListener('pointermove', e => { if (ptr.active) setPtr(e.clientY) })
+window.addEventListener('pointerup', () => { ptr.active = false; ptr.up = false; ptr.down = false })
+</script>
+</body>
+</html>
