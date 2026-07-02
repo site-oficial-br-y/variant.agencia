@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Cronômetro ⏱️</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    background: #0b1220; color: #fff; font-family: system-ui, -apple-system, sans-serif;
+    min-height: 100vh; display: flex; align-items: center; justify-content: center; padding: 20px;
+  }
+  #app { text-align: center; width: 100%; max-width: 420px; }
+  .time {
+    font-size: clamp(3rem, 16vw, 5.5rem); font-weight: 800; letter-spacing: -2px;
+    font-variant-numeric: tabular-nums; line-height: 1.1; margin-bottom: 6px;
+  }
+  .time .cs { font-size: .45em; color: rgba(255,255,255,.45); }
+  .state { font-size: .85rem; color: rgba(255,255,255,.4); margin-bottom: 24px; min-height: 1.2em; }
+  .row { display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; margin-bottom: 14px; }
+  button {
+    font-family: inherit; font-weight: 700; font-size: 1rem; cursor: pointer;
+    border: none; border-radius: 12px; padding: 13px 26px; color: #fff;
+  }
+  #startBtn { background: linear-gradient(135deg,#22c55e,#15803d); min-width: 130px; }
+  #startBtn.running { background: linear-gradient(135deg,#f59e0b,#b45309); }
+  #lapBtn, #resetBtn { background: rgba(255,255,255,.09); }
+  #lapBtn:disabled, #resetBtn:disabled { opacity: .35; cursor: default; }
+  #pipBtn {
+    background: transparent; border: 1px solid rgba(125,211,252,.35); color: #7dd3fc;
+    font-size: .9rem; padding: 10px 20px;
+  }
+  #pipHint { font-size: .75rem; color: rgba(255,255,255,.35); margin-top: 8px; }
+  #laps {
+    margin-top: 22px; text-align: left; max-height: 200px; overflow-y: auto;
+    display: flex; flex-direction: column; gap: 4px;
+  }
+  .lap {
+    display: flex; justify-content: space-between; font-variant-numeric: tabular-nums;
+    background: rgba(255,255,255,.05); border-radius: 8px; padding: 8px 14px; font-size: .9rem;
+  }
+  .lap span:first-child { color: rgba(255,255,255,.45); }
+  /* modo compacto dentro da janelinha PiP */
+  body.pip { padding: 8px; }
+  body.pip .time { font-size: 2.6rem; margin-bottom: 2px; }
+  body.pip .state, body.pip #laps, body.pip #pipBtn, body.pip #pipHint { display: none; }
+  body.pip button { padding: 8px 14px; font-size: .85rem; border-radius: 9px; }
+  body.pip #startBtn { min-width: 90px; }
+</style>
+</head>
+<body>
+<div id="app">
+  <div class="time" id="display">00:00<span class="cs">,00</span></div>
+  <div class="state" id="state">pronto</div>
+  <div class="row">
+    <button id="startBtn">Iniciar</button>
+    <button id="lapBtn" disabled>Volta</button>
+    <button id="resetBtn" disabled>Zerar</button>
+  </div>
+  <div class="row">
+    <button id="pipBtn">📌 Deixar de janelinha</button>
+  </div>
+  <div id="pipHint">A janelinha fica flutuando por cima das outras janelas (Chrome/Edge).</div>
+  <div id="laps"></div>
+</div>
+
+<script>
+let startAt = 0      // timestamp de quando (re)começou
+let acc = 0          // tempo acumulado antes da pausa (ms)
+let running = false
+let laps = []
+let lastLapTotal = 0
+
+const displayEl = document.getElementById('display')
+const stateEl = document.getElementById('state')
+const startBtn = document.getElementById('startBtn')
+const lapBtn = document.getElementById('lapBtn')
+const resetBtn = document.getElementById('resetBtn')
+const pipBtn = document.getElementById('pipBtn')
+const lapsEl = document.getElementById('laps')
+
+const now = () => performance.now()
+const total = () => acc + (running ? now() - startAt : 0)
+
+function fmtPlain(ms) {
+  const cs = Math.floor(ms / 10) % 100
+  const s = Math.floor(ms / 1000) % 60
+  const m = Math.floor(ms / 60000) % 60
+  const h = Math.floor(ms / 3600000)
+  const p = n => String(n).padStart(2, '0')
+  return (h > 0 ? p(h) + ':' : '') + p(m) + ':' + p(s) + ',' + p(cs)
+}
+
+function fmt(ms) {
+  const [main, cs] = fmtPlain(ms).split(',')
+  return main + '<span class="cs">,' + cs + '</span>'
+}
+
+function render() {
+  displayEl.innerHTML = fmt(total())
+  requestAnimationFrame(render)
+}
+requestAnimationFrame(render)
+
+function updateButtons() {
+  startBtn.textContent = running ? 'Pausar' : (acc > 0 ? 'Continuar' : 'Iniciar')
+  startBtn.classList.toggle('running', running)
+  stateEl.textContent = running ? 'rodando' : (acc > 0 ? 'pausado' : 'pronto')
+  lapBtn.disabled = !running
+  resetBtn.disabled = running || acc === 0
+}
+
+startBtn.onclick = () => {
+  if (running) {
+    acc += now() - startAt
+    running = false
+  } else {
+    startAt = now()
+    running = true
+  }
+  updateButtons()
+}
+
+lapBtn.onclick = () => {
+  const t = total()
+  laps.unshift({ n: laps.length + 1, split: t - lastLapTotal, t })
+  lastLapTotal = t
+  lapsEl.innerHTML = laps.map(l =>
+    '<div class="lap"><span>volta ' + l.n + '</span><span>+' + fmtPlain(l.split) + '</span><span>' + fmtPlain(l.t) + '</span></div>'
+  ).join('')
+}
+
+resetBtn.onclick = () => {
+  acc = 0; running = false; laps = []; lastLapTotal = 0
+  lapsEl.innerHTML = ''
+  updateButtons()
+}
+
+// teclado: espaço = iniciar/pausar, L = volta, R = zerar
+window.addEventListener('keydown', e => {
+  if (e.key === ' ') { startBtn.click(); e.preventDefault() }
+  if (e.key === 'l' || e.key === 'L') lapBtn.click()
+  if (e.key === 'r' || e.key === 'R') resetBtn.click()
+})
+
+// janelinha flutuante (Document Picture-in-Picture)
+pipBtn.onclick = async () => {
+  if (!('documentPictureInPicture' in window)) {
+    alert('Seu navegador não suporta a janelinha flutuante. Use Chrome ou Edge atualizados.')
+    return
+  }
+  const pipWin = await documentPictureInPicture.requestWindow({ width: 300, height: 150 })
+  for (const ss of document.styleSheets) {
+    try {
+      const css = [...ss.cssRules].map(r => r.cssText).join('')
+      const style = pipWin.document.createElement('style')
+      style.textContent = css
+      pipWin.document.head.appendChild(style)
+    } catch {}
+  }
+  pipWin.document.body.classList.add('pip')
+  pipWin.document.body.appendChild(document.getElementById('app'))
+  pipWin.addEventListener('pagehide', () => {
+    document.body.appendChild(document.getElementById('app'))
+  })
+}
+</script>
+</body>
+</html>
