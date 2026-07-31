@@ -22,21 +22,9 @@ async function fetchPlaces(query: string, lat: number, lng: number, radius: numb
 }
 
 async function fetchPlacesCity(query: string, lat: number, lng: number, maxResults: number | null): Promise<any[]> {
-  if (maxResults !== null && maxResults <= 20) {
-    return fetchPlaces(query, lat, lng, 20000)
-  }
-  // For unlimited plans: search with multiple radii to get more results
-  const radii = [5000, 15000, 30000, 50000]
-  const batches = await Promise.all(radii.map(r => fetchPlaces(query, lat, lng, r)))
-  const seen = new Set<string>()
-  const merged: any[] = []
-  for (const batch of batches) {
-    for (const p of batch) {
-      const key = p.name + (p.vicinity || '')
-      if (!seen.has(key)) { seen.add(key); merged.push(p) }
-    }
-  }
-  return merged
+  // Um único raio amplo cobre a região; raios múltiplos se sobrepõem e desperdiçam chamadas de API
+  const radius = maxResults !== null && maxResults <= 20 ? 20000 : 45000
+  return fetchPlaces(query, lat, lng, radius)
 }
 
 const BRAZIL_CITIES = [
@@ -150,7 +138,8 @@ export function SearchResults({ params, userId, plan = 'free', onLimitReached }:
         lat = loc.lat; lng = loc.lng
       }
 
-      const queries = maxResults === null ? segQueries : segQueries.slice(0, 1)
+      // Ilimitado usa até 3 palavras-chave (variedade); planos limitados usam 1 (economia de API)
+      const queries = maxResults === null ? segQueries.slice(0, 3) : segQueries.slice(0, 1)
       let raw: any[] = []
       if (params.allBrazil) {
         raw = await fetchPlacesBrazil(queries[0], (city, done) => {

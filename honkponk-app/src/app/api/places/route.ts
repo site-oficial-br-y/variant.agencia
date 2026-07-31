@@ -1,6 +1,13 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { createClient } from '@supabase/supabase-js'
 
 const GOOGLE_KEY = process.env.GOOGLE_PLACES_KEY || ''
+
+// Cache de resultados pra economizar chamadas pagas ao Google Places
+const supabaseCache = (process.env.NEXT_PUBLIC_SUPABASE_URL && process.env.SUPABASE_SERVICE_ROLE_KEY)
+  ? createClient(process.env.NEXT_PUBLIC_SUPABASE_URL, process.env.SUPABASE_SERVICE_ROLE_KEY)
+  : null
+const CACHE_TTL_MS = 7 * 24 * 60 * 60 * 1000 // 7 dias
 
 export async function GET(req: NextRequest) {
   const { searchParams } = new URL(req.url)
@@ -24,6 +31,17 @@ export async function GET(req: NextRequest) {
     const radius = parseFloat(searchParams.get('radius') || '20000')
     const keyword = searchParams.get('keyword') || ''
     const [lat, lng] = location.split(',').map(Number)
+
+    // 1) Tenta o cache antes de chamar o Google (economia de API)
+    const cacheKey = `nearby:${keyword.toLowerCase()}:${lat.toFixed(2)}:${lng.toFixed(2)}:${Math.round(radius)}`
+    if (supabaseCache) {
+      try {
+        const { data: cached } = await supabaseCache.from('places_cache').select('results, created_at').eq('cache_key', cacheKey).maybeSingle()
+        if (cached && cached.created_at && (Date.now() - new Date(cached.created_at).getTime()) < CACHE_TTL_MS) {
+          return NextResponse.json({ results: cached.results, status: 'OK', cached: true })
+        }
+      } catch { /* cache falhou, segue pro Google */ }
+    }
 
     const body = {
       textQuery: keyword,
@@ -58,6 +76,14 @@ export async function GET(req: NextRequest) {
       formatted_phone_number: p.nationalPhoneNumber || '',
       opening_hours: { open_now: p.currentOpeningHours?.openNow ?? null },
     }))
+
+    // 2) Guarda no cache pra próximas buscas iguais não pagarem de novo
+    if (supabaseCache && results.length && !data.error) {
+      try {
+        await supabaseCache.from('places_cache').upsert({ cache_key: cacheKey, results, created_at: new Date().toISOString() }, { onConflict: 'cache_key' })
+      } catch { /* ignora erro de cache */ }
+    }
+
     return NextResponse.json({ results, status: data.error ? 'ERROR' : 'OK', _raw_error: data.error })
   }
 
