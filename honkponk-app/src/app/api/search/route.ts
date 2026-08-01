@@ -36,21 +36,27 @@ export async function POST(req: NextRequest) {
     // Has coins — allow the search; coin will be deducted in countOnly step
   }
 
-  // Trava anti-spam: intervalo mínimo entre buscas (protege inclusive planos ilimitados)
+  // Trava anti-spam: intervalo mínimo entre buscas + limite por hora (protege inclusive planos ilimitados)
   if (user) {
-    const { data: lastSearch } = await supabase
+    const { data: recentSearches } = await supabase
       .from('search_logs')
       .select('created_at')
       .eq('user_id', user.id)
       .order('created_at', { ascending: false })
-      .limit(1)
-      .maybeSingle()
+      .limit(30)
 
-    if (lastSearch) {
-      const secondsSinceLast = (Date.now() - new Date(lastSearch.created_at).getTime()) / 1000
+    if (recentSearches && recentSearches.length) {
+      const secondsSinceLast = (Date.now() - new Date(recentSearches[0].created_at).getTime()) / 1000
       const MIN_INTERVAL_SECONDS = 5
       if (secondsSinceLast < MIN_INTERVAL_SECONDS) {
         return NextResponse.json({ error: 'Aguarde alguns segundos antes de fazer outra busca.' }, { status: 429 })
+      }
+
+      const oneHourAgo = Date.now() - 60 * 60 * 1000
+      const searchesLastHour = recentSearches.filter(s => new Date(s.created_at).getTime() > oneHourAgo).length
+      const MAX_SEARCHES_PER_HOUR = 25
+      if (searchesLastHour >= MAX_SEARCHES_PER_HOUR) {
+        return NextResponse.json({ error: 'Limite de buscas por hora atingido. Tente novamente mais tarde.' }, { status: 429 })
       }
     }
   }
