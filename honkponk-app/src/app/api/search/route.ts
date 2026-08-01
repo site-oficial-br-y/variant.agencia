@@ -36,6 +36,25 @@ export async function POST(req: NextRequest) {
     // Has coins — allow the search; coin will be deducted in countOnly step
   }
 
+  // Trava anti-spam: intervalo mínimo entre buscas (protege inclusive planos ilimitados)
+  if (user) {
+    const { data: lastSearch } = await supabase
+      .from('search_logs')
+      .select('created_at')
+      .eq('user_id', user.id)
+      .order('created_at', { ascending: false })
+      .limit(1)
+      .maybeSingle()
+
+    if (lastSearch) {
+      const secondsSinceLast = (Date.now() - new Date(lastSearch.created_at).getTime()) / 1000
+      const MIN_INTERVAL_SECONDS = 5
+      if (secondsSinceLast < MIN_INTERVAL_SECONDS) {
+        return NextResponse.json({ error: 'Aguarde alguns segundos antes de fazer outra busca.' }, { status: 429 })
+      }
+    }
+  }
+
   if (checkOnly) {
     return NextResponse.json({ ok: true })
   }

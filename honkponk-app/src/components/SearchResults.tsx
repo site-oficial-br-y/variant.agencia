@@ -131,6 +131,12 @@ export function SearchResults({ params, userId, plan = 'free', onLimitReached }:
         body: JSON.stringify({ checkOnly: true, ...params }),
       })
       if (limitRes.status === 403) { onLimitReached(); setLoading(false); return }
+      if (limitRes.status === 429) {
+        const data = await limitRes.json().catch(() => ({}))
+        setError(data.error || 'Aguarde alguns segundos antes de fazer outra busca.')
+        setLoading(false)
+        return
+      }
 
       let lat = -15.8, lng = -47.9
       if (!params.allBrazil && params.city) {
