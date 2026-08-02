@@ -1,0 +1,532 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Carteira de Identidade</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      background: #1a1a1a;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      font-family: 'Arial', sans-serif;
+      padding: 20px;
+    }
+
+    .label-topo {
+      color: #aaa;
+      font-size: 12px;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      margin-bottom: 16px;
+    }
+
+    /* ---- FRENTE ---- */
+    .rg {
+      width: 340px;
+      background: #f5f0e8;
+      border-radius: 12px;
+      overflow: hidden;
+      box-shadow: 0 8px 40px rgba(0,0,0,0.7);
+      position: relative;
+    }
+
+    /* Tarja verde do topo */
+    .rg-header {
+      background: linear-gradient(135deg, #1a5c2a 0%, #2d7a3a 50%, #1a5c2a 100%);
+      padding: 8px 12px 6px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      position: relative;
+    }
+
+    .rg-header::after {
+      content: '';
+      position: absolute;
+      bottom: 0; left: 0; right: 0;
+      height: 3px;
+      background: linear-gradient(90deg, #f5c518, #e8a800, #f5c518);
+    }
+
+    .brasao {
+      width: 36px;
+      height: 36px;
+      flex-shrink: 0;
+    }
+
+    .rg-header-text {
+      color: white;
+      flex: 1;
+    }
+
+    .rg-header-text .republica {
+      font-size: 7px;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+      opacity: 0.9;
+    }
+
+    .rg-header-text .titulo {
+      font-size: 11px;
+      font-weight: 800;
+      letter-spacing: 0.5px;
+      text-transform: uppercase;
+      line-height: 1.2;
+    }
+
+    .rg-header-text .subtitulo {
+      font-size: 7px;
+      opacity: 0.8;
+      letter-spacing: 0.5px;
+    }
+
+    /* Corpo */
+    .rg-body {
+      padding: 10px 12px 12px;
+      display: flex;
+      gap: 10px;
+      position: relative;
+    }
+
+    /* Marca d'água */
+    .rg-body::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background-image: repeating-linear-gradient(
+        45deg,
+        transparent,
+        transparent 18px,
+        rgba(26,92,42,0.04) 18px,
+        rgba(26,92,42,0.04) 19px
+      );
+      pointer-events: none;
+    }
+
+    /* Foto */
+    .foto-wrap {
+      flex-shrink: 0;
+      width: 82px;
+    }
+
+    .foto {
+      width: 82px;
+      height: 100px;
+      background: #d0ccc0;
+      border: 2px solid #999;
+      border-radius: 3px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      overflow: hidden;
+      position: relative;
+    }
+
+    /* Silhueta de pessoa */
+    .foto svg {
+      width: 54px;
+      height: 54px;
+      opacity: 0.35;
+    }
+
+    .foto-label {
+      font-size: 7px;
+      color: #666;
+      text-align: center;
+      margin-top: 3px;
+      letter-spacing: 0.5px;
+    }
+
+    /* Dados */
+    .dados {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      gap: 5px;
+    }
+
+    .campo {
+      border-bottom: 0.5px solid #bbb;
+      padding-bottom: 3px;
+    }
+
+    .campo-label {
+      font-size: 6.5px;
+      color: #555;
+      text-transform: uppercase;
+      letter-spacing: 0.8px;
+      font-weight: 700;
+    }
+
+    .campo-valor {
+      font-size: 10px;
+      color: #111;
+      font-weight: 600;
+      letter-spacing: 0.3px;
+      line-height: 1.3;
+    }
+
+    .campo-valor.nome {
+      font-size: 9px;
+      font-weight: 800;
+      text-transform: uppercase;
+    }
+
+    .rg-numero-wrap {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-end;
+      gap: 6px;
+    }
+
+    /* Linha de baixo */
+    .rg-footer {
+      background: linear-gradient(135deg, #1a5c2a, #2d7a3a);
+      padding: 5px 12px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .rg-footer span {
+      font-size: 6px;
+      color: rgba(255,255,255,0.7);
+      letter-spacing: 1px;
+      text-transform: uppercase;
+    }
+
+    /* Código de barras fake */
+    .barcode {
+      display: flex;
+      gap: 1px;
+      align-items: stretch;
+      height: 18px;
+    }
+
+    .barcode-bar {
+      background: white;
+      opacity: 0.7;
+    }
+
+    /* Chip holográfico */
+    .chip {
+      width: 28px;
+      height: 22px;
+      background: linear-gradient(135deg, #d4af37, #f5e06e, #b8860b, #f5e06e);
+      border-radius: 3px;
+      border: 0.5px solid #a07800;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .chip svg {
+      width: 18px;
+      height: 14px;
+      opacity: 0.6;
+    }
+
+    /* Verso */
+    .verso-label {
+      color: #aaa;
+      font-size: 12px;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      margin: 24px 0 16px;
+    }
+
+    .rg-verso {
+      width: 340px;
+      background: #f5f0e8;
+      border-radius: 12px;
+      overflow: hidden;
+      box-shadow: 0 8px 40px rgba(0,0,0,0.7);
+    }
+
+    .verso-header {
+      background: linear-gradient(135deg, #1a5c2a, #2d7a3a);
+      padding: 6px 12px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .verso-header span {
+      font-size: 7px;
+      color: rgba(255,255,255,0.85);
+      letter-spacing: 1px;
+      text-transform: uppercase;
+    }
+
+    .verso-body {
+      padding: 10px 12px;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      position: relative;
+    }
+
+    .verso-body::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background-image: repeating-linear-gradient(
+        45deg,
+        transparent,
+        transparent 18px,
+        rgba(26,92,42,0.04) 18px,
+        rgba(26,92,42,0.04) 19px
+      );
+      pointer-events: none;
+    }
+
+    .verso-row {
+      display: flex;
+      gap: 10px;
+    }
+
+    .verso-row .campo {
+      flex: 1;
+    }
+
+    .assinatura-wrap {
+      margin-top: 8px;
+      border-top: 0.5px solid #bbb;
+      padding-top: 4px;
+    }
+
+    .assinatura-line {
+      border-bottom: 0.5px solid #555;
+      height: 28px;
+      margin-bottom: 2px;
+      /* Assinatura cursiva fake */
+      position: relative;
+      overflow: hidden;
+    }
+
+    .assinatura-line svg {
+      position: absolute;
+      bottom: 2px;
+      left: 4px;
+    }
+
+    .assinatura-label {
+      font-size: 6.5px;
+      color: #666;
+      text-transform: uppercase;
+      letter-spacing: 0.8px;
+    }
+
+    /* MRZ */
+    .mrz {
+      background: #e8e4dc;
+      padding: 6px 10px;
+      font-family: 'Courier New', monospace;
+      font-size: 7px;
+      color: #333;
+      letter-spacing: 1.5px;
+      border-top: 1px solid #ccc;
+      line-height: 1.8;
+      overflow: hidden;
+    }
+
+    /* Nota de rodapé */
+    .nota {
+      margin-top: 24px;
+      font-size: 10px;
+      color: #555;
+      text-align: center;
+      max-width: 340px;
+      line-height: 1.5;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="label-topo">FRENTE</div>
+
+  <!-- FRENTE -->
+  <div class="rg">
+
+    <div class="rg-header">
+      <!-- Brasão SVG simplificado -->
+      <svg class="brasao" viewBox="0 0 60 60" xmlns="http://www.w3.org/2000/svg">
+        <circle cx="30" cy="30" r="28" fill="none" stroke="rgba(255,255,255,0.6)" stroke-width="1.5"/>
+        <circle cx="30" cy="30" r="20" fill="none" stroke="rgba(255,255,255,0.5)" stroke-width="1"/>
+        <polygon points="30,10 32,22 44,22 34,29 38,42 30,34 22,42 26,29 16,22 28,22"
+                 fill="rgba(255,255,255,0.85)"/>
+        <path d="M8,35 Q12,28 17,32 Q13,38 8,35Z" fill="rgba(255,255,255,0.6)"/>
+        <path d="M6,43 Q11,36 16,40 Q12,46 6,43Z" fill="rgba(255,255,255,0.6)"/>
+        <path d="M52,35 Q48,28 43,32 Q47,38 52,35Z" fill="rgba(255,255,255,0.6)"/>
+        <path d="M54,43 Q49,36 44,40 Q48,46 54,43Z" fill="rgba(255,255,255,0.6)"/>
+        <rect x="18" y="50" width="24" height="5" rx="1" fill="rgba(245,197,24,0.8)"/>
+        <text x="30" y="54.5" text-anchor="middle" font-size="3.5" fill="#1a5c2a" font-family="serif" font-weight="bold">BRASIL</text>
+      </svg>
+
+      <div class="rg-header-text">
+        <div class="republica">República Federativa do Brasil</div>
+        <div class="titulo">Carteira de Identidade</div>
+        <div class="subtitulo">Registro Geral — Via Digital</div>
+      </div>
+
+      <div class="chip">
+        <svg viewBox="0 0 18 14" xmlns="http://www.w3.org/2000/svg">
+          <rect x="1" y="1" width="16" height="12" rx="2" fill="none" stroke="#a07800" stroke-width="0.8"/>
+          <line x1="6" y1="1" x2="6" y2="13" stroke="#a07800" stroke-width="0.6"/>
+          <line x1="12" y1="1" x2="12" y2="13" stroke="#a07800" stroke-width="0.6"/>
+          <line x1="1" y1="5" x2="17" y2="5" stroke="#a07800" stroke-width="0.6"/>
+          <line x1="1" y1="9" x2="17" y2="9" stroke="#a07800" stroke-width="0.6"/>
+        </svg>
+      </div>
+    </div>
+
+    <div class="rg-body">
+
+      <div class="foto-wrap">
+        <div class="foto">
+          <!-- Silhueta humana -->
+          <svg viewBox="0 0 24 24" fill="#555" xmlns="http://www.w3.org/2000/svg">
+            <circle cx="12" cy="7" r="4"/>
+            <path d="M4 21c0-4.418 3.582-8 8-8s8 3.582 8 8"/>
+          </svg>
+        </div>
+        <div class="foto-label">FOTO 3×4</div>
+      </div>
+
+      <div class="dados">
+        <div class="campo">
+          <div class="campo-label">Nome</div>
+          <div class="campo-valor nome">Vinicius Macedo<br>Nami Tavares</div>
+        </div>
+
+        <div class="rg-numero-wrap">
+          <div class="campo" style="flex:1">
+            <div class="campo-label">Registro Geral</div>
+            <div class="campo-valor" style="font-size:13px; letter-spacing:1.5px; font-weight:900">62.636.599-5</div>
+          </div>
+        </div>
+
+        <div style="display:flex; gap:6px;">
+          <div class="campo" style="flex:1">
+            <div class="campo-label">Data de Nascimento</div>
+            <div class="campo-valor">16/03/2008</div>
+          </div>
+          <div class="campo" style="flex:1">
+            <div class="campo-label">Sexo</div>
+            <div class="campo-valor">M</div>
+          </div>
+        </div>
+
+        <div class="campo">
+          <div class="campo-label">Naturalidade</div>
+          <div class="campo-valor">Brasileiro</div>
+        </div>
+
+        <div class="campo">
+          <div class="campo-label">Doc. Origem</div>
+          <div class="campo-valor" style="font-size:8px;">Certidão de Nascimento</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="rg-footer">
+      <span>SSP — Secretaria de Segurança Pública</span>
+      <div class="barcode">
+        <!-- Barras geradas com larguras variadas para parecer real -->
+        <div class="barcode-bar" style="width:1px"></div><div style="width:2px"></div>
+        <div class="barcode-bar" style="width:2px"></div><div style="width:1px"></div>
+        <div class="barcode-bar" style="width:1px"></div><div style="width:3px"></div>
+        <div class="barcode-bar" style="width:2px"></div><div style="width:1px"></div>
+        <div class="barcode-bar" style="width:1px"></div><div style="width:2px"></div>
+        <div class="barcode-bar" style="width:3px"></div><div style="width:1px"></div>
+        <div class="barcode-bar" style="width:1px"></div><div style="width:2px"></div>
+        <div class="barcode-bar" style="width:2px"></div><div style="width:1px"></div>
+        <div class="barcode-bar" style="width:1px"></div><div style="width:3px"></div>
+        <div class="barcode-bar" style="width:2px"></div><div style="width:2px"></div>
+        <div class="barcode-bar" style="width:1px"></div><div style="width:1px"></div>
+        <div class="barcode-bar" style="width:3px"></div><div style="width:2px"></div>
+        <div class="barcode-bar" style="width:1px"></div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- VERSO -->
+  <div class="verso-label">VERSO</div>
+
+  <div class="rg-verso">
+
+    <div class="verso-header">
+      <span>República Federativa do Brasil — Carteira de Identidade</span>
+      <span>RG Nº 62.636.599-5</span>
+    </div>
+
+    <div class="verso-body">
+
+      <div class="verso-row">
+        <div class="campo">
+          <div class="campo-label">CPF</div>
+          <div class="campo-valor">— — —. — — —. — — — - — —</div>
+        </div>
+        <div class="campo">
+          <div class="campo-label">Data de Expedição</div>
+          <div class="campo-valor">— — / — — / — — — —</div>
+        </div>
+      </div>
+
+      <div class="verso-row">
+        <div class="campo">
+          <div class="campo-label">Filiação — Mãe</div>
+          <div class="campo-valor" style="font-size:9px;">— — — — — — — — — — —</div>
+        </div>
+      </div>
+
+      <div class="verso-row">
+        <div class="campo">
+          <div class="campo-label">Filiação — Pai</div>
+          <div class="campo-valor" style="font-size:9px;">— — — — — — — — — — —</div>
+        </div>
+      </div>
+
+      <div class="verso-row">
+        <div class="campo">
+          <div class="campo-label">Validade</div>
+          <div class="campo-valor">Indeterminada</div>
+        </div>
+        <div class="campo">
+          <div class="campo-label">Órgão Emissor</div>
+          <div class="campo-valor">SSP/SP</div>
+        </div>
+      </div>
+
+      <div class="assinatura-wrap">
+        <div class="assinatura-line">
+          <!-- Assinatura cursiva SVG fake -->
+          <svg width="120" height="22" viewBox="0 0 120 22" xmlns="http://www.w3.org/2000/svg">
+            <path d="M4,16 C10,4 16,18 22,12 C28,6 32,18 40,10 C46,4 50,16 58,12 C64,9 68,16 76,10 C82,5 86,14 94,12 C100,10 106,14 112,10"
+                  fill="none" stroke="#1a1a5a" stroke-width="1.2" stroke-linecap="round"/>
+          </svg>
+        </div>
+        <div class="assinatura-label">Assinatura do Titular</div>
+      </div>
+    </div>
+
+    <!-- MRZ — Machine Readable Zone -->
+    <div class="mrz">
+      IDBRAVIA&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;62636599&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;<br>
+      1600316M&lt;&lt;&lt;&lt;&lt;&lt;&lt;VMNT&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;<br>
+      TAVARES&lt;&lt;VINICIUS&lt;&lt;MACEDO&lt;&lt;NAMI&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;
+    </div>
+
+  </div>
+
+  <div class="nota">⚠️ Documento fictício criado para fins cinematográficos.<br>Não tem validade legal.</div>
+
+</body>
+</html>
