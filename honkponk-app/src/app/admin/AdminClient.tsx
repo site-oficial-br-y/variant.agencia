@@ -1,6 +1,7 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useMemo, useEffect, useRef, useTransition } from 'react'
+import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { PLANS, type Plan } from '@/lib/plans'
 import type { AdminStats, DayPoint, Ranked } from './page'
@@ -8,7 +9,6 @@ import type { AdminStats, DayPoint, Ranked } from './page'
 const BRL = (cents: number) =>
   (cents / 100).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL', maximumFractionDigits: 0 })
 
-/** Número formatado em pt-BR, ou travessão quando o dado não existe. */
 const num = (n: number | null | undefined) => (n === null || n === undefined ? '—' : n.toLocaleString('pt-BR'))
 
 const PLAN_COLOR: Record<Plan, string> = {
@@ -18,7 +18,38 @@ const PLAN_COLOR: Record<Plan, string> = {
   enterprise: '#c2185b',
 }
 
-/* ────────── tela de configuração ────────── */
+const PERIODS = [
+  { key: 7, label: '7 dias' },
+  { key: 30, label: '30 dias' },
+  { key: 90, label: '90 dias' },
+] as const
+type PeriodKey = (typeof PERIODS)[number]['key']
+
+const fmtDay = (iso: string) => `${iso.slice(8, 10)}/${iso.slice(5, 7)}`
+
+/* ── número que sobe até o valor ── */
+function useCountUp(target: number, ms = 900) {
+  const [v, setV] = useState(0)
+  const prev = useRef(0)
+  useEffect(() => {
+    const from = prev.current
+    prev.current = target
+    if (from === target) { setV(target); return }
+    let raf = 0
+    const t0 = performance.now()
+    const tick = (t: number) => {
+      const p = Math.min(1, (t - t0) / ms)
+      const eased = 1 - Math.pow(1 - p, 3)
+      setV(Math.round(from + (target - from) * eased))
+      if (p < 1) raf = requestAnimationFrame(tick)
+    }
+    raf = requestAnimationFrame(tick)
+    return () => cancelAnimationFrame(raf)
+  }, [target, ms])
+  return v
+}
+
+/* ────────── configuração ────────── */
 function Setup({ kind }: { kind: 'no-admin-emails' | 'no-service-key' }) {
   const isEmails = kind === 'no-admin-emails'
   return (
@@ -42,11 +73,7 @@ function Setup({ kind }: { kind: 'no-admin-emails' | 'no-service-key' }) {
                 {isEmails ? 'ADMIN_EMAILS' : 'SUPABASE_SERVICE_ROLE_KEY'}
               </code>
             </li>
-            <li>
-              {isEmails
-                ? 'Valor: seu e-mail de login (pode separar vários por vírgula)'
-                : 'Valor: a service_role key do Supabase (Settings → API)'}
-            </li>
+            <li>{isEmails ? 'Valor: seu e-mail de login (vários separados por vírgula)' : 'Valor: a service_role key do Supabase'}</li>
             <li>Redeploy do projeto</li>
           </ol>
         </div>
@@ -58,11 +85,12 @@ function Setup({ kind }: { kind: 'no-admin-emails' | 'no-service-key' }) {
   )
 }
 
-/* ────────── blocos visuais ────────── */
-function Card({ children, className = '' }: { children: React.ReactNode; className?: string }) {
+/* ────────── blocos ────────── */
+function Card({ children, className = '', delay = 0 }: { children: React.ReactNode; className?: string; delay?: number }) {
   return (
     <div
-      className={`rounded-3xl border border-white/10 bg-white/[0.04] backdrop-blur-2xl p-5 relative overflow-hidden ${className}`}
+      className={`rounded-3xl border border-white/10 bg-white/[0.04] backdrop-blur-2xl p-5 relative overflow-hidden transition-transform duration-300 hover:-translate-y-0.5 ${className}`}
+      style={{ animation: `fadeUp .5s ease ${delay}ms both` }}
     >
       <div className="pointer-events-none absolute inset-0 bg-gradient-to-br from-white/[0.07] to-transparent" />
       <div className="relative">{children}</div>
@@ -71,24 +99,27 @@ function Card({ children, className = '' }: { children: React.ReactNode; classNa
 }
 
 function Stat({
-  label, value, hint, accent,
-}: { label: string; value: string; hint?: string; accent?: string }) {
+  label, value, hint, accent, delay = 0, money,
+}: { label: string; value: number | null; hint?: string; accent?: string; delay?: number; money?: boolean }) {
+  const animated = useCountUp(value ?? 0)
+  const shown = value === null ? '—' : money ? BRL(animated) : animated.toLocaleString('pt-BR')
   return (
-    <Card>
+    <Card delay={delay}>
       <div className="text-[11px] uppercase tracking-wider text-white/40 font-semibold">{label}</div>
-      <div className="text-3xl font-extrabold mt-1.5 tracking-tight" style={accent ? { color: accent } : undefined}>
-        {value}
+      <div className="text-3xl font-extrabold mt-1.5 tracking-tight tabular-nums" style={accent ? { color: accent } : undefined}>
+        {shown}
       </div>
       {hint && <div className="text-xs text-white/40 mt-1">{hint}</div>}
     </Card>
   )
 }
 
-/** Gráfico de área em SVG puro — sem biblioteca externa. */
+/* ── gráfico de área com hover ── */
 function AreaChart({ data, color, id }: { data: DayPoint[]; color: string; id: string }) {
+  const [hover, setHover] = useState<number | null>(null)
   const w = 720
-  const h = 170
-  const pad = 8
+  const h = 180
+  const pad = 10
   const max = Math.max(1, ...data.map(d => d.count))
   const step = data.length > 1 ? (w - pad * 2) / (data.length - 1) : 0
   const y = (v: number) => h - pad - (v / max) * (h - pad * 2)
@@ -96,13 +127,43 @@ function AreaChart({ data, color, id }: { data: DayPoint[]; color: string; id: s
   const line = pts.map(([x, yy], i) => `${i ? 'L' : 'M'}${x.toFixed(1)},${yy.toFixed(1)}`).join(' ')
   const area = `${line} L${pad + (data.length - 1) * step},${h - pad} L${pad},${h - pad} Z`
   const total = data.reduce((s, d) => s + d.count, 0)
+  const active = hover !== null ? data[hover] : null
+
+  function pick(clientX: number, el: SVGSVGElement) {
+    const r = el.getBoundingClientRect()
+    const rel = ((clientX - r.left) / r.width) * w
+    const i = Math.round((rel - pad) / (step || 1))
+    setHover(Math.max(0, Math.min(data.length - 1, i)))
+  }
 
   return (
-    <div>
-      <svg viewBox={`0 0 ${w} ${h}`} className="w-full" style={{ height: 170 }} preserveAspectRatio="none">
+    <div className="relative select-none">
+      {active && (
+        <div
+          className="absolute -top-1 z-10 px-2.5 py-1.5 rounded-xl bg-black/85 border border-white/15 text-xs whitespace-nowrap pointer-events-none backdrop-blur"
+          style={{
+            left: `${((pts[hover!][0]) / w) * 100}%`,
+            transform: `translateX(${hover! < data.length / 2 ? '-10%' : '-90%'})`,
+          }}
+        >
+          <span className="text-white/50">{fmtDay(active.date)}</span>{' '}
+          <span className="font-bold" style={{ color }}>{active.count}</span>
+        </div>
+      )}
+      <svg
+        viewBox={`0 0 ${w} ${h}`}
+        className="w-full cursor-crosshair"
+        style={{ height: 180 }}
+        preserveAspectRatio="none"
+        onMouseMove={e => pick(e.clientX, e.currentTarget)}
+        onMouseLeave={() => setHover(null)}
+        onTouchStart={e => pick(e.touches[0].clientX, e.currentTarget)}
+        onTouchMove={e => pick(e.touches[0].clientX, e.currentTarget)}
+        onTouchEnd={() => setHover(null)}
+      >
         <defs>
           <linearGradient id={`g-${id}`} x1="0" y1="0" x2="0" y2="1">
-            <stop offset="0%" stopColor={color} stopOpacity="0.38" />
+            <stop offset="0%" stopColor={color} stopOpacity="0.4" />
             <stop offset="100%" stopColor={color} stopOpacity="0" />
           </linearGradient>
         </defs>
@@ -110,40 +171,70 @@ function AreaChart({ data, color, id }: { data: DayPoint[]; color: string; id: s
           <line key={f} x1={pad} x2={w - pad} y1={h * f} y2={h * f} stroke="rgba(255,255,255,.06)" strokeWidth="1" />
         ))}
         {total > 0 && <path d={area} fill={`url(#g-${id})`} />}
-        <path d={line} fill="none" stroke={color} strokeWidth="2.5" strokeLinejoin="round" strokeLinecap="round" />
-        {pts.length > 0 && (
+        <path
+          d={line}
+          fill="none"
+          stroke={color}
+          strokeWidth="2.5"
+          strokeLinejoin="round"
+          strokeLinecap="round"
+          style={{ transition: 'd .4s ease' }}
+        />
+        {hover !== null && (
+          <>
+            <line x1={pts[hover][0]} x2={pts[hover][0]} y1={pad} y2={h - pad} stroke="rgba(255,255,255,.25)" strokeWidth="1" />
+            <circle cx={pts[hover][0]} cy={pts[hover][1]} r="5.5" fill={color} stroke="#0f0f1a" strokeWidth="2.5" />
+          </>
+        )}
+        {hover === null && pts.length > 0 && (
           <circle cx={pts[pts.length - 1][0]} cy={pts[pts.length - 1][1]} r="4" fill={color} />
         )}
       </svg>
       <div className="flex justify-between text-[10px] text-white/30 mt-1 px-1">
-        <span>{data[0]?.date.slice(8)}/{data[0]?.date.slice(5, 7)}</span>
+        <span>{data[0] ? fmtDay(data[0].date) : ''}</span>
         <span>hoje</span>
       </div>
     </div>
   )
 }
 
+/* ── lista com barras clicáveis ── */
 function RankList({ items, empty }: { items: Ranked[] | null; empty: string }) {
+  const [sel, setSel] = useState<string | null>(null)
   if (!items || items.length === 0) {
     return <div className="text-sm text-white/30 py-6 text-center">{empty}</div>
   }
   const max = Math.max(...items.map(i => i.count))
+  const sum = items.reduce((s, i) => s + i.count, 0)
   return (
     <div className="space-y-2.5">
-      {items.map(i => (
-        <div key={i.label} className="flex items-center gap-3">
-          <div className="flex-1 min-w-0">
-            <div className="text-[13px] font-medium truncate">{i.label}</div>
-            <div className="h-1.5 rounded-full bg-white/[0.07] mt-1.5 overflow-hidden">
-              <div
-                className="h-full rounded-full bg-gradient-to-r from-[#f8b6c8] to-[#c2185b]"
-                style={{ width: `${(i.count / max) * 100}%` }}
-              />
+      {items.map((i, idx) => {
+        const on = sel === i.label
+        return (
+          <button
+            key={i.label}
+            onClick={() => setSel(on ? null : i.label)}
+            className="w-full flex items-center gap-3 text-left group"
+            style={{ animation: `fadeUp .4s ease ${idx * 45}ms both` }}
+          >
+            <div className="flex-1 min-w-0">
+              <div className="flex items-baseline gap-2">
+                <span className={`text-[13px] font-medium truncate transition-colors ${on ? 'text-[#f8b6c8]' : 'group-hover:text-[#f8b6c8]'}`}>
+                  {i.label}
+                </span>
+                {on && <span className="text-[10px] text-white/40 shrink-0">{((i.count / sum) * 100).toFixed(1)}% do total</span>}
+              </div>
+              <div className="h-1.5 rounded-full bg-white/[0.07] mt-1.5 overflow-hidden">
+                <div
+                  className="h-full rounded-full bg-gradient-to-r from-[#f8b6c8] to-[#c2185b] transition-all duration-700"
+                  style={{ width: `${(i.count / max) * 100}%`, opacity: sel && !on ? 0.35 : 1 }}
+                />
+              </div>
             </div>
-          </div>
-          <div className="text-xs font-bold text-white/50 w-10 text-right">{i.count}</div>
-        </div>
-      ))}
+            <div className="text-xs font-bold text-white/50 w-12 text-right tabular-nums">{num(i.count)}</div>
+          </button>
+        )
+      })}
     </div>
   )
 }
@@ -157,140 +248,206 @@ export function AdminClient({
   setup?: 'no-admin-emails' | 'no-service-key'
 }) {
   const [tab, setTab] = useState<'geral' | 'buscas'>('geral')
+  const [period, setPeriod] = useState<PeriodKey>(30)
+  const router = useRouter()
+  const [pending, startTransition] = useTransition()
+
+  const slice = (s: DayPoint[] | null | undefined) => (s ? s.slice(-period) : [])
+  const signups = useMemo(() => slice(stats?.users.signupsByDay), [stats, period])
+  const searchSeries = useMemo(() => slice(stats?.searches.byDay), [stats, period])
+  const sum = (s: DayPoint[]) => s.reduce((a, b) => a + b.count, 0)
 
   if (setup) return <Setup kind={setup} />
   if (!stats) return null
 
-  const { users, plans, coins, searches, warnings } = stats
+  const { users, plans, coins, searches, warnings, generatedAt } = stats
   const conv = users.total > 0 ? (plans.paying / users.total) * 100 : 0
+  const periodLabel = PERIODS.find(p => p.key === period)!.label
 
   return (
     <main className="min-h-screen bg-[#0f0f1a] text-white">
-      {/* luzes de fundo */}
       <div className="fixed inset-0 overflow-hidden pointer-events-none">
         <div className="absolute -top-32 -left-24 w-[420px] h-[420px] rounded-full blur-[110px] opacity-25 bg-[#e879a0]" />
         <div className="absolute -bottom-32 -right-24 w-[380px] h-[380px] rounded-full blur-[110px] opacity-20 bg-[#c2185b]" />
       </div>
 
-      <div className="relative max-w-5xl mx-auto px-4 py-8">
-        {/* topo */}
-        <header className="flex items-start justify-between gap-4 mb-7">
+      <div className={`relative max-w-5xl mx-auto px-4 py-8 transition-opacity ${pending ? 'opacity-50' : ''}`}>
+        <header className="flex items-start justify-between gap-4 mb-6">
           <div>
             <h1 className="text-3xl font-extrabold tracking-tight">
               Como a <span className="text-gradient">Honk</span> tá indo
             </h1>
-            <p className="text-white/40 text-sm mt-1">{email}</p>
+            <p className="text-white/40 text-sm mt-1">
+              {email} · atualizado {new Date(generatedAt).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}
+            </p>
           </div>
-          <Link
-            href="/dashboard"
-            className="shrink-0 text-sm px-4 py-2 rounded-xl border border-white/10 bg-white/[0.04] hover:bg-white/10 transition"
-          >
-            Dashboard
-          </Link>
+          <div className="flex gap-2 shrink-0">
+            <button
+              onClick={() => startTransition(() => router.refresh())}
+              disabled={pending}
+              className="text-sm px-3 py-2 rounded-xl border border-white/10 bg-white/[0.04] hover:bg-white/10 transition disabled:opacity-50"
+              title="Atualizar dados"
+            >
+              <span className={`inline-block ${pending ? 'animate-spin' : ''}`}>↻</span>
+            </button>
+            <Link href="/dashboard" className="text-sm px-4 py-2 rounded-xl border border-white/10 bg-white/[0.04] hover:bg-white/10 transition">
+              Dashboard
+            </Link>
+          </div>
         </header>
 
         {warnings.length > 0 && (
           <div className="mb-6 rounded-2xl border border-amber-400/25 bg-amber-400/[0.07] p-4">
             <div className="text-amber-300 text-xs font-bold uppercase tracking-wider mb-1.5">Avisos</div>
-            {warnings.map(w => (
-              <div key={w} className="text-sm text-amber-100/80">• {w}</div>
-            ))}
+            {warnings.map(w => <div key={w} className="text-sm text-amber-100/80">• {w}</div>)}
           </div>
         )}
 
-        {/* abas */}
-        <div className="flex gap-2 mb-6">
-          {(['geral', 'buscas'] as const).map(t => (
-            <button
-              key={t}
-              onClick={() => setTab(t)}
-              className={`px-4 py-2 rounded-xl text-sm font-semibold transition border ${
-                tab === t
-                  ? 'bg-[#e879a0]/15 border-[#e879a0]/40 text-[#f8b6c8]'
-                  : 'bg-white/[0.03] border-white/10 text-white/50 hover:bg-white/[0.07]'
-              }`}
-            >
-              {t === 'geral' ? 'Visão geral' : 'Buscas'}
-            </button>
-          ))}
+        {/* abas + período */}
+        <div className="flex flex-wrap items-center justify-between gap-3 mb-6">
+          <div className="flex gap-2">
+            {(['geral', 'buscas'] as const).map(t => (
+              <button
+                key={t}
+                onClick={() => setTab(t)}
+                className={`px-4 py-2 rounded-xl text-sm font-semibold transition border ${
+                  tab === t
+                    ? 'bg-[#e879a0]/15 border-[#e879a0]/40 text-[#f8b6c8]'
+                    : 'bg-white/[0.03] border-white/10 text-white/50 hover:bg-white/[0.07]'
+                }`}
+              >
+                {t === 'geral' ? 'Visão geral' : 'Buscas'}
+              </button>
+            ))}
+          </div>
+          <div className="flex gap-1 p-1 rounded-xl bg-white/[0.03] border border-white/10">
+            {PERIODS.map(p => (
+              <button
+                key={p.key}
+                onClick={() => setPeriod(p.key)}
+                className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition ${
+                  period === p.key ? 'bg-[#e879a0]/20 text-[#f8b6c8]' : 'text-white/40 hover:text-white/70'
+                }`}
+              >
+                {p.label}
+              </button>
+            ))}
+          </div>
         </div>
 
         {tab === 'geral' && (
           <div className="space-y-4">
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-              <Stat label="Usuários" value={num(users.total)} hint={`+${users.last7} nos últimos 7 dias`} />
-              <Stat label="Pagantes" value={num(plans.paying)} accent="#f8b6c8" hint={`${conv.toFixed(1)}% de conversão`} />
-              <Stat label="MRR estimado" value={BRL(plans.mrrCents)} accent="#4ade80" hint="planos ativos × preço" />
+              <Stat label="Usuários" value={users.total} hint={`+${sum(signups)} em ${periodLabel}`} delay={0} />
+              <Stat label="Pagantes" value={plans.paying} accent="#f8b6c8" hint={`${conv.toFixed(1)}% de conversão`} delay={60} />
+              <Stat label="MRR estimado" value={plans.mrrCents} money accent="#4ade80" hint="sem membros de equipe" delay={120} />
               <Stat
-                label="Moedas em circulação"
-                value={num(coins.inCirculation)}
-                hint="saldo somado dos usuários"
+                label="Vencendo em 7 dias"
+                value={plans.expiringIn7}
+                accent={plans.expiringIn7 > 0 ? '#fbbf24' : undefined}
+                hint="planos a renovar"
+                delay={180}
               />
             </div>
 
-            <Card>
+            <Card delay={240}>
               <div className="flex items-baseline justify-between mb-3">
-                <div className="text-sm font-bold">Cadastros — últimos 30 dias</div>
-                <div className="text-sm text-white/40">{users.last30} no total</div>
+                <div className="text-sm font-bold">Cadastros — {periodLabel}</div>
+                <div className="text-sm text-white/40 tabular-nums">{num(sum(signups))} no período</div>
               </div>
-              <AreaChart data={users.signupsByDay} color="#e879a0" id="signups" />
+              <AreaChart data={signups} color="#e879a0" id="signups" />
             </Card>
 
-            <Card>
-              <div className="text-sm font-bold mb-4">Distribuição por plano</div>
-              <div className="space-y-3">
-                {(Object.keys(PLANS) as Plan[]).map(p => {
-                  const n = plans.counts[p]
-                  const pct = users.total > 0 ? (n / users.total) * 100 : 0
-                  return (
-                    <div key={p} className="flex items-center gap-3">
-                      <div className="w-24 text-[13px] font-medium shrink-0">{PLANS[p].name}</div>
-                      <div className="flex-1 h-2.5 rounded-full bg-white/[0.07] overflow-hidden">
-                        <div
-                          className="h-full rounded-full transition-all"
-                          style={{ width: `${pct}%`, background: PLAN_COLOR[p] }}
-                        />
+            <div className="grid md:grid-cols-2 gap-4">
+              <Card delay={300}>
+                <div className="text-sm font-bold mb-4">Distribuição por plano</div>
+                <div className="space-y-3">
+                  {(Object.keys(PLANS) as Plan[]).map(p => {
+                    const n = plans.counts[p]
+                    const pct = users.total > 0 ? (n / users.total) * 100 : 0
+                    return (
+                      <div key={p} className="flex items-center gap-3">
+                        <div className="w-20 text-[13px] font-medium shrink-0">{PLANS[p].name}</div>
+                        <div className="flex-1 h-2.5 rounded-full bg-white/[0.07] overflow-hidden">
+                          <div
+                            className="h-full rounded-full transition-all duration-700"
+                            style={{ width: `${pct}%`, background: PLAN_COLOR[p] }}
+                          />
+                        </div>
+                        <div className="text-xs font-bold w-16 text-right tabular-nums">
+                          {n} <span className="text-white/30 font-normal">({pct.toFixed(0)}%)</span>
+                        </div>
                       </div>
-                      <div className="text-xs font-bold w-16 text-right">
-                        {n} <span className="text-white/30 font-normal">({pct.toFixed(0)}%)</span>
-                      </div>
-                    </div>
-                  )
-                })}
-              </div>
-              {plans.activeSubscriptions !== null && (
-                <div className="mt-4 pt-4 border-t border-white/[0.07] text-sm text-white/50">
-                  Assinaturas com status <span className="text-white/80 font-semibold">active</span>:{' '}
-                  <span className="text-white font-bold">{plans.activeSubscriptions}</span>
+                    )
+                  })}
                 </div>
-              )}
-            </Card>
+              </Card>
+
+              <Card delay={360}>
+                <div className="text-sm font-bold mb-4">Outros números</div>
+                <div className="space-y-3 text-sm">
+                  <div className="flex justify-between">
+                    <span className="text-white/50">Moedas em circulação</span>
+                    <span className="font-bold tabular-nums">{num(coins.inCirculation)}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-white/50">Membros de equipe</span>
+                    <span className="font-bold tabular-nums">{num(plans.teamMembers)}</span>
+                  </div>
+                  {plans.activeSubscriptions !== null && (
+                    <div className="flex justify-between">
+                      <span className="text-white/50">Assinaturas <code className="text-xs">active</code></span>
+                      <span className="font-bold tabular-nums">{num(plans.activeSubscriptions)}</span>
+                    </div>
+                  )}
+                  <div className="flex justify-between">
+                    <span className="text-white/50">Buscas consumidas hoje</span>
+                    <span className="font-bold tabular-nums">{num(searches.today)}</span>
+                  </div>
+                </div>
+              </Card>
+            </div>
           </div>
         )}
 
         {tab === 'buscas' && (
           <div className="space-y-4">
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-              <Stat label="Buscas registradas" value={num(searches.total)} />
-              <Stat label="Últimos 7 dias" value={num(searches.last7)} accent="#f8b6c8" />
-              <Stat label="Últimos 30 dias" value={num(searches.last30)} />
-              <Stat label="Consumidas hoje" value={num(searches.today)} hint="contador dos perfis" />
+              <Stat label="Buscas registradas" value={searches.total} delay={0} />
+              <Stat label={`Em ${periodLabel}`} value={searches.byDay ? sum(searchSeries) : null} accent="#f8b6c8" delay={60} />
+              <Stat
+                label="Média por dia"
+                value={searches.byDay ? Math.round(sum(searchSeries) / period) : null}
+                delay={120}
+              />
+              <Stat label="Consumidas hoje" value={searches.today} hint="contador dos perfis" delay={180} />
             </div>
 
-            {searches.byDay && (
-              <Card>
-                <div className="text-sm font-bold mb-3">Buscas — últimos 30 dias</div>
-                <AreaChart data={searches.byDay} color="#f8b6c8" id="searches" />
+            {searches.byDay ? (
+              <Card delay={240}>
+                <div className="flex items-baseline justify-between mb-3">
+                  <div className="text-sm font-bold">Buscas — {periodLabel}</div>
+                  <div className="text-sm text-white/40 tabular-nums">pico de {num(Math.max(...searchSeries.map(d => d.count), 0))} num dia</div>
+                </div>
+                <AreaChart data={searchSeries} color="#f8b6c8" id="searches" />
+              </Card>
+            ) : (
+              <Card delay={240}>
+                <div className="text-sm text-white/30 py-6 text-center">
+                  Gráfico indisponível — search_logs sem coluna de data.
+                </div>
               </Card>
             )}
 
             <div className="grid md:grid-cols-2 gap-4">
-              <Card>
-                <div className="text-sm font-bold mb-4">Segmentos mais buscados</div>
+              <Card delay={300}>
+                <div className="text-sm font-bold mb-1">Segmentos mais buscados</div>
+                <div className="text-[11px] text-white/30 mb-4">Toque numa barra para ver a fatia</div>
                 <RankList items={searches.topSegments} empty="Nenhuma busca registrada ainda" />
               </Card>
-              <Card>
-                <div className="text-sm font-bold mb-4">Cidades mais buscadas</div>
+              <Card delay={360}>
+                <div className="text-sm font-bold mb-1">Cidades mais buscadas</div>
+                <div className="text-[11px] text-white/30 mb-4">Toque numa barra para ver a fatia</div>
                 <RankList items={searches.topCities} empty="Nenhuma busca registrada ainda" />
               </Card>
             </div>
@@ -299,7 +456,7 @@ export function AdminClient({
 
         <p className="text-[11px] text-white/25 mt-8 leading-relaxed">
           MRR é uma estimativa: o webhook do Mercado Pago não guarda o valor nem a data de cada pagamento,
-          então o cálculo usa a quantidade de usuários em cada plano vezes o preço de tabela.
+          então o cálculo usa a quantidade de donos de plano pago vezes o preço de tabela — membros de equipe não entram na conta.
         </p>
       </div>
     </main>
