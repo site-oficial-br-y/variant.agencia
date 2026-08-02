@@ -3,11 +3,7 @@ const CACHE = 'mygoals-v1';
 const ASSETS = [
   './',
   './index.html',
-  './manifest.webmanifest',
-  './icon192.png',
-  './icon512.png',
-  './iconmaskable.png',
-  './appletouchicon.png'
+  './manifest.webmanifest'
 ];
 
 // Guarda os arquivos na primeira visita
