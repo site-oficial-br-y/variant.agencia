@@ -1,1 +1,5 @@
-honkponk-app/node_modules/\nhonkponk-app/.next/\nhonkponk-app/tsconfig.tsbuildinfo
+node_modules/
+.next/
+honkponk-app/node_modules/
+honkponk-app/.next/
+honkponk-app/tsconfig.tsbuildinfo
