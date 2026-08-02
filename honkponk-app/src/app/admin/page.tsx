@@ -12,28 +12,29 @@ export interface Ranked { label: string; count: number }
 export interface AdminStats {
   users: {
     total: number
-    last7: number
-    last30: number
-    signupsByDay: DayPoint[]
+    signupsByDay: DayPoint[] // 90 dias — o cliente fatia por período
   }
   plans: {
     counts: Record<Plan, number>
     paying: number
+    teamMembers: number
+    expiringIn7: number
     mrrCents: number
     activeSubscriptions: number | null
   }
   coins: { inCirculation: number | null }
   searches: {
     total: number | null
-    last7: number | null
-    last30: number | null
     today: number | null
-    byDay: DayPoint[] | null
+    byDay: DayPoint[] | null // 90 dias
     topSegments: Ranked[] | null
     topCities: Ranked[] | null
   }
+  generatedAt: string
   warnings: string[]
 }
+
+const SERIES_DAYS = 90
 
 const PLAN_KEYS: Plan[] = ['free', 'freelancer', 'agency', 'enterprise']
 
@@ -107,8 +108,6 @@ export default async function AdminPage() {
   const warnings: string[] = []
   const now = Date.now()
   const DAY = 86400000
-  const since7 = new Date(now - 7 * DAY)
-  const since30 = new Date(now - 30 * DAY)
 
   // ── Usuários (auth.users tem created_at garantido) ──
   const signupDates: string[] = []
@@ -125,36 +124,60 @@ export default async function AdminPage() {
   }
 
   const usersTotal = signupDates.length
-  const last7 = signupDates.filter(d => new Date(d) >= since7).length
-  const last30 = signupDates.filter(d => new Date(d) >= since30).length
 
   // ── Perfis: planos, moedas, buscas de hoje ──
   const planCounts = { free: 0, freelancer: 0, agency: 0, enterprise: 0 } as Record<Plan, number>
+  // MRR conta só quem realmente paga: membros de equipe herdam o plano do dono.
+  const payingCounts = { free: 0, freelancer: 0, agency: 0, enterprise: 0 } as Record<Plan, number>
   let coinsTotal: number | null = null
   let searchesToday: number | null = null
+  let teamMembers = 0
+  let expiringIn7 = 0
+
   try {
-    const { data, error } = await admin
-      .from('users_profiles')
-      .select('plan, honk_coins, searches_today')
-      .limit(20000)
-    if (error) throw error
+    let cols = 'plan, honk_coins, searches_today, plan_expires_at, team_owner_id'
+    let res = await admin.from('users_profiles').select(cols).limit(20000)
+    if (res.error) {
+      // Banco ainda sem as colunas novas — cai no conjunto mínimo.
+      cols = 'plan, honk_coins, searches_today'
+      res = await admin.from('users_profiles').select(cols).limit(20000)
+      if (res.error) throw res.error
+      warnings.push('users_profiles sem plan_expires_at/team_owner_id — MRR não desconta membros de equipe.')
+    }
+
     coinsTotal = 0
     searchesToday = 0
-    for (const row of (data || []) as { plan?: string; honk_coins?: number; searches_today?: number }[]) {
+    type Row = {
+      plan?: string
+      honk_coins?: number
+      searches_today?: number
+      plan_expires_at?: string | null
+      team_owner_id?: string | null
+    }
+    for (const row of (res.data || []) as Row[]) {
       const p = (row.plan || 'free') as Plan
-      if (PLAN_KEYS.includes(p)) planCounts[p]++
+      if (PLAN_KEYS.includes(p)) {
+        planCounts[p]++
+        if (row.team_owner_id) teamMembers++
+        else payingCounts[p]++
+      }
       coinsTotal += row.honk_coins || 0
       searchesToday += row.searches_today || 0
+
+      if (p !== 'free' && !row.team_owner_id && row.plan_expires_at) {
+        const exp = new Date(row.plan_expires_at).getTime()
+        if (exp >= now && exp <= now + 7 * DAY) expiringIn7++
+      }
     }
   } catch {
     warnings.push('Não consegui ler users_profiles.')
   }
 
-  const paying = planCounts.freelancer + planCounts.agency + planCounts.enterprise
+  const paying = payingCounts.freelancer + payingCounts.agency + payingCounts.enterprise
   const mrrCents =
-    planCounts.freelancer * PLANS.freelancer.price +
-    planCounts.agency * PLANS.agency.price +
-    planCounts.enterprise * PLANS.enterprise.price
+    payingCounts.freelancer * PLANS.freelancer.price +
+    payingCounts.agency * PLANS.agency.price +
+    payingCounts.enterprise * PLANS.enterprise.price
 
   // ── Assinaturas ativas ──
   let activeSubscriptions: number | null = null
@@ -171,8 +194,6 @@ export default async function AdminPage() {
 
   // ── Buscas ──
   let searchTotal: number | null = null
-  let search7: number | null = null
-  let search30: number | null = null
   let searchByDay: DayPoint[] | null = null
   let topSegments: Ranked[] | null = null
   let topCities: Ranked[] | null = null
@@ -200,28 +221,17 @@ export default async function AdminPage() {
     topCities = rank(list.map(r => r.location), 8)
 
     const stamps = list.map(r => r.created_at).filter(Boolean) as string[]
-    if (stamps.length) {
-      search7 = stamps.filter(d => new Date(d) >= since7).length
-      search30 = stamps.filter(d => new Date(d) >= since30).length
-      searchByDay = buildSeries(stamps, 30)
-    }
+    if (stamps.length) searchByDay = buildSeries(stamps, SERIES_DAYS)
   } catch {
     warnings.push('Não consegui ler search_logs.')
   }
 
   const stats: AdminStats = {
-    users: { total: usersTotal, last7, last30, signupsByDay: buildSeries(signupDates, 30) },
-    plans: { counts: planCounts, paying, mrrCents, activeSubscriptions },
+    users: { total: usersTotal, signupsByDay: buildSeries(signupDates, SERIES_DAYS) },
+    plans: { counts: planCounts, paying, teamMembers, expiringIn7, mrrCents, activeSubscriptions },
     coins: { inCirculation: coinsTotal },
-    searches: {
-      total: searchTotal,
-      last7: search7,
-      last30: search30,
-      today: searchesToday,
-      byDay: searchByDay,
-      topSegments,
-      topCities,
-    },
+    searches: { total: searchTotal, today: searchesToday, byDay: searchByDay, topSegments, topCities },
+    generatedAt: new Date().toISOString(),
     warnings,
   }
 
