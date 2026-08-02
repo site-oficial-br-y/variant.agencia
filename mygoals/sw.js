@@ -4,10 +4,10 @@ const ASSETS = [
   './',
   './index.html',
   './manifest.webmanifest',
-  './icon-192.png',
-  './icon-512.png',
-  './icon-maskable.png',
-  './apple-touch-icon.png'
+  './icon192.png',
+  './icon512.png',
+  './iconmaskable.png',
+  './appletouchicon.png'
 ];
 
 // Guarda os arquivos na primeira visita
