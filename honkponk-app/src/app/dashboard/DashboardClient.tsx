@@ -9,12 +9,26 @@ import type { Plan } from '@/lib/plans'
 import type { User } from '@supabase/supabase-js'
 import { QuizOverlay } from '@/components/QuizOverlay'
 import { SearchResults } from '@/components/SearchResults'
+import { SEGMENT_NAMES, SERVICE_META } from '@/lib/search'
 
 interface Profile { id: string; email: string; plan: Plan; searches_today: number; searches_reset_at: string; team_owner_id?: string | null; honk_coins?: number }
 interface TeamMember { id: string; owner_id: string; member_email: string; status: string }
 interface QuizData { service: string; city: string; segment: string; allBrazil: boolean }
+interface SearchHistoryItem { id: string; segment: string; service: string | null; location: string; all_brazil: boolean | null; created_at: string }
 
-export function DashboardClient({ user, profile, teamMembers }: { user: User; profile: Profile | null; teamMembers: TeamMember[] }) {
+function timeAgo(iso: string): string {
+  const diffMs = Date.now() - new Date(iso).getTime()
+  const mins = Math.floor(diffMs / 60000)
+  if (mins < 1) return 'agora mesmo'
+  if (mins < 60) return `há ${mins} min`
+  const hours = Math.floor(mins / 60)
+  if (hours < 24) return `há ${hours}h`
+  const days = Math.floor(hours / 24)
+  if (days === 1) return 'ontem'
+  return `há ${days} dias`
+}
+
+export function DashboardClient({ user, profile, teamMembers, searchHistory = [] }: { user: User; profile: Profile | null; teamMembers: TeamMember[]; searchHistory?: SearchHistoryItem[] }) {
   const [quizOpen, setQuizOpen] = useState(false)
   const [searchParams, setSearchParams] = useState<QuizData | null>(null)
   const [limitMsg, setLimitMsg] = useState(false)
@@ -95,6 +109,16 @@ export function DashboardClient({ user, profile, teamMembers }: { user: User; pr
       setMembers(m => m.filter(member => member.id !== memberId))
     } catch { setTeamError('Erro de conexão.') }
     finally { setTeamLoading(false) }
+  }
+
+  function handleRepeatSearch(item: SearchHistoryItem) {
+    if (!item.service) return
+    handleSearch({
+      service: item.service,
+      segment: item.segment,
+      allBrazil: !!item.all_brazil,
+      city: item.all_brazil ? '' : item.location,
+    })
   }
 
   function handleSearch(data: QuizData) {
@@ -286,6 +310,36 @@ export function DashboardClient({ user, profile, teamMembers }: { user: User; pr
             ) : (
               <p style={{ fontSize: '.82rem', color: 'rgba(255,255,255,.35)' }}>Nenhum membro adicionado ainda.</p>
             )}
+          </div>
+        )}
+
+        {/* Minhas buscas (planos pagos) */}
+        {plan !== 'free' && searchHistory.length > 0 && (
+          <div className="animate-pageIn" style={{ background: 'rgba(255,255,255,.02)', border: '1px solid rgba(248,182,200,.15)', borderRadius: 20, padding: '24px', marginBottom: 32, animationDelay: '.16s' }}>
+            <h2 style={{ fontSize: '1.05rem', fontWeight: 800, marginBottom: 4 }}>🕓 Minhas buscas</h2>
+            <p style={{ fontSize: '.8rem', color: 'rgba(255,255,255,.4)', marginBottom: 18 }}>Suas últimas buscas — repita com um clique.</p>
+            <ul style={{ listStyle: 'none', display: 'flex', flexDirection: 'column', gap: 8 }}>
+              {searchHistory.map(item => {
+                const serviceMeta = item.service ? SERVICE_META[item.service] : null
+                const segmentName = SEGMENT_NAMES[item.segment] || item.segment
+                const location = item.all_brazil ? 'Todo o Brasil' : (item.location || '—')
+                return (
+                  <li key={item.id} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12, background: 'rgba(255,255,255,.03)', border: '1px solid rgba(255,255,255,.08)', borderRadius: 10, padding: '10px 14px', fontSize: '.85rem', flexWrap: 'wrap' as const }}>
+                    <span>
+                      {serviceMeta ? `${serviceMeta.icon} ${serviceMeta.name}` : '🔍'} · {segmentName} · {location}
+                      <span style={{ color: 'rgba(255,255,255,.35)', fontSize: '.75rem', marginLeft: 8 }}>{timeAgo(item.created_at)}</span>
+                    </span>
+                    <button
+                      onClick={() => handleRepeatSearch(item)}
+                      disabled={!item.service}
+                      style={{ background: item.service ? 'rgba(232,121,160,.15)' : 'rgba(255,255,255,.04)', color: item.service ? '#f8b6c8' : 'rgba(255,255,255,.25)', border: `1px solid ${item.service ? 'rgba(232,121,160,.3)' : 'rgba(255,255,255,.08)'}`, borderRadius: 8, padding: '6px 12px', fontSize: '.76rem', fontWeight: 700, cursor: item.service ? 'pointer' : 'not-allowed', fontFamily: 'inherit', whiteSpace: 'nowrap' as const }}
+                    >
+                      ↺ Buscar de novo
+                    </button>
+                  </li>
+                )
+              })}
+            </ul>
           </div>
         )}
 

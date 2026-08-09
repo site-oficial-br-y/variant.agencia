@@ -39,5 +39,18 @@ export default async function DashboardPage() {
   }
 
   const { data: teamMembers } = await supabase.from('team_members').select('*').eq('owner_id', user.id)
-  return <DashboardClient user={user} profile={profile} teamMembers={teamMembers || []} />
+
+  // Histórico de buscas — só pra planos pagos (freelancer pra cima)
+  let searchHistory: { id: string; segment: string; service: string | null; location: string; all_brazil: boolean | null; created_at: string }[] = []
+  if (profile && profile.plan !== 'free') {
+    const { data } = await supabase
+      .from('search_logs')
+      .select('id, segment, service, location, all_brazil, created_at')
+      .eq('user_id', user.id)
+      .order('created_at', { ascending: false })
+      .limit(10)
+    searchHistory = data || []
+  }
+
+  return <DashboardClient user={user} profile={profile} teamMembers={teamMembers || []} searchHistory={searchHistory} />
 }
