@@ -1,0 +1,270 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Poison Door — Rock Psicodélico</title>
+  <meta name="description" content="Poison Door — banda de rock psicodélico de São Paulo. Atravesse a porta e marque um show." />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Metal+Mania&family=Cinzel:wght@400;600;800&family=Cormorant+Garamond:ital,wght@0,400;0,600;1,400&display=swap" rel="stylesheet" />
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --ink:      #0a0a0a;
+      --paper:    #ededea;
+      --paper-dim:rgba(237, 237, 234, 0.55);
+      --paper-faint: rgba(237, 237, 234, 0.28);
+      --line:     rgba(237, 237, 234, 0.18);
+      --display:  'Metal Mania', cursive;
+      --occult:   'Cinzel', serif;
+      --serif:    'Cormorant Garamond', Georgia, serif;
+    }
+
+    html { scroll-behavior: smooth; }
+
+    body {
+      background: var(--ink);
+      color: var(--paper);
+      font-family: var(--serif);
+      font-size: 18px;
+      line-height: 1.6;
+      min-height: 100vh;
+      overflow-x: hidden;
+      position: relative;
+    }
+
+    /* ── FULL-PAGE DOOR BACKGROUND ── */
+    .bg-layer {
+      position: fixed;
+      inset: 0;
+      z-index: -3;
+      background: var(--ink) url('bg-door.jpg') center top / cover no-repeat;
+      background-attachment: fixed;
+      filter: grayscale(100%) contrast(1.05);
+    }
+    .bg-veil {
+      position: fixed;
+      inset: 0;
+      z-index: -2;
+      background:
+        radial-gradient(ellipse 75% 60% at 50% 40%, rgba(0,0,0,0.10) 0%, rgba(0,0,0,0.74) 70%, rgba(0,0,0,0.93) 100%),
+        linear-gradient(180deg, rgba(0,0,0,0.45) 0%, rgba(0,0,0,0.28) 35%, rgba(0,0,0,0.7) 85%, #0a0a0a 100%);
+      pointer-events: none;
+    }
+    .bg-grain {
+      position: fixed;
+      inset: 0;
+      z-index: -1;
+      pointer-events: none;
+      opacity: 0.16;
+      mix-blend-mode: overlay;
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='180'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+      animation: grain 0.5s steps(2) infinite;
+    }
+    @keyframes grain {
+      0%, 100% { transform: translate(0,0); }
+      50%       { transform: translate(-4px, 3px); }
+    }
+
+    /* ── PAGE ── */
+    .page {
+      position: relative;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      padding: 64px 22px 40px;
+    }
+
+    .logo-img {
+      width: clamp(130px, 28vw, 210px);
+      height: clamp(130px, 28vw, 210px);
+      object-fit: contain;
+      border-radius: 50%;
+      filter: grayscale(100%) contrast(1.15) drop-shadow(0 0 30px rgba(0,0,0,0.9));
+      margin-bottom: 24px;
+      animation: breathe 6s ease-in-out infinite;
+    }
+    @keyframes breathe {
+      0%, 100% { transform: scale(1);    opacity: 0.92; }
+      50%       { transform: scale(1.04); opacity: 1; }
+    }
+
+    .band-name {
+      font-family: var(--display);
+      font-size: clamp(3.6rem, 14vw, 9.5rem);
+      line-height: 0.92;
+      letter-spacing: 0.02em;
+      color: var(--paper);
+      text-shadow: 0 2px 0 #000, 0 0 26px rgba(0,0,0,0.9), 0 0 60px rgba(237,237,234,0.12);
+      animation: flicker 9s infinite;
+    }
+    @keyframes flicker {
+      0%, 92%, 100% { opacity: 1; }
+      93% { opacity: 0.4; } 94% { opacity: 1; } 95% { opacity: 0.6; } 96% { opacity: 1; }
+    }
+
+    .tagline {
+      font-family: var(--occult);
+      font-size: clamp(0.66rem, 2vw, 0.92rem);
+      letter-spacing: 0.42em;
+      text-transform: uppercase;
+      color: var(--paper-dim);
+      margin-top: 24px;
+      padding-left: 0.42em;
+    }
+
+    .rule {
+      width: 100%;
+      max-width: 260px;
+      height: 1px;
+      margin: 42px auto 34px;
+      background: linear-gradient(90deg, transparent, var(--line), transparent);
+    }
+
+    .invite {
+      font-family: var(--serif);
+      font-size: clamp(1.15rem, 3.4vw, 1.5rem);
+      font-style: italic;
+      color: var(--paper-dim);
+      max-width: 460px;
+      margin: 0 auto 36px;
+    }
+
+    /* ── CONTACT BUTTONS ── */
+    .contacts {
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+      width: 100%;
+      max-width: 360px;
+    }
+
+    .contact-btn {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 14px;
+      width: 100%;
+      padding: 20px 24px;
+      font-family: var(--occult);
+      font-weight: 800;
+      font-size: 0.92rem;
+      letter-spacing: 0.16em;
+      text-transform: uppercase;
+      text-decoration: none;
+      cursor: pointer;
+      transition: all 0.22s ease;
+      border: 1px solid var(--paper);
+    }
+    .contact-btn svg { flex-shrink: 0; }
+    .contact-btn svg path { transition: fill 0.22s; }
+
+    /* filled (primary) — WhatsApp */
+    .contact-btn.solid {
+      background: var(--paper);
+      color: var(--ink);
+    }
+    .contact-btn.solid svg path { fill: var(--ink); }
+    .contact-btn.solid:hover {
+      background: var(--ink);
+      color: var(--paper);
+    }
+    .contact-btn.solid:hover svg path { fill: var(--paper); }
+
+    /* outline (secondary) — Instagram */
+    .contact-btn.ghost {
+      background: rgba(0,0,0,0.35);
+      color: var(--paper);
+    }
+    .contact-btn.ghost svg path { fill: var(--paper); }
+    .contact-btn.ghost:hover {
+      background: var(--paper);
+      color: var(--ink);
+    }
+    .contact-btn.ghost:hover svg path { fill: var(--ink); }
+
+    .handle {
+      margin-top: 30px;
+      font-family: var(--occult);
+      font-size: 0.72rem;
+      letter-spacing: 0.24em;
+      text-transform: uppercase;
+      color: var(--paper-faint);
+    }
+
+    footer {
+      position: relative;
+      text-align: center;
+      padding: 30px 20px 48px;
+      color: var(--paper-faint);
+      font-family: var(--occult);
+      font-size: 0.62rem;
+      letter-spacing: 0.22em;
+      text-transform: uppercase;
+    }
+
+    @media (max-width: 600px) {
+      body { font-size: 16px; }
+      .page { padding: 52px 18px 30px; min-height: 100vh; }
+      .rule { margin: 34px auto 28px; }
+    }
+  </style>
+</head>
+<body>
+
+  <div class="bg-layer"></div>
+  <div class="bg-veil"></div>
+  <div class="bg-grain"></div>
+
+  <main class="page">
+    <img src="logo.png" alt="Poison Door" class="logo-img" />
+    <h1 class="band-name">POISON<br>DOOR</h1>
+    <p class="tagline">Rock Psicodélico · São Paulo</p>
+
+    <div class="rule"></div>
+
+    <p class="invite">Quer a Poison Door no seu evento? Atravesse a porta — fala com a gente:</p>
+
+    <div class="contacts">
+      <!-- WhatsApp -->
+      <a class="contact-btn solid" id="wa-link" href="#" target="_blank" rel="noopener">
+        <svg width="20" height="20" viewBox="0 0 24 24" aria-hidden="true">
+          <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413Z"/>
+        </svg>
+        WhatsApp
+      </a>
+
+      <!-- Instagram -->
+      <a class="contact-btn ghost" href="https://instagram.com/poisondoorbanda" target="_blank" rel="noopener">
+        <svg width="20" height="20" viewBox="0 0 24 24" aria-hidden="true">
+          <path d="M12 2.16c3.2 0 3.58.01 4.85.07 1.17.05 1.8.25 2.23.41.56.22.96.48 1.38.9.42.42.68.82.9 1.38.16.42.36 1.06.41 2.23.06 1.27.07 1.65.07 4.85s-.01 3.58-.07 4.85c-.05 1.17-.25 1.8-.41 2.23-.22.56-.48.96-.9 1.38-.42.42-.82.68-1.38.9-.42.16-1.06.36-2.23.41-1.27.06-1.65.07-4.85.07s-3.58-.01-4.85-.07c-1.17-.05-1.8-.25-2.23-.41a3.7 3.7 0 01-1.38-.9 3.7 3.7 0 01-.9-1.38c-.16-.42-.36-1.06-.41-2.23C2.17 15.58 2.16 15.2 2.16 12s.01-3.58.07-4.85c.05-1.17.25-1.8.41-2.23.22-.56.48-.96.9-1.38.42-.42.82-.68 1.38-.9.42-.16 1.06-.36 2.23-.41C8.42 2.17 8.8 2.16 12 2.16M12 0C8.74 0 8.33.01 7.05.07 5.78.13 4.9.33 4.14.63a5.86 5.86 0 00-2.13 1.38A5.86 5.86 0 00.63 4.14C.33 4.9.13 5.78.07 7.05.01 8.33 0 8.74 0 12s.01 3.67.07 4.95c.06 1.27.26 2.15.56 2.91.31.79.73 1.46 1.38 2.13.67.65 1.34 1.07 2.13 1.38.76.3 1.64.5 2.91.56C8.33 23.99 8.74 24 12 24s3.67-.01 4.95-.07c1.27-.06 2.15-.26 2.91-.56a5.86 5.86 0 002.13-1.38 5.86 5.86 0 001.38-2.13c.3-.76.5-1.64.56-2.91.06-1.28.07-1.69.07-4.95s-.01-3.67-.07-4.95c-.06-1.27-.26-2.15-.56-2.91a5.86 5.86 0 00-1.38-2.13A5.86 5.86 0 0019.86.63c-.76-.3-1.64-.5-2.91-.56C15.67.01 15.26 0 12 0zm0 5.84A6.16 6.16 0 105.84 12 6.16 6.16 0 0012 5.84zm0 10.16A4 4 0 1116 12a4 4 0 01-4 4zm6.41-10.4a1.44 1.44 0 11-1.44-1.44 1.44 1.44 0 011.44 1.44z"/>
+        </svg>
+        Instagram
+      </a>
+    </div>
+
+    <p class="handle">@poisondoorbanda</p>
+  </main>
+
+  <footer>
+    Poison Door · Rock Psicodélico · São Paulo
+  </footer>
+
+  <script>
+    // Número de WhatsApp da banda (código do país + DDD), sem espaços/traços
+    const WHATSAPP = '5513996806044';
+
+    const MSG =
+      'Olá, Poison Door! 🤘🎸\n\n' +
+      'Gostaria de fazer uma proposta de show para a banda. Podem me passar os detalhes?';
+
+    document.getElementById('wa-link').href =
+      `https://wa.me/${WHATSAPP}?text=${encodeURIComponent(MSG)}`;
+  </script>
+</body>
+</html>
