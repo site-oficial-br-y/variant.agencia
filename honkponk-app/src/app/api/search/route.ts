@@ -3,6 +3,19 @@ import { createClient } from '@/lib/supabase/server'
 import { canSearch } from '@/lib/plans'
 import type { Plan } from '@/lib/plans'
 
+// A Vercel roda os servidores em UTC — sem isso, "meia-noite" no cálculo vira
+// meia-noite UTC (21h em Brasília), não meia-noite de verdade pro usuário.
+// Brasília é UTC-3 fixo (sem horário de verão desde 2019).
+const BRASILIA_OFFSET_MS = 3 * 60 * 60 * 1000
+function nextMidnightBrasilia(): Date {
+  const now = new Date()
+  const brWallClock = new Date(now.getTime() - BRASILIA_OFFSET_MS)
+  const brMidnightNextDayUTC = Date.UTC(
+    brWallClock.getUTCFullYear(), brWallClock.getUTCMonth(), brWallClock.getUTCDate() + 1, 0, 0, 0
+  )
+  return new Date(brMidnightNextDayUTC + BRASILIA_OFFSET_MS)
+}
+
 export async function POST(req: NextRequest) {
   const body = await req.json()
   const { checkOnly, countOnly } = body
@@ -72,10 +85,9 @@ export async function POST(req: NextRequest) {
       await supabase.from('users_profiles').update({ honk_coins: Math.max(0, coins - 1) }).eq('id', user.id)
     } else {
       const newCount = todaySearches + 1
-      const tomorrow = new Date(); tomorrow.setDate(tomorrow.getDate() + 1); tomorrow.setHours(0, 0, 0, 0)
       await supabase.from('users_profiles').update({
         searches_today: newCount,
-        searches_reset_at: new Date() > resetAt ? tomorrow.toISOString() : profile.searches_reset_at
+        searches_reset_at: new Date() > resetAt ? nextMidnightBrasilia().toISOString() : profile.searches_reset_at
       }).eq('id', user.id)
     }
     const { segment, city, allBrazil, service } = body
