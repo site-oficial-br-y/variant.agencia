@@ -36,13 +36,22 @@ export default function LoginPage() {
     e.preventDefault()
     setError('')
     setLoading(true)
-    const { error } = await supabase.auth.resetPasswordForEmail(email, {
-      redirectTo: `${window.location.origin}/auth/callback`,
-    })
-    if (error) {
+    try {
+      const res = await fetch('/api/auth/reset-password', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, origin: window.location.origin }),
+      })
+      if (res.status === 429) {
+        const data = await res.json().catch(() => ({}))
+        setError(data.error || 'Muitas tentativas. Aguarde um pouco.')
+      } else if (!res.ok) {
+        setError('Erro ao enviar e-mail. Tente novamente.')
+      } else {
+        setResetSent(true)
+      }
+    } catch {
       setError('Erro ao enviar e-mail. Tente novamente.')
-    } else {
-      setResetSent(true)
     }
     setLoading(false)
   }

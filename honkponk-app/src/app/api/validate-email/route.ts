@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { resolveMx } from 'dns/promises'
+import { getClientIp, isRateLimited } from '@/lib/rateLimit'
 
 const DISPOSABLE_DOMAINS = new Set([
   'mailinator.com', 'tempmail.com', 'temp-mail.org', 'guerrillamail.com',
@@ -9,6 +10,13 @@ const DISPOSABLE_DOMAINS = new Set([
 
 export async function POST(request: NextRequest) {
   try {
+    // Toda tentativa de cadastro passa por aqui antes do Supabase — é o lugar certo
+    // pra barrar criação de conta em massa (o que causou o estouro de cota do Resend).
+    const ip = getClientIp(request)
+    if (isRateLimited(`signup:${ip}`, 60 * 1000, 5)) {
+      return NextResponse.json({ valid: false, reason: 'Muitas tentativas de cadastro. Aguarde um pouco e tente de novo.' }, { status: 429 })
+    }
+
     const { email } = await request.json()
     if (!email || typeof email !== 'string') {
       return NextResponse.json({ valid: false, reason: 'E-mail inválido.' }, { status: 400 })
