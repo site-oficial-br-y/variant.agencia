@@ -9,9 +9,39 @@ const supabaseCache = (process.env.NEXT_PUBLIC_SUPABASE_URL && process.env.SUPAB
   : null
 const CACHE_TTL_MS = 7 * 24 * 60 * 60 * 1000 // 7 dias
 
+// Trava de emergência: essa rota chama o Google direto e pode ser acessada sem passar
+// pelo /api/search (que tem os limites por plano). Isso protege contra alguém batendo
+// nela diretamente e gerando custo de verdade na conta do Google Cloud.
+// Em memória mesmo (sem tabela nova): reseta em cold start, mas barra qualquer script
+// simples que tente martelar a rota — a rede de segurança de verdade é a cota diária
+// configurada no Google Cloud Console.
+const rateLimitHits = new Map<string, number[]>()
+const RATE_LIMIT_WINDOW_MS = 60 * 1000
+const RATE_LIMIT_MAX = 20 // requisições por IP por minuto
+
+function isRateLimited(ip: string): boolean {
+  const now = Date.now()
+  const hits = (rateLimitHits.get(ip) || []).filter(t => now - t < RATE_LIMIT_WINDOW_MS)
+  hits.push(now)
+  rateLimitHits.set(ip, hits)
+  // Evita crescimento infinito do Map em instâncias de longa duração
+  if (rateLimitHits.size > 5000) {
+    const cutoff = now - RATE_LIMIT_WINDOW_MS
+    for (const [key, times] of rateLimitHits) {
+      if (!times.some(t => t > cutoff)) rateLimitHits.delete(key)
+    }
+  }
+  return hits.length > RATE_LIMIT_MAX
+}
+
 export async function GET(req: NextRequest) {
   const { searchParams } = new URL(req.url)
   const action = searchParams.get('action')
+
+  const ip = req.headers.get('x-forwarded-for')?.split(',')[0]?.trim() || req.headers.get('x-real-ip') || 'unknown'
+  if (isRateLimited(ip)) {
+    return NextResponse.json({ error: 'Muitas requisições. Tente novamente em instantes.' }, { status: 429 })
+  }
 
   if (!GOOGLE_KEY) {
     return NextResponse.json({ error: 'API key not configured' }, { status: 500 })
