@@ -122,26 +122,36 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:-apple-
 }
 .card::before{content:'';position:absolute;inset:0;border-radius:inherit;pointer-events:none;background:linear-gradient(160deg,rgba(255,255,255,.08),transparent 50%);}
 
-/* ── DATE STRIP ── */
-.date-strip{display:flex;gap:8px;overflow-x:auto;padding:10px 0 14px;scrollbar-width:none;flex-shrink:0;}
+/* ── DATE STRIP (janela larga de dias, arrasta de verdade) ── */
+.date-strip-wrap{position:relative;flex-shrink:0;}
+.date-strip-month{font-size:11px;font-weight:800;color:var(--purple2);text-transform:uppercase;letter-spacing:1px;margin:0 4px 8px;transition:opacity .2s;}
+.date-strip{
+  display:flex;gap:8px;overflow-x:auto;padding:10px 26px 14px;scrollbar-width:none;
+  scroll-snap-type:x proximity;-webkit-overflow-scrolling:touch;touch-action:pan-x;
+}
 .date-strip::-webkit-scrollbar{display:none;}
 .date-day{
-  display:flex;flex-direction:column;align-items:center;gap:5px;min-width:48px;padding:10px 5px;border-radius:18px;
-  cursor:pointer;flex-shrink:0;position:relative;
+  display:flex;flex-direction:column;align-items:center;gap:5px;min-width:50px;padding:10px 5px;border-radius:18px;
+  cursor:pointer;flex-shrink:0;position:relative;scroll-snap-align:center;
   background:var(--glass);backdrop-filter:blur(18px);-webkit-backdrop-filter:blur(18px);
-  border:1px solid var(--stroke);transition:all .3s cubic-bezier(.22,1,.36,1);
+  border:1px solid var(--stroke);transition:background .3s,border-color .3s,box-shadow .3s,transform .18s;
 }
-.date-day:hover{background:var(--glass-hover);transform:translateY(-3px);border-color:var(--stroke-hi);}
 .date-day:active{transform:scale(.93);}
+.date-day.today:not(.sel){border-color:rgba(167,139,250,.45);}
 .date-day.sel{
   background:linear-gradient(150deg,rgba(124,111,247,.9),rgba(167,139,250,.75));
   border-color:rgba(167,139,250,.5);box-shadow:0 8px 26px var(--purple-glow);transform:translateY(-2px);
 }
+.date-day .month-tag{position:absolute;top:-8px;left:50%;transform:translateX(-50%);font-size:8px;font-weight:800;color:var(--purple2);background:var(--bg);padding:0 5px;text-transform:uppercase;letter-spacing:.4px;}
 .date-day .weekday{font-size:10px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:.6px;}
 .date-day.sel .weekday{color:rgba(255,255,255,.85);}
 .date-day .daynum{font-size:17px;font-weight:800;letter-spacing:-.4px;}
 .date-day .dot{width:5px;height:5px;border-radius:50%;background:transparent;transition:background .3s;}
 .date-day.has-green .dot{background:var(--green);box-shadow:0 0 8px rgba(74,222,128,.7);}
+@media(hover:hover){.date-day:hover{background:var(--glass-hover);transform:translateY(-3px);border-color:var(--stroke-hi);}}
+.strip-fade{position:absolute;top:0;bottom:14px;width:26px;pointer-events:none;z-index:2;}
+.strip-fade.left{left:0;background:linear-gradient(90deg,var(--bg),transparent);}
+.strip-fade.right{right:0;background:linear-gradient(-90deg,var(--bg),transparent);}
 .date-day.has-yellow .dot{background:var(--yellow);box-shadow:0 0 8px rgba(251,191,36,.7);}
 .date-day.has-red .dot{background:var(--red);box-shadow:0 0 8px rgba(248,113,113,.7);}
 
@@ -243,10 +253,10 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:-apple-
 }
 .cal-nav-btn:hover{background:var(--glass-hover);color:var(--purple2);transform:scale(1.1);border-color:var(--stroke-hi);}
 .cal-nav-btn:active{transform:scale(.9);}
-.cal-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:5px;}
-.cal-wday{text-align:center;font-size:10px;font-weight:800;color:var(--text3);text-transform:uppercase;padding:5px 0;letter-spacing:.5px;}
+.cal-grid{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:5px;touch-action:pan-y;}
+.cal-wday{min-width:0;text-align:center;font-size:10px;font-weight:800;color:var(--text3);text-transform:uppercase;padding:5px 0;letter-spacing:.5px;}
 .cal-cell{
-  aspect-ratio:1;display:flex;align-items:center;justify-content:center;border-radius:50%;
+  min-width:0;aspect-ratio:1;display:flex;align-items:center;justify-content:center;border-radius:50%;
   font-size:13px;font-weight:600;color:var(--text2);cursor:pointer;position:relative;
   transition:all .25s cubic-bezier(.22,1,.36,1);
   animation:cellIn .4s cubic-bezier(.22,1,.36,1) backwards;
@@ -488,7 +498,14 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:-apple-
       <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
     </div>
   </div>
-  <div style="padding:0 16px;flex-shrink:0;"><div class="date-strip" id="date-strip"></div></div>
+  <div style="padding:0 16px;flex-shrink:0;">
+    <div class="date-strip-month" id="date-strip-month"></div>
+    <div class="date-strip-wrap">
+      <div class="date-strip" id="date-strip"></div>
+      <div class="strip-fade left"></div>
+      <div class="strip-fade right"></div>
+    </div>
+  </div>
   <div class="scroll">
     <div class="section-label" id="hoje-label">Suas metas de hoje</div>
     <div id="goals-list"></div>
@@ -673,20 +690,7 @@ function renderHoje(){
   document.getElementById('hoje-label').textContent =
     state.selectedDate===todayStr()?'Suas metas de hoje':`Metas de ${sel.getDate()}/${sel.getMonth()+1}`;
 
-  const strip=document.getElementById('date-strip');
-  strip.innerHTML='';
-  for(let i=-3;i<=3;i++){
-    const d=new Date();d.setDate(d.getDate()+i);
-    const ds=fmt(d), log=state.logs[ds]||{}, total=state.metas.length;
-    const done=state.metas.filter(m=>log[m.id]).length;
-    let dot='';
-    if(total>0&&ds<=todayStr()){const r=done/total;dot=r===1?'has-green':r>=.5?'has-yellow':r>0?'has-red':'';}
-    const el=document.createElement('div');
-    el.className=`date-day ${ds===state.selectedDate?'sel':''} ${dot}`;
-    el.innerHTML=`<span class="weekday">${WDAYS[d.getDay()]}</span><span class="daynum">${d.getDate()}</span><div class="dot"></div>`;
-    el.onclick=e=>{ripple(e,el);buzz(8);state.selectedDate=ds;renderHoje();};
-    strip.appendChild(el);
-  }
+  buildDateStrip();
 
   const list=document.getElementById('goals-list');
   list.innerHTML='';
@@ -724,6 +728,70 @@ function renderHoje(){
     el.onclick=e=>{ripple(e,el);toggleGoal(meta.id);};
     list.appendChild(el);
   });
+}
+
+// ── FAIXA DE DATAS (larga, arrastável, com label de mês) ──
+function buildDateStrip(){
+  const strip=document.getElementById('date-strip');
+  if(strip.dataset.built){updateDateStrip();return;}
+  strip.dataset.built='1';
+  const RANGE=45;
+  const base=new Date();
+  for(let i=-RANGE;i<=RANGE;i++){
+    const d=new Date();d.setDate(base.getDate()+i);
+    const ds=fmt(d);
+    const el=document.createElement('div');
+    el.className='date-day';
+    el.dataset.date=ds;
+    const monthTag=d.getDate()===1?`<span class="month-tag">${MONTHS[d.getMonth()].slice(0,3)}</span>`:'';
+    el.innerHTML=`${monthTag}<span class="weekday">${WDAYS[d.getDay()]}</span><span class="daynum">${d.getDate()}</span><div class="dot"></div>`;
+    el.onclick=e=>{ripple(e,el);buzz(8);state.selectedDate=ds;renderHoje();};
+    strip.appendChild(el);
+  }
+  requestAnimationFrame(()=>{
+    const sel=strip.querySelector(`[data-date="${todayStr()}"]`);
+    if(sel)strip.scrollLeft=sel.offsetLeft-strip.clientWidth/2+sel.offsetWidth/2;
+    updateStripMonthLabel();
+  });
+  let stripTicking=false;
+  strip.addEventListener('scroll',()=>{
+    if(!stripTicking){window.requestAnimationFrame(()=>{updateStripMonthLabel();stripTicking=false;});stripTicking=true;}
+  },{passive:true});
+  updateDateStrip();
+}
+function updateStripMonthLabel(){
+  const strip=document.getElementById('date-strip');
+  const center=strip.scrollLeft+strip.clientWidth/2;
+  let closest=null,closestDist=Infinity;
+  strip.querySelectorAll('.date-day').forEach(el=>{
+    const c=el.offsetLeft+el.offsetWidth/2, dist=Math.abs(c-center);
+    if(dist<closestDist){closestDist=dist;closest=el;}
+  });
+  if(closest){
+    const d=new Date(closest.dataset.date+'T12:00:00');
+    document.getElementById('date-strip-month').textContent=`${MONTHS[d.getMonth()]} ${d.getFullYear()}`;
+  }
+}
+function updateDateStrip(){
+  const strip=document.getElementById('date-strip');
+  const today=todayStr();
+  strip.querySelectorAll('.date-day').forEach(el=>{
+    const ds=el.dataset.date;
+    const log=state.logs[ds]||{}, total=state.metas.length;
+    const done=state.metas.filter(m=>log[m.id]).length;
+    let dot='';
+    if(total>0&&ds<=today){const r=done/total;dot=r===1?'has-green':r>=.5?'has-yellow':r>0?'has-red':'';}
+    el.classList.toggle('sel',ds===state.selectedDate);
+    el.classList.toggle('today',ds===today);
+    el.classList.remove('has-green','has-yellow','has-red');
+    if(dot)el.classList.add(dot);
+  });
+  updateStripMonthLabel();
+  const selEl=strip.querySelector('.date-day.sel');
+  if(selEl){
+    const sr=strip.getBoundingClientRect(), er=selEl.getBoundingClientRect();
+    if(er.left<sr.left||er.right>sr.right)selEl.scrollIntoView({behavior:'smooth',inline:'center',block:'nearest'});
+  }
 }
 
 function toggleGoal(id){
@@ -820,6 +888,17 @@ function changeMonth(dir){
   state.calMonth=new Date(state.calMonth.getFullYear(),state.calMonth.getMonth()+dir,1);
   renderCal();
 }
+// Arrastar pro lado no calendário também troca de mês
+(function(){
+  const grid=document.getElementById('cal-grid');
+  let sx=0,sy=0,tracking=false;
+  grid.addEventListener('touchstart',e=>{sx=e.touches[0].clientX;sy=e.touches[0].clientY;tracking=true;},{passive:true});
+  grid.addEventListener('touchend',e=>{
+    if(!tracking)return;tracking=false;
+    const dx=e.changedTouches[0].clientX-sx, dy=e.changedTouches[0].clientY-sy;
+    if(Math.abs(dx)>55&&Math.abs(dx)>Math.abs(dy)*1.3)changeMonth(dx<0?1:-1);
+  },{passive:true});
+})();
 
 // ── RELATÓRIO ──
 function renderRelatorio(){
