@@ -110,7 +110,7 @@ export default function HomePage() {
                   <span style={{ fontSize: '.8rem', fontWeight: 700 }}>Painel de Prospecção</span>
                   <span style={{ display: 'flex', alignItems: 'center', gap: 5, fontSize: '.68rem', color: '#4ade80', fontWeight: 600 }}>
                     <span style={{ width: 6, height: 6, background: '#4ade80', borderRadius: '50%', display: 'inline-block', animation: 'blink 2s ease-in-out infinite' }} />
-                    ao vivo
+                    exemplo ilustrativo
                   </span>
                 </div>
                 <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3,1fr)', gap: 8, marginBottom: 12 }}>
