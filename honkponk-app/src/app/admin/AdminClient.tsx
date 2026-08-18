@@ -4,7 +4,7 @@ import { useState, useMemo, useEffect, useRef, useTransition } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { PLANS, type Plan } from '@/lib/plans'
-import type { AdminStats, DayPoint, Ranked } from './page'
+import type { AdminStats, DayPoint, Ranked, CoinPurchaseRow } from './page'
 
 const BRL = (cents: number) =>
   (cents / 100).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL', maximumFractionDigits: 0 })
@@ -110,6 +110,42 @@ function Stat({
         {shown}
       </div>
       {hint && <div className="text-xs text-white/40 mt-1">{hint}</div>}
+    </Card>
+  )
+}
+
+/* ── lista das últimas compras de Honk Coin ── */
+function CoinPurchasesCard({ purchases }: { purchases: CoinPurchaseRow[] | null }) {
+  return (
+    <Card delay={420}>
+      <div className="text-sm font-bold mb-4">Últimas compras de Honk Coins</div>
+      {purchases === null && (
+        <div className="text-sm text-white/40">
+          Tabela <code className="text-xs px-1 py-0.5 rounded bg-white/10">coin_purchases</code> ainda não existe.
+          Peça pro Claude te passar o SQL de criação e rode no SQL Editor do Supabase.
+        </div>
+      )}
+      {purchases !== null && purchases.length === 0 && (
+        <div className="text-sm text-white/40">Nenhuma compra registrada ainda.</div>
+      )}
+      {purchases !== null && purchases.length > 0 && (
+        <div className="space-y-2">
+          {purchases.map((p, i) => (
+            <div key={i} className="flex items-center justify-between text-sm border-b border-white/5 last:border-0 pb-2 last:pb-0">
+              <div className="min-w-0">
+                <div className="font-medium truncate">{p.email || 'e-mail não registrado'}</div>
+                <div className="text-xs text-white/40">
+                  {new Date(p.created_at).toLocaleString('pt-BR', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' })}
+                </div>
+              </div>
+              <div className="text-right shrink-0 pl-3">
+                <div className="font-bold tabular-nums">{p.coins} coins</div>
+                {p.amount_cents !== null && <div className="text-xs text-[#4ade80] tabular-nums">{BRL(p.amount_cents)}</div>}
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
     </Card>
   )
 }
@@ -390,6 +426,12 @@ export function AdminClient({
                     <span className="text-white/50">Moedas em circulação</span>
                     <span className="font-bold tabular-nums">{num(coins.inCirculation)}</span>
                   </div>
+                  {coins.revenueCentsTotal !== null && (
+                    <div className="flex justify-between">
+                      <span className="text-white/50">Faturado em Honk Coins</span>
+                      <span className="font-bold tabular-nums text-[#4ade80]">{BRL(coins.revenueCentsTotal)}</span>
+                    </div>
+                  )}
                   <div className="flex justify-between">
                     <span className="text-white/50">Membros de equipe</span>
                     <span className="font-bold tabular-nums">{num(plans.teamMembers)}</span>
@@ -407,6 +449,8 @@ export function AdminClient({
                 </div>
               </Card>
             </div>
+
+            <CoinPurchasesCard purchases={coins.recent} />
           </div>
         )}
 

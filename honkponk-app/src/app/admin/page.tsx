@@ -22,7 +22,11 @@ export interface AdminStats {
     mrrCents: number
     activeSubscriptions: number | null
   }
-  coins: { inCirculation: number | null }
+  coins: {
+    inCirculation: number | null
+    revenueCentsTotal: number | null
+    recent: CoinPurchaseRow[] | null
+  }
   searches: {
     total: number | null
     today: number | null
@@ -42,6 +46,13 @@ interface SearchLogRow {
   segment?: string | null
   location?: string | null
   created_at?: string | null
+}
+
+export interface CoinPurchaseRow {
+  email: string | null
+  coins: number
+  amount_cents: number | null
+  created_at: string
 }
 
 function dayKey(d: Date) {
@@ -226,10 +237,27 @@ export default async function AdminPage() {
     warnings.push('Não consegui ler search_logs.')
   }
 
+  // ── Histórico de compra de coin ──
+  let coinsRevenueCentsTotal: number | null = null
+  let coinsRecent: CoinPurchaseRow[] | null = null
+  try {
+    const { data, error } = await admin
+      .from('coin_purchases')
+      .select('email, coins, amount_cents, created_at')
+      .order('created_at', { ascending: false })
+      .limit(500)
+    if (error) throw error
+    const rows = (data || []) as CoinPurchaseRow[]
+    coinsRevenueCentsTotal = rows.reduce((acc, r) => acc + (r.amount_cents || 0), 0)
+    coinsRecent = rows.slice(0, 20)
+  } catch {
+    warnings.push('Tabela coin_purchases ainda não existe — histórico de compras indisponível (só o saldo atual).')
+  }
+
   const stats: AdminStats = {
     users: { total: usersTotal, signupsByDay: buildSeries(signupDates, SERIES_DAYS) },
     plans: { counts: planCounts, paying, teamMembers, expiringIn7, mrrCents, activeSubscriptions },
-    coins: { inCirculation: coinsTotal },
+    coins: { inCirculation: coinsTotal, revenueCentsTotal: coinsRevenueCentsTotal, recent: coinsRecent },
     searches: { total: searchTotal, today: searchesToday, byDay: searchByDay, topSegments, topCities },
     generatedAt: new Date().toISOString(),
     warnings,
