@@ -44,7 +44,6 @@ export function DashboardClient({ user, profile, teamMembers, searchHistory = []
   const [feedbackLoading, setFeedbackLoading] = useState(false)
   const [feedbackSent, setFeedbackSent] = useState(false)
   const [deleteOpen, setDeleteOpen] = useState(false)
-  const [deleteConfirmText, setDeleteConfirmText] = useState('')
   const [deleteLoading, setDeleteLoading] = useState(false)
   const [deleteError, setDeleteError] = useState('')
   const router = useRouter()
@@ -64,7 +63,6 @@ export function DashboardClient({ user, profile, teamMembers, searchHistory = []
   }
 
   async function handleDeleteAccount() {
-    if (deleteConfirmText.trim().toUpperCase() !== 'EXCLUIR') return
     setDeleteLoading(true)
     setDeleteError('')
     try {
@@ -234,29 +232,19 @@ export function DashboardClient({ user, profile, teamMembers, searchHistory = []
       {deleteOpen && (
         <div onClick={() => !deleteLoading && setDeleteOpen(false)} style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,.6)', backdropFilter: 'blur(4px)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 24, zIndex: 100 }}>
           <div onClick={e => e.stopPropagation()} style={{ background: '#16162a', border: '1px solid rgba(248,113,113,.25)', borderRadius: 20, padding: 32, width: '100%', maxWidth: 420 }}>
-            <h2 style={{ fontSize: '1.2rem', fontWeight: 800, marginBottom: 6, color: '#fca5a5' }}>Excluir sua conta</h2>
-            <p style={{ fontSize: '.82rem', color: 'rgba(255,255,255,.55)', marginBottom: 18, lineHeight: 1.6 }}>
-              Isso apaga seu perfil, plano, histórico de buscas e moedas de forma definitiva. Não tem como desfazer.
+            <h2 style={{ fontSize: '1.2rem', fontWeight: 800, marginBottom: 6, color: '#fca5a5' }}>Tem certeza que deseja excluir sua conta?</h2>
+            <p style={{ fontSize: '.82rem', color: 'rgba(255,255,255,.55)', marginBottom: 22, lineHeight: 1.6 }}>
+              Essa ação é permanente. Seu perfil, plano, histórico de buscas e moedas serão apagados e não tem como desfazer.
             </p>
-            <p style={{ fontSize: '.8rem', color: 'rgba(255,255,255,.5)', marginBottom: 10 }}>
-              Digite <strong style={{ color: '#fff' }}>EXCLUIR</strong> pra confirmar:
-            </p>
-            <input
-              value={deleteConfirmText}
-              onChange={e => setDeleteConfirmText(e.target.value)}
-              placeholder="EXCLUIR"
-              disabled={deleteLoading}
-              style={{ width: '100%', background: 'rgba(255,255,255,.06)', border: '1.5px solid rgba(255,255,255,.12)', borderRadius: 12, padding: '12px 14px', color: '#fff', fontSize: '.9rem', fontFamily: 'inherit', outline: 'none', marginBottom: 14 }}
-            />
             {deleteError && <p style={{ color: '#fb923c', fontSize: '.8rem', marginBottom: 14 }}>{deleteError}</p>}
             <div style={{ display: 'flex', gap: 10 }}>
-              <button onClick={() => { setDeleteOpen(false); setDeleteConfirmText(''); setDeleteError('') }} disabled={deleteLoading} style={{ flex: 1, background: 'rgba(255,255,255,.06)', color: 'rgba(255,255,255,.6)', border: '1px solid rgba(255,255,255,.1)', borderRadius: 12, padding: '12px', fontSize: '.9rem', fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit' }}>Cancelar</button>
+              <button onClick={() => { setDeleteOpen(false); setDeleteError('') }} disabled={deleteLoading} style={{ flex: 1, background: 'rgba(255,255,255,.06)', color: 'rgba(255,255,255,.6)', border: '1px solid rgba(255,255,255,.1)', borderRadius: 12, padding: '12px', fontSize: '.9rem', fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit' }}>Cancelar</button>
               <button
                 onClick={handleDeleteAccount}
-                disabled={deleteLoading || deleteConfirmText.trim().toUpperCase() !== 'EXCLUIR'}
-                style={{ flex: 2, background: '#dc2626', color: '#fff', border: 'none', borderRadius: 12, padding: '12px', fontSize: '.9rem', fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit', opacity: (deleteLoading || deleteConfirmText.trim().toUpperCase() !== 'EXCLUIR') ? 0.5 : 1 }}
+                disabled={deleteLoading}
+                style={{ flex: 1, background: '#dc2626', color: '#fff', border: 'none', borderRadius: 12, padding: '12px', fontSize: '.9rem', fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit', opacity: deleteLoading ? 0.6 : 1 }}
               >
-                {deleteLoading ? 'Excluindo...' : 'Excluir definitivamente'}
+                {deleteLoading ? 'Excluindo...' : 'Sim, excluir'}
               </button>
             </div>
           </div>
