@@ -172,25 +172,25 @@ export function DashboardClient({ user, profile, teamMembers, searchHistory = []
       <QuizOverlay open={quizOpen} onClose={() => setQuizOpen(false)} onSearch={handleSearch} />
 
       {/* Nav */}
-      <nav style={{ padding: '14px 24px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', background: 'rgba(15,15,26,0.85)', backdropFilter: 'blur(24px)', borderBottom: '1px solid rgba(248,182,200,0.12)', position: 'sticky', top: 0, zIndex: 50 }}>
-        <Link href="/" style={{ display: 'flex', alignItems: 'center', gap: 10, textDecoration: 'none' }}>
+      <nav style={{ padding: '14px 20px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', rowGap: 10, columnGap: 12, background: 'rgba(15,15,26,0.85)', backdropFilter: 'blur(24px)', borderBottom: '1px solid rgba(248,182,200,0.12)', position: 'sticky', top: 0, zIndex: 50 }}>
+        <Link href="/" style={{ display: 'flex', alignItems: 'center', gap: 10, textDecoration: 'none', flexShrink: 0 }}>
           <Image src="/logo.png" alt="Honk Ponk" width={28} height={28} style={{ objectFit: 'contain', borderRadius: 6 }} />
-          <span style={{ fontSize: '1.05rem', fontWeight: 800, color: '#fff' }}>Honk <em style={{ color: '#e879a0', fontStyle: 'normal' }}>Ponk</em></span>
+          <span style={{ fontSize: '1.05rem', fontWeight: 800, color: '#fff', whiteSpace: 'nowrap' }}>Honk <em style={{ color: '#e879a0', fontStyle: 'normal' }}>Ponk</em></span>
         </Link>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-          <span style={{ background: 'rgba(248,182,200,.1)', border: '1px solid rgba(248,182,200,.2)', borderRadius: 8, padding: '4px 12px', fontSize: '.76rem', fontWeight: 700, color: '#f8b6c8' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap', rowGap: 8 }}>
+          <span style={{ background: 'rgba(248,182,200,.1)', border: '1px solid rgba(248,182,200,.2)', borderRadius: 8, padding: '4px 12px', fontSize: '.76rem', fontWeight: 700, color: '#f8b6c8', whiteSpace: 'nowrap' }}>
             {planConfig.name}
           </span>
-          <a href="/checkout/coins" style={{ background: 'rgba(232,121,160,.1)', border: '1px solid rgba(232,121,160,.2)', borderRadius: 8, padding: '4px 10px', fontSize: '.76rem', fontWeight: 700, color: '#f8b6c8', display: 'flex', alignItems: 'center', gap: 5, textDecoration: 'none', cursor: 'pointer' }}>
+          <a href="/checkout/coins" style={{ background: 'rgba(232,121,160,.1)', border: '1px solid rgba(232,121,160,.2)', borderRadius: 8, padding: '4px 10px', fontSize: '.76rem', fontWeight: 700, color: '#f8b6c8', display: 'flex', alignItems: 'center', gap: 5, textDecoration: 'none', cursor: 'pointer', whiteSpace: 'nowrap' }}>
             🪙 {profile?.honk_coins ?? 0}
           </a>
-          <button onClick={() => setFeedbackOpen(true)} style={{ background: 'rgba(255,255,255,.05)', color: 'rgba(255,255,255,.5)', border: '1px solid rgba(255,255,255,.08)', borderRadius: 8, padding: '6px 14px', fontSize: '.78rem', fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit', transition: 'all .2s' }}>
+          <button onClick={() => setFeedbackOpen(true)} style={{ background: 'rgba(255,255,255,.05)', color: 'rgba(255,255,255,.5)', border: '1px solid rgba(255,255,255,.08)', borderRadius: 8, padding: '6px 14px', fontSize: '.78rem', fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit', transition: 'all .2s', whiteSpace: 'nowrap' }}>
             💬 Feedback
           </button>
-          <button onClick={handleLogout} disabled={loggingOut} style={{ background: 'rgba(255,255,255,.05)', color: 'rgba(255,255,255,.5)', border: '1px solid rgba(255,255,255,.08)', borderRadius: 8, padding: '6px 14px', fontSize: '.78rem', fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit', transition: 'all .2s' }}>
+          <button onClick={handleLogout} disabled={loggingOut} style={{ background: 'rgba(255,255,255,.05)', color: 'rgba(255,255,255,.5)', border: '1px solid rgba(255,255,255,.08)', borderRadius: 8, padding: '6px 14px', fontSize: '.78rem', fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit', transition: 'all .2s', whiteSpace: 'nowrap' }}>
             {loggingOut ? 'Saindo...' : 'Sair'}
           </button>
-          <button onClick={() => setDeleteOpen(true)} title="Excluir conta" style={{ background: 'none', color: 'rgba(255,255,255,.25)', border: 'none', fontSize: '.72rem', cursor: 'pointer', fontFamily: 'inherit', padding: '6px 4px', textDecoration: 'underline' }}>
+          <button onClick={() => setDeleteOpen(true)} title="Excluir conta" style={{ background: 'none', color: 'rgba(255,255,255,.25)', border: 'none', fontSize: '.72rem', cursor: 'pointer', fontFamily: 'inherit', padding: '6px 4px', textDecoration: 'underline', whiteSpace: 'nowrap' }}>
             Excluir conta
           </button>
         </div>
