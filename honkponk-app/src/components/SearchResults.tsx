@@ -180,15 +180,33 @@ export function SearchResults({ params, userId, plan = 'free', onLimitReached }:
         idealMatch: isIdealFilter && (meta.filterFn ? meta.filterFn({ website: p.website || undefined, reviews: p.user_ratings_total || 0 }) : true),
       }))
 
-      const filtered = meta.filterFn ? detailed.filter(p => meta.filterFn({ website: p.website || undefined, reviews: p.reviews || 0 })) : detailed
+      let filtered = meta.filterFn ? detailed.filter(p => meta.filterFn({ website: p.website || undefined, reviews: p.reviews || 0 })) : detailed
       const limit = maxResults === null ? filtered.length : maxResults
       const minGuarantee = maxResults !== null ? maxResults : 0
 
       // Antes, quando faltava resultado, o código completava a lista com QUALQUER negócio
       // (inclusive quem já tem site), mesmo pra quem escolheu "Criação de Sites" — bug real
-      // reportado por usuário (via comentário/vídeo): "coloquei que queria vender site mas
-      // tá aparecendo uns que já tem site". Agora todo preenchimento respeita o filtro do
-      // serviço escolhido; se faltar gente que bate com o filtro, mostra menos, não mostra errado.
+      // reportado por usuário: "coloquei que queria vender site mas tá aparecendo uns que já
+      // tem site". Agora, em vez de preencher com resultado errado, primeiro tenta achar mais
+      // gente de verdade que bate no filtro — busca de novo na mesma palavra-chave só que num
+      // raio bem maior (até o teto da API) — antes de qualquer preenchimento genérico.
+      if (filtered.length < minGuarantee && !params.allBrazil) {
+        const wider = await fetchPlaces(queries[0], lat, lng, 50000)
+        const seen = new Set(detailed.map(p => p.name + p.address))
+        const widerDetailed: PlaceResult[] = wider
+          .filter((p: any) => !seen.has(p.name + (p.vicinity || '')))
+          .map((p: any) => ({
+            name: p.name, address: p.vicinity || '', rating: p.rating || 0,
+            reviews: p.user_ratings_total || 0, website: p.website || '',
+            phone: p.formatted_phone_number || '', isOpen: p.opening_hours?.open_now ?? null,
+            idealMatch: isIdealFilter && (meta.filterFn ? meta.filterFn({ website: p.website || undefined, reviews: p.user_ratings_total || 0 }) : true),
+          }))
+        const widerFiltered = meta.filterFn
+          ? widerDetailed.filter(p => meta.filterFn({ website: p.website || undefined, reviews: p.reviews || 0 }))
+          : widerDetailed
+        filtered = [...filtered, ...widerFiltered]
+      }
+
       let final = filtered.slice(0, limit)
       if (final.length < minGuarantee && !params.allBrazil) {
         const fallback = await fetchPlaces('negócios locais', lat, lng, 20000)
