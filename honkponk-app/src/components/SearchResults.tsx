@@ -184,13 +184,12 @@ export function SearchResults({ params, userId, plan = 'free', onLimitReached }:
       const limit = maxResults === null ? filtered.length : maxResults
       const minGuarantee = maxResults !== null ? maxResults : 0
 
+      // Antes, quando faltava resultado, o código completava a lista com QUALQUER negócio
+      // (inclusive quem já tem site), mesmo pra quem escolheu "Criação de Sites" — bug real
+      // reportado por usuário (via comentário/vídeo): "coloquei que queria vender site mas
+      // tá aparecendo uns que já tem site". Agora todo preenchimento respeita o filtro do
+      // serviço escolhido; se faltar gente que bate com o filtro, mostra menos, não mostra errado.
       let final = filtered.slice(0, limit)
-      // Pad with unfiltered if below limit
-      if (final.length < limit) {
-        const extra = detailed.filter(p => !final.includes(p)).slice(0, limit - final.length)
-        final = [...final, ...extra]
-      }
-      // If still below minimum guarantee, fetch fallback without keyword filter
       if (final.length < minGuarantee && !params.allBrazil) {
         const fallback = await fetchPlaces('negócios locais', lat, lng, 20000)
         const fallbackMapped: PlaceResult[] = fallback.map((p: any) => ({
@@ -198,8 +197,11 @@ export function SearchResults({ params, userId, plan = 'free', onLimitReached }:
           reviews: p.user_ratings_total || 0, website: p.website || '',
           phone: p.formatted_phone_number || '', isOpen: p.opening_hours?.open_now ?? null,
         }))
+        const fallbackFiltered = meta.filterFn
+          ? fallbackMapped.filter(p => meta.filterFn({ website: p.website || undefined, reviews: p.reviews || 0 }))
+          : fallbackMapped
         const existing = new Set(final.map(p => p.name))
-        const extra2 = fallbackMapped.filter(p => !existing.has(p.name)).slice(0, minGuarantee - final.length)
+        const extra2 = fallbackFiltered.filter(p => !existing.has(p.name)).slice(0, minGuarantee - final.length)
         final = [...final, ...extra2]
       }
       setResults(final)
