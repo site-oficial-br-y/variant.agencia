@@ -320,9 +320,14 @@ export function DashboardClient({ user, profile, teamMembers, searchHistory = []
         {plan === 'enterprise' && !profile?.team_owner_id && (
           <div className="animate-pageIn" style={{ background: 'rgba(255,255,255,.02)', border: '1px solid rgba(248,182,200,.15)', borderRadius: 20, padding: '24px', marginBottom: 32, animationDelay: '.14s' }}>
             <h2 style={{ fontSize: '1.05rem', fontWeight: 800, marginBottom: 4 }}>👥 Equipe</h2>
-            <p style={{ fontSize: '.8rem', color: 'rgba(255,255,255,.4)', marginBottom: 18 }}>
+            <p style={{ fontSize: '.8rem', color: 'rgba(255,255,255,.4)', marginBottom: 12 }}>
               Adicione até {PLANS.enterprise.maxUsers - 1} membros para terem acesso ao plano Empresa.
             </p>
+            <div style={{ background: 'rgba(251,191,36,.08)', border: '1px solid rgba(251,191,36,.2)', borderRadius: 10, padding: '10px 14px', marginBottom: 18, fontSize: '.78rem', color: 'rgba(255,255,255,.6)', lineHeight: 1.55 }}>
+              ⚠️ A pessoa precisa ter conta no Honk Ponk com esse mesmo e-mail. O plano é liberado
+              sozinho quando ela entrar no painel — não enviamos e-mail de convite, então avise a
+              equipe pra criar a conta e acessar.
+            </div>
             <form onSubmit={handleInvite} style={{ display: 'flex', gap: 10, marginBottom: 18, flexWrap: 'wrap' as const }}>
               <input
                 type="email"
@@ -347,8 +352,11 @@ export function DashboardClient({ user, profile, teamMembers, searchHistory = []
                   <li key={member.id} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', background: 'rgba(255,255,255,.03)', border: '1px solid rgba(255,255,255,.08)', borderRadius: 10, padding: '10px 14px', fontSize: '.85rem' }}>
                     <span>{member.member_email}</span>
                     <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                      <span style={{ fontSize: '.72rem', fontWeight: 700, color: member.status === 'active' ? '#4ade80' : '#fbbf24', textTransform: 'uppercase' as const }}>
-                        {member.status === 'active' ? 'Ativo' : 'Pendente'}
+                      <span
+                        title={member.status === 'active' ? 'Já acessou e está usando o plano Empresa' : 'Aguardando a pessoa entrar no painel com esse e-mail'}
+                        style={{ fontSize: '.72rem', fontWeight: 700, color: member.status === 'active' ? '#4ade80' : '#fbbf24', textTransform: 'uppercase' as const, cursor: 'help' }}
+                      >
+                        {member.status === 'active' ? 'Ativo' : 'Aguardando acesso'}
                       </span>
                       <button onClick={() => handleRemoveMember(member.id)} disabled={teamLoading} style={{ background: 'none', border: 'none', color: 'rgba(255,255,255,.4)', cursor: 'pointer', fontSize: '.8rem' }}>✕</button>
                     </div>
