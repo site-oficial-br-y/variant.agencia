@@ -21,6 +21,7 @@ export interface AdminStats {
     expiringIn7: number
     mrrCents: number
     activeSubscriptions: number | null
+    courtesy: number | null
   }
   coins: {
     inCirculation: number | null
@@ -185,10 +186,39 @@ export default async function AdminPage() {
   }
 
   const paying = payingCounts.freelancer + payingCounts.agency + payingCounts.enterprise
-  const mrrCents =
-    payingCounts.freelancer * PLANS.freelancer.price +
-    payingCounts.agency * PLANS.agency.price +
-    payingCounts.enterprise * PLANS.enterprise.price
+
+  // MRR contado a partir das assinaturas de verdade, não do campo `plan` do perfil:
+  // o perfil também fica pago em cortesia/parceria, na conta do próprio dono e em plano
+  // vencido que ainda não foi rebaixado (o rebaixamento só roda quando a pessoa volta ao
+  // site). Contar por perfil inflava o número — mrrCents agora é receita real, e
+  // courtesyCount mostra quantos perfis pagos não têm assinatura por trás.
+  let mrrCents = 0
+  let courtesyCount: number | null = null
+  try {
+    const { data, error } = await admin
+      .from('subscriptions')
+      .select('plan')
+      .eq('status', 'active')
+      .limit(20000)
+    if (error) throw error
+    const realCounts = { free: 0, freelancer: 0, agency: 0, enterprise: 0 } as Record<Plan, number>
+    for (const row of (data || []) as { plan?: string }[]) {
+      const p = (row.plan || 'free') as Plan
+      if (PLAN_KEYS.includes(p)) realCounts[p]++
+    }
+    mrrCents =
+      realCounts.freelancer * PLANS.freelancer.price +
+      realCounts.agency * PLANS.agency.price +
+      realCounts.enterprise * PLANS.enterprise.price
+    courtesyCount = Math.max(0, paying - (realCounts.freelancer + realCounts.agency + realCounts.enterprise))
+  } catch {
+    // Sem a tabela de assinaturas, cai no cálculo antigo (por perfil) e avisa que está inflado.
+    mrrCents =
+      payingCounts.freelancer * PLANS.freelancer.price +
+      payingCounts.agency * PLANS.agency.price +
+      payingCounts.enterprise * PLANS.enterprise.price
+    warnings.push('Não consegui ler subscriptions — MRR calculado por perfil, então inclui cortesias e planos vencidos.')
+  }
 
   // ── Assinaturas ativas ──
   let activeSubscriptions: number | null = null
@@ -256,7 +286,7 @@ export default async function AdminPage() {
 
   const stats: AdminStats = {
     users: { total: usersTotal, signupsByDay: buildSeries(signupDates, SERIES_DAYS) },
-    plans: { counts: planCounts, paying, teamMembers, expiringIn7, mrrCents, activeSubscriptions },
+    plans: { counts: planCounts, paying, teamMembers, expiringIn7, mrrCents, activeSubscriptions, courtesy: courtesyCount },
     coins: { inCirculation: coinsTotal, revenueCentsTotal: coinsRevenueCentsTotal, recent: coinsRecent },
     searches: { total: searchTotal, today: searchesToday, byDay: searchByDay, topSegments, topCities },
     generatedAt: new Date().toISOString(),

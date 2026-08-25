@@ -376,7 +376,14 @@ export function AdminClient({
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
               <Stat label="Usuários" value={users.total} hint={`+${sum(signups)} em ${periodLabel}`} delay={0} />
               <Stat label="Pagantes" value={plans.paying} accent="#f8b6c8" hint={`${conv.toFixed(1)}% de conversão`} delay={60} />
-              <Stat label="MRR estimado" value={plans.mrrCents} money accent="#4ade80" hint="sem membros de equipe" delay={120} />
+              <Stat
+                label="MRR real"
+                value={plans.mrrCents}
+                money
+                accent="#4ade80"
+                hint={plans.courtesy !== null ? `só assinaturas ativas · ${plans.courtesy} cortesia${plans.courtesy === 1 ? '' : 's'}` : 'só assinaturas ativas'}
+                delay={120}
+              />
               <Stat
                 label="Vencendo em 7 dias"
                 value={plans.expiringIn7}
@@ -440,6 +447,14 @@ export function AdminClient({
                     <div className="flex justify-between">
                       <span className="text-white/50">Assinaturas <code className="text-xs">active</code></span>
                       <span className="font-bold tabular-nums">{num(plans.activeSubscriptions)}</span>
+                    </div>
+                  )}
+                  {plans.courtesy !== null && (
+                    <div className="flex justify-between">
+                      <span className="text-white/50" title="Perfis com plano pago sem assinatura por trás: cortesias, sua própria conta e planos vencidos ainda não rebaixados">
+                        Cortesias / não pagantes
+                      </span>
+                      <span className="font-bold tabular-nums text-[#fbbf24]">{num(plans.courtesy)}</span>
                     </div>
                   )}
                   <div className="flex justify-between">
