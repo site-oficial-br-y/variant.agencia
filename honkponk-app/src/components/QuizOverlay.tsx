@@ -12,6 +12,7 @@ const SERVICES = [
   { key: 'software', icon: '💻', name: 'Software / Sistemas', desc: 'Todos os negócios' },
   { key: 'foto', icon: '📷', name: 'Foto / Vídeo', desc: 'Todos os negócios' },
   { key: 'rh', icon: '👥', name: 'RH / Recrutamento', desc: 'Todos os negócios' },
+  { key: 'produtos', icon: '📦', name: 'Produtos e Materiais', desc: 'Todos os negócios' },
   { key: 'outros', icon: '✨', name: 'Outro serviço', desc: 'Todos os resultados' },
 ]
 
@@ -24,6 +25,7 @@ const SEGMENTS = [
   { value: 'dentist', label: 'Dentistas' }, { value: 'school', label: 'Escolas' },
   { value: 'lawyer', label: 'Escritórios de Advocacia' }, { value: 'accounting', label: 'Contabilidades' },
   { value: 'clothing', label: 'Lojas de Roupa' },
+  { value: 'construction', label: 'Construção Civil' },
 ]
 
 export function QuizOverlay({ open, onClose, onSearch }: { open: boolean; onClose: () => void; onSearch: (data: QuizData) => void }) {

@@ -14,6 +14,7 @@ export const SEGMENT_QUERIES: Record<string, string[]> = {
   lawyer: ['escritórios de advocacia', 'advogado', 'escritório jurídico'],
   accounting: ['contabilidade', 'escritório contábil', 'contador'],
   clothing: ['lojas de roupa', 'boutique', 'moda', 'confecção'],
+  construction: ['construtoras', 'empresa de engenharia civil', 'empreiteira', 'incorporadora'],
 }
 
 export const SEGMENT_NAMES: Record<string, string> = {
@@ -32,6 +33,7 @@ export const SEGMENT_NAMES: Record<string, string> = {
   lawyer: 'Escritórios de Advocacia',
   accounting: 'Contabilidades',
   clothing: 'Lojas de Roupa',
+  construction: 'Construção Civil',
 }
 
 export interface ServiceMeta {
@@ -99,6 +101,17 @@ export const SERVICE_META: Record<string, ServiceMeta> = {
     filterFn: () => true,
     showSiteTag: true,
     waMsg: (name) => `Olá, ${name}! Trabalho com recrutamento e seleção para pequenas e médias empresas. Posso ajudar seu negócio a encontrar os melhores profissionais. Podemos conversar?`,
+  },
+  produtos: {
+    name: 'Produtos e Materiais',
+    icon: '📦',
+    // Quem vende produto (material de obra, equipamento, insumo) precisa da lista de
+    // empresas com contato pronto — os dados do Google não dizem quem está precisando
+    // do produto agora, então não dá pra filtrar por "carência" como nos outros serviços.
+    filterLabel: 'Todos os negócios do segmento',
+    filterFn: () => true,
+    showSiteTag: true,
+    waMsg: (name) => `Olá, ${name}! Trabalho com fornecimento de produtos e materiais para empresas como a sua. Posso te enviar nosso catálogo e condições?`,
   },
   outros: {
     name: 'Outro serviço',
