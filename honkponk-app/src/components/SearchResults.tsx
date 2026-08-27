@@ -368,7 +368,12 @@ export function SearchResults({ params, userId, plan = 'free', onLimitReached }:
         <div style={{ textAlign: 'center', padding: '60px 24px', background: 'rgba(255,255,255,.02)', border: '1px dashed rgba(255,255,255,.1)', borderRadius: 16, color: 'rgba(255,255,255,.4)' }}>
           <div style={{ fontSize: '2.5rem', marginBottom: 12 }}>🔍</div>
           <p style={{ fontWeight: 600, marginBottom: 6 }}>Nenhum lead encontrado</p>
-          <p style={{ fontSize: '.82rem' }}>Tente outra cidade ou segmento.</p>
+          {/* Explicita que é o filtro do serviço, não falha do sistema: desde que a busca parou
+              de completar a lista com quem não bate no filtro, cair em zero ficou mais comum. */}
+          <p style={{ fontSize: '.82rem', maxWidth: 420, margin: '0 auto', lineHeight: 1.6 }}>
+            Nenhuma empresa dessa região bate com o filtro <strong style={{ color: 'rgba(255,255,255,.6)' }}>{meta.filterLabel.toLowerCase()}</strong>.
+            {' '}Tente outra cidade, outro segmento ou outro tipo de serviço.
+          </p>
         </div>
       ) : (
         <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
