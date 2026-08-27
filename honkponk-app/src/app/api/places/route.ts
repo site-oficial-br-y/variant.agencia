@@ -15,11 +15,17 @@ export async function GET(req: NextRequest) {
   const action = searchParams.get('action')
 
   // Trava de emergência: essa rota chama o Google direto e pode ser acessada sem passar
-  // pelo /api/search (que tem os limites por plano). Isso protege contra alguém batendo
-  // nela diretamente e gerando custo de verdade na conta do Google Cloud. A rede de
-  // segurança de verdade continua sendo a cota diária configurada no Google Cloud Console.
+  // pelo /api/search (que tem os limites por plano). A rede de segurança de verdade contra
+  // custo é a cota diária configurada no Google Cloud Console — isso aqui só barra script óbvio.
+  //
+  // O teto precisa ser generoso porque UMA busca do usuário consome várias chamadas aqui:
+  // "Todo o Brasil" dispara 10 (uma por cidade), busca por cidade em plano ilimitado usa 3
+  // palavras-chave, e ainda tem geocode + raio ampliado — uma busca só chega a ~12 chamadas.
+  // Operadora móvel no Brasil ainda usa CGNAT, então vários usuários dividem o mesmo IP.
+  // Com o valor anterior (20/min) duas buscas "Todo o Brasil" seguidas já travavam o usuário,
+  // e o front mostrava "nenhum resultado" em vez do erro — foi o que quebrou a busca em produção.
   const ip = getClientIp(req)
-  if (isRateLimited(`places:${ip}`, 60 * 1000, 20)) {
+  if (isRateLimited(`places:${ip}`, 60 * 1000, 150)) {
     return NextResponse.json({ error: 'Muitas requisições. Tente novamente em instantes.' }, { status: 429 })
   }
 

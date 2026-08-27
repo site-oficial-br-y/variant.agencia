@@ -8,16 +8,30 @@ import type { Plan } from '@/lib/plans'
 
 interface SearchParams { service: string; city: string; segment: string; allBrazil: boolean }
 
+/** Erro de infraestrutura (API fora, limite estourado) — precisa aparecer pro usuário
+ *  como erro, não como "nenhum resultado". Já enganou usuário em produção. */
+class SearchUnavailableError extends Error {}
+
 async function geocodeCity(city: string): Promise<{ lat: number; lng: number }> {
   const res = await fetch(`/api/places?action=geocode&address=${encodeURIComponent(city + ', Brasil')}`)
-  const data = await res.json()
+  const data = await res.json().catch(() => ({}))
+  if (res.status === 429) {
+    throw new SearchUnavailableError('Muitas buscas em pouco tempo. Espere um minuto e tente de novo.')
+  }
   if (data.results?.[0]) return data.results[0].geometry.location
-  return { lat: -15.8, lng: -47.9 }
+  // Sem coordenada válida, cair no centro do país entregaria lead de outra região sem avisar.
+  throw new SearchUnavailableError(`Não consegui localizar "${city}". Confira o nome da cidade e tente de novo.`)
 }
 
 async function fetchPlaces(query: string, lat: number, lng: number, radius: number): Promise<any[]> {
   const res = await fetch(`/api/places?action=nearby&location=${lat},${lng}&radius=${radius}&keyword=${encodeURIComponent(query)}`)
-  const data = await res.json()
+  const data = await res.json().catch(() => ({}))
+  if (res.status === 429) {
+    throw new SearchUnavailableError('Muitas buscas em pouco tempo. Espere um minuto e tente de novo.')
+  }
+  if (!res.ok || data.status === 'ERROR' || data.error) {
+    throw new SearchUnavailableError('A busca está indisponível no momento. Tente de novo em alguns minutos.')
+  }
   return data.results || []
 }
 
@@ -232,7 +246,7 @@ export function SearchResults({ params, userId, plan = 'free', onLimitReached }:
         }).catch(() => {})
       }
     } catch (e) {
-      setError('Erro na busca. Verifique sua conexão.')
+      setError(e instanceof SearchUnavailableError ? e.message : 'Erro na busca. Verifique sua conexão.')
     } finally {
       setLoading(false)
       setSearched(true)
