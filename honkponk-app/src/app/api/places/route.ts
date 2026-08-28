@@ -8,7 +8,12 @@ const GOOGLE_KEY = process.env.GOOGLE_PLACES_KEY || ''
 const supabaseCache = (process.env.NEXT_PUBLIC_SUPABASE_URL && process.env.SUPABASE_SERVICE_ROLE_KEY)
   ? createClient(process.env.NEXT_PUBLIC_SUPABASE_URL, process.env.SUPABASE_SERVICE_ROLE_KEY)
   : null
-const CACHE_TTL_MS = 7 * 24 * 60 * 60 * 1000 // 7 dias
+// Resultado de busca: empresa abre/fecha devagar, 30 dias de cache não deixa o dado velho
+// e corta bastante chamada paga em cidade/segmento repetido.
+const CACHE_TTL_MS = 30 * 24 * 60 * 60 * 1000 // 30 dias
+// Coordenada de cidade não muda. Cache longo aqui é seguro e elimina a maior parte das
+// chamadas de Geocoding (que estavam sem cache nenhum e passavam do volume do Places).
+const GEOCODE_TTL_MS = 365 * 24 * 60 * 60 * 1000 // 1 ano
 
 export async function GET(req: NextRequest) {
   const { searchParams } = new URL(req.url)
@@ -35,10 +40,33 @@ export async function GET(req: NextRequest) {
 
   if (action === 'geocode') {
     const address = searchParams.get('address') || ''
+
+    // Mesma tabela de cache da busca, com prefixo próprio na chave.
+    const geoCacheKey = `geocode:${address.trim().toLowerCase()}`
+    if (supabaseCache) {
+      try {
+        const { data: cached } = await supabaseCache.from('places_cache').select('results, created_at').eq('cache_key', geoCacheKey).maybeSingle()
+        if (cached && cached.created_at && (Date.now() - new Date(cached.created_at).getTime()) < GEOCODE_TTL_MS) {
+          return NextResponse.json({ results: cached.results, status: 'OK', cached: true })
+        }
+      } catch { /* cache falhou, segue pro Google */ }
+    }
+
     const res = await fetch(
       `https://maps.googleapis.com/maps/api/geocode/json?address=${encodeURIComponent(address)}&key=${GOOGLE_KEY}`
     )
     const data = await res.json()
+
+    // Só guarda acerto: erro e cidade inexistente não valem cache de um ano.
+    if (supabaseCache && data.status === 'OK' && data.results?.length) {
+      try {
+        await supabaseCache.from('places_cache').upsert(
+          { cache_key: geoCacheKey, results: data.results, created_at: new Date().toISOString() },
+          { onConflict: 'cache_key' }
+        )
+      } catch { /* ignora erro de cache */ }
+    }
+
     return NextResponse.json(data)
   }
 
