@@ -28,6 +28,10 @@ export interface AdminStats {
     revenueCentsTotal: number | null
     recent: CoinPurchaseRow[] | null
   }
+  extra: {
+    totalCents: number | null
+    recent: ExtraRevenueRow[] | null
+  }
   searches: {
     total: number | null
     today: number | null
@@ -54,6 +58,13 @@ export interface CoinPurchaseRow {
   coins: number
   amount_cents: number | null
   created_at: string
+}
+
+/** Receita fora do sistema (freela, bico) — não é recorrente, então fica separada do MRR. */
+export interface ExtraRevenueRow {
+  description: string
+  amount_cents: number
+  received_at: string
 }
 
 function dayKey(d: Date) {
@@ -284,10 +295,28 @@ export default async function AdminPage() {
     warnings.push('Tabela coin_purchases ainda não existe — histórico de compras indisponível (só o saldo atual).')
   }
 
+  // ── Receita fora do sistema (freela/bico) ──
+  let extraTotalCents: number | null = null
+  let extraRecent: ExtraRevenueRow[] | null = null
+  try {
+    const { data, error } = await admin
+      .from('extra_revenue')
+      .select('description, amount_cents, received_at')
+      .order('received_at', { ascending: false })
+      .limit(500)
+    if (error) throw error
+    const rows = (data || []) as ExtraRevenueRow[]
+    extraTotalCents = rows.reduce((acc, r) => acc + (r.amount_cents || 0), 0)
+    extraRecent = rows.slice(0, 20)
+  } catch {
+    warnings.push('Tabela extra_revenue ainda não existe — receita de freela não entra no saldo.')
+  }
+
   const stats: AdminStats = {
     users: { total: usersTotal, signupsByDay: buildSeries(signupDates, SERIES_DAYS) },
     plans: { counts: planCounts, paying, teamMembers, expiringIn7, mrrCents, activeSubscriptions, courtesy: courtesyCount },
     coins: { inCirculation: coinsTotal, revenueCentsTotal: coinsRevenueCentsTotal, recent: coinsRecent },
+    extra: { totalCents: extraTotalCents, recent: extraRecent },
     searches: { total: searchTotal, today: searchesToday, byDay: searchByDay, topSegments, topCities },
     generatedAt: new Date().toISOString(),
     warnings,

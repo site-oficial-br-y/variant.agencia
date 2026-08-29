@@ -4,7 +4,7 @@ import { useState, useMemo, useEffect, useRef, useTransition } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { PLANS, type Plan } from '@/lib/plans'
-import type { AdminStats, DayPoint, Ranked, CoinPurchaseRow } from './page'
+import type { AdminStats, DayPoint, Ranked, CoinPurchaseRow, ExtraRevenueRow } from './page'
 
 // Centavos importam aqui: com planos de 19,90 e 59,90 o total quase nunca é redondo,
 // e arredondar escondia a diferença (ex: R$418,30 aparecia como R$418).
@@ -144,6 +144,39 @@ function CoinPurchasesCard({ purchases }: { purchases: CoinPurchaseRow[] | null 
                 <div className="font-bold tabular-nums">{p.coins} coins</div>
                 {p.amount_cents !== null && <div className="text-xs text-[#4ade80] tabular-nums">{BRL(p.amount_cents)}</div>}
               </div>
+            </div>
+          ))}
+        </div>
+      )}
+    </Card>
+  )
+}
+
+/* ── receita fora do sistema (freela/bico) ── */
+function ExtraRevenueCard({ rows }: { rows: ExtraRevenueRow[] | null }) {
+  return (
+    <Card delay={460}>
+      <div className="text-sm font-bold mb-4">Freelas e bicos</div>
+      {rows === null && (
+        <div className="text-sm text-white/40">
+          Tabela <code className="text-xs px-1 py-0.5 rounded bg-white/10">extra_revenue</code> ainda não existe.
+          Rode o SQL de criação no Supabase pra começar a registrar.
+        </div>
+      )}
+      {rows !== null && rows.length === 0 && (
+        <div className="text-sm text-white/40">Nenhum freela registrado ainda.</div>
+      )}
+      {rows !== null && rows.length > 0 && (
+        <div className="space-y-2">
+          {rows.map((r, i) => (
+            <div key={i} className="flex items-center justify-between text-sm border-b border-white/5 last:border-0 pb-2 last:pb-0">
+              <div className="min-w-0">
+                <div className="font-medium truncate">{r.description}</div>
+                <div className="text-xs text-white/40">
+                  {new Date(r.received_at + 'T12:00:00').toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit', year: 'numeric' })}
+                </div>
+              </div>
+              <div className="font-bold tabular-nums text-[#a78bfa] shrink-0 pl-3">{BRL(r.amount_cents)}</div>
             </div>
           ))}
         </div>
@@ -298,7 +331,7 @@ export function AdminClient({
   if (setup) return <Setup kind={setup} />
   if (!stats) return null
 
-  const { users, plans, coins, searches, warnings, generatedAt } = stats
+  const { users, plans, coins, extra, searches, warnings, generatedAt } = stats
   const conv = users.total > 0 ? (plans.paying / users.total) * 100 : 0
   const periodLabel = PERIODS.find(p => p.key === period)!.label
 
@@ -375,15 +408,42 @@ export function AdminClient({
 
         {tab === 'geral' && (
           <div className="space-y-4">
+            {/* Dois blocos de dinheiro, mesmo peso visual:
+                MRR = só o que se repete todo mês. Saldo = tudo que entrou (assinatura + coins + freela). */}
+            <div className="grid md:grid-cols-2 gap-4">
+              <Card delay={0}>
+                <div className="text-[11px] uppercase tracking-wider text-white/40 font-semibold">MRR</div>
+                <div className="text-4xl font-extrabold mt-1.5 tracking-tight tabular-nums text-[#4ade80]">
+                  {BRL(plans.mrrCents)}
+                </div>
+                <div className="text-xs text-white/40 mt-1.5">
+                  receita que se repete todo mês · {plans.paying} assinante{plans.paying === 1 ? '' : 's'}
+                  {plans.courtesy !== null && plans.courtesy > 0 && ` · ${plans.courtesy} cortesia${plans.courtesy === 1 ? '' : 's'}`}
+                </div>
+              </Card>
+
+              <Card delay={80}>
+                <div className="text-[11px] uppercase tracking-wider text-white/40 font-semibold">Saldo atual</div>
+                <div className="text-4xl font-extrabold mt-1.5 tracking-tight tabular-nums">
+                  {BRL(plans.mrrCents + (coins.revenueCentsTotal || 0) + (extra.totalCents || 0))}
+                </div>
+                <div className="text-xs text-white/40 mt-1.5 space-y-0.5">
+                  <div>assinaturas {BRL(plans.mrrCents)}</div>
+                  {coins.revenueCentsTotal !== null && coins.revenueCentsTotal > 0 && <div>coins {BRL(coins.revenueCentsTotal)}</div>}
+                  {extra.totalCents !== null && extra.totalCents > 0 && <div>freela {BRL(extra.totalCents)}</div>}
+                </div>
+              </Card>
+            </div>
+
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
               <Stat label="Usuários" value={users.total} hint={`+${sum(signups)} em ${periodLabel}`} delay={0} />
               <Stat label="Pagantes" value={plans.paying} accent="#f8b6c8" hint={`${conv.toFixed(1)}% de conversão`} delay={60} />
               <Stat
-                label="MRR real"
-                value={plans.mrrCents}
+                label="Freela / bico"
+                value={extra.totalCents}
                 money
-                accent="#4ade80"
-                hint={plans.courtesy !== null ? `só assinaturas ativas · ${plans.courtesy} cortesia${plans.courtesy === 1 ? '' : 's'}` : 'só assinaturas ativas'}
+                accent="#a78bfa"
+                hint="receita fora do sistema"
                 delay={120}
               />
               <Stat
@@ -467,7 +527,10 @@ export function AdminClient({
               </Card>
             </div>
 
-            <CoinPurchasesCard purchases={coins.recent} />
+            <div className="grid md:grid-cols-2 gap-4">
+              <CoinPurchasesCard purchases={coins.recent} />
+              <ExtraRevenueCard rows={extra.recent} />
+            </div>
           </div>
         )}
 
