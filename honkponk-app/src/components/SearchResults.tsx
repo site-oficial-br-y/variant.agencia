@@ -120,6 +120,8 @@ export function SearchResults({ params, userId, plan = 'free', onLimitReached }:
   const [progressCity, setProgressCity] = useState('')
   const [progressDone, setProgressDone] = useState(0)
   const [aiFiltering, setAiFiltering] = useState(false)
+  // true quando nada bateu no filtro do serviço e a lista mostra a região inteira
+  const [showingOutsideFilter, setShowingOutsideFilter] = useState(false)
 
   const meta = SERVICE_META[params.service] || SERVICE_META.outros
   const segQueries: string[] = Array.isArray(SEGMENT_QUERIES[params.segment])
@@ -137,6 +139,7 @@ export function SearchResults({ params, userId, plan = 'free', onLimitReached }:
     setProgressCity('')
     setProgressDone(0)
     setAiFiltering(false)
+    setShowingOutsideFilter(false)
 
     try {
       const limitRes = await fetch('/api/search', {
@@ -236,9 +239,20 @@ export function SearchResults({ params, userId, plan = 'free', onLimitReached }:
         const extra2 = fallbackFiltered.filter(p => !existing.has(p.name)).slice(0, minGuarantee - final.length)
         final = [...final, ...extra2]
       }
+      // Nenhum lead bate no filtro: em vez de devolver tela vazia (que o usuário lê como
+      // "quebrou"), mostra o que existe na região avisando que está fora do critério. O badge
+      // "cliente ideal" continua separando os dois — sem misturar sem aviso, que foi a
+      // reclamação anterior.
+      const noIdealMatch = final.length === 0 && detailed.length > 0
+      if (noIdealMatch) {
+        final = detailed.slice(0, limit || detailed.length)
+      }
+      setShowingOutsideFilter(noIdealMatch)
       setResults(final)
 
-      if (userId) {
+      // Busca sem nenhum resultado não consome a busca do dia nem Honk Coin. Cobrar por tela
+      // vazia gerou reclamação de quem pagou ("comprei créditos e não aparece as pesquisas").
+      if (userId && final.length > 0) {
         fetch('/api/search', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
@@ -377,6 +391,12 @@ export function SearchResults({ params, userId, plan = 'free', onLimitReached }:
         </div>
       ) : (
         <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+          {showingOutsideFilter && (
+            <div style={{ background: 'rgba(251,191,36,.08)', border: '1px solid rgba(251,191,36,.25)', borderRadius: 12, padding: '12px 16px', marginBottom: 6, fontSize: '.82rem', color: 'rgba(255,255,255,.65)', lineHeight: 1.6 }}>
+              ⚠️ Nenhuma empresa dessa região bate com o filtro <strong style={{ color: '#fbbf24' }}>{meta.filterLabel.toLowerCase()}</strong>.
+              {' '}Mostrando os outros negócios da região — eles <strong>não</strong> têm o perfil ideal pro seu serviço, mas o contato está aqui caso queira abordar mesmo assim.
+            </div>
+          )}
           {results.map((place, i) => {
             const hot = isHotLead(place)
             return (
