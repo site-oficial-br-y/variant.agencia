@@ -6,8 +6,10 @@ import Link from 'next/link'
 import { PLANS, type Plan } from '@/lib/plans'
 import type { AdminStats, DayPoint, Ranked, CoinPurchaseRow } from './page'
 
+// Centavos importam aqui: com planos de 19,90 e 59,90 o total quase nunca é redondo,
+// e arredondar escondia a diferença (ex: R$418,30 aparecia como R$418).
 const BRL = (cents: number) =>
-  (cents / 100).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL', maximumFractionDigits: 0 })
+  (cents / 100).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL', minimumFractionDigits: 2, maximumFractionDigits: 2 })
 
 const num = (n: number | null | undefined) => (n === null || n === undefined ? '—' : n.toLocaleString('pt-BR'))
 
