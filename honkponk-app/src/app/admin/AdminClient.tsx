@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { PLANS, type Plan } from '@/lib/plans'
 import type { AdminStats, DayPoint, Ranked, CoinPurchaseRow, ExtraRevenueRow } from './page'
+import type { MpSummary } from '@/lib/mercadopago'
 
 // Centavos importam aqui: com planos de 19,90 e 59,90 o total quase nunca é redondo,
 // e arredondar escondia a diferença (ex: R$418,30 aparecia como R$418).
@@ -143,6 +144,111 @@ function CoinPurchasesCard({ purchases }: { purchases: CoinPurchaseRow[] | null 
               <div className="text-right shrink-0 pl-3">
                 <div className="font-bold tabular-nums">{p.coins} coins</div>
                 {p.amount_cents !== null && <div className="text-xs text-[#4ade80] tabular-nums">{BRL(p.amount_cents)}</div>}
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+    </Card>
+  )
+}
+
+const MONTH_LABEL = (m: string) =>
+  new Date(m + '-01T12:00:00').toLocaleDateString('pt-BR', { month: 'short', year: '2-digit' })
+
+/* ── faturamento acumulado de verdade, direto do Mercado Pago ──
+   Diferente do MRR (que é projeção de quanto entra por mês), aqui é a soma de
+   tudo que já foi aprovado desde o primeiro pagamento. */
+function TotalReceivedCard({ mp }: { mp: MpSummary | null }) {
+  if (!mp) {
+    return (
+      <Card delay={140}>
+        <div className="text-[11px] uppercase tracking-wider text-white/40 font-semibold">Total recebido</div>
+        <div className="text-sm text-white/40 mt-2">
+          Não consegui falar com o Mercado Pago. Confira se a variável{' '}
+          <code className="text-xs px-1 py-0.5 rounded bg-white/10">MP_ACCESS_TOKEN</code> está configurada na Vercel.
+        </div>
+      </Card>
+    )
+  }
+
+  const since = mp.firstApprovedAt
+    ? new Date(mp.firstApprovedAt).toLocaleDateString('pt-BR', { day: '2-digit', month: 'long', year: 'numeric' })
+    : null
+  const maxMonth = Math.max(1, ...mp.byMonth.map(m => m.netCents))
+
+  return (
+    <Card delay={140}>
+      <div className="flex items-baseline justify-between flex-wrap gap-2">
+        <div>
+          <div className="text-[11px] uppercase tracking-wider text-white/40 font-semibold">Total recebido</div>
+          <div className="text-4xl font-extrabold mt-1.5 tracking-tight tabular-nums text-[#4ade80]">
+            {BRL(mp.netCents)}
+          </div>
+          <div className="text-xs text-white/40 mt-1.5">
+            líquido, já sem a taxa do Mercado Pago · {mp.count} pagamento{mp.count === 1 ? '' : 's'} aprovado{mp.count === 1 ? '' : 's'}
+            {since && ` desde ${since}`}
+          </div>
+        </div>
+        <div className="text-right text-xs text-white/40 space-y-0.5">
+          <div>bruto <span className="tabular-nums text-white/70">{BRL(mp.grossCents)}</span></div>
+          <div>taxas <span className="tabular-nums text-[#fb923c]">-{BRL(mp.feeCents)}</span></div>
+        </div>
+      </div>
+
+      {mp.truncated && (
+        <div className="text-xs text-[#fbbf24] mt-3">
+          Histórico grande demais pra paginação da API — esse total é parcial.
+        </div>
+      )}
+
+      {mp.byMonth.length > 0 && (
+        <div className="mt-5">
+          <div className="text-[11px] uppercase tracking-wider text-white/40 font-semibold mb-3">Por mês</div>
+          <div className="space-y-2">
+            {mp.byMonth.map(m => (
+              <div key={m.month} className="flex items-center gap-3">
+                <div className="w-16 text-[13px] font-medium shrink-0 capitalize">{MONTH_LABEL(m.month)}</div>
+                <div className="flex-1 h-2.5 rounded-full bg-white/[0.07] overflow-hidden">
+                  <div
+                    className="h-full rounded-full bg-[#4ade80] transition-all duration-700"
+                    style={{ width: `${(m.netCents / maxMonth) * 100}%` }}
+                  />
+                </div>
+                <div className="text-xs font-bold w-32 text-right tabular-nums">
+                  {BRL(m.netCents)} <span className="text-white/30 font-normal">({m.count})</span>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+    </Card>
+  )
+}
+
+/* ── últimos pagamentos aprovados no Mercado Pago ── */
+function MpPaymentsCard({ mp }: { mp: MpSummary | null }) {
+  if (!mp) return null
+  return (
+    <Card delay={500}>
+      <div className="text-sm font-bold mb-4">Últimos pagamentos recebidos</div>
+      {mp.recent.length === 0 ? (
+        <div className="text-sm text-white/40">Nenhum pagamento aprovado ainda.</div>
+      ) : (
+        <div className="space-y-2">
+          {mp.recent.map(p => (
+            <div key={p.id} className="flex items-center justify-between text-sm border-b border-white/5 last:border-0 pb-2 last:pb-0">
+              <div className="min-w-0">
+                <div className="font-medium truncate">{p.email || 'e-mail não informado'}</div>
+                <div className="text-xs text-white/40 truncate">
+                  {new Date(p.approvedAt).toLocaleString('pt-BR', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' })}
+                  {p.description && ` · ${p.description}`}
+                </div>
+              </div>
+              <div className="text-right shrink-0 pl-3">
+                <div className="font-bold tabular-nums text-[#4ade80]">{BRL(p.netCents)}</div>
+                {p.feeCents > 0 && <div className="text-xs text-white/30 tabular-nums">bruto {BRL(p.grossCents)}</div>}
               </div>
             </div>
           ))}
@@ -331,7 +437,7 @@ export function AdminClient({
   if (setup) return <Setup kind={setup} />
   if (!stats) return null
 
-  const { users, plans, coins, extra, searches, warnings, generatedAt } = stats
+  const { users, plans, coins, extra, searches, payments, warnings, generatedAt } = stats
   const conv = users.total > 0 ? (plans.paying / users.total) * 100 : 0
   const periodLabel = PERIODS.find(p => p.key === period)!.label
 
@@ -435,6 +541,8 @@ export function AdminClient({
               </Card>
             </div>
 
+            <TotalReceivedCard mp={payments} />
+
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
               <Stat label="Usuários" value={users.total} hint={`+${sum(signups)} em ${periodLabel}`} delay={0} />
               <Stat label="Pagantes" value={plans.paying} accent="#f8b6c8" hint={`${conv.toFixed(1)}% de conversão`} delay={60} />
@@ -531,6 +639,8 @@ export function AdminClient({
               <CoinPurchasesCard purchases={coins.recent} />
               <ExtraRevenueCard rows={extra.recent} />
             </div>
+
+            <MpPaymentsCard mp={payments} />
           </div>
         )}
 

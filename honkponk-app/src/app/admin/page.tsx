@@ -3,6 +3,7 @@ import { createClient as createAdminClient } from '@supabase/supabase-js'
 import { redirect } from 'next/navigation'
 import { PLANS, type Plan } from '@/lib/plans'
 import { AdminClient } from './AdminClient'
+import { getMercadoPagoSummary, type MpSummary } from '@/lib/mercadopago'
 
 export const dynamic = 'force-dynamic'
 
@@ -32,6 +33,8 @@ export interface AdminStats {
     totalCents: number | null
     recent: ExtraRevenueRow[] | null
   }
+  /** Faturamento real, vindo da API do Mercado Pago. null = não deu pra ler. */
+  payments: MpSummary | null
   searches: {
     total: number | null
     today: number | null
@@ -312,11 +315,25 @@ export default async function AdminPage() {
     warnings.push('Tabela extra_revenue ainda não existe — receita de freela não entra no saldo.')
   }
 
+  // ── Faturamento real (Mercado Pago) ──
+  let payments: MpSummary | null = null
+  try {
+    payments = await getMercadoPagoSummary()
+    if (!payments) {
+      warnings.push('Não consegui ler os pagamentos no Mercado Pago — confira se MP_ACCESS_TOKEN está configurado na Vercel.')
+    } else if (payments.truncated) {
+      warnings.push('O histórico do Mercado Pago passou do limite de paginação — o total mostrado é parcial (só os mais recentes).')
+    }
+  } catch {
+    warnings.push('Erro ao consultar o Mercado Pago.')
+  }
+
   const stats: AdminStats = {
     users: { total: usersTotal, signupsByDay: buildSeries(signupDates, SERIES_DAYS) },
     plans: { counts: planCounts, paying, teamMembers, expiringIn7, mrrCents, activeSubscriptions, courtesy: courtesyCount },
     coins: { inCirculation: coinsTotal, revenueCentsTotal: coinsRevenueCentsTotal, recent: coinsRecent },
     extra: { totalCents: extraTotalCents, recent: extraRecent },
+    payments,
     searches: { total: searchTotal, today: searchesToday, byDay: searchByDay, topSegments, topCities },
     generatedAt: new Date().toISOString(),
     warnings,
