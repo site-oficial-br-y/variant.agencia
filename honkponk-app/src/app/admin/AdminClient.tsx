@@ -227,17 +227,29 @@ function TotalReceivedCard({ mp }: { mp: MpSummary | null }) {
   )
 }
 
-/* ── últimos pagamentos aprovados no Mercado Pago ── */
+/* ── pagamentos aprovados no Mercado Pago ── */
+const PAYMENTS_PREVIEW = 20
+
 function MpPaymentsCard({ mp }: { mp: MpSummary | null }) {
+  const [showAll, setShowAll] = useState(false)
   if (!mp) return null
+
+  const total = mp.list.length
+  const shown = showAll ? mp.list : mp.list.slice(0, PAYMENTS_PREVIEW)
+
   return (
     <Card delay={500}>
-      <div className="text-sm font-bold mb-4">Últimos pagamentos recebidos</div>
-      {mp.recent.length === 0 ? (
+      <div className="flex items-baseline justify-between gap-3 mb-4">
+        <div className="text-sm font-bold">
+          {showAll ? 'Todos os pagamentos' : 'Últimos pagamentos recebidos'}
+        </div>
+        <div className="text-xs text-white/40 tabular-nums">{total} no total</div>
+      </div>
+      {total === 0 ? (
         <div className="text-sm text-white/40">Nenhum pagamento aprovado ainda.</div>
       ) : (
-        <div className="space-y-2">
-          {mp.recent.map(p => (
+        <div className={`space-y-2 ${showAll ? 'max-h-[60vh] overflow-y-auto pr-1' : ''}`}>
+          {shown.map(p => (
             <div key={p.id} className="flex items-center justify-between text-sm border-b border-white/5 last:border-0 pb-2 last:pb-0">
               <div className="min-w-0">
                 <div className="font-medium truncate">{p.email || 'e-mail não informado'}</div>
@@ -253,6 +265,14 @@ function MpPaymentsCard({ mp }: { mp: MpSummary | null }) {
             </div>
           ))}
         </div>
+      )}
+      {total > PAYMENTS_PREVIEW && (
+        <button
+          onClick={() => setShowAll(v => !v)}
+          className="mt-4 w-full rounded-xl border border-white/10 bg-white/[0.04] py-2.5 text-sm font-semibold text-[#f8b6c8] transition-colors hover:bg-white/[0.08]"
+        >
+          {showAll ? 'Mostrar menos' : `Ver todas as ${total} transações`}
+        </button>
       )}
     </Card>
   )

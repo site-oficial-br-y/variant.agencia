@@ -34,7 +34,9 @@ export interface MpSummary {
   netCents: number
   feeCents: number
   byMonth: MpMonthPoint[]
-  recent: MpPayment[]
+  /** Histórico completo, do mais recente pro mais antigo. O painel mostra
+   *  os primeiros e revela o resto num botão. */
+  list: MpPayment[]
   firstApprovedAt: string | null
   truncated: boolean
 }
@@ -137,7 +139,7 @@ export async function getMercadoPagoSummary(): Promise<MpSummary | null> {
     netCents: payments.reduce((a, p) => a + p.netCents, 0),
     feeCents: payments.reduce((a, p) => a + p.feeCents, 0),
     byMonth: Array.from(monthMap.values()).sort((a, b) => a.month.localeCompare(b.month)),
-    recent: payments.slice(0, 20),
+    list: payments,
     firstApprovedAt: payments.length ? payments[payments.length - 1].approvedAt : null,
     truncated,
   }
