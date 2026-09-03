@@ -186,9 +186,14 @@ function TotalReceivedCard({ mp }: { mp: MpSummary | null }) {
             {BRL(mp.netCents)}
           </div>
           <div className="text-xs text-white/40 mt-1.5">
-            líquido, já sem a taxa do Mercado Pago · {mp.count} pagamento{mp.count === 1 ? '' : 's'} aprovado{mp.count === 1 ? '' : 's'}
+            líquido, já sem a taxa do Mercado Pago · {mp.count} pagamento{mp.count === 1 ? '' : 's'} do Honk Ponk
             {since && ` desde ${since}`}
           </div>
+          {mp.ignoredCount > 0 && (
+            <div className="text-xs text-white/30 mt-1">
+              {mp.ignoredCount} pagamento{mp.ignoredCount === 1 ? '' : 's'} da conta fora do Honk Ponk não {mp.ignoredCount === 1 ? 'entrou' : 'entraram'} nesse total
+            </div>
+          )}
         </div>
         <div className="text-right text-xs text-white/40 space-y-0.5">
           <div>bruto <span className="tabular-nums text-white/70">{BRL(mp.grossCents)}</span></div>

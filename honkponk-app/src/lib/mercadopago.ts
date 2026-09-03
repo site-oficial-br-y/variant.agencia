@@ -39,6 +39,21 @@ export interface MpSummary {
   list: MpPayment[]
   firstApprovedAt: string | null
   truncated: boolean
+  /** Pagamentos aprovados na conta que não são do Honk Ponk e ficaram de fora
+   *  dos totais. A conta do Mercado Pago é compartilhada, então isso não é
+   *  erro — é só o que pertence a outra pessoa. */
+  ignoredCount: number
+}
+
+/**
+ * O checkout e a compra de coins criam a preferência com o título começando em
+ * "Honk Ponk". Como a conta do Mercado Pago é usada para outras coisas, tudo que
+ * não bate com isso fica de fora — inclusive pagamento sem descrição, que não dá
+ * para atribuir com segurança. Melhor deixar de somar algo nosso do que somar
+ * dinheiro de outra pessoa como se fosse faturamento do produto.
+ */
+function isHonkPonk(description: string | null): boolean {
+  return (description || '').toLowerCase().includes('honk ponk')
 }
 
 const toCents = (v: unknown) => Math.round((typeof v === 'number' ? v : 0) * 100)
@@ -101,8 +116,9 @@ export async function getMercadoPagoSummary(): Promise<MpSummary | null> {
     }
   }
 
-  const payments: MpPayment[] = all
-    .filter(p => p.status === 'approved')
+  const approved = all.filter(p => p.status === 'approved')
+  const payments: MpPayment[] = approved
+    .filter(p => isHonkPonk(p.description ?? null))
     .map(p => {
       const gross = toCents(p.transaction_amount)
       const fee = (p.fee_details || []).reduce((acc, f) => acc + toCents(f.amount), 0)
@@ -142,5 +158,6 @@ export async function getMercadoPagoSummary(): Promise<MpSummary | null> {
     list: payments,
     firstApprovedAt: payments.length ? payments[payments.length - 1].approvedAt : null,
     truncated,
+    ignoredCount: approved.length - payments.length,
   }
 }
