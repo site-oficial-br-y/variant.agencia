@@ -29,10 +29,6 @@ export async function POST(request: NextRequest) {
       external_reference: `${userId}|${plan}|${period.months}`,
       notification_url: `${APP_URL}/api/webhook`,
       statement_descriptor: 'HONK PONK',
-      // Ticket de 19,90/59,90 não se parcela na prática, e parcelamento com juros
-      // por conta do vendedor comeria a margem à toa. Cartão continua liberado,
-      // só que à vista.
-      payment_methods: { installments: 1 },
       metadata: { user_id: userId, plan },
     }
 

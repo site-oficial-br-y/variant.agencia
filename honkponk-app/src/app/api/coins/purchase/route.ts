@@ -39,7 +39,6 @@ export async function POST(request: NextRequest) {
       external_reference: `${userId}|coins|${pkg.coins}`,
       notification_url: `${APP_URL}/api/webhook`,
       statement_descriptor: 'HONK PONK',
-      payment_methods: { installments: 1 },
       metadata: { user_id: userId, coins: pkg.coins },
     }
 
