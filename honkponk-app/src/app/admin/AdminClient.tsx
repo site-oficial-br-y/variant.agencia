@@ -4,7 +4,7 @@ import { useState, useMemo, useEffect, useRef, useTransition } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { PLANS, type Plan } from '@/lib/plans'
-import type { AdminStats, DayPoint, Ranked, CoinPurchaseRow, ExtraRevenueRow } from './page'
+import type { AdminStats, DayPoint, Ranked, CoinPurchaseRow, ExtraRevenueRow, ApiCostEstimate } from './page'
 import type { MpSummary } from '@/lib/mercadopago'
 
 // Centavos importam aqui: com planos de 19,90 e 59,90 o total quase nunca é redondo,
@@ -228,6 +228,47 @@ function TotalReceivedCard({ mp }: { mp: MpSummary | null }) {
           </div>
         </div>
       )}
+    </Card>
+  )
+}
+
+/* ── custo estimado da Places API, calculado pelas buscas do banco ──
+   Existe porque o faturamento do Google atrasa dias e some no começo do mês. */
+function ApiCostCard({ cost, mrrCents }: { cost: ApiCostEstimate | null; mrrCents: number }) {
+  if (!cost) return null
+
+  const pctOfMrr = mrrCents > 0 ? (cost.projectedCostCents / mrrCents) * 100 : 0
+  const tone = pctOfMrr > 30 ? '#fb923c' : pctOfMrr > 15 ? '#fbbf24' : '#4ade80'
+
+  return (
+    <Card delay={200}>
+      <div className="flex items-baseline justify-between flex-wrap gap-3">
+        <div>
+          <div className="text-[11px] uppercase tracking-wider text-white/40 font-semibold">Custo do Google — este mês</div>
+          <div className="text-4xl font-extrabold mt-1.5 tracking-tight tabular-nums" style={{ color: tone }}>
+            {BRL(cost.monthCostCents)}
+          </div>
+          <div className="text-xs text-white/40 mt-1.5">
+            {cost.monthCalls.toLocaleString('pt-BR')} chamadas em {cost.daysElapsed} dia{cost.daysElapsed === 1 ? '' : 's'}
+          </div>
+        </div>
+        <div className="text-right">
+          <div className="text-[11px] uppercase tracking-wider text-white/40 font-semibold">Projeção do mês</div>
+          <div className="text-2xl font-extrabold mt-1 tabular-nums" style={{ color: tone }}>
+            {BRL(cost.projectedCostCents)}
+          </div>
+          {mrrCents > 0 && (
+            <div className="text-xs text-white/40 mt-1">{pctOfMrr.toFixed(1)}% do MRR</div>
+          )}
+        </div>
+      </div>
+
+      <div className="mt-4 pt-4 border-t border-white/5 text-xs text-white/35 leading-relaxed">
+        Calculado pelas buscas registradas, não pelo painel do Google — que atrasa dias.
+        Preço por chamada calibrado pela fatura de {cost.referenceMonth} ({BRL(cost.referenceInvoiceCents)} ÷{' '}
+        {cost.referenceCalls.toLocaleString('pt-BR')} chamadas). É estimativa: serve pra perceber
+        movimento estranho cedo, não pra bater centavo com a fatura.
+      </div>
     </Card>
   )
 }
@@ -462,7 +503,7 @@ export function AdminClient({
   if (setup) return <Setup kind={setup} />
   if (!stats) return null
 
-  const { users, plans, coins, extra, searches, payments, warnings, generatedAt } = stats
+  const { users, plans, coins, extra, searches, payments, apiCost, warnings, generatedAt } = stats
   const conv = users.total > 0 ? (plans.paying / users.total) * 100 : 0
   const periodLabel = PERIODS.find(p => p.key === period)!.label
 
@@ -567,6 +608,8 @@ export function AdminClient({
             </div>
 
             <TotalReceivedCard mp={payments} />
+
+            <ApiCostCard cost={apiCost} mrrCents={plans.mrrCents} />
 
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
               <Stat label="Usuários" value={users.total} hint={`+${sum(signups)} em ${periodLabel}`} delay={0} />
