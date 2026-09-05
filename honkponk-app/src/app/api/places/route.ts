@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
+import { createClient as createServerClient } from '@/lib/supabase/server'
 import { getClientIp, isRateLimited } from '@/lib/rateLimit'
 
 const GOOGLE_KEY = process.env.GOOGLE_PLACES_KEY || ''
@@ -18,6 +19,16 @@ const GEOCODE_TTL_MS = 365 * 24 * 60 * 60 * 1000 // 1 ano
 export async function GET(req: NextRequest) {
   const { searchParams } = new URL(req.url)
   const action = searchParams.get('action')
+
+  // Sem login não passa. A busca só aparece pra quem já entrou (page.tsx e o dashboard
+  // só montam o componente com usuário na sessão), então isso não muda nada pra quem usa
+  // o site — inclusive no plano grátis, que também tem conta. O que fecha é o acesso
+  // direto à URL, que devolvia leads de graça e ainda gerava chamada paga ao Google.
+  const auth = createServerClient()
+  const { data: { user } } = await auth.auth.getUser()
+  if (!user) {
+    return NextResponse.json({ error: 'Faça login para buscar leads.' }, { status: 401 })
+  }
 
   // Trava de emergência: essa rota chama o Google direto e pode ser acessada sem passar
   // pelo /api/search (que tem os limites por plano). A rede de segurança de verdade contra

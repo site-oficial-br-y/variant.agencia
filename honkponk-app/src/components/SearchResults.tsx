@@ -12,9 +12,17 @@ interface SearchParams { service: string; city: string; segment: string; allBraz
  *  como erro, não como "nenhum resultado". Já enganou usuário em produção. */
 class SearchUnavailableError extends Error {}
 
+// A rota de busca agora exige sessão. Sem tratar o 401 aqui, sessão expirada cairia
+// nas mensagens genéricas abaixo ("não consegui localizar a cidade"), que mandam o
+// usuário procurar erro onde não tem.
+const SESSION_EXPIRED = 'Sua sessão expirou. Entre de novo para continuar buscando.'
+
 async function geocodeCity(city: string): Promise<{ lat: number; lng: number }> {
   const res = await fetch(`/api/places?action=geocode&address=${encodeURIComponent(city + ', Brasil')}`)
   const data = await res.json().catch(() => ({}))
+  if (res.status === 401) {
+    throw new SearchUnavailableError(SESSION_EXPIRED)
+  }
   if (res.status === 429) {
     throw new SearchUnavailableError('Muitas buscas em pouco tempo. Espere um minuto e tente de novo.')
   }
@@ -26,6 +34,9 @@ async function geocodeCity(city: string): Promise<{ lat: number; lng: number }> 
 async function fetchPlaces(query: string, lat: number, lng: number, radius: number): Promise<any[]> {
   const res = await fetch(`/api/places?action=nearby&location=${lat},${lng}&radius=${radius}&keyword=${encodeURIComponent(query)}`)
   const data = await res.json().catch(() => ({}))
+  if (res.status === 401) {
+    throw new SearchUnavailableError(SESSION_EXPIRED)
+  }
   if (res.status === 429) {
     throw new SearchUnavailableError('Muitas buscas em pouco tempo. Espere um minuto e tente de novo.')
   }
