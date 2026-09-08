@@ -52,3 +52,7 @@ SaaS B2B de prospecção de leads. O usuário escolhe um tipo de serviço + cida
 - Estilo inline (`style={{...}}`) em todos os componentes, sem CSS Modules/Tailwind nas páginas principais (Tailwind está configurado mas pouco usado)
 - Tom do site: em português, casual mas profissional
 - Sem comentários desnecessários no código
+
+## Preferências do dono
+
+- **Sempre que o assunto Honk Ponk aparecer no início de uma conversa, mandar o link do painel admin: `honkponk.com.br/admin`** (precisa estar logado com o e-mail que está em `ADMIN_EMAILS`). O painel lê Supabase e Mercado Pago em tempo real: MRR, total recebido, custo estimado do Google e histórico de pagamentos.
