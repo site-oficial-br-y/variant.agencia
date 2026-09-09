@@ -4,7 +4,7 @@ import { useState, useMemo, useEffect, useRef, useTransition } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { PLANS, type Plan } from '@/lib/plans'
-import type { AdminStats, DayPoint, Ranked, CoinPurchaseRow, ExtraRevenueRow, ApiCostEstimate } from './page'
+import type { AdminStats, DayPoint, Ranked, CoinPurchaseRow, ExtraRevenueRow, ApiUsage } from './page'
 import type { MpSummary } from '@/lib/mercadopago'
 
 // Centavos importam aqui: com planos de 19,90 e 59,90 o total quase nunca é redondo,
@@ -232,42 +232,67 @@ function TotalReceivedCard({ mp }: { mp: MpSummary | null }) {
   )
 }
 
-/* ── custo estimado da Places API, calculado pelas buscas do banco ──
-   Existe porque o faturamento do Google atrasa dias e some no começo do mês. */
-function ApiCostCard({ cost, mrrCents }: { cost: ApiCostEstimate | null; mrrCents: number }) {
-  if (!cost) return null
+/* ── consumo real da API do Google ──
+   Conta `api_calls`, que só recebe linha quando a requisição de fato sai pro
+   Google. A versão anterior estimava reais a partir de `search_logs` e errava
+   por mais de 20x, porque contava busca do usuário em vez de chamada paga. */
+function ApiUsageCard({ usage }: { usage: ApiUsage | null }) {
+  if (!usage) {
+    return (
+      <Card delay={200}>
+        <div className="text-[11px] uppercase tracking-wider text-white/40 font-semibold">Consumo do Google</div>
+        <div className="text-sm text-white/40 mt-2">
+          Tabela <code className="text-xs px-1 py-0.5 rounded bg-white/10">api_calls</code> ainda não existe.
+          Rode <code className="text-xs px-1 py-0.5 rounded bg-white/10">api_calls.sql</code> no Supabase.
+        </div>
+      </Card>
+    )
+  }
 
-  const pctOfMrr = mrrCents > 0 ? (cost.projectedCostCents / mrrCents) * 100 : 0
-  const tone = pctOfMrr > 30 ? '#fb923c' : pctOfMrr > 15 ? '#fbbf24' : '#4ade80'
+  const pctFree = Math.min(100, (usage.projectedTotal / usage.freeTierReference) * 100)
+  const tone = pctFree >= 100 ? '#fb923c' : pctFree > 70 ? '#fbbf24' : '#4ade80'
+  const delta = usage.previousMonthTotal > 0
+    ? ((usage.total - usage.previousMonthTotal) / usage.previousMonthTotal) * 100
+    : null
 
   return (
     <Card delay={200}>
       <div className="flex items-baseline justify-between flex-wrap gap-3">
         <div>
-          <div className="text-[11px] uppercase tracking-wider text-white/40 font-semibold">Custo do Google — este mês</div>
+          <div className="text-[11px] uppercase tracking-wider text-white/40 font-semibold">Chamadas ao Google — este mês</div>
           <div className="text-4xl font-extrabold mt-1.5 tracking-tight tabular-nums" style={{ color: tone }}>
-            {BRL(cost.monthCostCents)}
+            {usage.total.toLocaleString('pt-BR')}
           </div>
           <div className="text-xs text-white/40 mt-1.5">
-            {cost.monthCalls.toLocaleString('pt-BR')} chamadas em {cost.daysElapsed} dia{cost.daysElapsed === 1 ? '' : 's'}
+            {usage.places.toLocaleString('pt-BR')} busca · {usage.geocode.toLocaleString('pt-BR')} geocoding
+            {' · '}{usage.daysElapsed} dia{usage.daysElapsed === 1 ? '' : 's'}
+            {delta !== null && (
+              <span className={delta > 0 ? ' text-[#fbbf24]' : ' text-[#4ade80]'}>
+                {' · '}{delta > 0 ? '+' : ''}{delta.toFixed(0)}% vs mês passado
+              </span>
+            )}
           </div>
         </div>
         <div className="text-right">
           <div className="text-[11px] uppercase tracking-wider text-white/40 font-semibold">Projeção do mês</div>
           <div className="text-2xl font-extrabold mt-1 tabular-nums" style={{ color: tone }}>
-            {BRL(cost.projectedCostCents)}
+            {usage.projectedTotal.toLocaleString('pt-BR')}
           </div>
-          {mrrCents > 0 && (
-            <div className="text-xs text-white/40 mt-1">{pctOfMrr.toFixed(1)}% do MRR</div>
-          )}
+          <div className="text-xs text-white/40 mt-1">
+            teto grátis ~{usage.freeTierReference.toLocaleString('pt-BR')}
+          </div>
         </div>
       </div>
 
+      <div className="mt-4 h-2.5 rounded-full bg-white/[0.07] overflow-hidden">
+        <div className="h-full rounded-full transition-all duration-700" style={{ width: `${pctFree}%`, background: tone }} />
+      </div>
+
       <div className="mt-4 pt-4 border-t border-white/5 text-xs text-white/35 leading-relaxed">
-        Calculado pelas buscas registradas, não pelo painel do Google — que atrasa dias.
-        Preço por chamada calibrado pela fatura de {cost.referenceMonth} ({BRL(cost.referenceInvoiceCents)} ÷{' '}
-        {cost.referenceCalls.toLocaleString('pt-BR')} chamadas). É estimativa: serve pra perceber
-        movimento estranho cedo, não pra bater centavo com a fatura.
+        Contagem das chamadas que realmente saíram pro Google — busca respondida pelo cache não entra,
+        porque não é cobrada. Enquanto o mês couber na cota gratuita, o custo é zero, então aqui não tem
+        valor em reais: converter chamada em dinheiro antes de passar do teto daria número inventado.
+        O teto de {usage.freeTierReference.toLocaleString('pt-BR')} é referência a confirmar no relatório por SKU.
       </div>
     </Card>
   )
@@ -503,7 +528,7 @@ export function AdminClient({
   if (setup) return <Setup kind={setup} />
   if (!stats) return null
 
-  const { users, plans, coins, extra, searches, payments, apiCost, warnings, generatedAt } = stats
+  const { users, plans, coins, extra, searches, payments, apiUsage, warnings, generatedAt } = stats
   const conv = users.total > 0 ? (plans.paying / users.total) * 100 : 0
   const periodLabel = PERIODS.find(p => p.key === period)!.label
 
@@ -609,7 +634,7 @@ export function AdminClient({
 
             <TotalReceivedCard mp={payments} />
 
-            <ApiCostCard cost={apiCost} mrrCents={plans.mrrCents} />
+            <ApiUsageCard usage={apiUsage} />
 
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
               <Stat label="Usuários" value={users.total} hint={`+${sum(signups)} em ${periodLabel}`} delay={0} />

@@ -16,6 +16,18 @@ const CACHE_TTL_MS = 30 * 24 * 60 * 60 * 1000 // 30 dias
 // chamadas de Geocoding (que estavam sem cache nenhum e passavam do volume do Places).
 const GEOCODE_TTL_MS = 365 * 24 * 60 * 60 * 1000 // 1 ano
 
+// Marca uma chamada que realmente saiu para o Google. Só é chamada depois do
+// cache falhar — é isso que separa "busca do usuário" de "chamada paga", que era
+// exatamente onde a estimativa de custo do painel errava.
+// Nunca deixa estourar: contabilidade não pode derrubar busca de usuário.
+function logApiCall(provider: 'places' | 'geocode') {
+  if (!supabaseCache) return
+  void supabaseCache.from('api_calls').insert({ provider }).then(
+    () => {},
+    () => {},
+  )
+}
+
 export async function GET(req: NextRequest) {
   const { searchParams } = new URL(req.url)
   const action = searchParams.get('action')
@@ -63,6 +75,7 @@ export async function GET(req: NextRequest) {
       } catch { /* cache falhou, segue pro Google */ }
     }
 
+    logApiCall('geocode')
     const res = await fetch(
       `https://maps.googleapis.com/maps/api/geocode/json?address=${encodeURIComponent(address)}&key=${GOOGLE_KEY}`
     )
@@ -110,6 +123,7 @@ export async function GET(req: NextRequest) {
       maxResultCount: 20,
     }
 
+    logApiCall('places')
     const res = await fetch('https://places.googleapis.com/v1/places:searchText', {
       method: 'POST',
       headers: {

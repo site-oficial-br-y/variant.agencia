@@ -35,8 +35,8 @@ export interface AdminStats {
   }
   /** Faturamento real, vindo da API do Mercado Pago. null = não deu pra ler. */
   payments: MpSummary | null
-  /** Custo estimado da Places API. null = sem dados suficientes pra calibrar. */
-  apiCost: ApiCostEstimate | null
+  /** Consumo real da API do Google. null = tabela api_calls ainda não existe. */
+  apiUsage: ApiUsage | null
   searches: {
     total: number | null
     today: number | null
@@ -56,43 +56,34 @@ interface SearchLogRow {
   segment?: string | null
   location?: string | null
   created_at?: string | null
-  all_brazil?: boolean | null
 }
 
 /**
- * Estimativa de custo do Google, calculada a partir das buscas registradas.
+ * Consumo real da API do Google, contado em `api_calls`.
  *
- * O painel de faturamento do Google atrasa dias e às vezes só solta o número
- * depois do mês fechar. Como toda busca fica em `search_logs` e o consumo de
- * API por busca é previsível, dá pra ter a conta em tempo real sem depender
- * deles.
+ * A versão anterior estimava custo multiplicando linhas de `search_logs` por um
+ * peso por tipo de busca. Errava por mais de 20x: `search_logs` grava toda busca
+ * do usuário, e a maioria é respondida pelo cache sem nunca chegar no Google.
+ * Contava busca, não chamada paga. Agora a rota registra só o que de fato sai
+ * para o Google, e aqui é contagem, não dedução.
  *
- * O preço por chamada não é chutado: vem da divisão entre uma fatura real e o
- * número de chamadas daquele mesmo mês. Se o Google mudar preço, é só atualizar
- * a referência abaixo com a fatura mais recente.
+ * Também não converte mais para reais. O Google tem cota mensal gratuita e cobra
+ * só o excedente, então chamada não tem preço único — enquanto o consumo couber
+ * no gratuito, qualquer valor em reais que o painel mostrasse seria ficção.
+ * O que dá para afirmar é quantas chamadas foram feitas e o quanto isso se
+ * aproxima do teto gratuito.
  */
-const API_COST_REFERENCE = {
-  month: '2026-08',
-  invoiceCents: 2484, // fatura de agosto/2026, cobrada em 01/09
-}
+const FREE_TIER_REFERENCE = 1000 // por API, por mês — confirmar no relatório por SKU
 
-/** Busca "Todo Brasil" varre 10 cidades. Busca de cidade faz 1 a 3 chamadas
- *  conforme o plano, mais eventuais tentativas de raio maior — 2 é a média. */
-const CALLS_ALL_BRAZIL = 10
-const CALLS_SINGLE_CITY = 2
-
-const callsOf = (r: SearchLogRow) => (r.all_brazil ? CALLS_ALL_BRAZIL : CALLS_SINGLE_CITY)
-
-export interface ApiCostEstimate {
-  /** Centavos por chamada, derivado da fatura de referência. */
-  centsPerCall: number
-  referenceMonth: string
-  referenceInvoiceCents: number
-  referenceCalls: number
-  monthCalls: number
-  monthCostCents: number
-  /** Projeção do mês inteiro no ritmo atual. */
-  projectedCostCents: number
+export interface ApiUsage {
+  places: number
+  geocode: number
+  total: number
+  /** Mesmo período do mês anterior, para comparar ritmo. */
+  previousMonthTotal: number
+  /** Projeção de chamadas no mês inteiro, mantido o ritmo atual. */
+  projectedTotal: number
+  freeTierReference: number
   daysElapsed: number
   daysInMonth: number
 }
@@ -294,13 +285,12 @@ export default async function AdminPage() {
   let topSegments: Ranked[] | null = null
   let topCities: Ranked[] | null = null
 
-  let searchLogs: SearchLogRow[] = []
   try {
     // Tenta com created_at; se a coluna não existir, cai no plano B sem datas.
     let list: SearchLogRow[] = []
     const withTime = await admin
       .from('search_logs')
-      .select('segment, location, created_at, all_brazil')
+      .select('segment, location, created_at')
       .order('created_at', { ascending: false })
       .limit(50000)
 
@@ -313,7 +303,6 @@ export default async function AdminPage() {
       list = (withTime.data || []) as SearchLogRow[]
     }
 
-    searchLogs = list
     searchTotal = list.length
     topSegments = rank(list.map(r => r.segment), 8)
     topCities = rank(list.map(r => r.location), 8)
@@ -358,36 +347,51 @@ export default async function AdminPage() {
     warnings.push('Tabela extra_revenue ainda não existe — receita de freela não entra no saldo.')
   }
 
-  // ── Custo estimado da Places API ──
-  let apiCost: ApiCostEstimate | null = null
-  {
-    const callsInMonth = (month: string) =>
-      searchLogs.reduce((acc, r) => (r.created_at?.slice(0, 7) === month ? acc + callsOf(r) : acc), 0)
+  // ── Consumo real da API do Google ──
+  let apiUsage: ApiUsage | null = null
+  try {
+    const today = new Date()
+    const daysElapsed = today.getDate()
+    const daysInMonth = new Date(today.getFullYear(), today.getMonth() + 1, 0).getDate()
+    const monthStart = new Date(Date.UTC(today.getFullYear(), today.getMonth(), 1)).toISOString()
+    const prevStart = new Date(Date.UTC(today.getFullYear(), today.getMonth() - 1, 1)).toISOString()
 
-    const referenceCalls = callsInMonth(API_COST_REFERENCE.month)
-    if (referenceCalls > 0) {
-      const centsPerCall = API_COST_REFERENCE.invoiceCents / referenceCalls
-      const today = new Date()
-      const currentMonth = dayKey(today).slice(0, 7)
-      const monthCalls = callsInMonth(currentMonth)
-      const monthCostCents = Math.round(monthCalls * centsPerCall)
-      const daysElapsed = today.getDate()
-      const daysInMonth = new Date(today.getFullYear(), today.getMonth() + 1, 0).getDate()
+    const { data, error } = await admin
+      .from('api_calls')
+      .select('provider, created_at')
+      .gte('created_at', prevStart)
+      .limit(200000)
+    if (error) throw error
 
-      apiCost = {
-        centsPerCall,
-        referenceMonth: API_COST_REFERENCE.month,
-        referenceInvoiceCents: API_COST_REFERENCE.invoiceCents,
-        referenceCalls,
-        monthCalls,
-        monthCostCents,
-        projectedCostCents: Math.round((monthCostCents / daysElapsed) * daysInMonth),
-        daysElapsed,
-        daysInMonth,
+    const rows = (data || []) as { provider?: string; created_at?: string }[]
+    let places = 0
+    let geocode = 0
+    let previousMonthTotal = 0
+    for (const r of rows) {
+      if (!r.created_at) continue
+      if (r.created_at >= monthStart) {
+        if (r.provider === 'geocode') geocode++
+        else places++
+      } else if (new Date(r.created_at).getUTCDate() <= daysElapsed) {
+        // Mesmo trecho do mês anterior, senão comparar um mês fechado com
+        // um mês pela metade sempre acusaria queda.
+        previousMonthTotal++
       }
-    } else {
-      warnings.push(`Sem buscas registradas em ${API_COST_REFERENCE.month} — não deu pra calibrar o custo por chamada.`)
     }
+
+    const total = places + geocode
+    apiUsage = {
+      places,
+      geocode,
+      total,
+      previousMonthTotal,
+      projectedTotal: Math.round((total / daysElapsed) * daysInMonth),
+      freeTierReference: FREE_TIER_REFERENCE,
+      daysElapsed,
+      daysInMonth,
+    }
+  } catch {
+    warnings.push('Tabela api_calls ainda não existe — rode api_calls.sql no Supabase pra acompanhar o consumo do Google.')
   }
 
   // ── Faturamento real (Mercado Pago) ──
@@ -409,7 +413,7 @@ export default async function AdminPage() {
     coins: { inCirculation: coinsTotal, revenueCentsTotal: coinsRevenueCentsTotal, recent: coinsRecent },
     extra: { totalCents: extraTotalCents, recent: extraRecent },
     payments,
-    apiCost,
+    apiUsage,
     searches: { total: searchTotal, today: searchesToday, byDay: searchByDay, topSegments, topCities },
     generatedAt: new Date().toISOString(),
     warnings,
