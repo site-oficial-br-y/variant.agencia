@@ -15,6 +15,7 @@ const CACHE_TTL_MS = 30 * 24 * 60 * 60 * 1000 // 30 dias
 // Coordenada de cidade não muda. Cache longo aqui é seguro e elimina a maior parte das
 // chamadas de Geocoding (que estavam sem cache nenhum e passavam do volume do Places).
 const GEOCODE_TTL_MS = 365 * 24 * 60 * 60 * 1000 // 1 ano
+const GEOCODE_MISS_TTL_MS = 7 * 24 * 60 * 60 * 1000 // 7 dias
 
 // Marca uma chamada que realmente saiu para o Google. Só é chamada depois do
 // cache falhar — é isso que separa "busca do usuário" de "chamada paga", que era
@@ -64,13 +65,31 @@ export async function GET(req: NextRequest) {
   if (action === 'geocode') {
     const address = searchParams.get('address') || ''
 
+    // O campo de cidade é texto livre, então erro de digitação vira chamada perdida.
+    // O que dá pra barrar sem risco: vazio, curto demais e entrada sem letra nenhuma.
+    // O front sempre manda "<cidade>, Brasil", daí o corte na vírgula.
+    const cityPart = address.split(',')[0].trim()
+    if (cityPart.length < 3 || !/[a-zA-ZÀ-ÿ]{3}/.test(cityPart)) {
+      return NextResponse.json({ results: [], status: 'ZERO_RESULTS' })
+    }
+
     // Mesma tabela de cache da busca, com prefixo próprio na chave.
-    const geoCacheKey = `geocode:${address.trim().toLowerCase()}`
+    const normalized = address.trim().toLowerCase()
+    const geoCacheKey = `geocode:${normalized}`
+    // Cidade que não existe também precisa de memória: sem isso, cada pessoa que
+    // repetisse o mesmo erro de digitação gerava uma chamada nova ao Google.
+    // Prazo curto porque o Google eventualmente passa a reconhecer nomes novos.
+    const geoMissKey = `geocode-miss:${normalized}`
+
     if (supabaseCache) {
       try {
         const { data: cached } = await supabaseCache.from('places_cache').select('results, created_at').eq('cache_key', geoCacheKey).maybeSingle()
         if (cached && cached.created_at && (Date.now() - new Date(cached.created_at).getTime()) < GEOCODE_TTL_MS) {
           return NextResponse.json({ results: cached.results, status: 'OK', cached: true })
+        }
+        const { data: missed } = await supabaseCache.from('places_cache').select('created_at').eq('cache_key', geoMissKey).maybeSingle()
+        if (missed && missed.created_at && (Date.now() - new Date(missed.created_at).getTime()) < GEOCODE_MISS_TTL_MS) {
+          return NextResponse.json({ results: [], status: 'ZERO_RESULTS', cached: true })
         }
       } catch { /* cache falhou, segue pro Google */ }
     }
@@ -81,13 +100,24 @@ export async function GET(req: NextRequest) {
     )
     const data = await res.json()
 
-    // Só guarda acerto: erro e cidade inexistente não valem cache de um ano.
-    if (supabaseCache && data.status === 'OK' && data.results?.length) {
+    // Acerto vale cache longo; cidade inexistente vale cache curto, só pra não
+    // repetir a chamada. Falha de rede ou erro do Google não entram em nenhum
+    // dos dois, senão um problema temporário viraria "cidade não existe".
+    if (supabaseCache) {
+      const ok = data.status === 'OK' && data.results?.length
+      const notFound = data.status === 'ZERO_RESULTS' || data.status === 'INVALID_REQUEST'
       try {
-        await supabaseCache.from('places_cache').upsert(
-          { cache_key: geoCacheKey, results: data.results, created_at: new Date().toISOString() },
-          { onConflict: 'cache_key' }
-        )
+        if (ok) {
+          await supabaseCache.from('places_cache').upsert(
+            { cache_key: geoCacheKey, results: data.results, created_at: new Date().toISOString() },
+            { onConflict: 'cache_key' }
+          )
+        } else if (notFound) {
+          await supabaseCache.from('places_cache').upsert(
+            { cache_key: geoMissKey, results: [], created_at: new Date().toISOString() },
+            { onConflict: 'cache_key' }
+          )
+        }
       } catch { /* ignora erro de cache */ }
     }
 
