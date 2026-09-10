@@ -102,21 +102,25 @@ export interface ExtraRevenueRow {
   received_at: string
 }
 
+// A Vercel roda em UTC e Brasília é UTC-3. Agrupar por dia sem corrigir isso jogava
+// tudo que acontece depois das 21h para o dia seguinte no gráfico.
+const BRASILIA_OFFSET_MS = 3 * 60 * 60 * 1000
+
+/** Data no calendário de Brasília, no formato YYYY-MM-DD. */
 function dayKey(d: Date) {
-  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
+  return new Date(d.getTime() - BRASILIA_OFFSET_MS).toISOString().slice(0, 10)
 }
 
 /** Últimos N dias como série contínua, sem buracos. */
 function buildSeries(dates: string[], days: number): DayPoint[] {
   const bucket = new Map<string, number>()
+  const now = Date.now()
   for (let i = days - 1; i >= 0; i--) {
-    const d = new Date()
-    d.setDate(d.getDate() - i)
-    bucket.set(dayKey(d), 0)
+    bucket.set(dayKey(new Date(now - i * 86400000)), 0)
   }
   for (const iso of dates) {
     if (!iso) continue
-    const k = iso.slice(0, 10)
+    const k = dayKey(new Date(iso))
     if (bucket.has(k)) bucket.set(k, (bucket.get(k) || 0) + 1)
   }
   return Array.from(bucket, ([date, count]) => ({ date, count }))
@@ -193,7 +197,7 @@ export default async function AdminPage() {
   let expiringIn7 = 0
 
   try {
-    let cols = 'plan, honk_coins, searches_today, plan_expires_at, team_owner_id'
+    let cols = 'plan, honk_coins, searches_today, searches_reset_at, plan_expires_at, team_owner_id'
     let res = await admin.from('users_profiles').select(cols).limit(20000)
     if (res.error) {
       // Banco ainda sem as colunas novas — cai no conjunto mínimo.
@@ -209,6 +213,7 @@ export default async function AdminPage() {
       plan?: string
       honk_coins?: number
       searches_today?: number
+      searches_reset_at?: string | null
       plan_expires_at?: string | null
       team_owner_id?: string | null
     }
@@ -220,7 +225,12 @@ export default async function AdminPage() {
         else payingCounts[p]++
       }
       coinsTotal += row.honk_coins || 0
-      searchesToday += row.searches_today || 0
+      // O contador só zera quando a pessoa busca de novo, então perfil parado
+      // guarda o número de dias atrás. Sem checar a validade, este card somava
+      // buscas antigas e mostrava sempre mais do que aconteceu hoje.
+      if (row.searches_reset_at && new Date(row.searches_reset_at).getTime() > now) {
+        searchesToday += row.searches_today || 0
+      }
 
       if (p !== 'free' && !row.team_owner_id && row.plan_expires_at) {
         const exp = new Date(row.plan_expires_at).getTime()
