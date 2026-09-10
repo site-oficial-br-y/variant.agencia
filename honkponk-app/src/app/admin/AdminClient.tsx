@@ -614,7 +614,11 @@ export function AdminClient({
                   {BRL(plans.mrrCents)}
                 </div>
                 <div className="text-xs text-white/40 mt-1.5">
-                  receita que se repete todo mês · {plans.paying} assinante{plans.paying === 1 ? '' : 's'}
+                  {/* Conta o mesmo que gerou o valor: assinatura paga, não perfil com plano.
+                      Antes mostrava perfis pagos aqui, então o card dizia "13 assinantes"
+                      ao lado de um MRR calculado sobre 31 assinaturas. */}
+                  receita que se repete todo mês · {plans.paidSubscriptions ?? plans.paying} assinante
+                  {(plans.paidSubscriptions ?? plans.paying) === 1 ? '' : 's'}
                   {plans.courtesy !== null && plans.courtesy > 0 && ` · ${plans.courtesy} cortesia${plans.courtesy === 1 ? '' : 's'}`}
                 </div>
               </Card>

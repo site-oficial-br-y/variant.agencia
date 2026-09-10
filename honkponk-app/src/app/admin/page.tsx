@@ -18,6 +18,8 @@ export interface AdminStats {
   plans: {
     counts: Record<Plan, number>
     paying: number
+    /** Assinantes que realmente pagam, contados em `subscriptions`. */
+    paidSubscriptions: number | null
     teamMembers: number
     expiringIn7: number
     mrrCents: number
@@ -126,6 +128,28 @@ function buildSeries(dates: string[], days: number): DayPoint[] {
   return Array.from(bucket, ([date, count]) => ({ date, count }))
 }
 
+
+/**
+ * O Supabase corta cada requisição em 1.000 linhas, e `.limit()` não passa por
+ * cima disso. Sem paginar, o painel lia só o primeiro milheiro de perfis e
+ * calculava plano, moedas e buscas em cima de um pedaço da base — foi o que fez
+ * o MRR aparecer com 13 assinantes ao lado de 31 assinaturas ativas.
+ */
+async function fetchAll<T>(
+  run: (from: number, to: number) => PromiseLike<{ data: unknown; error: unknown }>,
+): Promise<T[]> {
+  const PAGE = 1000
+  const out: T[] = []
+  for (let from = 0; from < 200000; from += PAGE) {
+    const { data, error } = await run(from, from + PAGE - 1)
+    if (error) throw error
+    const batch = (data || []) as T[]
+    out.push(...batch)
+    if (batch.length < PAGE) break
+  }
+  return out
+}
+
 function rank(values: (string | null | undefined)[], limit: number): Ranked[] {
   const m = new Map<string, number>()
   for (const v of values) {
@@ -197,13 +221,13 @@ export default async function AdminPage() {
   let expiringIn7 = 0
 
   try {
-    let cols = 'plan, honk_coins, searches_today, searches_reset_at, plan_expires_at, team_owner_id'
-    let res = await admin.from('users_profiles').select(cols).limit(20000)
-    if (res.error) {
+    const fullCols = 'plan, honk_coins, searches_today, searches_reset_at, plan_expires_at, team_owner_id'
+    let profiles: Record<string, unknown>[] = []
+    try {
+      profiles = await fetchAll((from, to) => admin.from('users_profiles').select(fullCols).range(from, to))
+    } catch {
       // Banco ainda sem as colunas novas — cai no conjunto mínimo.
-      cols = 'plan, honk_coins, searches_today'
-      res = await admin.from('users_profiles').select(cols).limit(20000)
-      if (res.error) throw res.error
+      profiles = await fetchAll((from, to) => admin.from('users_profiles').select('plan, honk_coins, searches_today').range(from, to))
       warnings.push('users_profiles sem plan_expires_at/team_owner_id — MRR não desconta membros de equipe.')
     }
 
@@ -217,7 +241,7 @@ export default async function AdminPage() {
       plan_expires_at?: string | null
       team_owner_id?: string | null
     }
-    for (const row of (res.data || []) as Row[]) {
+    for (const row of profiles as Row[]) {
       const p = (row.plan || 'free') as Plan
       if (PLAN_KEYS.includes(p)) {
         planCounts[p]++
@@ -250,18 +274,18 @@ export default async function AdminPage() {
   // courtesyCount mostra quantos perfis pagos não têm assinatura por trás.
   let mrrCents = 0
   let courtesyCount: number | null = null
+  // Quantos assinantes de verdade sustentam o MRR — o card mostrava o total de
+  // perfis pagos, que é outra coisa e vinha do trecho truncado.
+  let paidSubscriptions: number | null = null
   try {
-    const { data, error } = await admin
-      .from('subscriptions')
-      .select('plan')
-      .eq('status', 'active')
-      .limit(20000)
-    if (error) throw error
+    const data = await fetchAll<{ plan?: string }>((from, to) =>
+      admin.from('subscriptions').select('plan').eq('status', 'active').range(from, to))
     const realCounts = { free: 0, freelancer: 0, agency: 0, enterprise: 0 } as Record<Plan, number>
-    for (const row of (data || []) as { plan?: string }[]) {
+    for (const row of data) {
       const p = (row.plan || 'free') as Plan
       if (PLAN_KEYS.includes(p)) realCounts[p]++
     }
+    paidSubscriptions = realCounts.freelancer + realCounts.agency + realCounts.enterprise
     mrrCents =
       realCounts.freelancer * PLANS.freelancer.price +
       realCounts.agency * PLANS.agency.price +
@@ -298,19 +322,13 @@ export default async function AdminPage() {
   try {
     // Tenta com created_at; se a coluna não existir, cai no plano B sem datas.
     let list: SearchLogRow[] = []
-    const withTime = await admin
-      .from('search_logs')
-      .select('segment, location, created_at')
-      .order('created_at', { ascending: false })
-      .limit(50000)
-
-    if (withTime.error) {
-      const plain = await admin.from('search_logs').select('segment, location').limit(50000)
-      if (plain.error) throw plain.error
-      list = (plain.data || []) as SearchLogRow[]
+    try {
+      list = await fetchAll<SearchLogRow>((from, to) =>
+        admin.from('search_logs').select('segment, location, created_at').order('created_at', { ascending: false }).range(from, to))
+    } catch {
+      list = await fetchAll<SearchLogRow>((from, to) =>
+        admin.from('search_logs').select('segment, location').range(from, to))
       warnings.push('search_logs não tem coluna de data — gráfico de buscas indisponível.')
-    } else {
-      list = (withTime.data || []) as SearchLogRow[]
     }
 
     searchTotal = list.length
@@ -327,13 +345,8 @@ export default async function AdminPage() {
   let coinsRevenueCentsTotal: number | null = null
   let coinsRecent: CoinPurchaseRow[] | null = null
   try {
-    const { data, error } = await admin
-      .from('coin_purchases')
-      .select('email, coins, amount_cents, created_at')
-      .order('created_at', { ascending: false })
-      .limit(500)
-    if (error) throw error
-    const rows = (data || []) as CoinPurchaseRow[]
+    const rows = await fetchAll<CoinPurchaseRow>((from, to) =>
+      admin.from('coin_purchases').select('email, coins, amount_cents, created_at').order('created_at', { ascending: false }).range(from, to))
     coinsRevenueCentsTotal = rows.reduce((acc, r) => acc + (r.amount_cents || 0), 0)
     coinsRecent = rows.slice(0, 20)
   } catch {
@@ -366,14 +379,8 @@ export default async function AdminPage() {
     const monthStart = new Date(Date.UTC(today.getFullYear(), today.getMonth(), 1)).toISOString()
     const prevStart = new Date(Date.UTC(today.getFullYear(), today.getMonth() - 1, 1)).toISOString()
 
-    const { data, error } = await admin
-      .from('api_calls')
-      .select('provider, created_at')
-      .gte('created_at', prevStart)
-      .limit(200000)
-    if (error) throw error
-
-    const rows = (data || []) as { provider?: string; created_at?: string }[]
+    const rows = await fetchAll<{ provider?: string; created_at?: string }>((from, to) =>
+      admin.from('api_calls').select('provider, created_at').gte('created_at', prevStart).range(from, to))
     let places = 0
     let geocode = 0
     let previousMonthTotal = 0
@@ -419,7 +426,7 @@ export default async function AdminPage() {
 
   const stats: AdminStats = {
     users: { total: usersTotal, signupsByDay: buildSeries(signupDates, SERIES_DAYS) },
-    plans: { counts: planCounts, paying, teamMembers, expiringIn7, mrrCents, activeSubscriptions, courtesy: courtesyCount },
+    plans: { counts: planCounts, paying, paidSubscriptions, teamMembers, expiringIn7, mrrCents, activeSubscriptions, courtesy: courtesyCount },
     coins: { inCirculation: coinsTotal, revenueCentsTotal: coinsRevenueCentsTotal, recent: coinsRecent },
     extra: { totalCents: extraTotalCents, recent: extraRecent },
     payments,
