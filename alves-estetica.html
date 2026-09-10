@@ -159,12 +159,15 @@ nav a:hover span{transform:translateY(-100%)}
 }
 @media(max-width:1000px){.hero-grid{grid-template-columns:1fr}}
 .hero h1{font-size:clamp(46px,10vw,142px);margin:22px 0 26px}
-.hero h1 em{font-style:normal;color:var(--red);position:relative;display:inline-block}
-.hero h1 em::after{
-  content:"";position:absolute;left:0;right:0;bottom:.08em;height:.07em;background:var(--red);
-  transform:scaleX(0);transform-origin:left;transition:transform .9s cubic-bezier(.19,1,.22,1) .7s;
+/* Sem sublinhado: com line-height fechado ele caía dentro das letras e virava
+   um risco no meio da palavra. A cor já basta para destacar. */
+.hero h1 em{
+  font-style:normal;color:var(--red);
+  text-shadow:0 0 42px rgba(229,8,31,.35);
 }
-.js .hero.in h1 em::after{transform:none}
+/* A revelação por linha corta o que passa da caixa, então a caixa precisa de
+   folga embaixo para não decepar a perna do Q e do J. */
+.line-wrap{padding-bottom:.08em;margin-bottom:-.08em}
 
 .car{position:relative;aspect-ratio:16/11}
 .car .plate{

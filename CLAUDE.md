@@ -60,6 +60,6 @@ SaaS B2B de prospecção de leads. O usuário escolhe um tipo de serviço + cida
 ## Sites para clientes (preferências fixas do dono)
 
 - **Nunca fundo preto chapado.** O fundo tem que ser vivo: animado, reagindo ao cursor e à rolagem.
-- **Paleta padrão: preto e vermelho.**
+- **A paleta é escolhida por projeto**, combinando com o negócio do cliente. Não existe cor fixa para todo site. (Preto e vermelho foi a escolha da Alves Estética Automotiva, não um padrão.)
 - **Muita animação e transição.** Revelação por rolagem, movimento no hover, transição entre seções.
 - **Não pode ter cara de IA.** Evitar layout todo centralizado e simétrico, grade de cards iguais, gradiente roxo/azul, emoji, vidro fosco em tudo e texto genérico. Preferir layout editorial assimétrico, texto específico e concreto, tipografia com contraste forte de tamanho, textura sutil.
