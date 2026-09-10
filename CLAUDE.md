@@ -56,3 +56,10 @@ SaaS B2B de prospecção de leads. O usuário escolhe um tipo de serviço + cida
 ## Preferências do dono
 
 - **Sempre que o assunto Honk Ponk aparecer no início de uma conversa, mandar o link do painel admin: `honkponk.com.br/admin`** (precisa estar logado com o e-mail que está em `ADMIN_EMAILS`). O painel lê Supabase e Mercado Pago em tempo real: MRR, total recebido, custo estimado do Google e histórico de pagamentos.
+
+## Sites para clientes (preferências fixas do dono)
+
+- **Nunca fundo preto chapado.** O fundo tem que ser vivo: animado, reagindo ao cursor e à rolagem.
+- **Paleta padrão: preto e vermelho.**
+- **Muita animação e transição.** Revelação por rolagem, movimento no hover, transição entre seções.
+- **Não pode ter cara de IA.** Evitar layout todo centralizado e simétrico, grade de cards iguais, gradiente roxo/azul, emoji, vidro fosco em tudo e texto genérico. Preferir layout editorial assimétrico, texto específico e concreto, tipografia com contraste forte de tamanho, textura sutil.
