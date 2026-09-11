@@ -13,12 +13,12 @@ export default function TermosPage() {
       </nav>
       <div style={{ maxWidth: 760, margin: '0 auto', padding: '60px 24px' }}>
         <h1 style={{ fontSize: '2.5rem', fontWeight: 900, letterSpacing: -1.5, marginBottom: 8 }}>Termos de Uso</h1>
-        <p style={{ color: 'rgba(255,255,255,.4)', marginBottom: 48, fontSize: '.9rem' }}>Última atualização: Janeiro de 2025</p>
+        <p style={{ color: 'rgba(255,255,255,.4)', marginBottom: 48, fontSize: '.9rem' }}>Última atualização: Setembro de 2026</p>
         {[
           { title: '1. Aceitação dos Termos', content: 'Ao acessar e utilizar a plataforma Honk Ponk, você concorda com os presentes Termos de Uso. Se você não concordar com algum dos termos, não utilize nossos serviços.' },
           { title: '2. Descrição do Serviço', content: 'A Honk Ponk é uma plataforma de prospecção B2B que utiliza a API do Google Places para fornecer dados públicos de negócios.' },
           { title: '3. Uso Aceitável', content: 'Você concorda em utilizar a plataforma apenas para fins legais e legítimos de prospecção comercial. É proibido: usar para spam ou assédio; automatizar ou fazer scraping; vender ou redistribuir os dados; violar a LGPD.' },
-          { title: '4. Planos e Pagamentos', content: 'Os planos pagos são cobrados mensalmente via Mercado Pago. O cancelamento pode ser solicitado a qualquer momento. Reembolsos são analisados caso a caso, em até 7 dias após a contratação.' },
+          { title: '4. Planos e Pagamentos', content: 'Os planos pagos são contratados por período, com pagamento único via Mercado Pago. Não há cobrança recorrente nem renovação automática: ao final do período contratado, a conta volta ao plano Grátis e nada mais é cobrado. Para continuar em um plano pago, basta contratar novamente. Como não existe cobrança automática, não há o que cancelar. Reembolsos são analisados caso a caso, em até 7 dias após a contratação.' },
           { title: '5. Privacidade e Dados', content: 'Coletamos apenas os dados necessários para o funcionamento da plataforma: e-mail, histórico de buscas e dados de pagamento. Não vendemos seus dados a terceiros.' },
           { title: '6. LGPD', content: 'Em conformidade com a Lei nº 13.709/2018 (LGPD), você tem direito a acessar, corrigir, excluir e portar seus dados pessoais. Contato: honkponkoficial@gmail.com.' },
           { title: '7. Limitação de Responsabilidade', content: 'A Honk Ponk não se responsabiliza por decisões comerciais tomadas com base nos dados fornecidos ou imprecisões nos dados do Google Places.' },
