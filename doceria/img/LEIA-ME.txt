@@ -1,0 +1,15 @@
+Coloque aqui as fotos usadas pelo site, com estes nomes:
+
+hero.jpg       foto principal do topo
+brigadeiro.jpg
+beijinho.jpg
+brownie.jpg
+pave.jpg
+torta.jpg
+acai.jpg
+loja.jpg       fachada ou ambiente
+destaque.jpg   foto do cartao rosa
+mapa.jpg       mapa ou fachada na secao de localizacao
+
+Qualquer arquivo que faltar simplesmente nao aparece: no lugar fica a
+moldura dizendo qual foto vai ali, sem quebrar a pagina.
