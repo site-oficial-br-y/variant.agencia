@@ -59,17 +59,6 @@ export default function HomePage() {
       <section style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', padding: '100px 24px 60px', position: 'relative', overflow: 'hidden' }}>
         <div className="hero-grid" />
         <div style={{ position: 'absolute', inset: 0, background: 'radial-gradient(ellipse 70% 60% at 60% 20%, rgba(232,121,160,.12) 0%, transparent 70%)', pointerEvents: 'none' }} />
-        {/* Alvo em neon ao fundo. O `screen` do CSS apaga o preto da imagem e deixa
-            só o brilho, então ela se funde com a página em vez de parecer colada.
-            Se o arquivo não existir em /public, o elemento se remove e o topo fica
-            exatamente como era antes. */}
-        <div className="hero-target" aria-hidden>
-          <img
-            src="/alvo.png"
-            alt=""
-            onError={e => { (e.currentTarget.parentElement as HTMLElement).style.display = 'none' }}
-          />
-        </div>
         <div style={{ maxWidth: 1200, margin: '0 auto', width: '100%', display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(300px,1fr))', gap: 60, alignItems: 'center', position: 'relative', zIndex: 1 }}>
           {/* Texto */}
           <div className="reveal">
