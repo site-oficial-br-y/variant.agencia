@@ -100,9 +100,9 @@ body {
    e o giro lento evita que ela pareça um adesivo parado. */
 .hero-target{
   position:absolute;
-  right:-8%;
-  top:50%;
-  width:min(68vw,720px);
+  right:-9%;
+  top:30%;
+  width:min(38vw,430px);
   aspect-ratio:2/3;
   transform:translateY(-50%);
   pointer-events:none;
@@ -119,16 +119,16 @@ body {
 }
 @keyframes targetFloat{
   0%,100%{transform:translateY(-50%) rotate(-1.2deg) scale(1)}
-  50%{transform:translateY(-53%) rotate(1.2deg) scale(1.035)}
+  50%{transform:translateY(-54%) rotate(1.2deg) scale(1.04)}
 }
 @media(max-width:900px){
   /* No celular o texto passa por cima da imagem, então ela recua bastante:
      vira atmosfera atrás do título, não elemento concorrendo com ele. */
   .hero-target{
-    right:-22%;
-    top:34%;
-    width:126vw;
-    opacity:.4;
+    right:-24%;
+    top:26%;
+    width:112vw;
+    opacity:.34;
     -webkit-mask-image:radial-gradient(56% 50% at 50% 50%,#000 30%,transparent 72%);
     mask-image:radial-gradient(56% 50% at 50% 50%,#000 30%,transparent 72%);
   }
