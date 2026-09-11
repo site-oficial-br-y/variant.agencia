@@ -712,8 +712,16 @@ export function AdminClient({
                   </div>
                   {plans.activeSubscriptions !== null && (
                     <div className="flex justify-between">
-                      <span className="text-white/50">Assinaturas <code className="text-xs">active</code></span>
+                      <span className="text-white/50">Assinaturas válidas</span>
                       <span className="font-bold tabular-nums">{num(plans.activeSubscriptions)}</span>
+                    </div>
+                  )}
+                  {plans.expiredSubscriptions > 0 && (
+                    <div className="flex justify-between">
+                      <span className="text-white/50" title="Pagaram uma vez e o plano venceu sem renovar. Não entram no MRR.">
+                        Assinaturas vencidas
+                      </span>
+                      <span className="font-bold tabular-nums text-[#fb923c]">{num(plans.expiredSubscriptions)}</span>
                     </div>
                   )}
                   {plans.courtesy !== null && (

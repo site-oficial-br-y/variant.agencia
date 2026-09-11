@@ -18,8 +18,10 @@ export interface AdminStats {
   plans: {
     counts: Record<Plan, number>
     paying: number
-    /** Assinantes que realmente pagam, contados em `subscriptions`. */
+    /** Assinantes que pagaram e cujo plano ainda não venceu. */
     paidSubscriptions: number | null
+    /** Pagaram um dia, mas o plano já venceu. */
+    expiredSubscriptions: number
     teamMembers: number
     expiringIn7: number
     mrrCents: number
@@ -219,21 +221,25 @@ export default async function AdminPage() {
   let searchesToday: number | null = null
   let teamMembers = 0
   let expiringIn7 = 0
+  // Validade do plano por usuário. É o único lugar que sabe se a assinatura
+  // ainda vale: a tabela `subscriptions` nunca é atualizada depois do pagamento.
+  const planExpiry = new Map<string, string | null>()
 
   try {
-    const fullCols = 'plan, honk_coins, searches_today, searches_reset_at, plan_expires_at, team_owner_id'
+    const fullCols = 'id, plan, honk_coins, searches_today, searches_reset_at, plan_expires_at, team_owner_id'
     let profiles: Record<string, unknown>[] = []
     try {
       profiles = await fetchAll((from, to) => admin.from('users_profiles').select(fullCols).range(from, to))
     } catch {
       // Banco ainda sem as colunas novas — cai no conjunto mínimo.
-      profiles = await fetchAll((from, to) => admin.from('users_profiles').select('plan, honk_coins, searches_today').range(from, to))
+      profiles = await fetchAll((from, to) => admin.from('users_profiles').select('id, plan, honk_coins, searches_today').range(from, to))
       warnings.push('users_profiles sem plan_expires_at/team_owner_id — MRR não desconta membros de equipe.')
     }
 
     coinsTotal = 0
     searchesToday = 0
     type Row = {
+      id?: string
       plan?: string
       honk_coins?: number
       searches_today?: number
@@ -243,10 +249,14 @@ export default async function AdminPage() {
     }
     for (const row of profiles as Row[]) {
       const p = (row.plan || 'free') as Plan
+      if (row.id) planExpiry.set(row.id, row.plan_expires_at ?? null)
       if (PLAN_KEYS.includes(p)) {
         planCounts[p]++
+        // Plano vencido continua gravado no perfil até a pessoa voltar ao site,
+        // então contar por plano sem olhar a validade inflava os pagantes.
+        const vencido = p !== 'free' && !!row.plan_expires_at && new Date(row.plan_expires_at).getTime() <= now
         if (row.team_owner_id) teamMembers++
-        else payingCounts[p]++
+        else if (!vencido) payingCounts[p]++
       }
       coinsTotal += row.honk_coins || 0
       // O contador só zera quando a pessoa busca de novo, então perfil parado
@@ -277,13 +287,24 @@ export default async function AdminPage() {
   // Quantos assinantes de verdade sustentam o MRR — o card mostrava o total de
   // perfis pagos, que é outra coisa e vinha do trecho truncado.
   let paidSubscriptions: number | null = null
+  // Pagaram um dia, mas o plano já venceu. Deixar isso visível evita a dúvida
+  // de para onde foram os assinantes quando o MRR cai.
+  let expiredSubscriptions = 0
   try {
-    const data = await fetchAll<{ plan?: string }>((from, to) =>
-      admin.from('subscriptions').select('plan').eq('status', 'active').range(from, to))
+    const data = await fetchAll<{ plan?: string; user_id?: string }>((from, to) =>
+      admin.from('subscriptions').select('plan, user_id').eq('status', 'active').range(from, to))
     const realCounts = { free: 0, freelancer: 0, agency: 0, enterprise: 0 } as Record<Plan, number>
+    // `status` na tabela só diz que houve pagamento aprovado um dia: o webhook
+    // grava 'active' e nada nunca reverte isso. Como a cobrança é avulsa e vence,
+    // contar por status somava todo mundo que já pagou desde o começo e inflava
+    // o MRR. Quem decide é a validade do plano no perfil.
     for (const row of data) {
       const p = (row.plan || 'free') as Plan
-      if (PLAN_KEYS.includes(p)) realCounts[p]++
+      if (!PLAN_KEYS.includes(p)) continue
+      const exp = row.user_id ? planExpiry.get(row.user_id) : undefined
+      const live = exp ? new Date(exp).getTime() > now : false
+      if (live) realCounts[p]++
+      else expiredSubscriptions++
     }
     paidSubscriptions = realCounts.freelancer + realCounts.agency + realCounts.enterprise
     mrrCents =
@@ -301,17 +322,7 @@ export default async function AdminPage() {
   }
 
   // ── Assinaturas ativas ──
-  let activeSubscriptions: number | null = null
-  try {
-    const { count, error } = await admin
-      .from('subscriptions')
-      .select('user_id', { count: 'exact', head: true })
-      .eq('status', 'active')
-    if (error) throw error
-    activeSubscriptions = count ?? 0
-  } catch {
-    activeSubscriptions = null
-  }
+  const activeSubscriptions = paidSubscriptions
 
   // ── Buscas ──
   let searchTotal: number | null = null
@@ -426,7 +437,7 @@ export default async function AdminPage() {
 
   const stats: AdminStats = {
     users: { total: usersTotal, signupsByDay: buildSeries(signupDates, SERIES_DAYS) },
-    plans: { counts: planCounts, paying, paidSubscriptions, teamMembers, expiringIn7, mrrCents, activeSubscriptions, courtesy: courtesyCount },
+    plans: { counts: planCounts, paying, paidSubscriptions, expiredSubscriptions, teamMembers, expiringIn7, mrrCents, activeSubscriptions, courtesy: courtesyCount },
     coins: { inCirculation: coinsTotal, revenueCentsTotal: coinsRevenueCentsTotal, recent: coinsRecent },
     extra: { totalCents: extraTotalCents, recent: extraRecent },
     payments,
