@@ -66,7 +66,7 @@ main,header,footer{position:relative;z-index:3}
 @media(hover:none),(max-width:900px){#cur{display:none}}
 
 /* ================= tipografia ================= */
-.display{font-weight:800;letter-spacing:-.05em;line-height:.9;text-transform:uppercase}
+.display{font-weight:800;letter-spacing:-.045em;line-height:.96;text-transform:uppercase}
 .eyebrow{
   font-size:clamp(10px,1.5vw,11px);letter-spacing:.3em;text-transform:uppercase;
   font-weight:700;display:inline-flex;align-items:center;gap:10px;color:var(--dim);
@@ -75,7 +75,9 @@ main,header,footer{position:relative;z-index:3}
 .lead{color:var(--dim);font-size:clamp(15px,1.7vw,17.5px);max-width:54ch}
 
 /* revelação de texto por linha */
-.line-wrap{overflow:hidden;display:block}
+/* A caixa corta o que passa dela para a linha deslizar de baixo. Sem folga,
+   ela decepa acento em cima e perna de letra embaixo. */
+.line-wrap{overflow:hidden;display:block;padding:.06em 0 .1em;margin:-.06em 0 -.1em}
 .js .line{display:block;transform:translateY(105%);transition:transform 1s cubic-bezier(.19,1,.22,1)}
 .js .in .line{transform:none}
 .js .in .line:nth-child(2){transition-delay:.09s}
@@ -150,15 +152,43 @@ nav a:hover span{transform:translateY(-100%)}
 
 /* ================= hero ================= */
 .hero{
-  position:relative;min-height:100svh;display:flex;align-items:center;
-  padding:120px var(--pad) 90px;overflow:hidden;
+  position:relative;min-height:100svh;display:flex;align-items:flex-end;
+  padding:140px var(--pad) clamp(40px,7vh,72px);overflow:hidden;
+}
+/* A foto ocupa a tela inteira e o texto deita em cima dela. É essa sobreposição
+   que dá ar de peça gráfica, e não de imagem encaixada num quadro ao lado. */
+.hero-photo{position:absolute;inset:0;z-index:0;overflow:hidden}
+.hero-photo .shot{position:absolute;inset:-6% -2%;width:104%;height:112%;object-fit:cover;will-change:transform}
+.hero-photo .ph{
+  background:
+    radial-gradient(120% 62% at 50% 104%,rgba(229,8,31,.22),transparent 60%),
+    radial-gradient(80% 42% at 50% 6%,rgba(255,255,255,.45),transparent 58%),
+    linear-gradient(#15151b 0 58%,#08080b 58% 100%);
+}
+.hero-photo .ph::before{
+  content:"";position:absolute;left:18%;right:18%;top:8%;height:6px;border-radius:5px;
+  background:rgba(255,255,255,.88);box-shadow:0 0 70px 22px rgba(255,255,255,.26);
+}
+.hero-photo .ph::after{
+  content:"SALVE A FOTO COMO carro.jpg NESTA PASTA";
+  position:absolute;left:0;right:0;top:46%;text-align:center;
+  font-size:11px;letter-spacing:.26em;color:rgba(246,245,243,.2);font-weight:700;
+}
+/* Escurece embaixo e à esquerda, onde o texto deita, preservando o meio da
+   foto, que é onde o carro costuma estar. */
+.hero-scrim{
+  position:absolute;inset:0;z-index:1;
+  background:
+    linear-gradient(to top,rgba(8,8,11,.94) 4%,rgba(8,8,11,.55) 34%,rgba(8,8,11,.12) 62%,rgba(8,8,11,.7) 100%),
+    linear-gradient(to right,rgba(8,8,11,.8),rgba(8,8,11,.15) 52%,transparent 78%);
 }
 .hero-grid{
-  width:100%;max-width:1400px;margin:0 auto;display:grid;gap:clamp(30px,5vw,60px);
-  grid-template-columns:1.15fr .85fr;align-items:center;
+  position:relative;z-index:2;
+  width:100%;max-width:1400px;margin:0 auto;display:grid;gap:clamp(26px,4vw,60px);
+  grid-template-columns:minmax(0,1fr) auto;align-items:flex-end;
 }
 @media(max-width:1000px){.hero-grid{grid-template-columns:1fr}}
-.hero h1{font-size:clamp(46px,10vw,142px);margin:22px 0 26px}
+.hero h1{font-size:clamp(34px,6.4vw,92px);margin:18px 0 24px;max-width:14ch}
 /* Sem sublinhado: com line-height fechado ele caía dentro das letras e virava
    um risco no meio da palavra. A cor já basta para destacar. */
 .hero h1 em{
@@ -167,7 +197,7 @@ nav a:hover span{transform:translateY(-100%)}
 }
 /* A revelação por linha corta o que passa da caixa, então a caixa precisa de
    folga embaixo para não decepar a perna do Q e do J. */
-.line-wrap{padding-bottom:.08em;margin-bottom:-.08em}
+
 
 .car{position:relative;aspect-ratio:16/11}
 .car .plate{
@@ -202,7 +232,7 @@ nav a:hover span{transform:translateY(-100%)}
   padding:11px 17px;font-size:10px;font-weight:800;letter-spacing:.18em;text-transform:uppercase;
 }
 .hud{
-  position:absolute;right:16px;top:16px;border:1px solid rgba(229,8,31,.34);
+  border:1px solid rgba(229,8,31,.34);
   background:rgba(10,10,13,.6);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);
   padding:13px 16px;font-variant-numeric:tabular-nums;
 }
@@ -210,7 +240,7 @@ nav a:hover span{transform:translateY(-100%)}
 .hud div+div{border-top:1px solid rgba(229,8,31,.16)}
 .hud span:first-child{color:var(--dim-2);text-transform:uppercase;font-weight:700}
 .hud span:last-child{color:var(--red);font-weight:800}
-@media(max-width:520px){.hud{display:none}}
+@media(max-width:1000px){.hud{display:none}}
 
 .btns{display:flex;flex-wrap:wrap;gap:12px;margin-top:30px}
 .btn{
@@ -379,6 +409,11 @@ footer{border-top:1px solid var(--line);padding:34px var(--pad);display:flex;fle
 <main>
 <!-- ============ HERO ============ -->
 <div class="hero rv" id="top">
+  <div class="hero-photo">
+    <img class="shot" id="heroShot" src="carro.jpg" alt="Carro em box de estética automotiva" onerror="this.remove()">
+    <div class="shot ph"></div>
+  </div>
+  <div class="hero-scrim"></div>
   <div class="hero-grid">
     <div>
       <span class="eyebrow rv">Santos · Atendimento por agendamento</span>
@@ -394,21 +429,12 @@ footer{border-top:1px solid var(--line);padding:34px var(--pad);display:flex;fle
       </div>
     </div>
 
-    <div class="car rv d2" data-tilt>
-      <!-- Basta salvar a foto como carro.jpg na mesma pasta deste arquivo.
-           Se ela não estiver lá, o desenho de estúdio abaixo aparece no lugar. -->
-      <div class="plate">
-        <img class="art foto" src="carro.jpg" alt="Carro em box de estética automotiva" onerror="this.remove()">
-        <div class="art ph"></div>
-      </div>
-      <div class="frame"></div>
-      <span class="badge">Box fechado</span>
-      <div class="hud">
-        <div><span>Serviço</span><span>Vitrificação</span></div>
-        <div><span>Camadas</span><span>03</span></div>
-        <div><span>Cura</span><span>24 h</span></div>
-        <div><span>Proteção</span><span>36 meses</span></div>
-      </div>
+    <div class="hud rv d3">
+      <div><span>Serviço</span><span>Vitrificação</span></div>
+      <div><span>Camadas</span><span>03</span></div>
+      <div><span>Cura</span><span>24 h</span></div>
+      <div><span>Proteção</span><span>36 meses</span></div>
+    </div>
     </div>
   </div>
 </div>
