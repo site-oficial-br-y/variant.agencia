@@ -280,10 +280,11 @@ export default function HomePage() {
         </div>
         <div style={{ display: 'flex', gap: 20, justifyContent: 'center', marginBottom: 16, flexWrap: 'wrap' }}>
           <Link href="/termos" style={{ color: 'rgba(255,255,255,.35)', fontSize: '.8rem', textDecoration: 'none' }}>Termos de Uso</Link>
+          <Link href="/privacidade" style={{ color: 'rgba(255,255,255,.35)', fontSize: '.8rem', textDecoration: 'none' }}>Privacidade</Link>
           <a href="mailto:honkponkoficial@gmail.com" style={{ color: 'rgba(255,255,255,.35)', fontSize: '.8rem', textDecoration: 'none' }}>Contato</a>
           <Link href="/dashboard" style={{ color: 'rgba(255,255,255,.35)', fontSize: '.8rem', textDecoration: 'none' }}>Dashboard</Link>
         </div>
-        <p style={{ fontSize: '.75rem', color: 'rgba(255,255,255,.2)' }}>© 2025 Honk Ponk. Todos os direitos reservados.</p>
+        <p style={{ fontSize: '.75rem', color: 'rgba(255,255,255,.2)' }}>© {new Date().getFullYear()} Honk Ponk. Todos os direitos reservados.</p>
       </footer>
 
       <style>{`
