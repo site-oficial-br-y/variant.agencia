@@ -159,7 +159,7 @@ const MONTH_LABEL = (m: string) =>
 /* ── faturamento acumulado de verdade, direto do Mercado Pago ──
    Diferente do MRR (que é projeção de quanto entra por mês), aqui é a soma de
    tudo que já foi aprovado desde o primeiro pagamento. */
-function TotalReceivedCard({ mp }: { mp: MpSummary | null }) {
+function TotalReceivedCard({ mp, extraCents }: { mp: MpSummary | null; extraCents: number | null }) {
   if (!mp) {
     return (
       <Card delay={140}>
@@ -183,11 +183,12 @@ function TotalReceivedCard({ mp }: { mp: MpSummary | null }) {
         <div>
           <div className="text-[11px] uppercase tracking-wider text-white/40 font-semibold">Total recebido</div>
           <div className="text-4xl font-extrabold mt-1.5 tracking-tight tabular-nums text-[#4ade80]">
-            {BRL(mp.netCents)}
+            {BRL(mp.netCents + (extraCents || 0))}
           </div>
           <div className="text-xs text-white/40 mt-1.5">
-            líquido, já sem a taxa do Mercado Pago · {mp.count} pagamento{mp.count === 1 ? '' : 's'} do Honk Ponk
+            tudo que já entrou, líquido · {mp.count} pagamento{mp.count === 1 ? '' : 's'} do Honk Ponk
             {since && ` desde ${since}`}
+            {!!extraCents && ` · mais ${BRL(extraCents)} de freela por fora`}
           </div>
           {mp.ignoredCount > 0 && (
             <div className="text-xs text-white/30 mt-1">
@@ -529,6 +530,13 @@ export function AdminClient({
   if (!stats) return null
 
   const { users, plans, coins, extra, searches, payments, apiUsage, warnings, generatedAt } = stats
+
+  // O mês corrente sai da quebra por mês que o Mercado Pago já devolve, para não
+  // haver duas contas diferentes do mesmo valor na mesma tela.
+  const currentMonth = generatedAt.slice(0, 7)
+  const thisMonth = payments?.byMonth.find(m => m.month === currentMonth)
+  const monthNetCents = payments ? (thisMonth?.netCents ?? 0) : null
+  const monthCount = thisMonth?.count ?? 0
   const conv = users.total > 0 ? (plans.paying / users.total) * 100 : 0
   const periodLabel = PERIODS.find(p => p.key === period)!.label
 
@@ -623,20 +631,24 @@ export function AdminClient({
                 </div>
               </Card>
 
+              {/* Antes aqui havia "Saldo atual", que somava o MRR (receita de um mês)
+                  com coins e freela (acumulados de todos os meses). O resultado não
+                  era nem mensal nem histórico. Virou o que de fato entrou no mês
+                  corrente, lido dos pagamentos do Mercado Pago. */}
               <Card delay={80}>
-                <div className="text-[11px] uppercase tracking-wider text-white/40 font-semibold">Saldo atual</div>
-                <div className="text-4xl font-extrabold mt-1.5 tracking-tight tabular-nums">
-                  {BRL(plans.mrrCents + (coins.revenueCentsTotal || 0) + (extra.totalCents || 0))}
+                <div className="text-[11px] uppercase tracking-wider text-white/40 font-semibold">Recebido no mês</div>
+                <div className="text-4xl font-extrabold mt-1.5 tracking-tight tabular-nums text-[#4ade80]">
+                  {monthNetCents === null ? '—' : BRL(monthNetCents)}
                 </div>
-                <div className="text-xs text-white/40 mt-1.5 space-y-0.5">
-                  <div>assinaturas {BRL(plans.mrrCents)}</div>
-                  {coins.revenueCentsTotal !== null && coins.revenueCentsTotal > 0 && <div>coins {BRL(coins.revenueCentsTotal)}</div>}
-                  {extra.totalCents !== null && extra.totalCents > 0 && <div>freela {BRL(extra.totalCents)}</div>}
+                <div className="text-xs text-white/40 mt-1.5">
+                  {monthNetCents === null
+                    ? 'sem dados do Mercado Pago'
+                    : <>já recebido em {MONTH_LABEL(currentMonth)} · {monthCount} pagamento{monthCount === 1 ? '' : 's'}</>}
                 </div>
               </Card>
             </div>
 
-            <TotalReceivedCard mp={payments} />
+            <TotalReceivedCard mp={payments} extraCents={extra.totalCents} />
 
             <ApiUsageCard usage={apiUsage} />
 
