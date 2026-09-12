@@ -11,8 +11,6 @@ import { DemoResults } from '@/components/DemoResults'
 import { PricingSection } from '@/components/PricingSection'
 import { Navbar } from '@/components/Navbar'
 
-const TICKER_ITEMS = ['Santos','Campinas','São Paulo','Curitiba','Porto Alegre','Belo Horizonte','Fortaleza','Recife','Manaus','Goiânia','Florianópolis','Salvador','Belém','Natal','Maceió']
-
 interface QuizData { service: string; city: string; segment: string; allBrazil: boolean }
 
 export default function HomePage() {
@@ -56,9 +54,17 @@ export default function HomePage() {
       <QuizOverlay open={quizOpen} onClose={() => setQuizOpen(false)} onSearch={handleSearch} />
 
       {/* Hero */}
-      <section style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', padding: '100px 24px 60px', position: 'relative', overflow: 'hidden' }}>
-        <div className="hero-grid" />
-        <div style={{ position: 'absolute', inset: 0, background: 'radial-gradient(ellipse 70% 60% at 60% 20%, rgba(232,121,160,.12) 0%, transparent 70%)', pointerEvents: 'none' }} />
+      <section style={{ minHeight: '660px', display: 'flex', alignItems: 'center', padding: '100px 24px 60px', position: 'relative', overflow: 'hidden' }}>
+        {/* Cidade ao fundo. Os véus por cima existem para o texto continuar legível
+            sem apagar o skyline: um escurece de baixo para cima, outro puxa o lado
+            esquerdo, onde o texto deita. */}
+        <div style={{ position: 'absolute', inset: 0, overflow: 'hidden', pointerEvents: 'none' }}>
+          <img src="/cidade.jpg" alt="" aria-hidden className="cidade-fundo" />
+        </div>
+        <div style={{ position: 'absolute', inset: 0, pointerEvents: 'none', background: 'linear-gradient(to top, #0f0f1a 0%, rgba(15,15,26,.72) 20%, rgba(15,15,26,.24) 52%, rgba(15,15,26,.55) 100%)' }} />
+        <div style={{ position: 'absolute', inset: 0, pointerEvents: 'none', background: 'linear-gradient(to right, rgba(15,15,26,.9) 2%, rgba(15,15,26,.52) 34%, rgba(15,15,26,.08) 66%, transparent 100%)' }} />
+        <div className="hero-grid" style={{ opacity: .35 }} />
+        <div style={{ position: 'absolute', inset: 0, background: 'radial-gradient(ellipse 70% 60% at 60% 20%, rgba(232,121,160,.14) 0%, transparent 70%)', pointerEvents: 'none' }} />
         <div style={{ maxWidth: 1200, margin: '0 auto', width: '100%', display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(300px,1fr))', gap: 60, alignItems: 'center', position: 'relative', zIndex: 1 }}>
           {/* Texto */}
           <div className="reveal">
@@ -82,7 +88,7 @@ export default function HomePage() {
               </a>
             </div>
             <div style={{ display: 'flex', gap: 28, marginTop: 40 }}>
-              {[['Todo o BR', 'busca em qualquer cidade'], ['4 canais', 'WhatsApp, Insta, tel e site'], ['Grátis', 'para começar hoje']].map(([num, lbl]) => (
+              {[['+2.800', 'usuários ativos'], ['+5.000', 'buscas realizadas'], ['+20.000', 'locais prospectados']].map(([num, lbl]) => (
                 <div key={lbl}>
                   <div style={{ fontSize: '1.6rem', fontWeight: 800 }}>{num}</div>
                   <div style={{ fontSize: '.78rem', color: 'rgba(255,255,255,.4)', marginTop: 2 }}>{lbl}</div>
@@ -114,7 +120,7 @@ export default function HomePage() {
                   </span>
                 </div>
                 <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3,1fr)', gap: 8, marginBottom: 12 }}>
-                  {[['1.247','Leads hoje','+18%'],['83','Contatados','+7%'],['R$12k','Em negócios','+31%']].map(([val,lbl,delta]) => (
+                  {[['2.800','Usuários','+18%'],['5.000','Buscas','+7%'],['20 mil','Locais','+31%']].map(([val,lbl,delta]) => (
                     <div key={lbl} style={{ background: 'rgba(255,255,255,.05)', borderRadius: 10, padding: '10px 12px' }}>
                       <div style={{ fontSize: '1.1rem', fontWeight: 800 }}>{val}</div>
                       <div style={{ fontSize: '.62rem', color: 'rgba(255,255,255,.4)', margin: '2px 0' }}>{lbl}</div>
@@ -149,14 +155,6 @@ export default function HomePage() {
           </div>
         </div>
 
-        {/* Ticker */}
-        <div style={{ position: 'absolute', bottom: 24, left: 0, right: 0, overflow: 'hidden', maskImage: 'linear-gradient(90deg,transparent,#000 15%,#000 85%,transparent)' }}>
-          <div style={{ display: 'flex', gap: 32, animation: 'ticker 20s linear infinite', width: 'max-content' }}>
-            {[...TICKER_ITEMS, ...TICKER_ITEMS].map((c, i) => (
-              <span key={i} style={{ fontSize: '.78rem', color: 'rgba(255,255,255,.2)', whiteSpace: 'nowrap', fontWeight: 600 }}>📍 {c}</span>
-            ))}
-          </div>
-        </div>
       </section>
 
       {/* Search results */}
@@ -202,8 +200,11 @@ export default function HomePage() {
       </section>
 
       {/* Features */}
-      <section id="recursos" style={{ padding: '90px 24px', background: '#16162a' }}>
-        <div style={{ maxWidth: 1000, margin: '0 auto' }}>
+      <section id="recursos" style={{ padding: '90px 24px', background: '#16162a', position: 'relative', overflow: 'hidden' }}>
+        {/* O fundo aqui era chapado. Estas manchas se deslocam devagar e dão
+            profundidade sem competir com o conteúdo. */}
+        <div className="manchas" aria-hidden><i /><i /><i /></div>
+        <div style={{ maxWidth: 1000, margin: '0 auto', position: 'relative', zIndex: 1 }}>
           <div className="reveal" style={{ textAlign: 'center', marginBottom: 60 }}>
             <h2 style={{ fontSize: 'clamp(1.8rem,4vw,2.8rem)', fontWeight: 800, letterSpacing: -1.5 }}>Tudo que você precisa para prospectar.</h2>
           </div>
@@ -216,8 +217,8 @@ export default function HomePage() {
               { icon: '🔒', title: 'Seguro e privado', desc: 'Seus dados protegidos com Supabase + RLS.' },
               { icon: '⚡', title: 'Resultados na hora', desc: 'Sem espera. Resultados em segundos.' },
             ].map(f => (
-              <div key={f.title} className="reveal" style={{ background: 'rgba(255,255,255,.04)', border: '1px solid rgba(248,182,200,0.14)', borderRadius: 16, padding: 22 }}>
-                <div style={{ fontSize: '1.8rem', marginBottom: 10 }}>{f.icon}</div>
+              <div key={f.title} className="reveal card-recurso" style={{ background: 'rgba(255,255,255,.04)', border: '1px solid rgba(248,182,200,0.14)', borderRadius: 16, padding: 22 }}>
+                <div className="icone-recurso" style={{ fontSize: '1.8rem', marginBottom: 10 }}>{f.icon}</div>
                 <h3 style={{ fontSize: '.95rem', fontWeight: 700, marginBottom: 6 }}>{f.title}</h3>
                 <p style={{ fontSize: '.82rem', color: 'rgba(255,255,255,.45)', lineHeight: 1.5 }}>{f.desc}</p>
               </div>
@@ -229,15 +230,16 @@ export default function HomePage() {
       {/* Testimonials */}
       <section style={{ padding: '90px 24px', background: '#0f0f1a', position: 'relative', overflow: 'hidden' }}>
         <div className="hero-grid" style={{ opacity: 0.4 }} />
-        <div style={{ maxWidth: 900, margin: '0 auto' }}>
+        <div style={{ maxWidth: 1040, margin: '0 auto' }}>
           <div className="reveal" style={{ textAlign: 'center', marginBottom: 60 }}>
             <h2 style={{ fontSize: 'clamp(1.8rem,4vw,2.6rem)', fontWeight: 800, letterSpacing: -1.5 }}>Quem já usa, aprova.</h2>
           </div>
           <div className="stagger" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(260px,1fr))', gap: 20 }}>
             {[
-              { name: 'Freelancer de Sites', role: 'Comentário no TikTok', avatar: '🌐', color: '#e879a0', text: 'Valeu, mano! Me salvou — já vendi 3 sites de R$100 só hoje.', stars: 5, ago: 'há 4 dias' },
-              { name: 'Designer', role: 'Comentário no TikTok', avatar: '🎨', color: '#a855f7', text: 'Trampo com design e, por causa do Honk Ponk, achei uma sorveteria que não tinha identidade visual. Fechei com o dono e agora produzo toda a parte de marketing da empresa.', stars: 5, ago: 'há 1 semana' },
-            ].map(t => (
+              { name: 'Tunico', role: 'Comentário no TikTok', avatar: 'T', color: '#e879a0', text: 'valeu mn salvou já vendi 3 sites de 100 hj', stars: 5, ago: '19 curtidas' },
+            { name: 'vemobabado', role: 'Comentário no Instagram', avatar: 'V', color: '#f59e0b', text: 'mano incrível fui testar e no primeiro restaurante já vendi um site por 120 reais com domínio', stars: 5, ago: 'há 1 dia' },
+            { name: 'Usuário do plano Freelancer', role: 'Avaliação dentro da plataforma', avatar: 'F', color: '#a855f7', text: 'Super bom. Muito fácil de fechar vendas.', stars: 5, ago: 'há 2 semanas' },
+          ].map(t => (
               <div key={t.name} className="reveal" style={{ background: 'rgba(255,255,255,.04)', border: '1px solid rgba(248,182,200,0.18)', borderRadius: 20, padding: 28, display: 'flex', flexDirection: 'column', gap: 16 }}>
                 <div style={{ display: 'flex', gap: 4 }}>
                   {[1,2,3,4,5].map(i => <span key={i} style={{ color: i <= t.stars ? '#fbbf24' : 'rgba(255,255,255,.15)', fontSize: '1rem' }}>★</span>)}
