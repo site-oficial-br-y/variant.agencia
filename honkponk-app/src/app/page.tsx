@@ -188,9 +188,9 @@ export default function HomePage() {
               { n: '02', icon: '📍', title: 'Escolha a cidade e o nicho', desc: 'Filtramos pelo segmento certo: restaurantes, clínicas, oficinas...' },
               { n: '03', icon: '💬', title: 'Contate na hora', desc: 'Abra o WhatsApp com mensagem personalizada já preenchida.' },
             ].map(s => (
-              <div key={s.n} className="reveal" style={{ background: 'rgba(255,255,255,.04)', border: '1px solid rgba(248,182,200,0.18)', borderRadius: 20, padding: 28 }}>
-                <div style={{ fontSize: '.72rem', fontWeight: 800, color: '#e879a0', letterSpacing: 2, marginBottom: 16 }}>{s.n}</div>
-                <div style={{ fontSize: '2rem', marginBottom: 12 }}>{s.icon}</div>
+              <div key={s.n} className="reveal card-passo" style={{ background: 'rgba(255,255,255,.04)', border: '1px solid rgba(248,182,200,0.18)', borderRadius: 20, padding: 28 }}>
+                <div className="passo-n" style={{ fontSize: '.72rem', fontWeight: 800, color: '#e879a0', letterSpacing: 2, marginBottom: 16 }}>{s.n}</div>
+                <div className="passo-ico" style={{ fontSize: '2rem', marginBottom: 12 }}>{s.icon}</div>
                 <h3 style={{ fontSize: '1.05rem', fontWeight: 800, marginBottom: 8 }}>{s.title}</h3>
                 <p style={{ fontSize: '.85rem', color: 'rgba(255,255,255,.5)', lineHeight: 1.6 }}>{s.desc}</p>
               </div>

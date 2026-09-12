@@ -181,3 +181,28 @@ body {
   position:absolute; left:0; right:0; top:0; height:clamp(120px,16vw,230px);
   display:block; pointer-events:none; z-index:0;
 }
+
+/* ── os três passos reagem como os cards de recurso ── */
+.card-passo{
+  transition: transform .45s cubic-bezier(.19,1,.22,1), border-color .4s, background .4s, box-shadow .45s;
+  position:relative; overflow:hidden;
+}
+.card-passo::before{
+  content:""; position:absolute; left:0; top:0; height:3px; width:0;
+  background:linear-gradient(90deg,#e879a0,#c2185b);
+  transition:width .55s cubic-bezier(.19,1,.22,1);
+}
+.card-passo:hover{
+  transform:translateY(-6px);
+  border-color:rgba(232,121,160,.45);
+  background:rgba(255,255,255,.06);
+  box-shadow:0 18px 44px rgba(0,0,0,.4);
+}
+.card-passo:hover::before{ width:100% }
+.passo-ico{ display:inline-block; transition:transform .5s cubic-bezier(.19,1,.22,1) }
+.card-passo:hover .passo-ico{ transform:translateY(-3px) rotate(-8deg) scale(1.12) }
+.passo-n{ transition:letter-spacing .45s ease, color .35s }
+.card-passo:hover .passo-n{ letter-spacing:4px; color:#f8b6c8 }
+@media (prefers-reduced-motion: reduce){
+  .card-passo, .passo-ico, .passo-n{ transition:none }
+}
