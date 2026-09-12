@@ -1,0 +1,7 @@
+Imagens do site, tambem embutidas dentro do index.html.
+O arquivo abre sozinho, sem esta pasta. Ela serve para publicar o site.
+
+  logo.png     emblema com fundo transparente, gerado a partir da arte original
+  box.jpg      interior da garagem, usada no topo e na galeria
+  polimento.jpg  secao "Por que escolher"
+  farol.jpg / roda.jpg / volante.jpg  galeria
