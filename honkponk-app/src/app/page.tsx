@@ -54,7 +54,7 @@ export default function HomePage() {
       <QuizOverlay open={quizOpen} onClose={() => setQuizOpen(false)} onSearch={handleSearch} />
 
       {/* Hero */}
-      <section style={{ minHeight: '660px', display: 'flex', alignItems: 'center', padding: '100px 24px 60px', position: 'relative', overflow: 'hidden' }}>
+      <section style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', padding: '100px 24px 60px', position: 'relative', overflow: 'hidden' }}>
         {/* Cidade ao fundo. Os véus por cima existem para o texto continuar legível
             sem apagar o skyline: um escurece de baixo para cima, outro puxa o lado
             esquerdo, onde o texto deita. */}
@@ -229,9 +229,14 @@ export default function HomePage() {
 
       {/* Testimonials */}
       <section style={{ padding: '90px 24px', background: '#0f0f1a', position: 'relative', overflow: 'hidden' }}>
-        {/* Luzes rosas desfocadas: aqui o fundo era só a grade e ficava seco. */}
-        <div className="luzes" aria-hidden><i /><i /><i /></div>
-        <div className="hero-grid" style={{ opacity: 0.4 }} />
+        {/* Céu ao fundo. As duas bordas são dissolvidas por degradê para a seção
+            emendar nas vizinhas sem linha de corte. */}
+        <div className="ceu" aria-hidden>
+          <img src="/ceu.jpg" alt="" />
+          <span className="ceu-topo" />
+          <span className="ceu-base" />
+        </div>
+        <div className="hero-grid" style={{ opacity: 0.25 }} />
         <div style={{ maxWidth: 1040, margin: '0 auto', position: 'relative', zIndex: 1 }}>
           <div className="reveal" style={{ textAlign: 'center', marginBottom: 60 }}>
             <h2 style={{ fontSize: 'clamp(1.8rem,4vw,2.6rem)', fontWeight: 800, letterSpacing: -1.5 }}>Quem já usa, aprova.</h2>
