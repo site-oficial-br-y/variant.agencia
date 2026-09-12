@@ -39,6 +39,7 @@ body{background:var(--cacau);color:var(--creme);font-family:var(--sans);line-hei
 img{max-width:100%;display:block}
 a{color:inherit;text-decoration:none}
 button{font:inherit;color:inherit;background:none;border:none;cursor:pointer}
+[hidden]{display:none!important}
 ::selection{background:var(--rosa);color:var(--cacau)}
 
 /* ===== fundo vivo: calor de forno, não cor chapada ===== */
@@ -231,6 +232,25 @@ section{padding:clamp(64px,9vw,124px) var(--pad);max-width:1400px;margin:0 auto}
 }
 .doce .mais:hover{transform:rotate(90deg) scale(1.1);background:#ffc0d2}
 
+/* filtros do cardápio */
+.filtros{display:flex;flex-wrap:wrap;gap:14px;align-items:center;justify-content:space-between;margin-bottom:22px}
+.chips{display:flex;flex-wrap:wrap;gap:8px}
+.chip{
+  border:1px solid var(--linha);border-radius:100px;padding:8px 15px;font-size:12.5px;
+  color:var(--creme-dim);font-weight:600;transition:background .3s,color .3s,border-color .3s,transform .3s;
+}
+.chip:hover{border-color:var(--rosa);color:var(--creme);transform:translateY(-2px)}
+.chip.on{background:var(--rosa);border-color:var(--rosa);color:#2a1014}
+.busca{display:flex;align-items:center;gap:9px;border:1px solid var(--linha);border-radius:100px;
+  padding:9px 16px;min-width:210px;transition:border-color .3s}
+.busca:focus-within{border-color:var(--rosa)}
+.busca svg{width:16px;height:16px;stroke:var(--creme-dim2);fill:none;stroke-width:1.8;flex-shrink:0}
+.busca input{background:none;border:0;outline:0;color:var(--creme);font:inherit;font-size:13px;width:100%}
+.busca input::placeholder{color:var(--creme-dim2)}
+.vazio-busca{color:var(--creme-dim);font-size:14px;padding:26px 0}
+.doce[hidden]{display:none}
+.mais-doces{display:flex;justify-content:center;margin-top:26px}
+
 /* sobre */
 .sobre{display:grid;grid-template-columns:1fr 1.15fr .85fr;gap:0;align-items:stretch}
 .sobre .foto{min-height:clamp(320px,46vw,560px)}
@@ -336,7 +356,7 @@ footer small{font-size:11.5px;color:var(--creme-dim2);width:100%;text-align:cent
 
   <div style="position:relative">
     <div class="foto rv d2">
-      <img src="img/hero.jpg" alt="Doce artesanal da casa" onerror="this.remove()">
+      <img fetchpriority="high" src="img/hero.jpg" alt="Doce artesanal da casa" onerror="this.remove()">
       <div class="vazio"><b>foto principal</b><span>img/hero.jpg</span></div>
     </div>
     <div class="selo nota rv d4">
@@ -371,44 +391,69 @@ footer small{font-size:11.5px;color:var(--creme-dim2);width:100%;text-align:cent
     </div>
   </div>
 
-  <div class="grade">
-    <article class="doce rv">
-      <div class="foto"><img src="img/brigadeiro.jpg" alt="Brigadeiro tradicional" onerror="this.remove()"><div class="vazio"><b>brigadeiro</b><span>img/brigadeiro.jpg</span></div></div>
+  <!-- Com cardápio grande, a pessoa não rola atrás do doce: ela filtra.
+       Os botões e a busca escondem e mostram os cards que já estão na página,
+       sem recarregar nada. -->
+  <div class="filtros rv d1">
+    <div class="chips" id="chips">
+      <button class="chip on" data-cat="todos">Todos</button>
+      <button class="chip" data-cat="brigadeiros">Brigadeiros</button>
+      <button class="chip" data-cat="bombons">Bombons</button>
+      <button class="chip" data-cat="bolos">Bolos</button>
+      <button class="chip" data-cat="tortas">Tortas</button>
+      <button class="chip" data-cat="paves">Pavês</button>
+      <button class="chip" data-cat="potes">Doces no pote</button>
+      <button class="chip" data-cat="sobremesas">Sobremesas</button>
+      <button class="chip" data-cat="acai">Açaí</button>
+    </div>
+    <label class="busca">
+      <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="6.5"/><path d="m16 16 4.5 4.5" stroke-linecap="round"/></svg>
+      <input id="busca" type="search" placeholder="Buscar doce..." autocomplete="off">
+    </label>
+  </div>
+
+  <p class="vazio-busca" id="semNada" hidden>Nada encontrado com esse nome. Tente outra palavra.</p>
+
+  <div class="grade" id="grade">
+    <article data-cat="brigadeiros" class="doce rv">
+      <div class="foto"><img loading="lazy" decoding="async" src="img/brigadeiro.jpg" alt="Brigadeiro tradicional" onerror="this.remove()"><div class="vazio"><b>brigadeiro</b><span>img/brigadeiro.jpg</span></div></div>
       <div class="info"><h3>Brigadeiro tradicional</h3><p>O clássico que nunca sai de moda, enrolado na hora.</p>
         <div class="pe"><span class="preco">R$ 4,00</span><span class="mais">+</span></div></div>
     </article>
-    <article class="doce rv d1">
-      <div class="foto"><img src="img/beijinho.jpg" alt="Beijinho" onerror="this.remove()"><div class="vazio"><b>beijinho</b><span>img/beijinho.jpg</span></div></div>
+    <article data-cat="brigadeiros" class="doce rv d1">
+      <div class="foto"><img loading="lazy" decoding="async" src="img/beijinho.jpg" alt="Beijinho" onerror="this.remove()"><div class="vazio"><b>beijinho</b><span>img/beijinho.jpg</span></div></div>
       <div class="info"><h3>Beijinho</h3><p>Coco fresco, leite condensado e muito capricho.</p>
         <div class="pe"><span class="preco">R$ 4,00</span><span class="mais">+</span></div></div>
     </article>
-    <article class="doce rv d2">
-      <div class="foto"><img src="img/brownie.jpg" alt="Brownie" onerror="this.remove()"><div class="vazio"><b>brownie</b><span>img/brownie.jpg</span></div></div>
+    <article data-cat="sobremesas" class="doce rv d2">
+      <div class="foto"><img loading="lazy" decoding="async" src="img/brownie.jpg" alt="Brownie" onerror="this.remove()"><div class="vazio"><b>brownie</b><span>img/brownie.jpg</span></div></div>
       <div class="info"><h3>Brownie</h3><p>Macio por dentro, casquinha crocante por fora.</p>
         <div class="pe"><span class="preco">R$ 8,00</span><span class="mais">+</span></div></div>
     </article>
-    <article class="doce rv d3">
-      <div class="foto"><img src="img/pave.jpg" alt="Pavê de ninho" onerror="this.remove()"><div class="vazio"><b>pavê</b><span>img/pave.jpg</span></div></div>
+    <article data-cat="paves" class="doce rv d3">
+      <div class="foto"><img loading="lazy" decoding="async" src="img/pave.jpg" alt="Pavê de ninho" onerror="this.remove()"><div class="vazio"><b>pavê</b><span>img/pave.jpg</span></div></div>
       <div class="info"><h3>Pavê de ninho</h3><p>Cremoso, leve e difícil de dividir com alguém.</p>
         <div class="pe"><span class="preco">R$ 12,00</span><span class="mais">+</span></div></div>
     </article>
-    <article class="doce rv d4">
-      <div class="foto"><img src="img/torta.jpg" alt="Torta de morango" onerror="this.remove()"><div class="vazio"><b>torta</b><span>img/torta.jpg</span></div></div>
+    <article data-cat="tortas" class="doce rv d4">
+      <div class="foto"><img loading="lazy" decoding="async" src="img/torta.jpg" alt="Torta de morango" onerror="this.remove()"><div class="vazio"><b>torta</b><span>img/torta.jpg</span></div></div>
       <div class="info"><h3>Torta de morango</h3><p>Massa amanteigada, creme e morango da estação.</p>
         <div class="pe"><span class="preco">R$ 16,00</span><span class="mais">+</span></div></div>
     </article>
-    <article class="doce rv d5">
-      <div class="foto"><img src="img/acai.jpg" alt="Açaí no pote" onerror="this.remove()"><div class="vazio"><b>açaí</b><span>img/acai.jpg</span></div></div>
+    <article data-cat="acai" class="doce rv d5">
+      <div class="foto"><img loading="lazy" decoding="async" src="img/acai.jpg" alt="Açaí no pote" onerror="this.remove()"><div class="vazio"><b>açaí</b><span>img/acai.jpg</span></div></div>
       <div class="info"><h3>Açaí no pote</h3><p>Cremoso, com os acompanhamentos que você escolher.</p>
         <div class="pe"><span class="preco">R$ 14,00</span><span class="mais">+</span></div></div>
     </article>
   </div>
+
+  <div class="mais-doces"><button class="btn btn-linha" id="verMais" hidden>Ver mais doces</button></div>
 </section>
 
 <!-- ============ SOBRE ============ -->
 <div class="sobre" id="sobre">
   <div class="foto rv">
-    <img src="img/loja.jpg" alt="Fachada da doceria" onerror="this.remove()">
+    <img loading="lazy" decoding="async" src="img/loja.jpg" alt="Fachada da doceria" onerror="this.remove()">
     <div class="vazio"><b>foto da loja</b><span>img/loja.jpg</span></div>
   </div>
   <div class="corpo rv d1">
@@ -436,7 +481,7 @@ footer small{font-size:11.5px;color:var(--creme-dim2);width:100%;text-align:cent
       <svg viewBox="0 0 30 26"><path d="M3 3c6 14 18 18 24 8" stroke-linecap="round"/><path d="M21 13l6-4v8" stroke-linecap="round" stroke-linejoin="round"/></svg>
     </p>
     <div class="foto">
-      <img src="img/destaque.jpg" alt="Doce em destaque" onerror="this.remove()">
+      <img loading="lazy" decoding="async" src="img/destaque.jpg" alt="Doce em destaque" onerror="this.remove()">
       <div class="vazio"><b>destaque</b><span>img/destaque.jpg</span></div>
     </div>
   </div>
@@ -466,7 +511,7 @@ footer small{font-size:11.5px;color:var(--creme-dim2);width:100%;text-align:cent
     </div>
 
     <div class="foto mapa rv d1">
-      <img src="img/mapa.jpg" alt="Mapa da localização" onerror="this.remove()">
+      <img loading="lazy" decoding="async" src="img/mapa.jpg" alt="Mapa da localização" onerror="this.remove()">
       <div class="vazio"><b>mapa ou fachada</b><span>img/mapa.jpg</span></div>
     </div>
 
@@ -527,6 +572,51 @@ var io=new IntersectionObserver(function(es){
   es.forEach(function(e){if(e.isIntersecting){e.target.classList.add('in');io.unobserve(e.target);}});
 },{threshold:.12,rootMargin:'0px 0px -6% 0px'});
 d.querySelectorAll('.rv,.cabeca').forEach(function(el){io.observe(el);});
+
+/* filtro do cardápio: categoria, busca e quantos aparecem de cada vez */
+(function(){
+  var grade=d.getElementById('grade');
+  if(!grade)return;
+  var cards=[].slice.call(grade.querySelectorAll('.doce')),
+      chips=[].slice.call(d.querySelectorAll('.chip')),
+      busca=d.getElementById('busca'),
+      verMais=d.getElementById('verMais'),
+      semNada=d.getElementById('semNada'),
+      PASSO=12, cat='todos', termo='', mostrando=PASSO;
+
+  function limpa(t){
+    return (t||'').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'');
+  }
+  function aplica(){
+    var achou=0;
+    cards.forEach(function(c){
+      var okCat = cat==='todos' || c.dataset.cat===cat;
+      var okTermo = !termo || limpa(c.textContent).indexOf(termo)>-1;
+      var passa = okCat && okTermo;
+      if(passa) achou++;
+      c.hidden = !passa || achou>mostrando;
+    });
+    semNada.hidden = achou>0;
+    verMais.hidden = achou<=mostrando;
+  }
+  chips.forEach(function(b){
+    b.addEventListener('click',function(){
+      chips.forEach(function(x){x.classList.remove('on')});
+      b.classList.add('on');
+      cat=b.dataset.cat;mostrando=PASSO;aplica();
+    });
+  });
+  if(busca)busca.addEventListener('input',function(){termo=limpa(busca.value);mostrando=PASSO;aplica();});
+  verMais.addEventListener('click',function(){mostrando+=PASSO;aplica();});
+  /* a faixa de categorias do topo também filtra */
+  d.querySelectorAll('.cats a').forEach(function(a,i){
+    a.addEventListener('click',function(){
+      var alvo=chips[i+1];
+      if(alvo)alvo.click();
+    });
+  });
+  aplica();
+})();
 
 /* as manchas do fundo respondem ao cursor e à rolagem, devagar */
 if(!reduce){
