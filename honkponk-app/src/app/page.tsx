@@ -229,8 +229,10 @@ export default function HomePage() {
 
       {/* Testimonials */}
       <section style={{ padding: '90px 24px', background: '#0f0f1a', position: 'relative', overflow: 'hidden' }}>
+        {/* Luzes rosas desfocadas: aqui o fundo era só a grade e ficava seco. */}
+        <div className="luzes" aria-hidden><i /><i /><i /></div>
         <div className="hero-grid" style={{ opacity: 0.4 }} />
-        <div style={{ maxWidth: 1040, margin: '0 auto' }}>
+        <div style={{ maxWidth: 1040, margin: '0 auto', position: 'relative', zIndex: 1 }}>
           <div className="reveal" style={{ textAlign: 'center', marginBottom: 60 }}>
             <h2 style={{ fontSize: 'clamp(1.8rem,4vw,2.6rem)', fontWeight: 800, letterSpacing: -1.5 }}>Quem já usa, aprova.</h2>
           </div>
