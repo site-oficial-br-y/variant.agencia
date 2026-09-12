@@ -6,11 +6,8 @@ FALTAM ESTAS, com estes nomes exatos:
   mini-sanduiches.jpg    Mini Sanduiches
   suco-maracuja.jpg      Suco de Maracuja
   vitamina-morango.jpg   Vitamina de Morango
-  loja.jpg               fachada ou ambiente, secao "Sobre"
-  mapa.jpg               mapa ou fachada, secao "Localizacao"
 
-Enquanto nao chegam, o site mostra uma moldura dizendo qual foto vai ali,
-sem quebrar nada.
+Esses quatro itens estao fora do cardapio ate a foto chegar.
 
 SOBRARAM (nao estao sendo usadas, pode apagar ou reaproveitar):
 
@@ -19,4 +16,11 @@ SOBRARAM (nao estao sendo usadas, pode apagar ou reaproveitar):
   empadao-assado.jpg
   torta-creme.jpg
 
-Todas as fotos foram reduzidas para no maximo 1100 pixels e recomprimidas.
+ONDE CADA FOTO DE AMBIENTE APARECE:
+
+  loja.jpg      vitrine, na secao "Sobre"
+  fachada.jpg   fachada, na secao "Localizacao"
+  destaque.jpg  cartao rosa da secao "Sobre"
+  hero.jpg      abertura do site
+
+Todas foram reduzidas e recomprimidas.
