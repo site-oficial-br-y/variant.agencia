@@ -18,7 +18,8 @@ const SERVICES = [
 
 const SEGMENTS = [
   { value: 'restaurant', label: 'Restaurantes' }, { value: 'beauty', label: 'Salões de Beleza' },
-  { value: 'car_repair', label: 'Oficinas / Mecânicas' }, { value: 'clinic', label: 'Clínicas & Consultórios' },
+  { value: 'car_repair', label: 'Oficinas / Mecânicas' }, { value: 'car_detailing', label: 'Estética Automotiva' },
+  { value: 'clinic', label: 'Clínicas & Consultórios' },
   { value: 'gym', label: 'Academias' }, { value: 'pharmacy', label: 'Farmácias' },
   { value: 'hotel', label: 'Hotéis & Pousadas' }, { value: 'supermarket', label: 'Supermercados' },
   { value: 'bakery', label: 'Padarias' }, { value: 'bar', label: 'Bares' },
