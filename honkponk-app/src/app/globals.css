@@ -164,6 +164,14 @@ body {
 }
 .ceu span{ position:absolute; left:0; right:0; display:block; pointer-events:none }
 /* em cima emenda com a seção de recursos, embaixo com a de planos */
-.ceu-topo{ top:0; height:32%; background:linear-gradient(to bottom, #16162a 0%, rgba(22,22,42,.7) 34%, transparent 100%) }
-.ceu-base{ bottom:0; height:42%; background:linear-gradient(to top, #0f0f1a 0%, rgba(15,15,26,.82) 38%, transparent 100%) }
+.ceu-topo{ top:0; height:48%; background:linear-gradient(to bottom, #0f0f1a 0%, rgba(15,15,26,.92) 16%, rgba(15,15,26,.5) 44%, transparent 100%) }
+.ceu-base{ bottom:0; height:52%; background:linear-gradient(to top, #0f0f1a 0%, rgba(15,15,26,.9) 22%, rgba(15,15,26,.45) 52%, transparent 100%) }
 @media (prefers-reduced-motion: reduce){ .ceu img{ animation:none } }
+
+/* ── emenda entre seções ──
+   Onde duas seções de cor diferente se encostavam ficava uma linha reta. Esta
+   faixa dissolve o fim de uma na cor da seguinte. */
+.emenda{
+  position:absolute; left:0; right:0; bottom:0; height:clamp(90px,12vw,170px);
+  display:block; pointer-events:none; z-index:0;
+}

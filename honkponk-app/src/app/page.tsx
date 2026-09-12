@@ -197,6 +197,7 @@ export default function HomePage() {
             ))}
           </div>
         </div>
+        <span className="emenda" style={{ background: 'linear-gradient(to bottom, transparent, #16162a)' }} aria-hidden />
       </section>
 
       {/* Features */}
@@ -225,6 +226,7 @@ export default function HomePage() {
             ))}
           </div>
         </div>
+        <span className="emenda" style={{ background: 'linear-gradient(to bottom, transparent, #0f0f1a)' }} aria-hidden />
       </section>
 
       {/* Testimonials */}
