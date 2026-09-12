@@ -1,26 +1,11 @@
-Fotos do site.
+Fotos usadas pelo site.
 
-FALTAM ESTAS, com estes nomes exatos:
+Elas tambem estao embutidas dentro do index.html, entao o arquivo abre
+sozinho, sem esta pasta. A pasta serve para quando o site for publicado.
 
-  brownie.jpg            Brownie de Chocolate
-  mini-sanduiches.jpg    Mini Sanduiches
-  suco-maracuja.jpg      Suco de Maracuja
-  vitamina-morango.jpg   Vitamina de Morango
+  hero.jpg      abertura
+  loja.jpg      vitrine, secao "Sobre"
+  fachada.jpg   secao "Localizacao", em tela cheia
+  demais        um por item do cardapio
 
-Esses quatro itens estao fora do cardapio ate a foto chegar.
-
-SOBRARAM (nao estao sendo usadas, pode apagar ou reaproveitar):
-
-  brigadeiros-confeito.jpg
-  mini-bolos.jpg
-  empadao-assado.jpg
-  torta-creme.jpg
-
-ONDE CADA FOTO DE AMBIENTE APARECE:
-
-  loja.jpg      vitrine, na secao "Sobre"
-  fachada.jpg   fachada, na secao "Localizacao"
-  destaque.jpg  cartao rosa da secao "Sobre"
-  hero.jpg      abertura do site
-
-Todas foram reduzidas e recomprimidas.
+Itens sem foto foram tirados do cardapio a pedido do dono.
