@@ -35,7 +35,7 @@
 }
 *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
 html{scroll-behavior:smooth;-webkit-text-size-adjust:100%}
-body{background:var(--cacau);color:var(--creme);font-family:var(--sans);line-height:1.6;overflow-x:hidden;-webkit-font-smoothing:antialiased}
+body{background:var(--cacau);color:var(--creme);font-family:var(--sans);line-height:1.6;overflow-x:clip;-webkit-font-smoothing:antialiased}
 img{max-width:100%;display:block}
 a{color:inherit;text-decoration:none}
 button{font:inherit;color:inherit;background:none;border:none;cursor:pointer}
@@ -52,12 +52,14 @@ button{font:inherit;color:inherit;background:none;border:none;cursor:pointer}
 #bg i:nth-child(2){width:40vmax;height:40vmax;right:-10vmax;top:24vh;background:radial-gradient(circle,rgba(196,106,58,.26),transparent 68%)}
 #bg i:nth-child(3){width:52vmax;height:52vmax;left:18vw;bottom:-22vmax;background:radial-gradient(circle,rgba(247,166,189,.2),transparent 70%)}
 #grain{
-  position:fixed;inset:-120%;z-index:1;pointer-events:none;opacity:.32;
+  position:fixed;inset:0;z-index:1;pointer-events:none;opacity:.32;
   background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.8' numOctaves='3'/%3E%3C/filter%3E%3Crect width='140' height='140' filter='url(%23n)' opacity='.3'/%3E%3C/svg%3E");
   animation:grain 7s steps(6) infinite;
 }
-@keyframes grain{0%{transform:translate(0,0)}20%{transform:translate(-3%,2%)}40%{transform:translate(2%,-3%)}
-60%{transform:translate(-2%,-2%)}80%{transform:translate(3%,3%)}100%{transform:translate(0,0)}}
+@keyframes grain{
+  0%{background-position:0 0}20%{background-position:-30px 20px}40%{background-position:20px -30px}
+  60%{background-position:-20px -20px}80%{background-position:30px 30px}100%{background-position:0 0}
+}
 header,main,footer{position:relative;z-index:2}
 
 /* ===== tipografia ===== */
@@ -95,7 +97,7 @@ header,main,footer{position:relative;z-index:2}
 
 /* ===== nav ===== */
 header{
-  position:fixed;inset:0 0 auto;z-index:60;padding:16px var(--pad);
+  position:fixed;top:0;left:0;width:100%;z-index:60;padding:16px var(--pad);
   display:flex;align-items:center;justify-content:space-between;gap:18px;
   transition:background .45s,backdrop-filter .45s,padding .45s,border-color .45s;
   border-bottom:1px solid transparent;
@@ -186,7 +188,14 @@ nav a:hover::after{width:100%}
 .selo svg{width:34px;margin:4px auto 0;display:block;stroke:var(--rosa);fill:none;stroke-width:2}
 .botoes{display:flex;flex-wrap:wrap;gap:12px;margin-top:26px}
 @media(max-width:980px){
-  .hero{grid-template-columns:1fr;padding-top:104px;gap:26px}
+  .hero{
+    grid-template-columns:minmax(0,1fr);padding:104px var(--pad) 44px;gap:30px;
+    min-height:auto;align-items:stretch;
+  }
+  .hero h1{font-size:clamp(52px,14vw,86px);margin:12px 0 18px}
+  .hero h1 small{font-size:clamp(18px,4.6vw,24px)}
+  .hero .lead{font-size:16px;max-width:none}
+  .hero .botoes{margin-top:22px}
   .hero-img{order:2}
   .hero .txt{order:1}
   .hero .foto{height:min(46vh,380px);margin-right:0}
@@ -239,9 +248,21 @@ section{padding:clamp(64px,9vw,124px) var(--pad);max-width:1400px;margin:0 auto}
   border:1px solid var(--linha);border-radius:20px;overflow:hidden;background:rgba(30,19,17,.6);
   display:flex;flex-direction:column;transition:transform .5s cubic-bezier(.19,1,.22,1),border-color .4s;
 }
-.doce:hover{transform:translateY(-7px);border-color:rgba(247,166,189,.4)}
+.doce:hover{
+  transform:translateY(-4px);
+  border-color:rgba(247,166,189,.32);
+  box-shadow:0 16px 40px rgba(0,0,0,.32);
+}
+.doce .foto::after{
+  content:"";position:absolute;inset:0;z-index:2;
+  background:linear-gradient(to top,rgba(247,166,189,.18),transparent 58%);
+  opacity:0;transition:opacity .5s;
+}
+.doce:hover .foto::after{opacity:1}
+.doce h3{transition:color .35s}
+.doce:hover h3{color:var(--rosa)}
 .doce .foto{aspect-ratio:4/3}
-.doce:hover .foto img{transform:scale(1.08)}
+.doce:hover .foto img{transform:scale(1.05)}
 .doce .info{padding:16px 16px 18px;display:flex;flex-direction:column;gap:6px;flex:1}
 .doce h3{font-size:15.5px;font-weight:700;letter-spacing:-.01em}
 .doce p{font-size:13px;color:var(--creme-dim);flex:1}
