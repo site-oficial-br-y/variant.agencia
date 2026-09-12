@@ -1,15 +1,22 @@
-Coloque aqui as fotos usadas pelo site, com estes nomes:
+Fotos do site.
 
-hero.jpg       foto principal do topo
-brigadeiro.jpg
-beijinho.jpg
-brownie.jpg
-pave.jpg
-torta.jpg
-acai.jpg
-loja.jpg       fachada ou ambiente
-destaque.jpg   foto do cartao rosa
-mapa.jpg       mapa ou fachada na secao de localizacao
+FALTAM ESTAS, com estes nomes exatos:
 
-Qualquer arquivo que faltar simplesmente nao aparece: no lugar fica a
-moldura dizendo qual foto vai ali, sem quebrar a pagina.
+  brownie.jpg            Brownie de Chocolate
+  mini-sanduiches.jpg    Mini Sanduiches
+  suco-maracuja.jpg      Suco de Maracuja
+  vitamina-morango.jpg   Vitamina de Morango
+  loja.jpg               fachada ou ambiente, secao "Sobre"
+  mapa.jpg               mapa ou fachada, secao "Localizacao"
+
+Enquanto nao chegam, o site mostra uma moldura dizendo qual foto vai ali,
+sem quebrar nada.
+
+SOBRARAM (nao estao sendo usadas, pode apagar ou reaproveitar):
+
+  brigadeiros-confeito.jpg
+  mini-bolos.jpg
+  empadao-assado.jpg
+  torta-creme.jpg
+
+Todas as fotos foram reduzidas para no maximo 1100 pixels e recomprimidas.

@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Protótipo · Doceria Artesanal</title>
-<meta name="description" content="Doceria artesanal. Brigadeiros, bolos, tortas, pavês e doces no pote feitos com ingredientes selecionados.">
+<meta name="description" content="Doceria artesanal. Bolos, tortas, brigadeiros, salgados e bebidas feitos com ingredientes selecionados.">
 <style>
 /* Fontes embutidas no arquivo: nada é baixado ao abrir, então o site mantém a
    identidade sem internet e continua sendo um arquivo só para mandar ao cliente.
@@ -174,9 +174,10 @@ nav a:hover::after{width:100%}
 }
 
 /* ===== categorias ===== */
+/* Quatro categorias reais, não oito inventadas. */
 .cats{
   border-block:1px solid var(--linha);background:rgba(30,19,17,.55);
-  display:grid;grid-template-columns:repeat(8,1fr);
+  display:grid;grid-template-columns:repeat(4,1fr);
 }
 .cats a{
   padding:26px 8px;text-align:center;border-left:1px solid var(--linha);
@@ -192,8 +193,7 @@ nav a:hover::after{width:100%}
 .cats .ico svg{width:24px;height:24px;stroke:var(--creme-dim);fill:none;stroke-width:1.5;transition:stroke .4s}
 .cats a:hover .ico svg{stroke:var(--rosa)}
 .cats small{font-size:12.5px;color:var(--creme-dim);font-weight:500}
-@media(max-width:1100px){.cats{grid-template-columns:repeat(4,1fr)}
-  .cats a:nth-child(5){border-left:0}.cats a:nth-child(-n+4){border-bottom:1px solid var(--linha)}}
+
 @media(max-width:560px){.cats{grid-template-columns:repeat(2,1fr)}
   .cats a:nth-child(odd){border-left:0}.cats a:nth-child(-n+6){border-bottom:1px solid var(--linha)}}
 
@@ -342,12 +342,12 @@ footer small{font-size:11.5px;color:var(--creme-dim2);width:100%;text-align:cent
 <!-- ============ HERO ============ -->
 <section class="hero" id="topo" style="max-width:none">
   <div class="txt">
-    <p class="olho rv">Doces que transformam<br>qualquer momento em algo especial</p>
+    <p class="olho rv">Doce, salgado e bebida<br>para qualquer hora do dia</p>
     <h1 class="script rv d1">
       <small>Bem-vindo à</small>
       <b>Protótipo</b>
     </h1>
-    <p class="lead rv d2">Aqui cada doce é um projeto de felicidade. Do clássico ao autoral, tudo feito com ingredientes selecionados, em pequenas fornadas, no mesmo dia da entrega.</p>
+    <p class="lead rv d2">Bolo, torta, brigadeiro, salgado e bebida gelada. Tudo feito com ingredientes selecionados, em pequenas fornadas, no mesmo dia da entrega.</p>
     <div class="botoes rv d3">
       <a href="https://wa.me/5511999999999" class="btn btn-rosa" target="_blank" rel="noopener">Peça pelo WhatsApp</a>
       <a href="#cardapio" class="btn btn-linha">Ver o cardápio</a>
@@ -369,13 +369,9 @@ footer small{font-size:11.5px;color:var(--creme-dim2);width:100%;text-align:cent
 <!-- ============ CATEGORIAS ============ -->
 <div class="cats">
   <a href="#cardapio"><span class="ico"><svg viewBox="0 0 24 24"><path d="M6 11h12l-1.2 8.2a1 1 0 0 1-1 .8H8.2a1 1 0 0 1-1-.8Z"/><path d="M8 11a4 4 0 0 1 8 0"/><path d="M12 4v3"/></svg></span><small>Brigadeiros</small></a>
-  <a href="#cardapio"><span class="ico"><svg viewBox="0 0 24 24"><path d="M12 4 4 9v6l8 5 8-5V9Z"/><path d="m4 9 8 5 8-5"/><path d="M12 14v6"/></svg></span><small>Bombons</small></a>
-  <a href="#cardapio"><span class="ico"><svg viewBox="0 0 24 24"><path d="M4 20h16v-7H4Z"/><path d="M4 13c1.6-2 3-2 4.6 0s3 2 4.6 0 3-2 4.6 0"/><path d="M12 4v4"/></svg></span><small>Bolos</small></a>
-  <a href="#cardapio"><span class="ico"><svg viewBox="0 0 24 24"><path d="M3 19 12 5l9 14Z"/><path d="M7 19h10"/></svg></span><small>Tortas</small></a>
-  <a href="#cardapio"><span class="ico"><svg viewBox="0 0 24 24"><path d="M7 6h10l-1 13a1 1 0 0 1-1 1H9a1 1 0 0 1-1-1Z"/><path d="M8 11h8"/></svg></span><small>Pavês</small></a>
-  <a href="#cardapio"><span class="ico"><svg viewBox="0 0 24 24"><path d="M7 9h10v10a1 1 0 0 1-1 1H8a1 1 0 0 1-1-1Z"/><path d="M6 6h12v3H6Z"/><path d="M12 3v3"/></svg></span><small>Doces no pote</small></a>
-  <a href="#cardapio"><span class="ico"><svg viewBox="0 0 24 24"><path d="M4 16h16"/><path d="M5 16a7 7 0 0 1 14 0"/><path d="M12 6v3"/><path d="M4 20h16"/></svg></span><small>Sobremesas</small></a>
-  <a href="#cardapio"><span class="ico"><svg viewBox="0 0 24 24"><path d="M6 8h12l-1.4 11.2a1 1 0 0 1-1 .8H8.4a1 1 0 0 1-1-.8Z"/><path d="M9 8a3 3 0 0 1 6 0"/><path d="M10 4.5c1.5.6 2.5.6 4 0"/></svg></span><small>Açaí</small></a>
+  <a href="#cardapio"><span class="ico"><svg viewBox="0 0 24 24"><path d="M4 20h16v-7H4Z"/><path d="M4 13c1.6-2 3-2 4.6 0s3 2 4.6 0 3-2 4.6 0"/><path d="M12 4v4"/></svg></span><small>Bolos e tortas</small></a>
+  <a href="#cardapio"><span class="ico"><svg viewBox="0 0 24 24"><path d="M4 14h16"/><path d="M5 14a7 7 0 0 1 14 0"/><path d="M4 17.5h16"/><path d="M7 11c1-1.4 3-1.4 4 0"/></svg></span><small>Salgados</small></a>
+  <a href="#cardapio"><span class="ico"><svg viewBox="0 0 24 24"><path d="M7 8h10l-1.2 11.2a1 1 0 0 1-1 .8H9.2a1 1 0 0 1-1-.8Z"/><path d="M9 8V6a3 3 0 0 1 6 0v2"/><path d="M9.5 12h5"/></svg></span><small>Bebidas</small></a>
 </div>
 
 <!-- ============ CARDÁPIO ============ -->
@@ -386,7 +382,7 @@ footer small{font-size:11.5px;color:var(--creme-dim2);width:100%;text-align:cent
       <h2 class="script"><em>Cardápio</em></h2>
     </div>
     <div style="max-width:420px">
-      <p class="lead">Artesanais, feitos em pequenas quantidades e com ingrediente de verdade. Aqui tem o doce certo pra cada ocasião.</p>
+      <p class="lead">Artesanais, feitos em pequenas quantidades e com ingrediente de verdade. Tem doce, salgado e bebida para cada ocasião.</p>
       <a href="#contato" class="btn btn-linha" style="margin-top:16px">Ver cardápio completo →</a>
     </div>
   </div>
@@ -398,17 +394,13 @@ footer small{font-size:11.5px;color:var(--creme-dim2);width:100%;text-align:cent
     <div class="chips" id="chips">
       <button class="chip on" data-cat="todos">Todos</button>
       <button class="chip" data-cat="brigadeiros">Brigadeiros</button>
-      <button class="chip" data-cat="bombons">Bombons</button>
-      <button class="chip" data-cat="bolos">Bolos</button>
-      <button class="chip" data-cat="tortas">Tortas</button>
-      <button class="chip" data-cat="paves">Pavês</button>
-      <button class="chip" data-cat="potes">Doces no pote</button>
-      <button class="chip" data-cat="sobremesas">Sobremesas</button>
-      <button class="chip" data-cat="acai">Açaí</button>
+      <button class="chip" data-cat="bolos">Bolos e tortas</button>
+      <button class="chip" data-cat="salgados">Salgados</button>
+      <button class="chip" data-cat="bebidas">Bebidas</button>
     </div>
     <label class="busca">
       <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="6.5"/><path d="m16 16 4.5 4.5" stroke-linecap="round"/></svg>
-      <input id="busca" type="search" placeholder="Buscar doce..." autocomplete="off">
+      <input id="busca" type="search" placeholder="Buscar no cardápio..." autocomplete="off">
     </label>
   </div>
 
@@ -416,38 +408,143 @@ footer small{font-size:11.5px;color:var(--creme-dim2);width:100%;text-align:cent
 
   <div class="grade" id="grade">
     <article data-cat="brigadeiros" class="doce rv">
-      <div class="foto"><img loading="lazy" decoding="async" src="img/brigadeiro.jpg" alt="Brigadeiro tradicional" onerror="this.remove()"><div class="vazio"><b>brigadeiro</b><span>img/brigadeiro.jpg</span></div></div>
-      <div class="info"><h3>Brigadeiro tradicional</h3><p>O clássico que nunca sai de moda, enrolado na hora.</p>
-        <div class="pe"><span class="preco">R$ 4,00</span><span class="mais">+</span></div></div>
+      <div class="foto"><img loading="lazy" decoding="async" src="img/brigadeiros.jpg" alt="Brigadeiros Gourmet" onerror="this.remove()"><div class="vazio"><b>brigadeiros gourmet</b><span>img/brigadeiros.jpg</span></div></div>
+      <div class="info"><h3>Brigadeiros Gourmet</h3><p>Chocolate, coco, morango, Ninho e sabores especiais, com diferentes coberturas.</p>
+        <div class="pe"><span class="preco">R$ 5,00 <small>/un.</small></span><span class="mais">+</span></div></div>
     </article>
-    <article data-cat="brigadeiros" class="doce rv d1">
-      <div class="foto"><img loading="lazy" decoding="async" src="img/beijinho.jpg" alt="Beijinho" onerror="this.remove()"><div class="vazio"><b>beijinho</b><span>img/beijinho.jpg</span></div></div>
-      <div class="info"><h3>Beijinho</h3><p>Coco fresco, leite condensado e muito capricho.</p>
-        <div class="pe"><span class="preco">R$ 4,00</span><span class="mais">+</span></div></div>
-    </article>
-    <article data-cat="sobremesas" class="doce rv d2">
-      <div class="foto"><img loading="lazy" decoding="async" src="img/brownie.jpg" alt="Brownie" onerror="this.remove()"><div class="vazio"><b>brownie</b><span>img/brownie.jpg</span></div></div>
-      <div class="info"><h3>Brownie</h3><p>Macio por dentro, casquinha crocante por fora.</p>
+    <article data-cat="bolos" class="doce rv d1">
+      <div class="foto"><img loading="lazy" decoding="async" src="img/brownie.jpg" alt="Brownie de Chocolate" onerror="this.remove()"><div class="vazio"><b>brownie de chocolate</b><span>img/brownie.jpg</span></div></div>
+      <div class="info"><h3>Brownie de Chocolate</h3><p>Macio por dentro, intenso em chocolate e com casquinha crocante.</p>
         <div class="pe"><span class="preco">R$ 8,00</span><span class="mais">+</span></div></div>
     </article>
-    <article data-cat="paves" class="doce rv d3">
-      <div class="foto"><img loading="lazy" decoding="async" src="img/pave.jpg" alt="Pavê de ninho" onerror="this.remove()"><div class="vazio"><b>pavê</b><span>img/pave.jpg</span></div></div>
-      <div class="info"><h3>Pavê de ninho</h3><p>Cremoso, leve e difícil de dividir com alguém.</p>
+    <article data-cat="bolos" class="doce rv d2">
+      <div class="foto"><img loading="lazy" decoding="async" src="img/pave-ninho.jpg" alt="Pavê de Ninho" onerror="this.remove()"><div class="vazio"><b>pavê de ninho</b><span>img/pave-ninho.jpg</span></div></div>
+      <div class="info"><h3>Pavê de Ninho</h3><p>Camadas de creme de Ninho e biscoito, supercremoso.</p>
         <div class="pe"><span class="preco">R$ 12,00</span><span class="mais">+</span></div></div>
     </article>
-    <article data-cat="tortas" class="doce rv d4">
-      <div class="foto"><img loading="lazy" decoding="async" src="img/torta.jpg" alt="Torta de morango" onerror="this.remove()"><div class="vazio"><b>torta</b><span>img/torta.jpg</span></div></div>
-      <div class="info"><h3>Torta de morango</h3><p>Massa amanteigada, creme e morango da estação.</p>
+    <article data-cat="bolos" class="doce rv d3">
+      <div class="foto"><img loading="lazy" decoding="async" src="img/torta-morango.jpg" alt="Torta de Morango" onerror="this.remove()"><div class="vazio"><b>torta de morango</b><span>img/torta-morango.jpg</span></div></div>
+      <div class="info"><h3>Torta de Morango</h3><p>Massa crocante, creme suave e morangos frescos.</p>
         <div class="pe"><span class="preco">R$ 16,00</span><span class="mais">+</span></div></div>
     </article>
-    <article data-cat="acai" class="doce rv d5">
-      <div class="foto"><img loading="lazy" decoding="async" src="img/acai.jpg" alt="Açaí no pote" onerror="this.remove()"><div class="vazio"><b>açaí</b><span>img/acai.jpg</span></div></div>
-      <div class="info"><h3>Açaí no pote</h3><p>Cremoso, com os acompanhamentos que você escolher.</p>
+    <article data-cat="bolos" class="doce rv d4">
+      <div class="foto"><img loading="lazy" decoding="async" src="img/torta-limao.jpg" alt="Torta de Limão" onerror="this.remove()"><div class="vazio"><b>torta de limão</b><span>img/torta-limao.jpg</span></div></div>
+      <div class="info"><h3>Torta de Limão</h3><p>Creme de limão equilibrado sobre uma base crocante.</p>
+        <div class="pe"><span class="preco">R$ 15,00</span><span class="mais">+</span></div></div>
+    </article>
+    <article data-cat="bolos" class="doce rv d5">
+      <div class="foto"><img loading="lazy" decoding="async" src="img/torta-chocolate.jpg" alt="Torta de Chocolate" onerror="this.remove()"><div class="vazio"><b>torta de chocolate</b><span>img/torta-chocolate.jpg</span></div></div>
+      <div class="info"><h3>Torta de Chocolate</h3><p>Recheio cremoso de chocolate em uma massa delicada.</p>
+        <div class="pe"><span class="preco">R$ 17,00</span><span class="mais">+</span></div></div>
+    </article>
+    <article data-cat="bolos" class="doce rv">
+      <div class="foto"><img loading="lazy" decoding="async" src="img/red-velvet.jpg" alt="Red Velvet" onerror="this.remove()"><div class="vazio"><b>red velvet</b><span>img/red-velvet.jpg</span></div></div>
+      <div class="info"><h3>Red Velvet</h3><p>Bolo macio e aveludado com cobertura cremosa.</p>
         <div class="pe"><span class="preco">R$ 14,00</span><span class="mais">+</span></div></div>
+    </article>
+    <article data-cat="bolos" class="doce rv d1">
+      <div class="foto"><img loading="lazy" decoding="async" src="img/torta-morango-creme.jpg" alt="Torta de Morango com Creme" onerror="this.remove()"><div class="vazio"><b>torta de morango com creme</b><span>img/torta-morango-creme.jpg</span></div></div>
+      <div class="info"><h3>Torta de Morango com Creme</h3><p>Creme delicado, morangos frescos e massa crocante.</p>
+        <div class="pe"><span class="preco">R$ 17,00</span><span class="mais">+</span></div></div>
+    </article>
+    <article data-cat="bolos" class="doce rv d2">
+      <div class="foto"><img loading="lazy" decoding="async" src="img/torta-creme.jpg" alt="Mini Tortinha de Morango" onerror="this.remove()"><div class="vazio"><b>mini tortinha de morango</b><span>img/torta-creme.jpg</span></div></div>
+      <div class="info"><h3>Mini Tortinha de Morango</h3><p>Uma versão individual, recheada com creme e morangos.</p>
+        <div class="pe"><span class="preco">R$ 9,00</span><span class="mais">+</span></div></div>
+    </article>
+    <article data-cat="bolos" class="doce rv d3">
+      <div class="foto"><img loading="lazy" decoding="async" src="img/bolo-coco.jpg" alt="Bolo de Coco" onerror="this.remove()"><div class="vazio"><b>bolo de coco</b><span>img/bolo-coco.jpg</span></div></div>
+      <div class="info"><h3>Bolo de Coco</h3><p>Massa fofinha com cobertura cremosa de coco.</p>
+        <div class="pe"><span class="preco">R$ 12,00</span><span class="mais">+</span></div></div>
+    </article>
+    <article data-cat="bolos" class="doce rv d4">
+      <div class="foto"><img loading="lazy" decoding="async" src="img/bolo-crocante-chocolate.jpg" alt="Bolo Crocante de Chocolate" onerror="this.remove()"><div class="vazio"><b>bolo crocante de chocolate</b><span>img/bolo-crocante-chocolate.jpg</span></div></div>
+      <div class="info"><h3>Bolo Crocante de Chocolate</h3><p>Chocolate, creme e uma camada crocante irresistível.</p>
+        <div class="pe"><span class="preco">R$ 14,00</span><span class="mais">+</span></div></div>
+    </article>
+    <article data-cat="salgados" class="doce rv d5">
+      <div class="foto"><img loading="lazy" decoding="async" src="img/croissant.jpg" alt="Croissant Recheado" onerror="this.remove()"><div class="vazio"><b>croissant recheado</b><span>img/croissant.jpg</span></div></div>
+      <div class="info"><h3>Croissant Recheado</h3><p>Massa folhada dourada e crocante com recheio cremoso.</p>
+        <div class="pe"><span class="preco">R$ 12,00</span><span class="mais">+</span></div></div>
+    </article>
+    <article data-cat="salgados" class="doce rv">
+      <div class="foto"><img loading="lazy" decoding="async" src="img/mini-sanduiches.jpg" alt="Mini Sanduíches" onerror="this.remove()"><div class="vazio"><b>mini sanduíches</b><span>img/mini-sanduiches.jpg</span></div></div>
+      <div class="info"><h3>Mini Sanduíches</h3><p>Pãezinhos macios com opções variadas de recheio.</p>
+        <div class="pe"><span class="preco">R$ 9,00</span><span class="mais">+</span></div></div>
+    </article>
+    <article data-cat="salgados" class="doce rv d1">
+      <div class="foto"><img loading="lazy" decoding="async" src="img/wraps.jpg" alt="Wraps" onerror="this.remove()"><div class="vazio"><b>wraps</b><span>img/wraps.jpg</span></div></div>
+      <div class="info"><h3>Wraps</h3><p>Tortilhas recheadas, frescas e leves.</p>
+        <div class="pe"><span class="preco">R$ 8,00</span><span class="mais">+</span></div></div>
+    </article>
+    <article data-cat="salgados" class="doce rv d2">
+      <div class="foto"><img loading="lazy" decoding="async" src="img/mini-hamburguer.jpg" alt="Mini Hambúrguer" onerror="this.remove()"><div class="vazio"><b>mini hambúrguer</b><span>img/mini-hamburguer.jpg</span></div></div>
+      <div class="info"><h3>Mini Hambúrguer</h3><p>Pão macio, carne e molho especial.</p>
+        <div class="pe"><span class="preco">R$ 10,00</span><span class="mais">+</span></div></div>
+    </article>
+    <article data-cat="salgados" class="doce rv d3">
+      <div class="foto"><img loading="lazy" decoding="async" src="img/empadao-frango.jpg" alt="Empadão de Frango" onerror="this.remove()"><div class="vazio"><b>empadão de frango</b><span>img/empadao-frango.jpg</span></div></div>
+      <div class="info"><h3>Empadão de Frango</h3><p>Massa dourada recheada com frango cremoso.</p>
+        <div class="pe"><span class="preco">R$ 12,00</span><span class="mais">+</span></div></div>
+    </article>
+    <article data-cat="salgados" class="doce rv d4">
+      <div class="foto"><img loading="lazy" decoding="async" src="img/empadao-carne.jpg" alt="Empadão de Carne" onerror="this.remove()"><div class="vazio"><b>empadão de carne</b><span>img/empadao-carne.jpg</span></div></div>
+      <div class="info"><h3>Empadão de Carne</h3><p>Massa crocante com recheio bem temperado.</p>
+        <div class="pe"><span class="preco">R$ 13,00</span><span class="mais">+</span></div></div>
+    </article>
+    <article data-cat="bebidas" class="doce rv d5">
+      <div class="foto"><img loading="lazy" decoding="async" src="img/suco-laranja.jpg" alt="Suco de Laranja" onerror="this.remove()"><div class="vazio"><b>suco de laranja</b><span>img/suco-laranja.jpg</span></div></div>
+      <div class="info"><h3>Suco de Laranja</h3><p>Natural e preparado com laranjas frescas.</p>
+        <div class="pe"><span class="preco">R$ 8,00</span><span class="mais">+</span></div></div>
+    </article>
+    <article data-cat="bebidas" class="doce rv">
+      <div class="foto"><img loading="lazy" decoding="async" src="img/suco-goiaba.jpg" alt="Suco de Goiaba" onerror="this.remove()"><div class="vazio"><b>suco de goiaba</b><span>img/suco-goiaba.jpg</span></div></div>
+      <div class="info"><h3>Suco de Goiaba</h3><p>Refrescante, cremoso e cheio de sabor.</p>
+        <div class="pe"><span class="preco">R$ 8,00</span><span class="mais">+</span></div></div>
+    </article>
+    <article data-cat="bebidas" class="doce rv d1">
+      <div class="foto"><img loading="lazy" decoding="async" src="img/suco-manga.jpg" alt="Suco de Manga" onerror="this.remove()"><div class="vazio"><b>suco de manga</b><span>img/suco-manga.jpg</span></div></div>
+      <div class="info"><h3>Suco de Manga</h3><p>Manga batida, docinha e refrescante.</p>
+        <div class="pe"><span class="preco">R$ 9,00</span><span class="mais">+</span></div></div>
+    </article>
+    <article data-cat="bebidas" class="doce rv d2">
+      <div class="foto"><img loading="lazy" decoding="async" src="img/suco-maracuja.jpg" alt="Suco de Maracujá" onerror="this.remove()"><div class="vazio"><b>suco de maracujá</b><span>img/suco-maracuja.jpg</span></div></div>
+      <div class="info"><h3>Suco de Maracujá</h3><p>Levemente azedinho e superrefrescante.</p>
+        <div class="pe"><span class="preco">R$ 9,00</span><span class="mais">+</span></div></div>
+    </article>
+    <article data-cat="bebidas" class="doce rv d3">
+      <div class="foto"><img loading="lazy" decoding="async" src="img/suco-tropical.jpg" alt="Suco Tropical" onerror="this.remove()"><div class="vazio"><b>suco tropical</b><span>img/suco-tropical.jpg</span></div></div>
+      <div class="info"><h3>Suco Tropical</h3><p>Uma mistura deliciosa de frutas tropicais.</p>
+        <div class="pe"><span class="preco">R$ 10,00</span><span class="mais">+</span></div></div>
+    </article>
+    <article data-cat="bebidas" class="doce rv d4">
+      <div class="foto"><img loading="lazy" decoding="async" src="img/vitamina-morango.jpg" alt="Vitamina de Morango" onerror="this.remove()"><div class="vazio"><b>vitamina de morango</b><span>img/vitamina-morango.jpg</span></div></div>
+      <div class="info"><h3>Vitamina de Morango</h3><p>Morangos batidos com leite, cremosa e gelada.</p>
+        <div class="pe"><span class="preco">R$ 10,00</span><span class="mais">+</span></div></div>
+    </article>
+    <article data-cat="bebidas" class="doce rv d5">
+      <div class="foto"><img loading="lazy" decoding="async" src="img/coca-cola.jpg" alt="Coca-Cola" onerror="this.remove()"><div class="vazio"><b>coca-cola</b><span>img/coca-cola.jpg</span></div></div>
+      <div class="info"><h3>Coca-Cola</h3><p>Lata bem gelada.</p>
+        <div class="pe"><span class="preco">R$ 6,00</span><span class="mais">+</span></div></div>
+    </article>
+    <article data-cat="bebidas" class="doce rv">
+      <div class="foto"><img loading="lazy" decoding="async" src="img/coca-zero.jpg" alt="Coca-Cola Zero" onerror="this.remove()"><div class="vazio"><b>coca-cola zero</b><span>img/coca-zero.jpg</span></div></div>
+      <div class="info"><h3>Coca-Cola Zero</h3><p>Lata gelada, sem açúcar.</p>
+        <div class="pe"><span class="preco">R$ 6,00</span><span class="mais">+</span></div></div>
+    </article>
+    <article data-cat="bebidas" class="doce rv d1">
+      <div class="foto"><img loading="lazy" decoding="async" src="img/sprite.jpg" alt="Sprite" onerror="this.remove()"><div class="vazio"><b>sprite</b><span>img/sprite.jpg</span></div></div>
+      <div class="info"><h3>Sprite</h3><p>Refrescante e cítrica.</p>
+        <div class="pe"><span class="preco">R$ 6,00</span><span class="mais">+</span></div></div>
+    </article>
+    <article data-cat="bebidas" class="doce rv d2">
+      <div class="foto"><img loading="lazy" decoding="async" src="img/agua.jpg" alt="Água Mineral" onerror="this.remove()"><div class="vazio"><b>água mineral</b><span>img/agua.jpg</span></div></div>
+      <div class="info"><h3>Água Mineral</h3><p>Natural ou com gás.</p>
+        <div class="pe"><span class="preco">R$ 4,00</span><span class="mais">+</span></div></div>
     </article>
   </div>
 
-  <div class="mais-doces"><button class="btn btn-linha" id="verMais" hidden>Ver mais doces</button></div>
+  <div class="mais-doces"><button class="btn btn-linha" id="verMais" hidden>Ver mais itens</button></div>
 </section>
 
 <!-- ============ SOBRE ============ -->
