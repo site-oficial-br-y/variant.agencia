@@ -175,3 +175,9 @@ body {
   position:absolute; left:0; right:0; bottom:0; height:clamp(90px,12vw,170px);
   display:block; pointer-events:none; z-index:0;
 }
+/* Mesma ideia na borda de cima: cobre o corte reto que o desfoque das manchas
+   deixa ao ser clipado pela seção. */
+.emenda-topo{
+  position:absolute; left:0; right:0; top:0; height:clamp(120px,16vw,230px);
+  display:block; pointer-events:none; z-index:0;
+}

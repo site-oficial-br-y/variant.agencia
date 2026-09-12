@@ -197,7 +197,6 @@ export default function HomePage() {
             ))}
           </div>
         </div>
-        <span className="emenda" style={{ background: 'linear-gradient(to bottom, transparent, #16162a)' }} aria-hidden />
       </section>
 
       {/* Features */}
@@ -205,6 +204,7 @@ export default function HomePage() {
         {/* O fundo aqui era chapado. Estas manchas se deslocam devagar e dão
             profundidade sem competir com o conteúdo. */}
         <div className="manchas" aria-hidden><i /><i /><i /></div>
+        <span className="emenda-topo" style={{ background: 'linear-gradient(to bottom, #0f0f1a, rgba(15,15,26,.55) 45%, transparent)' }} aria-hidden />
         <div style={{ maxWidth: 1000, margin: '0 auto', position: 'relative', zIndex: 1 }}>
           <div className="reveal" style={{ textAlign: 'center', marginBottom: 60 }}>
             <h2 style={{ fontSize: 'clamp(1.8rem,4vw,2.8rem)', fontWeight: 800, letterSpacing: -1.5 }}>Tudo que você precisa para prospectar.</h2>
