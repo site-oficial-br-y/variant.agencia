@@ -247,7 +247,7 @@ export default function HomePage() {
             { name: 'vemobabado', role: 'Comentário no Instagram', avatar: 'V', color: '#f59e0b', text: 'mano incrível fui testar e no primeiro restaurante já vendi um site por 120 reais com domínio', stars: 5, ago: 'há 1 dia' },
             { name: 'Usuário do plano Freelancer', role: 'Avaliação dentro da plataforma', avatar: 'F', color: '#a855f7', text: 'Super bom. Muito fácil de fechar vendas.', stars: 5, ago: 'há 2 semanas' },
           ].map(t => (
-              <div key={t.name} className="reveal" style={{ background: 'rgba(255,255,255,.04)', border: '1px solid rgba(248,182,200,0.18)', borderRadius: 20, padding: 28, display: 'flex', flexDirection: 'column', gap: 16 }}>
+              <div key={t.name} className="reveal" style={{ background: '#16162a', border: '1px solid rgba(248,182,200,0.18)', borderRadius: 20, padding: 28, display: 'flex', flexDirection: 'column', gap: 16, boxShadow: '0 20px 50px rgba(0,0,0,.45)' }}>
                 <div style={{ display: 'flex', gap: 4 }}>
                   {[1,2,3,4,5].map(i => <span key={i} style={{ color: i <= t.stars ? '#fbbf24' : 'rgba(255,255,255,.15)', fontSize: '1rem' }}>★</span>)}
                 </div>
