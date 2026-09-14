@@ -64,3 +64,36 @@ SaaS B2B de prospecção de leads. O usuário escolhe um tipo de serviço + cida
 - **Muita animação e transição.** Revelação por rolagem, movimento no hover, transição entre seções.
 - **O layout é feito em volta de fotos reais.** Reservar espaço generoso e bem enquadrado para imagem de verdade desde o começo, em vez de encher a tela de caixa colorida, ícone e gradiente. Quando a foto ainda não existe, deixar o espaço marcado e pronto para receber o arquivo.
 - **Não pode ter cara de IA.** Evitar layout todo centralizado e simétrico, grade de cards iguais, gradiente roxo/azul, emoji, vidro fosco em tudo e texto genérico. Preferir layout editorial assimétrico, texto específico e concreto, tipografia com contraste forte de tamanho, textura sutil.
+
+## Como construir site de cliente (método que funciona)
+
+1. **Pedir antes de começar:** uma referência visual, as fotos e a lista de serviços com preço. Quando o dono manda tudo junto, o site sai quase de primeira; quando falta, cada ida e volta custa uma rodada.
+2. **Renderizar e olhar.** Existe Chromium neste ambiente. Abrir o resultado, tirar print e conferir antes de entregar acha mais defeito do que reler o código.
+3. **Entregar arquivo único.** Fontes e imagens embutidas em base64, porque o dono baixa o HTML e abre no celular na frente do cliente, sem pasta e às vezes sem internet.
+
+### Técnicas que deram certo
+
+- **Logo sobre fundo preto:** gerar PNG com transparência calculada pelo brilho de cada pixel (`alpha = luminância`). `mix-blend-mode: screen` falha dentro de cabeçalho fixo, porque o `z-index` cria camada isolada e não há fundo com que misturar.
+- **Foto que não combina com a marca:** duotone. Mapear o brilho numa rampa feita só com as cores do site. A foto deixa de ter cor própria e passa a ser da mesma casa. De quebra o arquivo encolhe.
+- **Borda de foto:** dissolver com máscara radial em vez de cortar reto, e sangrar a imagem até a borda da tela do lado que não dá para mascarar.
+- **Emenda entre seções de cor diferente:** faixa de degradê no topo da seção seguinte (não no fim da anterior, que não cobre fundo animado clipado).
+- **Cardápio grande:** filtro por categoria, busca por nome, exibição em blocos com botão de ver mais, e imagem carregada só quando chega perto da tela.
+
+### Armadilhas já pagas (não repetir)
+
+- **O navegador daqui tem largura mínima de ~500 px.** Pedir print em 390 px renderiza em 485 e recorta a foto. Eu já relatei "bug no celular" que era artefato do meu teste.
+- **Print pega animação no meio.** Para fotografar é preciso desligar a revelação por rolagem. **Conferir o restauro com `git diff` antes de commitar** — eu já commitei a gambiarra por engano.
+- **`grid-template-columns: 1fr` estoura o container** quando o conteúdo é largo: usar `minmax(0,1fr)`.
+- **Elemento posicionado com `z-index:0` pinta acima de conteúdo não posicionado.** Faixa de degradê cobriu texto por isso.
+- **Regra de display vence `[hidden]`.** Precisa de `[hidden]{display:none!important}`.
+- **Máscara radial maior que a própria caixa não dissolve nada**, porque a parte transparente cai fora da área visível.
+- **Véu escuro sobre foto precisa de `z-index`** se a imagem já tiver um, senão fica atrás dela e o texto some.
+- **Supabase corta cada leitura em 1.000 linhas** e `.limit()` não passa por cima: tem que paginar com `range()`.
+- **Comentário JSX solto dentro de `.map()` quebra a sintaxe**, porque a função passa a retornar dois elementos.
+
+## Como este dono gosta de trabalhar
+
+- **Não agir sem pedido explícito.** Perguntar "quer que eu faça?" e esperar. Ele já interrompeu trabalho que eu comecei por conta própria.
+- **Mudança em produção: mostrar print antes de subir.** O site tem assinantes pagando.
+- **Nunca encostar no fluxo de busca** (`api/places`, `api/search`, `SearchResults`, `QuizOverlay`) em tarefa de design, e confirmar pelo diff que não encostou.
+- Ele testa e aponta erro rápido. Quando ele diz que algo está errado, verificar de verdade antes de responder — às vezes ele está certo e eu não tinha visto, às vezes o erro está no meu print.
