@@ -97,3 +97,10 @@ SaaS B2B de prospecção de leads. O usuário escolhe um tipo de serviço + cida
 - **Mudança em produção: mostrar print antes de subir.** O site tem assinantes pagando.
 - **Nunca encostar no fluxo de busca** (`api/places`, `api/search`, `SearchResults`, `QuizOverlay`) em tarefa de design, e confirmar pelo diff que não encostou.
 - Ele testa e aponta erro rápido. Quando ele diz que algo está errado, verificar de verdade antes de responder — às vezes ele está certo e eu não tinha visto, às vezes o erro está no meu print.
+
+## Situação do negócio (setembro de 2026)
+
+- **Honk Ponk:** 32 assinantes. O crescimento **empacou** e a entrada de dinheiro deu uma parada. Os números públicos do site são: mais de 2.800 usuários, 5.000 buscas e 20.000 locais prospectados.
+- **Foco atual do dono: venda de sites**, não mais só o SaaS. Ele tem protótipos prontos de clínica, doceria e estética automotiva (Detail Garage e Lopes Estética), e prospecta presencialmente e por telefone em Santos.
+- **Domínio dos sites de cliente:** ele decidiu **registrar e pagar no próprio nome** (cerca de R$40 por ano por cliente), em vez de deixar no nome do cliente. Isso combina com cobrança mensal para cobrir o custo recorrente.
+- **Recebimento** ainda cai na conta Mercado Pago do irmão, que não repassa. Conta própria só aos 18 anos; existe uma conta com o pai como responsável, mas ele não quis usar.
