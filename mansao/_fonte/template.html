@@ -1,0 +1,473 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Alvorada Residence — Jardim Acapulco, Guarujá</title>
+<meta name="description" content="Residência de arquitetura autoral no Jardim Acapulco. 720 m² construídos, cinco suítes, vinte metros de vão livre sobre o espelho d'água.">
+<style>
+{{FONTS}}
+
+:root{
+  --tinta:#0C0B09;
+  --tinta-2:#141310;
+  --creme:#EFE8DA;
+  --creme-70:rgba(239,232,218,.70);
+  --creme-45:rgba(239,232,218,.45);
+  --creme-20:rgba(239,232,218,.20);
+  --creme-10:rgba(239,232,218,.10);
+  --latao:#B2925F;
+  --verde:#0F1712;
+}
+*{margin:0;padding:0;box-sizing:border-box}
+[hidden]{display:none!important}
+html{scroll-behavior:smooth;-webkit-text-size-adjust:100%}
+body{
+  background:var(--tinta);color:var(--creme);
+  font-family:'Outfit',system-ui,sans-serif;font-weight:300;
+  -webkit-font-smoothing:antialiased;overflow-x:hidden;
+}
+img{display:block;max-width:100%}
+a{color:inherit;text-decoration:none}
+
+.grao{position:fixed;inset:0;z-index:90;pointer-events:none;opacity:.05;mix-blend-mode:overlay;
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='3'/%3E%3C/filter%3E%3Crect width='160' height='160' filter='url(%23n)'/%3E%3C/svg%3E")}
+
+/* ---------- topo ---------- */
+.topo{position:fixed;top:0;left:0;right:0;z-index:60;display:flex;align-items:center;
+  gap:24px;padding:22px clamp(16px,2.6vw,38px);transition:background .5s,backdrop-filter .5s,padding .5s}
+.topo.solido{background:rgba(12,11,9,.82);backdrop-filter:blur(14px);padding-top:14px;padding-bottom:14px;
+  border-bottom:1px solid var(--creme-10)}
+.pilulas{display:flex;gap:8px;flex:1}
+.pilula{font-size:.62rem;letter-spacing:.16em;text-transform:uppercase;font-weight:400;
+  padding:11px 20px;border:1px solid var(--creme-20);border-radius:999px;color:var(--creme-70);
+  transition:.35s cubic-bezier(.2,.8,.2,1);white-space:nowrap}
+.pilula:hover{background:var(--creme);color:var(--tinta);border-color:var(--creme)}
+.pilula.ativa{background:var(--creme);color:var(--tinta);border-color:var(--creme)}
+.marca{display:flex;align-items:center;gap:10px}
+.marca-grade{display:grid;grid-template-columns:repeat(3,4px);gap:3px}
+.marca-grade i{width:4px;height:4px;background:var(--creme);border-radius:1px;opacity:.85}
+.marca b{font-weight:500;font-size:.8rem;letter-spacing:.02em;line-height:1.05;display:block}
+.marca em{font-family:'Cormorant Garamond',serif;font-style:italic;font-size:.82rem;
+  color:var(--creme-70);display:block;line-height:1}
+.acoes{flex:1;display:flex;justify-content:flex-end;align-items:center;gap:26px}
+.acoes a{font-size:.62rem;letter-spacing:.16em;text-transform:uppercase;color:var(--creme-70);transition:color .3s}
+.acoes a:hover{color:var(--creme)}
+.seta{display:inline-flex;align-items:center;gap:9px;color:var(--creme)}
+.seta svg{transition:transform .4s cubic-bezier(.2,.8,.2,1)}
+.seta:hover svg{transform:translateX(7px)}
+
+/* ---------- capa ---------- */
+.capa{position:relative;height:100svh;min-height:600px;overflow:hidden;background:#0a0e14}
+.palco{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);
+  height:100%;aspect-ratio:1672/941;min-width:100%;container-type:size}
+.palco picture{position:absolute;inset:0;display:block}
+.camada{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
+.palco picture:first-of-type{z-index:1}
+.palco picture:last-of-type{z-index:3}
+.camada-fundo{z-index:1}
+.camada-casa{z-index:3}
+.titulo{position:absolute;z-index:2;left:52%;top:20.5%;transform:translateX(-50%);
+  width:100%;text-align:center;line-height:.78}
+.titulo h1{font-family:'Outfit',sans-serif;font-weight:700;font-size:12.2cqw;letter-spacing:-.025em;
+  color:#F3EDE1;text-transform:uppercase;text-shadow:0 2px 60px rgba(10,20,30,.25)}
+.cursiva{position:absolute;right:14.5%;top:54%;font-family:'Cormorant Garamond',serif;font-style:italic;
+  font-weight:300;font-size:5.5cqw;color:#FFF;line-height:1;letter-spacing:-.01em}
+.capa-ui{position:absolute;inset:0;z-index:4;pointer-events:none}
+.capa-ui::before{content:'';position:absolute;inset:0;pointer-events:none;
+  background:linear-gradient(to bottom,rgba(8,12,16,.62),rgba(8,12,16,.16) 16%,transparent 34%,transparent 62%,rgba(8,12,16,.42))}
+.capa-ui a,.capa-ui button{pointer-events:auto}
+.selo{position:absolute;font-size:.66rem;letter-spacing:.1em;color:rgba(255,255,255,.8);line-height:1.7;text-shadow:0 1px 14px rgba(6,12,10,.85)}
+.selo-esq{left:clamp(16px,2.6vw,38px);top:15.5%}
+.selo-meio{left:43%;top:15.5%}
+.selo-dir{right:clamp(16px,2.6vw,38px);top:14.5%;text-align:right}
+.selo-dir span{display:block}
+.ficha{position:absolute;left:clamp(16px,4vw,64px);bottom:21%;
+  background:rgba(10,14,12,.42);backdrop-filter:blur(16px) saturate(.8);border:1px solid rgba(255,255,255,.16);
+  border-radius:14px;padding:18px 26px;font-size:.74rem;line-height:2.05;color:rgba(255,255,255,.72)}
+.ficha b{color:#fff;font-weight:500}
+.capa-texto{position:absolute;right:clamp(16px,2.6vw,38px);bottom:6%;display:flex;gap:34px;
+  max-width:min(620px,62vw)}
+.capa-texto p{font-size:.78rem;line-height:1.85;color:rgba(255,255,255,.86);text-shadow:0 1px 14px rgba(6,12,10,.8);flex:1;
+  border-top:1px solid rgba(255,255,255,.22);padding-top:12px}
+.rolar{position:absolute;left:clamp(16px,2.6vw,38px);bottom:6%;font-size:.6rem;letter-spacing:.2em;
+  text-transform:uppercase;color:rgba(255,255,255,.72);display:flex;align-items:center;gap:12px;text-shadow:0 1px 14px rgba(6,12,10,.85)}
+.rolar i{width:44px;height:1px;background:rgba(255,255,255,.4);display:block;position:relative;overflow:hidden}
+.rolar i::after{content:'';position:absolute;inset:0;background:#fff;animation:varre 2.6s infinite}
+@keyframes varre{0%{transform:translateX(-100%)}60%,100%{transform:translateX(100%)}}
+
+/* ---------- gerais ---------- */
+.secao{position:relative;padding:clamp(80px,11vw,170px) clamp(20px,5vw,90px)}
+.rotulo{font-size:.6rem;letter-spacing:.24em;text-transform:uppercase;color:var(--latao);
+  display:flex;align-items:center;gap:12px;margin-bottom:34px}
+.rotulo::before{content:'';width:30px;height:1px;background:var(--latao);opacity:.6}
+h2{font-weight:400;font-size:clamp(1.9rem,4.6vw,4.1rem);line-height:1.02;letter-spacing:-.03em}
+h2 em{font-family:'Cormorant Garamond',serif;font-style:italic;font-weight:300;color:var(--latao)}
+.corpo{font-size:clamp(.92rem,1.1vw,1.02rem);line-height:1.95;color:var(--creme-70);font-weight:300}
+
+.reveal{opacity:0;transform:translateY(34px);transition:opacity 1.1s cubic-bezier(.2,.8,.2,1),transform 1.1s cubic-bezier(.2,.8,.2,1)}
+.reveal.vis{opacity:1;transform:none}
+
+/* ---------- manifesto ---------- */
+.manifesto{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.05fr);gap:clamp(30px,6vw,90px);
+  align-items:end;max-width:1500px;margin:0 auto}
+.manifesto h2{max-width:14ch}
+.manifesto .corpo+.corpo{margin-top:20px}
+.brilho{position:absolute;width:60vw;height:60vw;max-width:800px;max-height:800px;border-radius:50%;
+  background:radial-gradient(circle,rgba(178,146,95,.13),transparent 68%);pointer-events:none;
+  left:-14vw;top:-10vw;filter:blur(24px)}
+
+/* ---------- numeros ---------- */
+.numeros{max-width:1500px;margin:clamp(60px,8vw,120px) auto 0;
+  display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));border-top:1px solid var(--creme-10)}
+.numero{padding:30px 22px 0;border-right:1px solid var(--creme-10)}
+.numero:last-child{border-right:0}
+.numero b{display:block;font-size:clamp(1.9rem,3.4vw,2.9rem);font-weight:300;letter-spacing:-.035em;line-height:1}
+.numero b i{font-style:normal;font-size:.42em;color:var(--creme-45);margin-left:5px;letter-spacing:0}
+.numero span{display:block;margin-top:9px;font-size:.62rem;letter-spacing:.17em;text-transform:uppercase;color:var(--creme-45)}
+
+/* ---------- faixa larga ---------- */
+.faixa{position:relative;height:clamp(260px,42vw,560px);overflow:hidden}
+.faixa img{width:100%;height:100%;object-fit:cover;object-position:50% 93%;transform:scale(1.12)}
+.faixa::after{content:'';position:absolute;inset:0;
+  background:linear-gradient(to bottom,var(--tinta),transparent 26%,transparent 74%,var(--tinta))}
+.faixa figcaption{position:absolute;left:clamp(20px,5vw,90px);bottom:26px;z-index:2;
+  font-size:.62rem;letter-spacing:.17em;text-transform:uppercase;color:rgba(255,255,255,.62)}
+
+/* ---------- galeria ---------- */
+.galeria{max-width:1500px;margin:0 auto;display:grid;gap:clamp(12px,1.5vw,24px);
+  grid-template-columns:repeat(12,minmax(0,1fr));grid-auto-rows:clamp(58px,7.4vw,112px)}
+.foto{position:relative;overflow:hidden;border-radius:3px;background:#161612}
+.foto img{width:100%;height:100%;object-fit:cover;transition:transform 1.3s cubic-bezier(.2,.8,.2,1);filter:saturate(.92)}
+.foto:hover img{transform:scale(1.055)}
+.foto figcaption{position:absolute;left:18px;bottom:16px;z-index:2;font-size:.6rem;letter-spacing:.16em;
+  text-transform:uppercase;color:rgba(255,255,255,.85);opacity:0;transform:translateY(10px);transition:.5s}
+.foto::after{content:'';position:absolute;inset:0;background:linear-gradient(to top,rgba(8,10,8,.78),transparent 46%);
+  opacity:0;transition:.5s}
+.foto:hover figcaption,.foto:hover::after{opacity:1;transform:none}
+.f1{grid-column:1/8;grid-row:1/4}
+.f2{grid-column:8/13;grid-row:1/6}
+.f3{grid-column:1/8;grid-row:4/8}
+.f4{grid-column:8/13;grid-row:6/9}
+.f5{grid-column:1/7;grid-row:8/12}
+.f6{grid-column:7/13;grid-row:9/12}
+
+/* ---------- ambientes ---------- */
+.ambientes{max-width:1500px;margin:0 auto;display:grid;grid-template-columns:minmax(0,1.15fr) minmax(0,.85fr);
+  gap:clamp(30px,5vw,80px);align-items:start}
+.lista{border-top:1px solid var(--creme-10)}
+.item{display:flex;align-items:baseline;gap:18px;padding:26px 6px;border-bottom:1px solid var(--creme-10);
+  cursor:default;transition:padding-left .45s cubic-bezier(.2,.8,.2,1),color .45s}
+.item:hover{padding-left:20px}
+.item .n{font-size:.6rem;color:var(--latao);letter-spacing:.14em;width:28px;flex:none}
+.item .t{font-size:clamp(1.05rem,1.7vw,1.5rem);font-weight:300;letter-spacing:-.02em;flex:1}
+.item .d{font-size:.7rem;color:var(--creme-45);text-align:right;max-width:44%;line-height:1.7}
+.item.on .t{color:#fff}
+.painel{position:sticky;top:110px;aspect-ratio:4/5;border-radius:4px;overflow:hidden;background:#161612}
+.painel img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;opacity:0;
+  transition:opacity .8s cubic-bezier(.2,.8,.2,1),transform 1.4s cubic-bezier(.2,.8,.2,1);transform:scale(1.07)}
+.painel img.on{opacity:1;transform:none}
+
+/* ---------- localizacao ---------- */
+.local{max-width:1500px;margin:0 auto;display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);
+  gap:clamp(30px,6vw,90px);align-items:center}
+.distancias{margin-top:40px;border-top:1px solid var(--creme-10)}
+.distancias div{display:flex;justify-content:space-between;padding:15px 2px;border-bottom:1px solid var(--creme-10);
+  font-size:.82rem;color:var(--creme-70)}
+.distancias div b{font-weight:400;color:var(--creme)}
+.mapa{position:relative;aspect-ratio:1/1;border:1px solid var(--creme-10);border-radius:4px;overflow:hidden;
+  background:linear-gradient(150deg,#101610,#0b0c0a)}
+.mapa svg{position:absolute;inset:0;width:100%;height:100%}
+.mapa .coord{position:absolute;right:18px;bottom:16px;font-size:.58rem;letter-spacing:.2em;color:var(--creme-45)}
+.mapa .pino{position:absolute;left:50%;top:50%;margin-top:-4%;transform:translate(-50%,-50%);z-index:2;text-align:center}
+.mapa .pino i{display:block;width:9px;height:9px;border-radius:50%;background:var(--latao);margin:0 auto 30px;
+  box-shadow:0 0 0 0 rgba(178,146,95,.55);animation:pulso 2.8s infinite}
+@keyframes pulso{0%{box-shadow:0 0 0 0 rgba(178,146,95,.5)}70%{box-shadow:0 0 0 46px rgba(178,146,95,0)}100%{box-shadow:0 0 0 0 rgba(178,146,95,0)}}
+.mapa .pino span{font-size:.6rem;letter-spacing:.2em;text-transform:uppercase;color:var(--creme-70)}
+
+/* ---------- valor ---------- */
+.valor{position:relative;text-align:center;padding:clamp(90px,13vw,190px) clamp(20px,5vw,90px);
+  border-top:1px solid var(--creme-10)}
+.preco{font-size:clamp(2.6rem,7.5vw,6.2rem);font-weight:300;letter-spacing:-.045em;line-height:1;margin:22px 0 8px}
+.preco i{font-style:normal;font-size:.28em;color:var(--creme-45);letter-spacing:.02em;vertical-align:.9em;margin-right:10px}
+.botao{display:inline-flex;align-items:center;gap:13px;margin-top:44px;padding:17px 34px;border-radius:999px;
+  background:var(--creme);color:var(--tinta);font-size:.68rem;letter-spacing:.17em;text-transform:uppercase;
+  font-weight:500;transition:.4s cubic-bezier(.2,.8,.2,1)}
+.botao:hover{transform:translateY(-3px);box-shadow:0 18px 44px rgba(178,146,95,.22)}
+.corretor{margin-top:34px;font-size:.7rem;letter-spacing:.06em;color:var(--creme-45);line-height:2}
+
+/* ---------- rodape ---------- */
+.rodape{padding:46px clamp(20px,5vw,90px);border-top:1px solid var(--creme-10);
+  display:flex;flex-wrap:wrap;gap:20px;justify-content:space-between;align-items:center;
+  font-size:.62rem;letter-spacing:.13em;text-transform:uppercase;color:var(--creme-45)}
+.rodape nav{display:flex;gap:22px}
+.rodape a:hover{color:var(--creme)}
+
+@media(max-width:940px){
+  .pilulas{display:none}
+  .acoes a:not(.seta){display:none}
+  .marca{flex:1}
+  .selo-meio{display:none}
+  .ficha{left:clamp(16px,5vw,40px);bottom:23%;padding:14px 18px;font-size:.66rem;line-height:1.9}
+  .capa-texto{display:none}
+  .manifesto,.ambientes,.local{grid-template-columns:minmax(0,1fr)}
+  .painel{position:relative;top:0;aspect-ratio:16/10}
+  .f1,.f2,.f3,.f4,.f5,.f6{grid-column:1/13;grid-row:auto}
+  .galeria{grid-auto-rows:auto}
+  .foto{aspect-ratio:4/3}
+  .f2{aspect-ratio:4/5}
+  .numero{border-right:0;border-bottom:1px solid var(--creme-10);padding-bottom:26px}
+}
+@media(max-aspect-ratio:1/1){
+  .palco{aspect-ratio:3/4}
+  .titulo{top:34%;left:50%}
+  .titulo h1{font-size:12cqw}
+  .cursiva{font-size:6.2cqw;right:24%;top:-64%}
+  .selo-dir{display:none}
+  .rolar{display:none}
+}
+@media (min-aspect-ratio:4/5) and (max-aspect-ratio:1/1){
+  .titulo{top:29%}
+}
+@media(prefers-reduced-motion:reduce){
+  .reveal{opacity:1;transform:none;transition:none}
+  *{animation:none!important}
+}
+</style>
+</head>
+<body>
+<div class="grao"></div>
+
+<header class="topo" id="topo">
+  <nav class="pilulas">
+    <a class="pilula ativa" href="#capa">Início</a>
+    <a class="pilula" href="#casa">A casa</a>
+    <a class="pilula" href="#galeria">Galeria</a>
+    <a class="pilula" href="#ambientes">Ambientes</a>
+    <a class="pilula" href="#local">Localização</a>
+  </nav>
+  <a class="marca" href="#capa">
+    <span class="marca-grade"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></span>
+    <span><b>ALVORADA</b><em>residence</em></span>
+  </a>
+  <div class="acoes">
+    <a href="#valor">Contato</a>
+    <a class="seta" href="#valor">Agendar visita
+      <svg width="26" height="8" viewBox="0 0 26 8" fill="none"><path d="M0 4h24M21 1l4 3-4 3" stroke="currentColor" stroke-width="1"/></svg>
+    </a>
+  </div>
+</header>
+
+<section class="capa" id="capa">
+  <div class="palco" id="palco">
+    <picture><source media="(max-aspect-ratio:1/1)" srcset="{{IMG:hero-fundo-v.webp}}"><img class="camada camada-fundo" src="{{IMG:hero-fundo.webp}}" alt=""></picture>
+    <div class="titulo">
+      <h1>Alvorada</h1>
+      <span class="cursiva">residence</span>
+    </div>
+    <picture><source media="(max-aspect-ratio:1/1)" srcset="{{IMG:hero-casa-v.webp}}"><img class="camada camada-casa" src="{{IMG:hero-casa.webp}}" alt="Fachada da Alvorada Residence, volume suspenso de concreto com brise de madeira, cercado de mata e espelho d'água"></picture>
+  </div>
+
+  <div class="capa-ui">
+    <p class="selo selo-esq">Jardim Acapulco<br>Guarujá, São Paulo</p>
+    <p class="selo selo-meio">2026<br>Arquitetura de exceção</p>
+    <p class="selo selo-dir"><span>— Vinte metros de vão livre</span><span>— Mata atlântica preservada</span><span>— Faces voltadas ao nascente</span></p>
+
+    <div class="ficha">
+      Projeto: <b>Bonfim + Aguiar Arquitetura</b><br>
+      Paisagismo: <b>Estúdio Raiz</b><br>
+      Localização: <b>Jardim Acapulco, Guarujá</b><br>
+      Terreno: <b>1.480 m²</b><br>
+      Área construída: <b>720 m²</b><br>
+      Entrega: <b>2026</b>
+    </div>
+
+    <div class="capa-texto">
+      <p>Concreto aparente, brise de cumaru e vinte metros de vão livre sobre o espelho d'água. A casa se abre inteira para a mata e se fecha para a rua.</p>
+      <p>Cinco suítes voltadas ao nascente, pé-direito de 3,40 m e uma laje suspensa que devolve quase todo o térreo ao jardim.</p>
+    </div>
+
+    <div class="rolar"><i></i> Role para descer</div>
+  </div>
+</section>
+
+<section class="secao" id="casa">
+  <div class="brilho"></div>
+  <div class="manifesto">
+    <div class="reveal">
+      <p class="rotulo">A casa</p>
+      <h2>Uma laje que <em>flutua</em> sobre a mata</h2>
+    </div>
+    <div class="reveal">
+      <p class="corpo">A Alvorada nasceu de uma restrição: não derrubar nenhuma das árvores adultas do terreno. A resposta foi erguer o corpo da casa sobre dois apoios de concreto e deixar o solo seguir vivo por baixo, com o jardim atravessando de ponta a ponta.</p>
+      <p class="corpo">O pavimento superior reúne as cinco suítes atrás de um painel móvel de cumaru, que filtra o sol da tarde sem fechar a vista. Embaixo, o estar, a sala de jantar e a cozinha se dissolvem no deck e no espelho d'água de vinte e dois metros.</p>
+    </div>
+  </div>
+
+  <div class="numeros reveal">
+    <div class="numero"><b>1.480<i>m²</i></b><span>Terreno</span></div>
+    <div class="numero"><b>720<i>m²</i></b><span>Área construída</span></div>
+    <div class="numero"><b>5</b><span>Suítes</span></div>
+    <div class="numero"><b>6</b><span>Vagas cobertas</span></div>
+    <div class="numero"><b>3,40<i>m</i></b><span>Pé-direito</span></div>
+    <div class="numero"><b>22<i>m</i></b><span>Espelho d'água</span></div>
+  </div>
+</section>
+
+<figure class="faixa"><img id="faixa-img" src="{{IMG:hero-fundo.webp}}" alt="Espelho d'água refletindo a fachada"><figcaption>Espelho d'água, face oeste</figcaption></figure>
+
+<section class="secao" id="galeria">
+  <p class="rotulo reveal">Galeria</p>
+  <div class="galeria">
+    <figure class="foto f1 reveal"><img loading="lazy" src="{{IMG:g-fachada.webp}}" alt="Fachada principal"><figcaption>Volume suspenso, fachada norte</figcaption></figure>
+    <figure class="foto f2 reveal"><img loading="lazy" src="{{IMG:g-palmeiras.webp}}" alt="Palmeiras e lateral da casa"><figcaption>Palmeiras imperiais preservadas</figcaption></figure>
+    <figure class="foto f4 reveal"><img loading="lazy" src="{{IMG:g-jardim.webp}}" alt="Jardim tropical junto à casa"><figcaption>Jardim de inverno</figcaption></figure>
+    <figure class="foto f3 reveal"><img loading="lazy" src="{{IMG:g-varanda.webp}}" alt="Varanda envidraçada sobre a piscina"><figcaption>Estar suspenso sobre a piscina</figcaption></figure>
+    <figure class="foto f5 reveal"><img loading="lazy" src="{{IMG:g-pilotis.webp}}" alt="Pilotis de concreto sobre a mata"><figcaption>Pilotis e mata nativa</figcaption></figure>
+    <figure class="foto f6 reveal"><img loading="lazy" src="{{IMG:g-ripado.webp}}" alt="Brise de madeira cumaru"><figcaption>Brise de cumaru</figcaption></figure>
+  </div>
+</section>
+
+<section class="secao" id="ambientes">
+  <div class="ambientes">
+    <div>
+      <p class="rotulo reveal">Ambientes</p>
+      <h2 class="reveal">Doze espaços, <em>um só gesto</em></h2>
+      <div class="lista reveal" id="lista">
+        <div class="item on" data-foto="0"><span class="n">01</span><span class="t">Estar de pé-direito duplo</span><span class="d">Vão livre de 20 m, sem um único pilar no meio</span></div>
+        <div class="item" data-foto="1"><span class="n">02</span><span class="t">Cozinha e adega</span><span class="d">Ilha de pedra bruta e adega climatizada para 340 rótulos</span></div>
+        <div class="item" data-foto="2"><span class="n">03</span><span class="t">Suíte master</span><span class="d">62 m² com closet, varanda privativa e vista para a mata</span></div>
+        <div class="item" data-foto="3"><span class="n">04</span><span class="t">Deck e espelho d'água</span><span class="d">Piscina de borda infinita com 22 m de lâmina</span></div>
+        <div class="item" data-foto="4"><span class="n">05</span><span class="t">Pilotis e jardim</span><span class="d">Térreo devolvido ao paisagismo nativo</span></div>
+        <div class="item" data-foto="5"><span class="n">06</span><span class="t">Garagem coberta</span><span class="d">Seis vagas em piso drenante e carregador elétrico</span></div>
+      </div>
+    </div>
+    <div class="painel reveal" id="painel">
+      <img class="on" src="{{IMG:g-varanda.webp}}" alt="">
+      <img src="{{IMG:g-ripado.webp}}" alt="">
+      <img src="{{IMG:g-fachada.webp}}" alt="">
+      <img src="{{IMG:g-espelho.webp}}" alt="">
+      <img src="{{IMG:g-pilotis.webp}}" alt="">
+      <img src="{{IMG:g-jardim.webp}}" alt="">
+    </div>
+  </div>
+</section>
+
+<section class="secao" id="local">
+  <div class="local">
+    <div class="reveal">
+      <p class="rotulo">Localização</p>
+      <h2>Rua fechada, <em>mata atrás</em>, mar adiante</h2>
+      <p class="corpo" style="margin-top:26px">O Jardim Acapulco é um condomínio fechado de lotes largos entre a serra e a praia de Pernambuco. A Alvorada ocupa a última quadra antes da mata, com fundo para a área de preservação e acesso próprio à praia.</p>
+      <div class="distancias">
+        <div><span>Praia de Pernambuco</span><b>600 m</b></div>
+        <div><span>Iate Clube</span><b>2,4 km</b></div>
+        <div><span>Centro do Guarujá</span><b>11 km</b></div>
+        <div><span>Santos, pela Ponta da Praia</span><b>19 km</b></div>
+        <div><span>Aeroporto de Guarulhos</span><b>98 km</b></div>
+      </div>
+    </div>
+    <div class="mapa reveal">
+      <svg viewBox="0 0 600 600" preserveAspectRatio="xMidYMid slice" aria-hidden="true">
+        <defs>
+          <pattern id="ondas" width="18" height="18" patternUnits="userSpaceOnUse">
+            <path d="M0 13c4.5-5 9-5 13.5 0" fill="none" stroke="rgba(178,146,95,.30)" stroke-width="1"/>
+          </pattern>
+          <pattern id="mata" width="26" height="26" patternUnits="userSpaceOnUse" patternTransform="rotate(38)">
+            <line x1="0" y1="0" x2="0" y2="26" stroke="rgba(239,232,218,.07)" stroke-width="1"/>
+          </pattern>
+        </defs>
+        <path d="M0 470 Q150 430 300 476 T600 448 L600 600 L0 600Z" fill="url(#ondas)"/>
+        <path d="M0 470 Q150 430 300 476 T600 448" fill="none" stroke="rgba(178,146,95,.55)" stroke-width="1.4"/>
+        <path d="M0 0 L600 0 L600 150 Q420 196 250 150 T0 176Z" fill="url(#mata)"/>
+        <path d="M0 176 Q120 140 250 150 T600 150" fill="none" stroke="rgba(239,232,218,.20)" stroke-width="1"/>
+        <g stroke="rgba(239,232,218,.16)" stroke-width="1" fill="none">
+          <path d="M-20 390 Q180 356 330 380 T620 352"/>
+          <path d="M-20 300 Q200 268 360 292 T620 268"/>
+          <path d="M120 600 L142 210"/><path d="M300 600 L300 200"/><path d="M470 600 L442 216"/>
+        </g>
+        <g stroke="rgba(239,232,218,.10)" stroke-width="1" fill="none">
+          <rect x="150" y="300" width="60" height="44"/><rect x="216" y="300" width="60" height="44"/>
+          <rect x="324" y="300" width="60" height="44"/><rect x="390" y="300" width="60" height="44"/>
+          <rect x="150" y="350" width="60" height="44"/><rect x="216" y="350" width="60" height="44"/>
+          <rect x="324" y="350" width="60" height="44"/><rect x="390" y="350" width="60" height="44"/>
+        </g>
+        <rect x="282" y="284" width="42" height="34" fill="rgba(178,146,95,.18)" stroke="rgba(178,146,95,.85)" stroke-width="1.2"/>
+        <text x="30" y="556" fill="rgba(239,232,218,.34)" font-family="Outfit" font-size="13" letter-spacing="3">PRAIA DE PERNAMBUCO</text>
+        <text x="30" y="48" fill="rgba(239,232,218,.34)" font-family="Outfit" font-size="13" letter-spacing="3">MATA ATLÂNTICA</text>
+      </svg>
+      <div class="pino"><i></i><span>Alvorada Residence</span></div>
+      <p class="coord">23°59'S &nbsp; 46°13'O</p>
+    </div>
+  </div>
+</section>
+
+<section class="valor" id="valor">
+  <div class="brilho" style="left:auto;right:-16vw;top:auto;bottom:-14vw"></div>
+  <p class="rotulo reveal" style="justify-content:center">Venda direta</p>
+  <h2 class="reveal">Visita agendada, <em>sempre acompanhada</em></h2>
+  <p class="preco reveal"><i>R$</i>14.800.000</p>
+  <p class="corpo reveal" style="max-width:52ch;margin:0 auto">Documentação regularizada, habite-se emitido e escritura pronta para transferência. Aceita permuta parcial em imóvel na orla de Santos.</p>
+  <a class="botao reveal" href="https://wa.me/5513999999999" target="_blank" rel="noopener">Agendar uma visita
+    <svg width="26" height="8" viewBox="0 0 26 8" fill="none"><path d="M0 4h24M21 1l4 3-4 3" stroke="currentColor" stroke-width="1.2"/></svg>
+  </a>
+  <p class="corretor reveal">Marina Vilhena, corretora responsável<br>CRECI 189.442-F &nbsp;·&nbsp; +55 13 99999-9999</p>
+</section>
+
+<footer class="rodape">
+  <span>Alvorada Residence · Jardim Acapulco, Guarujá</span>
+  <nav>
+    <a href="#casa">A casa</a><a href="#galeria">Galeria</a><a href="#local">Localização</a><a href="#valor">Contato</a>
+  </nav>
+  <span>Imagens meramente ilustrativas</span>
+</footer>
+
+<script>
+(function(){
+  var topo=document.getElementById('topo');
+  var capa=document.getElementById('capa');
+  var palco=document.getElementById('palco');
+
+  addEventListener('scroll',function(){
+    topo.classList.toggle('solido',scrollY>60);
+    if(scrollY<innerHeight){
+      palco.style.transform='translate(-50%,calc(-50% + '+(scrollY*0.14)+'px)) scale('+(1+scrollY*0.00006)+')';
+    }
+  },{passive:true});
+
+  var io=new IntersectionObserver(function(es){
+    es.forEach(function(e){ if(e.isIntersecting){ e.target.classList.add('vis'); io.unobserve(e.target); } });
+  },{threshold:.12,rootMargin:'0px 0px -8% 0px'});
+  document.querySelectorAll('.reveal').forEach(function(el,i){ el.style.transitionDelay=(i%3)*90+'ms'; io.observe(el); });
+
+  var itens=document.querySelectorAll('#lista .item');
+  var fotos=document.querySelectorAll('#painel img');
+  itens.forEach(function(it){
+    it.addEventListener('mouseenter',function(){
+      itens.forEach(function(o){o.classList.remove('on')});
+      fotos.forEach(function(o){o.classList.remove('on')});
+      it.classList.add('on');
+      fotos[+it.dataset.foto].classList.add('on');
+    });
+  });
+
+  var links=document.querySelectorAll('.pilula');
+  var alvos=[].map.call(links,function(l){return document.querySelector(l.getAttribute('href'))});
+  addEventListener('scroll',function(){
+    var y=scrollY+innerHeight*0.35,at=0;
+    alvos.forEach(function(s,i){ if(s&&s.offsetTop<=y) at=i; });
+    links.forEach(function(l,i){ l.classList.toggle('ativa',i===at); });
+  },{passive:true});
+
+  var faixa=document.getElementById('faixa-img');
+  addEventListener('scroll',function(){
+    var r=faixa.parentNode.getBoundingClientRect();
+    if(r.bottom>0&&r.top<innerHeight){
+      var p=(r.top+r.height/2-innerHeight/2)/innerHeight;
+      faixa.style.transform='scale(1.12) translateY('+(p*-34)+'px)';
+    }
+  },{passive:true});
+})();
+</script>
+</body>
+</html>
