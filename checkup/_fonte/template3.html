@@ -1,0 +1,578 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Raio-X — check-up da presença digital do seu negócio</title>
+<meta name="description" content="Coloque o endereço do seu site e descubra em um minuto o que está afastando cliente, e exatamente como corrigir.">
+<style>
+{{FONTS}}
+
+:root{
+  --preto:#090607;
+  --preto-2:#120C0D;
+  --carta:#140D0E;
+  --linha:rgba(255,138,61,.13);
+  --linha-2:rgba(255,138,61,.28);
+  --texto:#F2EDEA;
+  --texto-60:rgba(242,237,234,.60);
+  --texto-38:rgba(242,237,234,.38);
+  --laranja:#FF5F1F;
+  --laranja-2:#FF9A3D;
+  --bom:#4ADE80;
+  --display:'Space Grotesk',sans-serif;
+  --mono:'JetBrains Mono',ui-monospace,monospace;
+}
+*{margin:0;padding:0;box-sizing:border-box}
+[hidden]{display:none!important}
+html{scroll-behavior:smooth;-webkit-text-size-adjust:100%}
+body{background:var(--preto);color:var(--texto);font-family:'Inter',system-ui,sans-serif;
+  -webkit-font-smoothing:antialiased;overflow-x:hidden;line-height:1.6}
+a{color:inherit;text-decoration:none}
+button,input{font:inherit;color:inherit}
+main{position:relative;z-index:1}
+
+.malha{position:fixed;inset:0;z-index:0;pointer-events:none;opacity:.6;
+  background-image:linear-gradient(rgba(255,138,61,.07) 1px,transparent 1px),linear-gradient(90deg,rgba(255,138,61,.07) 1px,transparent 1px);
+  background-size:62px 62px;
+  -webkit-mask-image:radial-gradient(ellipse 85% 50% at 50% 0%,#000,transparent 72%);
+  mask-image:radial-gradient(ellipse 85% 50% at 50% 0%,#000,transparent 72%)}
+
+/* ---------- topo ---------- */
+.topo{position:fixed;top:0;left:0;right:0;z-index:50;display:flex;align-items:center;justify-content:space-between;
+  gap:20px;padding:15px clamp(16px,4vw,44px);border-bottom:1px solid transparent;transition:background .4s,border-color .4s}
+.topo.solido{background:rgba(9,6,7,.82);backdrop-filter:blur(16px);border-bottom-color:var(--linha)}
+.logo{display:flex;align-items:center;gap:11px;font-family:var(--display);font-weight:700;
+  letter-spacing:.06em;font-size:.94rem;text-transform:uppercase}
+.logo svg{display:block;filter:drop-shadow(0 0 7px rgba(255,95,31,.6))}
+.topo nav{display:flex;align-items:center;gap:26px;font-size:.83rem;color:var(--texto-60)}
+.topo nav a:hover{color:var(--texto)}
+
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:9px;border:0;border-radius:999px;cursor:pointer;
+  font-family:var(--display);font-weight:500;letter-spacing:-.01em;transition:.3s cubic-bezier(.2,.8,.2,1);white-space:nowrap}
+.btn-fogo{background:linear-gradient(180deg,#FF7A32,#F04A0C);color:#fff;padding:12px 22px;font-size:.86rem;
+  box-shadow:0 6px 24px rgba(255,95,31,.28)}
+.btn-fogo:hover{transform:translateY(-2px);box-shadow:0 12px 34px rgba(255,95,31,.42)}
+.btn-borda{border:1px solid var(--linha-2);padding:12px 22px;font-size:.86rem;background:rgba(255,138,61,.05);color:var(--texto)}
+.btn-borda:hover{border-color:rgba(255,138,61,.55);background:rgba(255,138,61,.1)}
+
+/* ---------- hero ---------- */
+.hero{position:relative;overflow:hidden;padding:clamp(116px,14vh,158px) clamp(16px,4vw,44px) clamp(56px,7vw,86px)}
+.hero-grade{position:relative;z-index:2;max-width:1180px;margin:0 auto;display:grid;
+  grid-template-columns:minmax(0,1.02fr) minmax(0,.98fr);gap:clamp(30px,5vw,64px);align-items:center}
+.brasa{position:absolute;pointer-events:none;border-radius:50%;filter:blur(70px)}
+.brasa-1{right:-8%;top:-14%;width:62vw;height:62vw;max-width:880px;max-height:880px;
+  background:radial-gradient(circle,rgba(255,95,31,.42),rgba(255,95,31,.10) 44%,transparent 68%)}
+.brasa-2{left:-18%;bottom:-40%;width:70vw;height:46vw;max-width:940px;
+  background:radial-gradient(circle,rgba(255,138,61,.20),transparent 66%)}
+.hero::after{content:'';position:absolute;left:0;right:0;bottom:0;height:220px;z-index:1;pointer-events:none;
+  background:linear-gradient(transparent,var(--preto))}
+
+.selo{display:inline-flex;align-items:center;gap:9px;border:1px solid var(--linha-2);border-radius:999px;
+  padding:6px 15px;font-family:var(--mono);font-size:.66rem;letter-spacing:.14em;color:var(--laranja-2);
+  text-transform:uppercase;margin-bottom:24px;background:rgba(255,95,31,.07)}
+.selo i{width:6px;height:6px;border-radius:50%;background:var(--laranja);animation:bate 2.2s ease-in-out infinite}
+@keyframes bate{0%,100%{box-shadow:0 0 0 0 rgba(255,95,31,.55)}50%{box-shadow:0 0 0 7px rgba(255,95,31,0)}}
+h1{font-family:var(--display);font-weight:700;letter-spacing:-.035em;line-height:1.03;
+  font-size:clamp(2rem,4.6vw,3.5rem)}
+h1 span{background:linear-gradient(100deg,#FF8A3D,#F0430A);-webkit-background-clip:text;background-clip:text;color:transparent}
+.sub{margin:20px 0 0;max-width:46ch;color:var(--texto-60);font-size:clamp(.94rem,1.1vw,1.04rem)}
+
+.caixa{margin:30px 0 0;max-width:520px;display:flex;gap:9px;
+  border:1px solid var(--linha-2);border-radius:999px;background:rgba(255,255,255,.035);padding:7px 7px 7px 8px;
+  transition:border-color .3s,box-shadow .3s}
+.caixa:focus-within{border-color:rgba(255,95,31,.7);box-shadow:0 0 0 4px rgba(255,95,31,.12)}
+.caixa input{flex:1;min-width:0;background:transparent;border:0;outline:0;padding:11px 14px;
+  font-family:var(--mono);font-size:.9rem}
+.caixa input::placeholder{color:var(--texto-38)}
+.aviso{margin-top:13px;font-size:.75rem;color:var(--texto-38);font-family:var(--mono)}
+
+.micro{display:flex;flex-wrap:wrap;gap:26px;margin-top:34px;padding-top:26px;border-top:1px solid var(--linha)}
+.micro div{display:flex;align-items:center;gap:10px;font-size:.8rem;color:var(--texto-60)}
+.micro svg{color:var(--laranja);flex:none}
+.micro b{display:block;color:var(--texto);font-weight:500;font-size:.84rem}
+
+/* marca de escaneamento */
+.scanner{position:relative;aspect-ratio:1;width:100%;max-width:440px;margin:0 auto;display:grid;place-items:center}
+.moldura{position:relative;width:54%;aspect-ratio:1}
+.moldura svg{position:absolute;inset:0;width:100%;height:100%;
+  filter:drop-shadow(0 0 16px rgba(255,95,31,.75)) drop-shadow(0 0 44px rgba(255,95,31,.35))}
+.moldura .cantos{stroke:url(#fogo);stroke-width:5;fill:none;stroke-linecap:round}
+.moldura .pulso{stroke:url(#fogo);stroke-width:3.4;fill:none;stroke-linecap:round;stroke-linejoin:round;
+  stroke-dasharray:330;stroke-dashoffset:330;animation:desenha 3.4s cubic-bezier(.6,0,.2,1) infinite}
+@keyframes desenha{0%{stroke-dashoffset:330}45%,100%{stroke-dashoffset:0}}
+.varre{position:absolute;left:16%;right:16%;height:1.5px;border-radius:2px;
+  background:linear-gradient(90deg,transparent,rgba(255,154,61,.55),transparent);
+  box-shadow:0 0 12px rgba(255,95,31,.45);animation:varrer 3.4s ease-in-out infinite}
+@keyframes varrer{0%,100%{top:14%;opacity:0}12%{opacity:1}50%{top:84%;opacity:1}62%{opacity:0}}
+
+.fichas{position:absolute;inset:0;pointer-events:none}
+.ficha{position:absolute;width:150px;border:1px solid var(--linha-2);border-radius:11px;padding:11px 12px;
+  background:rgba(20,13,14,.82);backdrop-filter:blur(7px);box-shadow:0 14px 34px rgba(0,0,0,.5);
+  animation:flutua 7s ease-in-out infinite}
+.ficha b{display:flex;align-items:center;gap:7px;font-size:.74rem;font-weight:500;margin-bottom:8px}
+.ficha b svg{color:var(--laranja);flex:none}
+.ficha i{display:block;height:4px;border-radius:2px;background:rgba(242,237,234,.14);margin-bottom:5px}
+.ficha i:nth-child(3){width:78%}
+.ficha i:nth-child(4){width:52%}
+.f1{top:6%;left:-2%;animation-delay:0s}
+.f2{top:2%;right:-3%;animation-delay:.9s}
+.f3{bottom:12%;left:-5%;animation-delay:1.8s}
+.f4{bottom:4%;right:0%;animation-delay:2.7s}
+@keyframes flutua{0%,100%{transform:translateY(0)}50%{transform:translateY(-11px)}}
+
+/* ---------- gerais ---------- */
+.secao{position:relative;padding:clamp(66px,8.5vw,116px) clamp(16px,4vw,44px);max-width:1180px;margin:0 auto}
+.rotulo{display:inline-flex;align-items:center;gap:9px;font-family:var(--mono);font-size:.66rem;letter-spacing:.16em;
+  text-transform:uppercase;color:var(--laranja-2);border:1px solid var(--linha-2);border-radius:999px;
+  padding:5px 13px;margin-bottom:20px;background:rgba(255,95,31,.06)}
+h2{font-family:var(--display);font-weight:700;letter-spacing:-.03em;line-height:1.08;
+  font-size:clamp(1.55rem,3.4vw,2.5rem);max-width:20ch}
+h2 span{background:linear-gradient(100deg,#FF8A3D,#F0430A);-webkit-background-clip:text;background-clip:text;color:transparent}
+.legenda{margin-top:14px;color:var(--texto-60);max-width:58ch;font-size:.95rem}
+.reveal{opacity:0;transform:translateY(24px);transition:opacity .9s cubic-bezier(.2,.8,.2,1),transform .9s cubic-bezier(.2,.8,.2,1)}
+.reveal.vis{opacity:1;transform:none}
+
+/* ---------- laudo ---------- */
+.laudo{position:relative;margin-top:38px;border:1px solid var(--linha-2);border-radius:18px;overflow:hidden;
+  background:linear-gradient(170deg,#1A1012,#0C0809 58%);box-shadow:0 30px 90px rgba(0,0,0,.55)}
+.laudo::before{content:'';position:absolute;left:-10%;bottom:-60%;width:70%;height:120%;pointer-events:none;
+  background:radial-gradient(circle,rgba(255,95,31,.22),transparent 62%);filter:blur(52px)}
+.laudo>*{position:relative}
+.laudo-topo{display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap;
+  padding:13px 20px;border-bottom:1px solid var(--linha);background:rgba(255,138,61,.04)}
+.laudo-topo .url{font-family:var(--mono);font-size:.79rem;color:var(--texto-60);display:flex;align-items:center;gap:10px;min-width:0}
+.laudo-topo .url b{color:var(--texto);font-weight:400;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.pontinhos{display:flex;gap:5px}
+.pontinhos i{width:8px;height:8px;border-radius:50%;background:rgba(255,138,61,.26)}
+.laudo-topo .data{font-family:var(--mono);font-size:.71rem;color:var(--texto-38)}
+
+.placar{display:grid;grid-template-columns:minmax(0,auto) minmax(0,1fr);gap:clamp(24px,4vw,54px);
+  padding:clamp(24px,4vw,44px);align-items:center;border-bottom:1px solid var(--linha)}
+.medidor{display:flex;flex-direction:column;align-items:center;gap:15px}
+.mostrador{position:relative;width:clamp(168px,18vw,214px);aspect-ratio:1}
+.mostrador svg{width:100%;height:100%;transform:rotate(-90deg);
+  filter:drop-shadow(0 0 13px rgba(255,95,31,.55))}
+.mostrador circle{fill:none;stroke-width:9;stroke-linecap:round}
+.mostrador .trilho{stroke:rgba(255,138,61,.1)}
+.mostrador .arco{stroke:url(#fogo2);stroke-dasharray:534;stroke-dashoffset:534;
+  transition:stroke-dashoffset 2s cubic-bezier(.2,.8,.2,1)}
+.mostrador.on .arco{stroke-dashoffset:283}
+.mostrador .centro{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center}
+.mostrador .rot{font-family:var(--mono);font-size:.6rem;letter-spacing:.2em;color:var(--texto-38);margin-bottom:9px}
+.mostrador .n{font-family:var(--display);font-weight:700;font-size:clamp(2.7rem,5.4vw,3.6rem);line-height:1;
+  background:linear-gradient(160deg,#FFB067,#F0430A);-webkit-background-clip:text;background-clip:text;color:transparent}
+.mostrador .de{font-family:var(--mono);font-size:.7rem;color:var(--texto-38);margin-top:5px}
+.tag{font-family:var(--mono);font-size:.63rem;letter-spacing:.14em;text-transform:uppercase;color:var(--laranja-2);
+  border:1px solid var(--linha-2);border-radius:999px;padding:5px 13px;background:rgba(255,95,31,.07)}
+
+.areas{display:grid;gap:15px}
+.area{display:grid;grid-template-columns:minmax(0,1fr) 44px;gap:14px;align-items:center}
+.area .nome{font-size:.89rem;color:var(--texto-60);display:flex;align-items:baseline;gap:9px;flex-wrap:wrap}
+.area .nome em{font-style:normal;font-family:var(--mono);font-size:.65rem;color:var(--texto-38)}
+.area .v{font-family:var(--mono);font-weight:700;font-size:.94rem;text-align:right;color:var(--laranja-2)}
+.area .barra{grid-column:1/3;height:5px;border-radius:3px;background:rgba(255,138,61,.09);overflow:hidden;margin-top:-7px}
+.area .barra i{display:block;height:100%;border-radius:3px;width:0;
+  background:linear-gradient(90deg,#F0430A,#FF9A3D);box-shadow:0 0 11px rgba(255,95,31,.55);
+  transition:width 1.5s cubic-bezier(.2,.8,.2,1)}
+
+.achados{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:0}
+.coluna{padding:clamp(22px,3vw,32px)}
+.coluna+.coluna{border-left:1px solid var(--linha)}
+.coluna h3{font-family:var(--mono);font-size:.7rem;letter-spacing:.14em;text-transform:uppercase;font-weight:400;
+  display:flex;align-items:center;gap:9px;margin-bottom:19px}
+.coluna h3 i{width:7px;height:7px;border-radius:50%;flex:none}
+.item{display:flex;gap:13px;padding:15px 0;border-top:1px solid var(--linha)}
+.item:first-of-type{border-top:0;padding-top:0}
+.item .num{font-family:var(--mono);font-size:.68rem;color:var(--texto-38);padding-top:3px;flex:none}
+.item p{font-size:.91rem;line-height:1.62}
+.item p b{font-weight:500}
+.item small{display:block;margin-top:6px;font-size:.79rem;color:var(--texto-38);line-height:1.6}
+.item .prova{display:inline-block;margin-top:9px;font-family:var(--mono);font-size:.71rem;color:var(--laranja-2);
+  background:rgba(255,95,31,.08);border:1px solid var(--linha-2);border-radius:6px;padding:5px 9px}
+
+/* ---------- cartoes ---------- */
+.acoes{display:grid;grid-template-columns:repeat(auto-fit,minmax(252px,1fr));gap:15px;margin-top:36px}
+.acao{position:relative;border:1px solid var(--linha);border-radius:15px;padding:25px 23px 23px;background:var(--carta);
+  transition:.35s cubic-bezier(.2,.8,.2,1);overflow:hidden}
+.acao::after{content:'';position:absolute;inset:0;pointer-events:none;opacity:0;transition:opacity .4s;
+  background:radial-gradient(440px 180px at 50% -10%,rgba(255,95,31,.22),transparent 70%)}
+.acao:hover{transform:translateY(-4px);border-color:var(--linha-2)}
+.acao:hover::after{opacity:1}
+.acao>*{position:relative}
+.acao .ic{width:36px;height:36px;border-radius:10px;border:1px solid var(--linha-2);display:grid;place-items:center;
+  margin-bottom:17px;color:var(--laranja);background:rgba(255,95,31,.08)}
+.acao h4{font-family:var(--display);font-weight:500;font-size:1.04rem;letter-spacing:-.02em}
+.acao p{margin-top:9px;font-size:.87rem;color:var(--texto-60)}
+.acao ul{margin-top:15px;padding-top:15px;border-top:1px solid var(--linha);list-style:none;
+  font-size:.81rem;color:var(--texto-38);display:grid;gap:8px}
+.acao li{display:flex;gap:9px;align-items:flex-start}
+.acao li svg{flex:none;margin-top:5px;color:var(--laranja)}
+
+.passos{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));margin-top:36px;border-top:1px solid var(--linha)}
+.passo{padding:24px 22px 0;border-right:1px solid var(--linha)}
+.passo:last-child{border-right:0}
+.passo b{font-family:var(--mono);font-size:.7rem;color:var(--laranja);display:block;margin-bottom:11px}
+.passo h4{font-family:var(--display);font-weight:500;font-size:1.01rem;letter-spacing:-.02em}
+.passo p{margin-top:8px;font-size:.86rem;color:var(--texto-60)}
+
+/* ---------- planos ---------- */
+.planos{display:grid;grid-template-columns:repeat(auto-fit,minmax(248px,1fr));gap:15px;margin-top:36px}
+.plano{position:relative;border:1px solid var(--linha);border-radius:15px;padding:25px 23px;display:flex;
+  flex-direction:column;background:var(--carta);overflow:hidden}
+.plano.destaque{border-color:rgba(255,95,31,.42)}
+.plano.destaque::before{content:'';position:absolute;inset:0;pointer-events:none;
+  background:radial-gradient(520px 200px at 50% -12%,rgba(255,95,31,.24),transparent 68%)}
+.plano>*{position:relative}
+.plano .fita{position:absolute;top:16px;right:-34px;transform:rotate(38deg);background:linear-gradient(180deg,#FF7A32,#F04A0C);
+  color:#fff;font-family:var(--mono);font-size:.56rem;letter-spacing:.16em;padding:4px 36px;text-transform:uppercase}
+.plano .nome{font-family:var(--mono);font-size:.7rem;letter-spacing:.14em;text-transform:uppercase;color:var(--laranja-2)}
+.plano .preco{font-family:var(--display);font-weight:700;font-size:2rem;letter-spacing:-.03em;margin:13px 0 4px}
+.plano .preco small{font-size:.78rem;font-weight:500;color:var(--texto-38);letter-spacing:0}
+.plano p{font-size:.85rem;color:var(--texto-60);min-height:42px}
+.plano ul{list-style:none;margin:18px 0 22px;padding-top:18px;border-top:1px solid var(--linha);
+  display:grid;gap:9px;font-size:.85rem;color:var(--texto-60);flex:1}
+.plano li{display:flex;gap:9px;align-items:flex-start}
+.plano li svg{flex:none;margin-top:5px;color:var(--laranja)}
+.plano .btn{width:100%}
+
+/* ---------- chamada final ---------- */
+.final{position:relative;overflow:hidden;border-top:1px solid var(--linha)}
+.final .dentro{max-width:1180px;margin:0 auto;padding:clamp(56px,7vw,92px) clamp(16px,4vw,44px);
+  display:flex;gap:30px;align-items:center;justify-content:space-between;flex-wrap:wrap;position:relative;z-index:1}
+.final h2{max-width:24ch}
+.final .brasa-3{position:absolute;left:50%;bottom:-70%;transform:translateX(-50%);width:110%;height:180%;
+  background:radial-gradient(ellipse at center,rgba(255,95,31,.26),transparent 62%);filter:blur(60px);pointer-events:none}
+
+.rodape{border-top:1px solid var(--linha);padding:28px clamp(16px,4vw,44px);display:flex;flex-wrap:wrap;gap:16px;
+  justify-content:space-between;align-items:center;font-size:.78rem;color:var(--texto-38);max-width:1180px;margin:0 auto}
+.rodape nav{display:flex;gap:20px}
+
+@media(max-width:980px){
+  .topo nav{display:none}
+  .hero-grade{grid-template-columns:minmax(0,1fr)}
+  .scanner{order:-1;max-width:340px}
+  .achados{grid-template-columns:minmax(0,1fr)}
+  .coluna+.coluna{border-left:0;border-top:1px solid var(--linha)}
+}
+@media(max-width:700px){
+  .placar{grid-template-columns:minmax(0,1fr);justify-items:center}
+  .areas{width:100%}
+  .caixa{flex-direction:column;border-radius:16px}
+  .caixa .btn{width:100%}
+  .moldura{width:46%}
+  .ficha{width:118px;padding:9px 10px}
+  .ficha b{font-size:.7rem}
+  .f1{top:0;left:-3%}
+  .f2{top:-2%;right:-3%}
+  .f3{bottom:9%;left:-3%}
+  .f4{bottom:-1%;right:-3%}
+  .passo{border-right:0;border-bottom:1px solid var(--linha);padding-bottom:24px}
+  .passo:last-child{border-bottom:0}
+}
+@media(prefers-reduced-motion:reduce){
+  .reveal{opacity:1;transform:none;transition:none}
+  *{animation:none!important}
+}
+</style>
+</head>
+<body>
+<div class="malha"></div>
+
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <defs>
+    <linearGradient id="fogo" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#FFB067"/><stop offset=".55" stop-color="#FF5F1F"/><stop offset="1" stop-color="#E03A05"/>
+    </linearGradient>
+    <linearGradient id="fogo2" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#E03A05"/><stop offset="1" stop-color="#FFB067"/>
+    </linearGradient>
+  </defs>
+</svg>
+
+<header class="topo" id="topo">
+  <a class="logo" href="#hero">
+    <svg width="26" height="26" viewBox="0 0 26 26" fill="none" aria-hidden="true">
+      <path d="M3 9V6a3 3 0 0 1 3-3h3M17 3h3a3 3 0 0 1 3 3v3M23 17v3a3 3 0 0 1-3 3h-3M9 23H6a3 3 0 0 1-3-3v-3"
+        stroke="url(#fogo)" stroke-width="2.1" stroke-linecap="round" fill="none"/>
+      <path d="M5.5 13h3.2l1.4-3.4 2.3 7.2 1.8-5 1.2 1.2h5.1"
+        stroke="url(#fogo)" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+    </svg>
+    Raio-X
+  </a>
+  <nav>
+    <a href="#laudo">O laudo</a>
+    <a href="#corrigir">Corrigir</a>
+    <a href="#como">Como funciona</a>
+    <a href="#planos">Planos</a>
+  </nav>
+  <a class="btn btn-fogo" href="#hero">Fazer meu check-up
+    <svg width="14" height="9" viewBox="0 0 14 9" fill="none"><path d="M0 4.5h12M9 1l3.5 3.5L9 8" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/></svg>
+  </a>
+</header>
+
+<main>
+<section class="hero" id="hero">
+  <div class="brasa brasa-1"></div>
+  <div class="brasa brasa-2"></div>
+
+  <div class="hero-grade">
+    <div>
+      <span class="selo"><i></i> Diagnóstico em 1 minuto</span>
+      <h1>O check-up da <span>presença digital</span> do seu negócio</h1>
+      <p class="sub">Você coloca o endereço do seu site. A gente analisa como um cliente vê, aponta o que está afastando gente e mostra exatamente como corrigir.</p>
+
+      <form class="caixa" onsubmit="return false">
+        <input type="text" value="esteticaprime.com.br" aria-label="Endereço do seu site" placeholder="oseusite.com.br">
+        <button class="btn btn-fogo" type="submit">Analisar de graça
+          <svg width="14" height="9" viewBox="0 0 14 9" fill="none"><path d="M0 4.5h12M9 1l3.5 3.5L9 8" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </button>
+      </form>
+      <p class="aviso">sem cadastro · sem cartão · resultado na tela</p>
+
+      <div class="micro">
+        <div>
+          <svg width="17" height="17" viewBox="0 0 17 17" fill="none"><circle cx="8.5" cy="8.5" r="7" stroke="currentColor" stroke-width="1.4"/><path d="M8.5 4.5v4.3l2.8 1.7" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/></svg>
+          <span><b>Um minuto</b>do endereço ao laudo</span>
+        </div>
+        <div>
+          <svg width="17" height="17" viewBox="0 0 17 17" fill="none"><path d="M2 12.5V5a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v7.5" stroke="currentColor" stroke-width="1.4"/><path d="M1 14h15" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/></svg>
+          <span><b>Site e celular</b>as duas telas que importam</span>
+        </div>
+        <div>
+          <svg width="17" height="17" viewBox="0 0 17 17" fill="none"><path d="M3 14V8M8.5 14V3M14 14v-4" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>
+          <span><b>Nota por área</b>com a prova de cada perda</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="scanner">
+      <div class="moldura">
+        <svg viewBox="0 0 200 200" aria-hidden="true">
+          <path class="cantos" d="M14 58V32a18 18 0 0 1 18-18h26M142 14h26a18 18 0 0 1 18 18v26M186 142v26a18 18 0 0 1-18 18h-26M58 186H32a18 18 0 0 1-18-18v-26"/>
+          <path class="pulso" d="M34 100h26l11-26 15 52 13-38 9 12h58"/>
+        </svg>
+        <span class="varre"></span>
+      </div>
+
+      <div class="fichas">
+        <div class="ficha f1"><b><svg width="13" height="13" viewBox="0 0 13 13" fill="none"><circle cx="6.5" cy="6.5" r="5.6" stroke="currentColor" stroke-width="1.2"/><path d="M.9 6.5h11.2M6.5.9c3 3.4 3 8 0 11.2-3-3.2-3-7.8 0-11.2z" stroke="currentColor" stroke-width="1.2"/></svg> Site</b><i></i><i></i><i></i></div>
+        <div class="ficha f2"><b><svg width="13" height="13" viewBox="0 0 13 13" fill="none"><rect x=".9" y=".9" width="11.2" height="11.2" rx="3.4" stroke="currentColor" stroke-width="1.2"/><circle cx="6.5" cy="6.5" r="2.7" stroke="currentColor" stroke-width="1.2"/></svg> Instagram</b><i></i><i></i><i></i></div>
+        <div class="ficha f3"><b><svg width="13" height="13" viewBox="0 0 13 13" fill="none"><path d="M7.4 1v7.3a2.4 2.4 0 1 1-2-2.4" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/><path d="M7.4 2.6c.5 1.2 1.5 2 2.9 2.1" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/></svg> TikTok</b><i></i><i></i><i></i></div>
+        <div class="ficha f4"><b><svg width="13" height="13" viewBox="0 0 13 13" fill="none"><rect x=".9" y="2.6" width="8.2" height="7.8" rx="2" stroke="currentColor" stroke-width="1.2"/><path d="M9.1 6.5l3-2.2v5l-3-2.3z" stroke="currentColor" stroke-width="1.2" stroke-linejoin="round"/></svg> Vídeos</b><i></i><i></i><i></i></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="secao" id="laudo">
+  <p class="rotulo reveal">O laudo</p>
+  <h2 class="reveal">Nota, motivo e <span>prova</span>. Não é opinião solta.</h2>
+  <p class="legenda reveal">Cada problema vem com o trecho exato do site que causou o desconto na nota, para você conferir com os próprios olhos.</p>
+
+  <div class="laudo reveal">
+    <div class="laudo-topo">
+      <span class="url"><span class="pontinhos"><i></i><i></i><i></i></span> <b>esteticaprime.com.br</b></span>
+      <span class="data">analisado em 16.09.2026 · 41 s</span>
+    </div>
+
+    <div class="placar">
+      <div class="medidor">
+        <div class="mostrador" id="mostrador">
+          <svg viewBox="0 0 200 200" aria-hidden="true">
+            <circle class="trilho" cx="100" cy="100" r="85"/>
+            <circle class="arco" cx="100" cy="100" r="85"/>
+          </svg>
+          <div class="centro">
+            <span class="rot">DIGITAL SCORE</span>
+            <span class="n" id="nota">0</span>
+            <span class="de">de 100</span>
+          </div>
+        </div>
+        <span class="tag">precisa de reparo</span>
+      </div>
+
+      <div class="areas" id="areas">
+        <div class="area" data-v="38"><span class="nome">Clareza da proposta <em>o que vocês fazem</em></span><span class="v">38</span><span class="barra"><i></i></span></div>
+        <div class="area" data-v="25"><span class="nome">Contato e conversão <em>como falar com você</em></span><span class="v">25</span><span class="barra"><i></i></span></div>
+        <div class="area" data-v="52"><span class="nome">Experiência no celular <em>onde 8 em 10 acessam</em></span><span class="v">52</span><span class="barra"><i></i></span></div>
+        <div class="area" data-v="44"><span class="nome">Credibilidade <em>dá pra confiar</em></span><span class="v">44</span><span class="barra"><i></i></span></div>
+        <div class="area" data-v="61"><span class="nome">Velocidade <em>quanto demora pra abrir</em></span><span class="v">61</span><span class="barra"><i></i></span></div>
+        <div class="area" data-v="58"><span class="nome">Busca no Google <em>te achar sem saber o nome</em></span><span class="v">58</span><span class="barra"><i></i></span></div>
+      </div>
+    </div>
+
+    <div class="achados">
+      <div class="coluna">
+        <h3><i style="background:#FF4A2B;box-shadow:0 0 9px rgba(255,74,43,.8)"></i> O que está custando cliente</h3>
+        <div class="item"><span class="num">01</span><div>
+          <p><b>Em cinco segundos ninguém descobre o que vocês fazem.</b></p>
+          <small>A primeira frase do site é uma saudação. Quem caiu ali pelo Google não sabe se é lava-rápido, oficina ou loja de acessórios, e volta pro resultado de busca.</small>
+          <span class="prova">primeira dobra: "Seja bem-vindo ao nosso site!"</span></div></div>
+        <div class="item"><span class="num">02</span><div>
+          <p><b>Não existe WhatsApp em lugar nenhum do site.</b></p>
+          <small>O único jeito de falar com vocês é um formulário de cinco campos. Seu cliente está no celular, com o carro sujo, decidindo agora. Ele não preenche formulário.</small>
+          <span class="prova">0 link wa.me · 1 formulário · 0 telefone clicável</span></div></div>
+        <div class="item"><span class="num">03</span><div>
+          <p><b>No celular, a primeira tela inteira é uma foto.</b></p>
+          <small>Precisa rolar duas telas até aparecer qualquer serviço ou preço. Metade das visitas vai embora antes disso.</small>
+          <span class="prova">primeiro texto visível a 1.180 px de rolagem</span></div></div>
+      </div>
+
+      <div class="coluna">
+        <h3><i style="background:var(--bom);box-shadow:0 0 9px rgba(74,222,128,.7)"></i> O que dá pra ganhar</h3>
+        <div class="item"><span class="num">01</span><div>
+          <p><b>Trocar a primeira frase resolve o problema mais caro.</b></p>
+          <small>"Polimento, vitrificação e higienização interna em Santos, com retirada e entrega do carro" diz serviço, cidade e diferencial em uma linha.</small></div></div>
+        <div class="item"><span class="num">02</span><div>
+          <p><b>Um botão de WhatsApp fixo no rodapé da tela.</b></p>
+          <small>É a mudança de menor esforço e maior efeito do laudo inteiro. Sai de zero caminho de contato imediato para um, sempre visível.</small></div></div>
+        <div class="item"><span class="num">03</span><div>
+          <p><b>Vocês têm 47 avaliações no Google e nenhuma aparece no site.</b></p>
+          <small>A prova de que o trabalho é bom já existe, só está fora do lugar onde a decisão acontece.</small></div></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="secao" id="corrigir">
+  <p class="rotulo reveal">Depois do diagnóstico</p>
+  <h2 class="reveal">Saber o problema é metade. A outra metade é <span>corrigir</span>.</h2>
+  <p class="legenda reveal">O laudo aponta. A partir dele, a plataforma executa.</p>
+
+  <div class="acoes">
+    <div class="acao reveal">
+      <div class="ic"><svg width="17" height="17" viewBox="0 0 17 17" fill="none"><rect x="1" y="2" width="15" height="13" rx="2.5" stroke="currentColor" stroke-width="1.3"/><path d="M1 6h15" stroke="currentColor" stroke-width="1.3"/></svg></div>
+      <h4>Refazer o site</h4>
+      <p>Uma página nova construída em cima dos problemas encontrados, com o conteúdo que já é seu.</p>
+      <ul>
+        <li><svg width="12" height="9" viewBox="0 0 12 9" fill="none"><path d="M1 4.5L4 8l7-7" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg> Primeira dobra que explica o negócio</li>
+        <li><svg width="12" height="9" viewBox="0 0 12 9" fill="none"><path d="M1 4.5L4 8l7-7" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg> WhatsApp em todo lugar certo</li>
+        <li><svg width="12" height="9" viewBox="0 0 12 9" fill="none"><path d="M1 4.5L4 8l7-7" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg> Feito para o celular primeiro</li>
+      </ul>
+    </div>
+
+    <div class="acao reveal">
+      <div class="ic"><svg width="17" height="17" viewBox="0 0 17 17" fill="none"><rect x="1.5" y="1.5" width="14" height="14" rx="4" stroke="currentColor" stroke-width="1.3"/><circle cx="8.5" cy="8.5" r="3.4" stroke="currentColor" stroke-width="1.3"/></svg></div>
+      <h4>Arrumar o Instagram</h4>
+      <p>Bio, destaques e organização do feed, a partir dos prints que você enviou.</p>
+      <ul>
+        <li><svg width="12" height="9" viewBox="0 0 12 9" fill="none"><path d="M1 4.5L4 8l7-7" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg> Bio que diz serviço e cidade</li>
+        <li><svg width="12" height="9" viewBox="0 0 12 9" fill="none"><path d="M1 4.5L4 8l7-7" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg> Destaques por serviço e por preço</li>
+        <li><svg width="12" height="9" viewBox="0 0 12 9" fill="none"><path d="M1 4.5L4 8l7-7" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg> Calendário de conteúdo do mês</li>
+      </ul>
+    </div>
+
+    <div class="acao reveal">
+      <div class="ic"><svg width="17" height="17" viewBox="0 0 17 17" fill="none"><rect x="1" y="3" width="11" height="11" rx="2.5" stroke="currentColor" stroke-width="1.3"/><path d="M12 8l4-3v7l-4-3z" stroke="currentColor" stroke-width="1.3" stroke-linejoin="round"/></svg></div>
+      <h4>Melhorar os vídeos</h4>
+      <p>Análise dos primeiros segundos, do roteiro e da edição dos vídeos que você mandou.</p>
+      <ul>
+        <li><svg width="12" height="9" viewBox="0 0 12 9" fill="none"><path d="M1 4.5L4 8l7-7" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg> Onde a pessoa desiste de assistir</li>
+        <li><svg width="12" height="9" viewBox="0 0 12 9" fill="none"><path d="M1 4.5L4 8l7-7" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg> Ganchos novos para os mesmos temas</li>
+        <li><svg width="12" height="9" viewBox="0 0 12 9" fill="none"><path d="M1 4.5L4 8l7-7" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg> Roteiro pronto do próximo vídeo</li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<section class="secao" id="como">
+  <p class="rotulo reveal">Como funciona</p>
+  <h2 class="reveal">Três passos, <span>um minuto</span></h2>
+  <div class="passos reveal">
+    <div class="passo"><b>01</b><h4>Você manda o endereço</h4><p>Só o site já serve. Instagram e TikTok são opcionais, por print e vídeo, sem conectar conta nenhuma.</p></div>
+    <div class="passo"><b>02</b><h4>A gente abre como cliente</h4><p>No computador e no celular, medindo o que trava, o que confunde e o que falta.</p></div>
+    <div class="passo"><b>03</b><h4>Sai o laudo</h4><p>Nota por área, os problemas em ordem de prejuízo e o que fazer primeiro.</p></div>
+  </div>
+</section>
+
+<section class="secao" id="planos">
+  <p class="rotulo reveal">Planos</p>
+  <h2 class="reveal">Diagnosticar é de graça. <span>Consertar</span> é o serviço.</h2>
+
+  <div class="planos">
+    <div class="plano reveal">
+      <span class="nome">Check-up</span>
+      <div class="preco">Grátis</div>
+      <p>Para saber onde você está.</p>
+      <ul>
+        <li><svg width="12" height="9" viewBox="0 0 12 9" fill="none"><path d="M1 4.5L4 8l7-7" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg> Nota geral e por área</li>
+        <li><svg width="12" height="9" viewBox="0 0 12 9" fill="none"><path d="M1 4.5L4 8l7-7" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg> Os 3 problemas principais</li>
+        <li><svg width="12" height="9" viewBox="0 0 12 9" fill="none"><path d="M1 4.5L4 8l7-7" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg> Só o site</li>
+      </ul>
+      <button class="btn btn-borda">Analisar agora</button>
+    </div>
+
+    <div class="plano destaque reveal">
+      <span class="fita">mais pedido</span>
+      <span class="nome">Completo</span>
+      <div class="preco">R$49 <small>por análise</small></div>
+      <p>Site, Instagram e TikTok, com o laudo inteiro.</p>
+      <ul>
+        <li><svg width="12" height="9" viewBox="0 0 12 9" fill="none"><path d="M1 4.5L4 8l7-7" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg> Tudo do Check-up</li>
+        <li><svg width="12" height="9" viewBox="0 0 12 9" fill="none"><path d="M1 4.5L4 8l7-7" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg> Instagram e TikTok por print</li>
+        <li><svg width="12" height="9" viewBox="0 0 12 9" fill="none"><path d="M1 4.5L4 8l7-7" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg> Análise dos seus vídeos</li>
+        <li><svg width="12" height="9" viewBox="0 0 12 9" fill="none"><path d="M1 4.5L4 8l7-7" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg> Laudo em PDF pra guardar</li>
+      </ul>
+      <button class="btn btn-fogo">Fazer o completo</button>
+    </div>
+
+    <div class="plano reveal">
+      <span class="nome">Correção</span>
+      <div class="preco">sob orçamento</div>
+      <p>A gente não aponta, a gente resolve.</p>
+      <ul>
+        <li><svg width="12" height="9" viewBox="0 0 12 9" fill="none"><path d="M1 4.5L4 8l7-7" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg> Site novo publicado</li>
+        <li><svg width="12" height="9" viewBox="0 0 12 9" fill="none"><path d="M1 4.5L4 8l7-7" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg> Instagram reposicionado</li>
+        <li><svg width="12" height="9" viewBox="0 0 12 9" fill="none"><path d="M1 4.5L4 8l7-7" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg> Roteiros de vídeo do mês</li>
+        <li><svg width="12" height="9" viewBox="0 0 12 9" fill="none"><path d="M1 4.5L4 8l7-7" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg> Acompanhamento da nota</li>
+      </ul>
+      <button class="btn btn-borda">Falar com a gente</button>
+    </div>
+  </div>
+</section>
+
+<section class="final">
+  <div class="brasa-3"></div>
+  <div class="dentro">
+    <h2>Descubra em um minuto o que está <span>custando cliente</span> pra você.</h2>
+    <a class="btn btn-fogo" href="#hero" style="padding:15px 28px;font-size:.92rem">Fazer meu check-up
+      <svg width="14" height="9" viewBox="0 0 14 9" fill="none"><path d="M0 4.5h12M9 1l3.5 3.5L9 8" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/></svg>
+    </a>
+  </div>
+</section>
+</main>
+
+<footer class="rodape">
+  <span>Raio-X · check-up de presença digital</span>
+  <nav><a href="#laudo">O laudo</a><a href="#corrigir">Corrigir</a><a href="#planos">Planos</a></nav>
+  <span>Protótipo. Dados de exemplo.</span>
+</footer>
+
+<script>
+(function(){
+  var topo=document.getElementById('topo');
+  addEventListener('scroll',function(){ topo.classList.toggle('solido',scrollY>30) },{passive:true});
+
+  function anima(){
+    document.getElementById('mostrador').classList.add('on');
+    var alvo=47,n=document.getElementById('nota'),i=0;
+    var t=setInterval(function(){ i++; n.textContent=i; if(i>=alvo) clearInterval(t) },1900/alvo);
+    document.querySelectorAll('#areas .area').forEach(function(a,k){
+      setTimeout(function(){ a.querySelector('.barra i').style.width=a.dataset.v+'%' },130*k);
+    });
+  }
+
+  var io=new IntersectionObserver(function(es){
+    es.forEach(function(e){
+      if(!e.isIntersecting) return;
+      e.target.classList.add('vis');
+      if(e.target.classList.contains('laudo')) anima();
+      io.unobserve(e.target);
+    });
+  },{threshold:.15,rootMargin:'0px 0px -6% 0px'});
+  document.querySelectorAll('.reveal').forEach(function(el,i){ el.style.transitionDelay=(i%3)*80+'ms'; io.observe(el) });
+})();
+</script>
+</body>
+</html>
