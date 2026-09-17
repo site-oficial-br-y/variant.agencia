@@ -41,9 +41,15 @@ segurar a posição apostando que um elenco melhor vai sair.
 
 ## Base de dados
 
-40 times, 440 entradas, 368 jogadores distintos. Doze elencos têm a fonte
-registrada no campo `fonte` — os demais ainda saíram de memória e precisam
-da mesma conferência. Três detalhes que ela resolve:
+39 times, 429 entradas, 366 jogadores distintos. **Todos os elencos têm a
+fonte registrada** no campo `fonte`. Três trazem `fonte_parcial: true` —
+Santos 2002, Cruzeiro 2013 e Cruzeiro 2014 — onde os nomes principais foram
+confirmados mas o XI exato não foi localizado.
+
+Critério do XI: a escalação do jogo decisivo daquela conquista, por ser o
+dado verificável. Isso deixa de fora craques que estavam no elenco mas não
+naquele jogo (Pelé na final de 63, por lesão; Roberto Carlos no Palmeiras 94;
+Deyverson, que entrou na prorrogação da final de 2021). Três detalhes que ela resolve:
 
 - **Homônimos são pessoas diferentes.** Há quatro "Danilo", quatro "Alex" e três
   "Júnior". Cada um tem ID próprio, senão o jogo apagaria o errado.
@@ -72,8 +78,8 @@ Medido em 800 partidas reais na página e 20.000 campanhas simuladas:
 - Card de resultado para compartilhar
 - Modo diário: um sorteio igual para todo mundo, que vira à meia-noite
 - Ver o seu time durante a campanha
-- Conferir por pesquisa os 28 elencos que ainda não têm `fonte`. Grêmio 1995,
-  Santos 2002 e Palmeiras 1994 são os mais suspeitos.
+- Achar o XI exato de Santos 2002, Cruzeiro 2013 e Cruzeiro 2014
+- Repor o Flamengo 2023, removido por não ter conquistado nada naquele ano
 - Faltam 10 dos 20 elencos novos planejados: São Paulo 1986, Cruzeiro 1993,
   Fluminense 1984, Guarani 1978, Coritiba 1985, Sport 1987, Bahia 1988,
   Atlético-PR 2001, Santos 1968 e Flamengo 1992.

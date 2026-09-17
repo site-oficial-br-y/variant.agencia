@@ -88,7 +88,8 @@
      "grupo": "ATA",
      "over": 90
     }
-   ]
+   ],
+   "fonte": "CONMEBOL — time campeão da América de 1962"
   },
   {
    "id": "fla19",
@@ -177,7 +178,8 @@
      "grupo": "ATA",
      "over": 90
     }
-   ]
+   ],
+   "fonte": "Coluna do Fla — escalação da final da Libertadores de 2019"
   },
   {
    "id": "san63",
@@ -187,7 +189,7 @@
     "#111111",
     "#FFFFFF"
    ],
-   "conquista": "Bicampeão da Libertadores e do Mundial",
+   "conquista": "Bicampeão da Libertadores e do Mundial, com Pelé lesionado na final",
    "elenco": [
     {
      "id": "gilmar",
@@ -253,11 +255,11 @@
      "over": 92
     },
     {
-     "id": "pele",
-     "nome": "Pelé",
+     "id": "almir",
+     "nome": "Almir",
      "pos": "Atacante",
      "grupo": "ATA",
-     "over": 99
+     "over": 84
     },
     {
      "id": "pepe",
@@ -266,7 +268,8 @@
      "grupo": "ATA",
      "over": 90
     }
-   ]
+   ],
+   "fonte": "ogol / Santos FC — escalação da final do Mundial de 1963"
   },
   {
    "id": "fla81",
@@ -355,7 +358,8 @@
      "grupo": "ATA",
      "over": 85
     }
-   ]
+   ],
+   "fonte": "Flamengo / Imortais — escalação da final do Mundial de 1981"
   },
   {
    "id": "spfc92",
@@ -444,7 +448,8 @@
      "grupo": "ATA",
      "over": 87
     }
-   ]
+   ],
+   "fonte": "São Paulo FC — escalação da final do Mundial de 1992"
   },
   {
    "id": "pal99",
@@ -533,7 +538,8 @@
      "grupo": "ATA",
      "over": 80
     }
-   ]
+   ],
+   "fonte": "Wikipédia / ogol — escalação da final da Libertadores de 1999"
   },
   {
    "id": "san11",
@@ -588,11 +594,11 @@
      "over": 81
     },
     {
-     "id": "henrique-san",
-     "nome": "Henrique",
+     "id": "adriano-san",
+     "nome": "Adriano",
      "pos": "Volante",
      "grupo": "MEI",
-     "over": 76
+     "over": 78
     },
     {
      "id": "elano",
@@ -616,13 +622,14 @@
      "over": 91
     },
     {
-     "id": "borges",
-     "nome": "Borges",
+     "id": "ze-eduardo",
+     "nome": "Zé Eduardo",
      "pos": "Centroavante",
      "grupo": "ATA",
-     "over": 80
+     "over": 77
     }
-   ]
+   ],
+   "fonte": "ESPN / Wikipédia — escalação da final da Libertadores de 2011"
   },
   {
    "id": "cru03",
@@ -795,13 +802,14 @@
      "over": 80
     },
     {
-     "id": "willian-pal",
-     "nome": "Willian",
-     "pos": "Atacante",
-     "grupo": "ATA",
-     "over": 79
+     "id": "gabriel-menino",
+     "nome": "Gabriel Menino",
+     "pos": "Volante",
+     "grupo": "MEI",
+     "over": 78
     }
-   ]
+   ],
+   "fonte": "ogol / Palmeiras — escalação da final da Libertadores de 2020"
   },
   {
    "id": "cor12",
@@ -870,11 +878,11 @@
      "over": 80
     },
     {
-     "id": "douglas-cor",
-     "nome": "Douglas",
-     "pos": "Meia",
-     "grupo": "MEI",
-     "over": 76
+     "id": "guerrero",
+     "nome": "Paolo Guerrero",
+     "pos": "Centroavante",
+     "grupo": "ATA",
+     "over": 85
     },
     {
      "id": "jorge-henrique",
@@ -890,7 +898,8 @@
      "grupo": "ATA",
      "over": 84
     }
-   ]
+   ],
+   "fonte": "Goal / Wikipédia — escalação da final do Mundial de 2012"
   },
   {
    "id": "int06",
@@ -979,7 +988,8 @@
      "grupo": "ATA",
      "over": 81
     }
-   ]
+   ],
+   "fonte": "Goal / Internacional — escalação da final do Mundial de 2006"
   },
   {
    "id": "cam13",
@@ -1020,11 +1030,11 @@
      "over": 82
     },
     {
-     "id": "junior-cesar",
-     "nome": "Júnior César",
+     "id": "richarlyson",
+     "nome": "Richarlyson",
      "pos": "Lateral-esquerdo",
      "grupo": "DEF",
-     "over": 76
+     "over": 78
     },
     {
      "id": "pierre",
@@ -1068,7 +1078,8 @@
      "grupo": "ATA",
      "over": 82
     }
-   ]
+   ],
+   "fonte": "Goal — escalação da final da Libertadores de 2013"
   },
   {
    "id": "spfc05",
@@ -1151,13 +1162,14 @@
      "over": 79
     },
     {
-     "id": "grafite",
-     "nome": "Grafite",
-     "pos": "Centroavante",
-     "grupo": "ATA",
-     "over": 82
+     "id": "edcarlos",
+     "nome": "Edcarlos",
+     "pos": "Zagueiro",
+     "grupo": "DEF",
+     "over": 78
     }
-   ]
+   ],
+   "fonte": "São Paulo FC — escalação da final do Mundial de 2005"
   },
   {
    "id": "pal21",
@@ -1177,11 +1189,11 @@
      "over": 85
     },
     {
-     "id": "marcos-rocha",
-     "nome": "Marcos Rocha",
+     "id": "mayke",
+     "nome": "Mayke",
      "pos": "Lateral-direito",
      "grupo": "DEF",
-     "over": 82
+     "over": 79
     },
     {
      "id": "gustavo-gomez",
@@ -1240,13 +1252,14 @@
      "over": 82
     },
     {
-     "id": "deyverson",
-     "nome": "Deyverson",
-     "pos": "Centroavante",
-     "grupo": "ATA",
-     "over": 77
+     "id": "gustavo-scarpa",
+     "nome": "Gustavo Scarpa",
+     "pos": "Meia",
+     "grupo": "MEI",
+     "over": 83
     }
-   ]
+   ],
+   "fonte": "Wikipédia / ESPN — escalação da final da Libertadores de 2021"
   },
   {
    "id": "fla22",
@@ -1335,7 +1348,8 @@
      "grupo": "ATA",
      "over": 87
     }
-   ]
+   ],
+   "fonte": "Wikipédia / ESPN — escalação da final da Libertadores de 2022"
   },
   {
    "id": "gre83",
@@ -1508,13 +1522,14 @@
      "over": 88
     },
     {
-     "id": "magno-gre",
-     "nome": "Magno",
-     "pos": "Ponta",
-     "grupo": "ATA",
-     "over": 75
+     "id": "arilson",
+     "nome": "Arílson",
+     "pos": "Meia",
+     "grupo": "MEI",
+     "over": 79
     }
-   ]
+   ],
+   "fonte": "Imortais do Futebol — Grêmio 1994-1997, time da Libertadores de 95"
   },
   {
    "id": "spfc93",
@@ -1603,7 +1618,8 @@
      "grupo": "ATA",
      "over": 87
     }
-   ]
+   ],
+   "fonte": "São Paulo FC — escalação da final do Mundial de 1993"
   },
   {
    "id": "pal94",
@@ -1692,7 +1708,8 @@
      "grupo": "ATA",
      "over": 85
     }
-   ]
+   ],
+   "fonte": "Goal — escalação da final do Brasileiro de 1994"
   },
   {
    "id": "flu12",
@@ -1781,7 +1798,8 @@
      "grupo": "ATA",
      "over": 88
     }
-   ]
+   ],
+   "fonte": "Campeões do Futebol — elenco e jogo do título de 2012"
   },
   {
    "id": "san02",
@@ -1870,7 +1888,9 @@
      "grupo": "ATA",
      "over": 77
     }
-   ]
+   ],
+   "fonte": "Santos FC / Imortais — elenco de 2002 (XI da final não localizado)",
+   "fonte_parcial": true
   },
   {
    "id": "cor15",
@@ -1959,7 +1979,8 @@
      "grupo": "ATA",
      "over": 83
     }
-   ]
+   ],
+   "fonte": "Todo Poderoso Timão / Lance — time base do Brasileiro de 2015"
   },
   {
    "id": "cam21",
@@ -2048,7 +2069,8 @@
      "grupo": "ATA",
      "over": 83
     }
-   ]
+   ],
+   "fonte": "Imortais do Futebol / Atlético — time base de 2021"
   },
   {
    "id": "cru13",
@@ -2137,7 +2159,9 @@
      "grupo": "ATA",
      "over": 80
     }
-   ]
+   ],
+   "fonte": "Wikipédia / Edição dos Campeões — elenco do Brasileiro de 2013 (nomes-chave conferidos, XI não confirmado)",
+   "fonte_parcial": true
   },
   {
    "id": "cru14",
@@ -2226,7 +2250,9 @@
      "grupo": "ATA",
      "over": 80
     }
-   ]
+   ],
+   "fonte": "Wikipédia — elenco do Brasileiro de 2014 (nomes-chave conferidos, XI não confirmado)",
+   "fonte_parcial": true
   },
   {
    "id": "int10",
@@ -2295,11 +2321,11 @@
      "over": 89
     },
     {
-     "id": "giuliano",
-     "nome": "Giuliano",
-     "pos": "Meia",
+     "id": "sandro-int",
+     "nome": "Sandro",
+     "pos": "Volante",
      "grupo": "MEI",
-     "over": 83
+     "over": 80
     },
     {
      "id": "rafael-sobis",
@@ -2309,13 +2335,14 @@
      "over": 82
     },
     {
-     "id": "alecsandro",
-     "nome": "Alecsandro",
-     "pos": "Centroavante",
+     "id": "taison",
+     "nome": "Taison",
+     "pos": "Ponta",
      "grupo": "ATA",
-     "over": 80
+     "over": 82
     }
-   ]
+   ],
+   "fonte": "ogol — escalação da final da Libertadores de 2010"
   },
   {
    "id": "flu23",
@@ -2342,11 +2369,11 @@
      "over": 79
     },
     {
-     "id": "nino",
-     "nome": "Nino",
+     "id": "marlon-flu",
+     "nome": "Marlon",
      "pos": "Zagueiro",
      "grupo": "DEF",
-     "over": 82
+     "over": 79
     },
     {
      "id": "felipe-melo",
@@ -2370,11 +2397,11 @@
      "over": 85
     },
     {
-     "id": "martinelli",
-     "nome": "Martinelli",
+     "id": "lima-flu",
+     "nome": "Lima",
      "pos": "Volante",
      "grupo": "MEI",
-     "over": 79
+     "over": 78
     },
     {
      "id": "ganso",
@@ -2404,7 +2431,8 @@
      "grupo": "ATA",
      "over": 87
     }
-   ]
+   ],
+   "fonte": "Wikipédia / ESPN — escalação da final da Libertadores de 2023"
   },
   {
    "id": "bot24",
@@ -2431,11 +2459,11 @@
      "over": 78
     },
     {
-     "id": "bastos",
-     "nome": "Bastos",
+     "id": "adryelson",
+     "nome": "Adryelson",
      "pos": "Zagueiro",
      "grupo": "DEF",
-     "over": 82
+     "over": 79
     },
     {
      "id": "barboza",
@@ -2493,7 +2521,8 @@
      "grupo": "ATA",
      "over": 82
     }
-   ]
+   ],
+   "fonte": "Wikipédia / CNN — escalação da final da Libertadores de 2024"
   },
   {
    "id": "san10",
@@ -2534,11 +2563,11 @@
      "over": 79
     },
     {
-     "id": "leo-san",
-     "nome": "Léo",
+     "id": "alex-sandro",
+     "nome": "Alex Sandro",
      "pos": "Lateral-esquerdo",
      "grupo": "DEF",
-     "over": 82
+     "over": 80
     },
     {
      "id": "arouca",
@@ -2582,96 +2611,8 @@
      "grupo": "ATA",
      "over": 80
     }
-   ]
-  },
-  {
-   "id": "fla23",
-   "clube": "Flamengo",
-   "ano": 2023,
-   "cores": [
-    "#C52613",
-    "#111111"
    ],
-   "conquista": "Carioca",
-   "elenco": [
-    {
-     "id": "rossi",
-     "nome": "Rossi",
-     "pos": "Goleiro",
-     "grupo": "GOL",
-     "over": 82
-    },
-    {
-     "id": "varela",
-     "nome": "Varela",
-     "pos": "Lateral-direito",
-     "grupo": "DEF",
-     "over": 79
-    },
-    {
-     "id": "fabricio-bruno",
-     "nome": "Fabrício Bruno",
-     "pos": "Zagueiro",
-     "grupo": "DEF",
-     "over": 82
-    },
-    {
-     "id": "david-luiz",
-     "nome": "David Luiz",
-     "pos": "Zagueiro",
-     "grupo": "DEF",
-     "over": 84
-    },
-    {
-     "id": "ayrton-lucas",
-     "nome": "Ayrton Lucas",
-     "pos": "Lateral-esquerdo",
-     "grupo": "DEF",
-     "over": 82
-    },
-    {
-     "id": "erick-pulgar",
-     "nome": "Erick Pulgar",
-     "pos": "Volante",
-     "grupo": "MEI",
-     "over": 81
-    },
-    {
-     "id": "gerson",
-     "nome": "Gerson",
-     "pos": "Meia",
-     "grupo": "MEI",
-     "over": 85
-    },
-    {
-     "id": "everton-ribeiro",
-     "nome": "Everton Ribeiro",
-     "pos": "Meia",
-     "grupo": "MEI",
-     "over": 86
-    },
-    {
-     "id": "arrascaeta",
-     "nome": "Arrascaeta",
-     "pos": "Meia",
-     "grupo": "MEI",
-     "over": 88
-    },
-    {
-     "id": "bruno-henrique",
-     "nome": "Bruno Henrique",
-     "pos": "Atacante",
-     "grupo": "ATA",
-     "over": 89
-    },
-    {
-     "id": "pedro",
-     "nome": "Pedro",
-     "pos": "Centroavante",
-     "grupo": "ATA",
-     "over": 87
-    }
-   ]
+   "fonte": "CBF / Santos FC — escalação da final da Copa do Brasil de 2010"
   },
   {
    "id": "bot62",
