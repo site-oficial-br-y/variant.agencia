@@ -41,7 +41,9 @@ segurar a posição apostando que um elenco melhor vai sair.
 
 ## Base de dados
 
-330 entradas, 264 jogadores distintos. Três detalhes que ela resolve:
+40 times, 440 entradas, 368 jogadores distintos. Doze elencos têm a fonte
+registrada no campo `fonte` — os demais ainda saíram de memória e precisam
+da mesma conferência. Três detalhes que ela resolve:
 
 - **Homônimos são pessoas diferentes.** Há quatro "Danilo", quatro "Alex" e três
   "Júnior". Cada um tem ID próprio, senão o jogo apagaria o errado.
@@ -70,5 +72,9 @@ Medido em 800 partidas reais na página e 20.000 campanhas simuladas:
 - Card de resultado para compartilhar
 - Modo diário: um sorteio igual para todo mundo, que vira à meia-noite
 - Ver o seu time durante a campanha
-- Revisar os nomes dos elencos antigos: Grêmio 1983, Grêmio 1995, Cruzeiro 2003,
-  Santos 2002 e Palmeiras 1994 são os que têm mais chute
+- Conferir por pesquisa os 28 elencos que ainda não têm `fonte`. Grêmio 1995,
+  Santos 2002 e Palmeiras 1994 são os mais suspeitos.
+- Faltam 10 dos 20 elencos novos planejados: São Paulo 1986, Cruzeiro 1993,
+  Fluminense 1984, Guarani 1978, Coritiba 1985, Sport 1987, Bahia 1988,
+  Atlético-PR 2001, Santos 1968 e Flamengo 1992.
+- Cadastro e ranking via Supabase (faltam a URL e a anon key do projeto)
