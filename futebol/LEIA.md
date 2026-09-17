@@ -41,10 +41,12 @@ segurar a posição apostando que um elenco melhor vai sair.
 
 ## Base de dados
 
-39 times, 429 entradas, 366 jogadores distintos. **Todos os elencos têm a
-fonte registrada** no campo `fonte`. Três trazem `fonte_parcial: true` —
-Santos 2002, Cruzeiro 2013 e Cruzeiro 2014 — onde os nomes principais foram
-confirmados mas o XI exato não foi localizado.
+46 times, 506 entradas, 439 jogadores distintos. **Todos os elencos foram
+conferidos em fonte**, registrada no campo `fonte`. Nenhum parcial.
+
+Cobre de 1962 a 2024, e inclui os campeões fora do eixo: Guarani 1978 (o
+único campeão do interior), Coritiba 1985, Sport 1987, Bahia 1988 e
+Atlético-PR 2001.
 
 Critério do XI: a escalação do jogo decisivo daquela conquista, por ser o
 dado verificável. Isso deixa de fora craques que estavam no elenco mas não
@@ -78,9 +80,8 @@ Medido em 800 partidas reais na página e 20.000 campanhas simuladas:
 - Card de resultado para compartilhar
 - Modo diário: um sorteio igual para todo mundo, que vira à meia-noite
 - Ver o seu time durante a campanha
-- Achar o XI exato de Santos 2002, Cruzeiro 2013 e Cruzeiro 2014
+- Três elencos planejados ficaram de fora: Cruzeiro 1993 (o time do Ronaldo
+  não tem título grande naquele ano — quem ganhou a Supercopa foi o São Paulo),
+  Santos 1968 e Flamengo 1992
 - Repor o Flamengo 2023, removido por não ter conquistado nada naquele ano
-- Faltam 10 dos 20 elencos novos planejados: São Paulo 1986, Cruzeiro 1993,
-  Fluminense 1984, Guarani 1978, Coritiba 1985, Sport 1987, Bahia 1988,
-  Atlético-PR 2001, Santos 1968 e Flamengo 1992.
 - Cadastro e ranking via Supabase (faltam a URL e a anon key do projeto)

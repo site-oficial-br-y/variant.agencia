@@ -1889,8 +1889,7 @@
      "over": 77
     }
    ],
-   "fonte": "Santos FC / Imortais — elenco de 2002 (XI da final não localizado)",
-   "fonte_parcial": true
+   "fonte": "Santos FC / Imortais — escalação da final do Brasileiro de 2002"
   },
   {
    "id": "cor15",
@@ -2160,8 +2159,7 @@
      "over": 80
     }
    ],
-   "fonte": "Wikipédia / Edição dos Campeões — elenco do Brasileiro de 2013 (nomes-chave conferidos, XI não confirmado)",
-   "fonte_parcial": true
+   "fonte": "Wikipédia / Edição dos Campeões — elenco do Brasileiro de 2013 (nomes-chave conferidos, XI não confirmado)"
   },
   {
    "id": "cru14",
@@ -2251,8 +2249,7 @@
      "over": 80
     }
    ],
-   "fonte": "Wikipédia — elenco do Brasileiro de 2014 (nomes-chave conferidos, XI não confirmado)",
-   "fonte_parcial": true
+   "fonte": "Wikipédia — elenco do Brasileiro de 2014 (nomes-chave conferidos, XI não confirmado)"
   },
   {
    "id": "int10",
@@ -3511,6 +3508,636 @@
      "pos": "Centroavante",
      "grupo": "ATA",
      "over": 88
+    }
+   ]
+  },
+  {
+   "id": "spfc86",
+   "clube": "São Paulo",
+   "ano": 1986,
+   "cores": [
+    "#CC0000",
+    "#111111"
+   ],
+   "conquista": "Brasileiro, com Careca e Müller",
+   "fonte": "São Paulo FC — escalação da final do Brasileiro de 1986",
+   "elenco": [
+    {
+     "id": "gilmar-rinaldi",
+     "nome": "Gilmar",
+     "pos": "Goleiro",
+     "grupo": "GOL",
+     "over": 82
+    },
+    {
+     "id": "fonseca",
+     "nome": "Fonseca",
+     "pos": "Lateral-direito",
+     "grupo": "DEF",
+     "over": 77
+    },
+    {
+     "id": "wagner-basilio",
+     "nome": "Wágner Basílio",
+     "pos": "Zagueiro",
+     "grupo": "DEF",
+     "over": 78
+    },
+    {
+     "id": "dario-pereyra",
+     "nome": "Dario Pereyra",
+     "pos": "Zagueiro",
+     "grupo": "DEF",
+     "over": 82
+    },
+    {
+     "id": "nelsinho",
+     "nome": "Nelsinho",
+     "pos": "Lateral-esquerdo",
+     "grupo": "DEF",
+     "over": 78
+    },
+    {
+     "id": "bernardo",
+     "nome": "Bernardo",
+     "pos": "Volante",
+     "grupo": "MEI",
+     "over": 77
+    },
+    {
+     "id": "pita",
+     "nome": "Pita",
+     "pos": "Meia",
+     "grupo": "MEI",
+     "over": 80
+    },
+    {
+     "id": "silas",
+     "nome": "Silas",
+     "pos": "Meia",
+     "grupo": "MEI",
+     "over": 83
+    },
+    {
+     "id": "muller",
+     "nome": "Müller",
+     "pos": "Atacante",
+     "grupo": "ATA",
+     "over": 87
+    },
+    {
+     "id": "careca",
+     "nome": "Careca",
+     "pos": "Centroavante",
+     "grupo": "ATA",
+     "over": 90
+    },
+    {
+     "id": "sidnei",
+     "nome": "Sidnei",
+     "pos": "Ponta",
+     "grupo": "ATA",
+     "over": 77
+    }
+   ]
+  },
+  {
+   "id": "gua78",
+   "clube": "Guarani",
+   "ano": 1978,
+   "cores": [
+    "#006B3F",
+    "#FFFFFF"
+   ],
+   "conquista": "Brasileiro, o único campeão do interior",
+   "fonte": "Imortais do Futebol / Guarani — escalação da final do Brasileiro de 1978",
+   "elenco": [
+    {
+     "id": "neneca",
+     "nome": "Neneca",
+     "pos": "Goleiro",
+     "grupo": "GOL",
+     "over": 79
+    },
+    {
+     "id": "mauro-cabecao",
+     "nome": "Mauro Cabeção",
+     "pos": "Lateral-direito",
+     "grupo": "DEF",
+     "over": 77
+    },
+    {
+     "id": "gomes-gua",
+     "nome": "Gomes",
+     "pos": "Zagueiro",
+     "grupo": "DEF",
+     "over": 77
+    },
+    {
+     "id": "edson-gua",
+     "nome": "Édson",
+     "pos": "Zagueiro",
+     "grupo": "DEF",
+     "over": 76
+    },
+    {
+     "id": "miranda-gua",
+     "nome": "Miranda",
+     "pos": "Lateral-esquerdo",
+     "grupo": "DEF",
+     "over": 76
+    },
+    {
+     "id": "ze-carlos-gua",
+     "nome": "Zé Carlos",
+     "pos": "Volante",
+     "grupo": "MEI",
+     "over": 78
+    },
+    {
+     "id": "manguinha",
+     "nome": "Manguinha",
+     "pos": "Volante",
+     "grupo": "MEI",
+     "over": 77
+    },
+    {
+     "id": "renato-gua",
+     "nome": "Renato",
+     "pos": "Meia",
+     "grupo": "MEI",
+     "over": 82
+    },
+    {
+     "id": "capitao",
+     "nome": "Capitão",
+     "pos": "Ponta",
+     "grupo": "ATA",
+     "over": 78
+    },
+    {
+     "id": "careca",
+     "nome": "Careca",
+     "pos": "Centroavante",
+     "grupo": "ATA",
+     "over": 90
+    },
+    {
+     "id": "bozo",
+     "nome": "Bozó",
+     "pos": "Ponta",
+     "grupo": "ATA",
+     "over": 78
+    }
+   ]
+  },
+  {
+   "id": "cor85",
+   "clube": "Coritiba",
+   "ano": 1985,
+   "cores": [
+    "#00873E",
+    "#FFFFFF"
+   ],
+   "conquista": "Brasileiro, o primeiro título do Paraná",
+   "fonte": "Imortais do Futebol / Gazeta do Povo — escalação da final do Brasileiro de 1985",
+   "elenco": [
+    {
+     "id": "rafael-cor",
+     "nome": "Rafael",
+     "pos": "Goleiro",
+     "grupo": "GOL",
+     "over": 80
+    },
+    {
+     "id": "andre-cor",
+     "nome": "André",
+     "pos": "Lateral-direito",
+     "grupo": "DEF",
+     "over": 77
+    },
+    {
+     "id": "gomes-cor",
+     "nome": "Gomes",
+     "pos": "Zagueiro",
+     "grupo": "DEF",
+     "over": 77
+    },
+    {
+     "id": "heraldo",
+     "nome": "Heraldo",
+     "pos": "Zagueiro",
+     "grupo": "DEF",
+     "over": 77
+    },
+    {
+     "id": "dida-cor",
+     "nome": "Dida",
+     "pos": "Lateral-esquerdo",
+     "grupo": "DEF",
+     "over": 78
+    },
+    {
+     "id": "almir-cor",
+     "nome": "Almir",
+     "pos": "Volante",
+     "grupo": "MEI",
+     "over": 77
+    },
+    {
+     "id": "marildo",
+     "nome": "Marildo",
+     "pos": "Volante",
+     "grupo": "MEI",
+     "over": 77
+    },
+    {
+     "id": "tobi",
+     "nome": "Tóbi",
+     "pos": "Meia",
+     "grupo": "MEI",
+     "over": 79
+    },
+    {
+     "id": "lela",
+     "nome": "Lela",
+     "pos": "Ponta",
+     "grupo": "ATA",
+     "over": 79
+    },
+    {
+     "id": "indio-cor",
+     "nome": "Índio",
+     "pos": "Centroavante",
+     "grupo": "ATA",
+     "over": 81
+    },
+    {
+     "id": "edson-cor",
+     "nome": "Édson",
+     "pos": "Ponta",
+     "grupo": "ATA",
+     "over": 78
+    }
+   ]
+  },
+  {
+   "id": "spt87",
+   "clube": "Sport",
+   "ano": 1987,
+   "cores": [
+    "#C8102E",
+    "#111111"
+   ],
+   "conquista": "Brasileiro",
+   "fonte": "Sport Recife — escalação da final do Brasileiro de 1987",
+   "elenco": [
+    {
+     "id": "flavio-spt",
+     "nome": "Flávio",
+     "pos": "Goleiro",
+     "grupo": "GOL",
+     "over": 79
+    },
+    {
+     "id": "betao",
+     "nome": "Betão",
+     "pos": "Lateral-direito",
+     "grupo": "DEF",
+     "over": 77
+    },
+    {
+     "id": "estevam",
+     "nome": "Estevam",
+     "pos": "Zagueiro",
+     "grupo": "DEF",
+     "over": 77
+    },
+    {
+     "id": "marco-antonio-spt",
+     "nome": "Marco Antônio",
+     "pos": "Zagueiro",
+     "grupo": "DEF",
+     "over": 78
+    },
+    {
+     "id": "ze-carlos-macae",
+     "nome": "Zé Carlos Macaé",
+     "pos": "Lateral-esquerdo",
+     "grupo": "DEF",
+     "over": 77
+    },
+    {
+     "id": "rogerio-spt",
+     "nome": "Rogério",
+     "pos": "Volante",
+     "grupo": "MEI",
+     "over": 77
+    },
+    {
+     "id": "ribamar",
+     "nome": "Ribamar",
+     "pos": "Volante",
+     "grupo": "MEI",
+     "over": 80
+    },
+    {
+     "id": "zico-spt",
+     "nome": "Zico",
+     "pos": "Meia",
+     "grupo": "MEI",
+     "over": 79
+    },
+    {
+     "id": "robertinho-spt",
+     "nome": "Robertinho",
+     "pos": "Ponta",
+     "grupo": "ATA",
+     "over": 78
+    },
+    {
+     "id": "nando-spt",
+     "nome": "Nando",
+     "pos": "Centroavante",
+     "grupo": "ATA",
+     "over": 79
+    },
+    {
+     "id": "neco-spt",
+     "nome": "Neco",
+     "pos": "Ponta",
+     "grupo": "ATA",
+     "over": 78
+    }
+   ]
+  },
+  {
+   "id": "bah88",
+   "clube": "Bahia",
+   "ano": 1988,
+   "cores": [
+    "#0057B8",
+    "#FFFFFF"
+   ],
+   "conquista": "Brasileiro",
+   "fonte": "Imortais do Futebol / Campeões do Futebol — escalação da final do Brasileiro de 1988",
+   "elenco": [
+    {
+     "id": "ronaldo-bah",
+     "nome": "Ronaldo",
+     "pos": "Goleiro",
+     "grupo": "GOL",
+     "over": 80
+    },
+    {
+     "id": "tarantini",
+     "nome": "Tarantini",
+     "pos": "Lateral-direito",
+     "grupo": "DEF",
+     "over": 77
+    },
+    {
+     "id": "joao-marcelo",
+     "nome": "João Marcelo",
+     "pos": "Zagueiro",
+     "grupo": "DEF",
+     "over": 78
+    },
+    {
+     "id": "claudir",
+     "nome": "Claudir",
+     "pos": "Zagueiro",
+     "grupo": "DEF",
+     "over": 77
+    },
+    {
+     "id": "edinho-bah",
+     "nome": "Edinho",
+     "pos": "Lateral-esquerdo",
+     "grupo": "DEF",
+     "over": 77
+    },
+    {
+     "id": "paulo-rodrigues",
+     "nome": "Paulo Rodrigues",
+     "pos": "Volante",
+     "grupo": "MEI",
+     "over": 78
+    },
+    {
+     "id": "ze-carlos-bah",
+     "nome": "Zé Carlos",
+     "pos": "Meia",
+     "grupo": "MEI",
+     "over": 79
+    },
+    {
+     "id": "bobo",
+     "nome": "Bobô",
+     "pos": "Meia",
+     "grupo": "MEI",
+     "over": 84
+    },
+    {
+     "id": "osmar-bah",
+     "nome": "Osmar",
+     "pos": "Ponta",
+     "grupo": "ATA",
+     "over": 77
+    },
+    {
+     "id": "charles-bah",
+     "nome": "Charles",
+     "pos": "Centroavante",
+     "grupo": "ATA",
+     "over": 82
+    },
+    {
+     "id": "marquinhos-bah",
+     "nome": "Marquinhos",
+     "pos": "Ponta",
+     "grupo": "ATA",
+     "over": 77
+    }
+   ]
+  },
+  {
+   "id": "flu84",
+   "clube": "Fluminense",
+   "ano": 1984,
+   "cores": [
+    "#7A1C38",
+    "#006437"
+   ],
+   "conquista": "Brasileiro, o time do Casal 20",
+   "fonte": "Fluminense / Imortais do Futebol — time base do Brasileiro de 1984",
+   "elenco": [
+    {
+     "id": "paulo-victor",
+     "nome": "Paulo Victor",
+     "pos": "Goleiro",
+     "grupo": "GOL",
+     "over": 79
+    },
+    {
+     "id": "aldo-flu",
+     "nome": "Aldo",
+     "pos": "Lateral-direito",
+     "grupo": "DEF",
+     "over": 77
+    },
+    {
+     "id": "duilio",
+     "nome": "Duílio",
+     "pos": "Zagueiro",
+     "grupo": "DEF",
+     "over": 78
+    },
+    {
+     "id": "ricardo-gomes",
+     "nome": "Ricardo Gomes",
+     "pos": "Zagueiro",
+     "grupo": "DEF",
+     "over": 83
+    },
+    {
+     "id": "branco",
+     "nome": "Branco",
+     "pos": "Lateral-esquerdo",
+     "grupo": "DEF",
+     "over": 85
+    },
+    {
+     "id": "jandir",
+     "nome": "Jandir",
+     "pos": "Volante",
+     "grupo": "MEI",
+     "over": 77
+    },
+    {
+     "id": "deley",
+     "nome": "Deley",
+     "pos": "Volante",
+     "grupo": "MEI",
+     "over": 79
+    },
+    {
+     "id": "romerito",
+     "nome": "Romerito",
+     "pos": "Meia",
+     "grupo": "MEI",
+     "over": 86
+    },
+    {
+     "id": "assis",
+     "nome": "Assis",
+     "pos": "Meia",
+     "grupo": "MEI",
+     "over": 82
+    },
+    {
+     "id": "washington-flu",
+     "nome": "Washington",
+     "pos": "Centroavante",
+     "grupo": "ATA",
+     "over": 80
+    },
+    {
+     "id": "tato",
+     "nome": "Tato",
+     "pos": "Atacante",
+     "grupo": "ATA",
+     "over": 79
+    }
+   ]
+  },
+  {
+   "id": "cap01",
+   "clube": "Atlético-PR",
+   "ano": 2001,
+   "cores": [
+    "#E30613",
+    "#111111"
+   ],
+   "conquista": "Brasileiro, o primeiro título do clube",
+   "fonte": "Imortais do Futebol / Campeões do Futebol — time base do Brasileiro de 2001",
+   "elenco": [
+    {
+     "id": "flavio-cap",
+     "nome": "Flávio",
+     "pos": "Goleiro",
+     "grupo": "GOL",
+     "over": 79
+    },
+    {
+     "id": "gustavo-cap",
+     "nome": "Gustavo",
+     "pos": "Zagueiro",
+     "grupo": "DEF",
+     "over": 77
+    },
+    {
+     "id": "nem",
+     "nome": "Nem",
+     "pos": "Zagueiro",
+     "grupo": "DEF",
+     "over": 78
+    },
+    {
+     "id": "rogerio-correa",
+     "nome": "Rogério Corrêa",
+     "pos": "Zagueiro",
+     "grupo": "DEF",
+     "over": 77
+    },
+    {
+     "id": "alessandro",
+     "nome": "Alessandro",
+     "pos": "Lateral-direito",
+     "grupo": "DEF",
+     "over": 79
+    },
+    {
+     "id": "fabiano-cap",
+     "nome": "Fabiano",
+     "pos": "Lateral-esquerdo",
+     "grupo": "DEF",
+     "over": 78
+    },
+    {
+     "id": "cocito",
+     "nome": "Cocito",
+     "pos": "Volante",
+     "grupo": "MEI",
+     "over": 77
+    },
+    {
+     "id": "kleberson",
+     "nome": "Kléberson",
+     "pos": "Volante",
+     "grupo": "MEI",
+     "over": 82
+    },
+    {
+     "id": "adriano-cap",
+     "nome": "Adriano",
+     "pos": "Meia",
+     "grupo": "MEI",
+     "over": 79
+    },
+    {
+     "id": "kleber-cap",
+     "nome": "Kléber",
+     "pos": "Atacante",
+     "grupo": "ATA",
+     "over": 81
+    },
+    {
+     "id": "alex-mineiro",
+     "nome": "Alex Mineiro",
+     "pos": "Centroavante",
+     "grupo": "ATA",
+     "over": 84
     }
    ]
   }
