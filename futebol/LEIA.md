@@ -92,6 +92,14 @@ Medido em 800 partidas reais na página e 20.000 campanhas simuladas:
 | Escala bem | 88,4 | 30% | 0% |
 | Escala no automático | 82,8 | 1% | 16% |
 
+## Teste
+
+`node teste-formacoes.js` confere as coordenadas das oito formações: 11
+jogadores, setores batendo com o nome do esquema, ninguém fora do campo,
+ninguém atrás do goleiro ou à frente dos atacantes, e — o defeito que faz
+o campo parecer torto — nenhuma dupla espelhada do mesmo setor em alturas
+diferentes.
+
 ## Pendente
 
 - Nome e identidade visual (o visual atual é provisório)
