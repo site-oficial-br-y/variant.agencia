@@ -34,17 +34,27 @@ export async function POST(request: NextRequest) {
       if (coins > 0) {
         const { data: profile } = await supabase.from('users_profiles').select('honk_coins, email').eq('id', userId).single()
         const p = profile as { honk_coins?: number; email?: string } | null
-        const current = p?.honk_coins || 0
-        await supabase.from('users_profiles').update({ honk_coins: current + coins }).eq('id', userId)
-        // Registra a compra pra ter histórico (antes só atualizava o saldo, sem deixar rastro de quando/quanto)
         const amountCents = typeof payment.transaction_amount === 'number' ? Math.round(payment.transaction_amount * 100) : null
-        await supabase.from('coin_purchases').insert({
+
+        // O Mercado Pago reenvia a mesma notificação. Antes o saldo era somado
+        // primeiro, então cada reenvio dava coin de novo: quem comprou 10 recebeu 20.
+        // Agora a compra é registrada antes, e o índice único em mp_payment_id
+        // recusa a repetida — é ela que decide se o crédito acontece.
+        const { error: registro } = await supabase.from('coin_purchases').insert({
           user_id: userId,
           email: p?.email || payment.payer?.email || null,
           coins,
           amount_cents: amountCents,
           mp_payment_id: String(paymentId),
         })
+        // 23505 = violação de unicidade: esse pagamento já foi creditado.
+        if (registro?.code === '23505') return NextResponse.json({ received: true, duplicate: true })
+        // Qualquer outra falha credita assim mesmo: é melhor perder o histórico
+        // do que alguém pagar e ficar sem coin.
+        if (registro) console.error('coin_purchases insert falhou, creditando mesmo assim:', registro)
+
+        const current = p?.honk_coins || 0
+        await supabase.from('users_profiles').update({ honk_coins: current + coins }).eq('id', userId)
       }
     } else {
       const plan = type
