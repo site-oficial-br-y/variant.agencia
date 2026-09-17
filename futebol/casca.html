@@ -19,17 +19,42 @@
   --grama:#16351f;
 }
 html{-webkit-text-size-adjust:100%}
+
+/* ---- luzes de fundo ---- */
+.aura{position:fixed;inset:0;z-index:0;pointer-events:none;overflow:hidden}
+.aura i{position:absolute;display:block;border-radius:50%;filter:blur(70px)}
+.aura .a{width:70vw;height:70vw;max-width:760px;max-height:760px;left:-18vw;top:-24vw;
+  background:radial-gradient(circle,rgba(123,228,149,.55),rgba(63,143,86,.22) 45%,transparent 70%);animation:deriva 26s ease-in-out infinite}
+.aura .b{width:60vw;height:60vw;max-width:640px;max-height:640px;right:-16vw;top:26vh;
+  background:radial-gradient(circle,rgba(123,228,149,.42),rgba(63,143,86,.18) 45%,transparent 70%);animation:deriva 34s ease-in-out infinite reverse}
+.aura .c{width:120vw;height:46vh;left:-10vw;bottom:-22vh;
+  background:radial-gradient(ellipse at center,rgba(123,228,149,.45),rgba(63,143,86,.18) 40%,transparent 66%);animation:pulsa 12s ease-in-out infinite}
+@keyframes deriva{0%,100%{transform:translate3d(0,0,0) scale(1)}33%{transform:translate3d(6vw,4vh,0) scale(1.1)}66%{transform:translate3d(-4vw,7vh,0) scale(.94)}}
+@keyframes pulsa{0%,100%{opacity:.55}50%{opacity:1}}
+.wrap{position:relative;z-index:1}
+
+/* ---- animacoes ---- */
+@keyframes sobe{from{opacity:0;transform:translateY(16px)}to{opacity:1;transform:none}}
+@keyframes entraEsq{from{opacity:0;transform:translateX(-14px)}to{opacity:1;transform:none}}
+@keyframes brilha{0%{box-shadow:0 0 0 0 rgba(123,228,149,.55)}70%{box-shadow:0 0 0 16px rgba(123,228,149,0)}100%{box-shadow:0 0 0 0 rgba(123,228,149,0)}}
+@keyframes tremeDado{0%,100%{transform:skewX(-9deg) rotate(0)}25%{transform:skewX(-9deg) rotate(-2.5deg)}75%{transform:skewX(-9deg) rotate(2.5deg)}}
+.anima{animation:sobe .5s cubic-bezier(.2,.7,.3,1) both}
+.anima-1{animation-delay:.06s} .anima-2{animation-delay:.12s} .anima-3{animation-delay:.18s} .anima-4{animation-delay:.24s}
+@media (prefers-reduced-motion:reduce){
+  .anima,.aura i{animation:none!important}
+  *{transition-duration:.01ms!important}
+}
 body{
   background:var(--preto); color:var(--claro);
   font-family:system-ui,-apple-system,'Segoe UI',sans-serif;
-  min-height:100vh; padding:0 16px 80px; overflow-x:hidden;
+  min-height:100vh; padding:0 16px 40px; overflow-x:hidden;
 }
 .wrap{max-width:900px;margin:0 auto}
 .tag{font-size:10px;letter-spacing:.2em;text-transform:uppercase;color:var(--apagado);font-weight:800}
 button{font-family:inherit;cursor:pointer;border:0;background:none;color:inherit}
 
 /* ---- marca ---- */
-.marca{display:inline-block;transform:skewX(-9deg);border:2.5px solid var(--claro);
+.marca{display:inline-block;transform:skewX(-9deg);transition:box-shadow .3s;border:2.5px solid var(--claro);
   padding:5px 13px 4px;background:var(--preto);box-shadow:4px 4px 0 var(--verde-esc)}
 .marca span{display:block;transform:skewX(9deg);font-weight:900;letter-spacing:.06em;
   font-size:23px;line-height:1;font-style:italic}
@@ -54,21 +79,25 @@ topo{display:block;padding:26px 0 0}
   background:
     linear-gradient(to bottom,rgba(10,13,10,.93) 0%,rgba(10,13,10,.55) 45%,rgba(10,13,10,.97) 100%),
     repeating-linear-gradient(90deg,#132b1a 0 44px,#16351f 44px 88px);
-  border:1px solid var(--linha);padding:44px 28px 34px}
-.hero::after{content:'';position:absolute;left:0;right:0;bottom:46px;height:2px;
-  background:rgba(255,255,255,.16)}
-.hero::before{content:'';position:absolute;left:50%;bottom:-70px;width:190px;height:190px;
-  border:2px solid rgba(255,255,255,.14);border-radius:50%;transform:translateX(-50%)}
-h1{font-size:clamp(33px,8.4vw,60px);font-weight:900;letter-spacing:-.035em;line-height:.95;
+  border:1px solid var(--linha);padding:44px 28px 92px}
+.hero .glow{position:absolute;left:-12%;right:-12%;bottom:-70px;height:250px;pointer-events:none;z-index:1;
+  background:radial-gradient(ellipse 55% 100% at 50% 100%,
+    #a8f0bf 0%, rgba(140,235,170,.78) 18%, rgba(110,215,145,.42) 38%,
+    rgba(63,143,86,.16) 60%, transparent 78%);
+  filter:blur(26px);animation:pulsa 9s ease-in-out infinite}
+.hero::before{content:'';position:absolute;left:50%;bottom:-78px;width:210px;height:210px;
+  border:2px solid rgba(255,255,255,.12);border-radius:50%;transform:translateX(-50%);z-index:0}
+h1{position:relative;z-index:2;font-size:clamp(33px,8.4vw,60px);font-weight:900;letter-spacing:-.035em;line-height:.95;
   font-style:italic;text-transform:uppercase;position:relative;z-index:1}
 h1 em{font-style:italic;color:var(--verde)}
-.sub{color:#c3ccc3;font-size:14.5px;margin-top:16px;max-width:44ch;line-height:1.55;position:relative;z-index:1}
-.hero .row{margin-top:26px;position:relative;z-index:1}
+.sub{color:#c3ccc3;font-size:14.5px;margin-top:16px;max-width:44ch;line-height:1.55;position:relative;z-index:2}
+.hero .row{margin-top:26px;position:relative;z-index:2}
 
 .comofunc{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,190px),1fr));
   gap:1px;background:var(--linha);border:1px solid var(--linha);border-radius:12px;
   overflow:hidden;margin-top:14px}
-.comofunc div{background:var(--carvao);padding:20px 18px}
+.comofunc div{background:var(--carvao);padding:20px 18px;transition:background .25s,transform .25s}
+.comofunc div:hover{background:#17201a;transform:translateY(-3px)}
 .comofunc .n{color:var(--verde);font-weight:900;font-size:13px;font-style:italic}
 .comofunc h3{font-size:13.5px;font-weight:800;text-transform:uppercase;letter-spacing:.04em;margin:7px 0 6px}
 .comofunc p{font-size:12.5px;color:var(--apagado);line-height:1.5}
@@ -96,7 +125,8 @@ h1 em{font-style:italic;color:var(--verde)}
 .bola{width:100%;aspect-ratio:1;max-width:52px;margin:0 auto;border-radius:50%;
   border:2px solid var(--verde-esc);background:rgba(10,13,10,.55);
   display:flex;align-items:center;justify-content:center;transition:all .2s}
-.pos.on .bola{border-color:var(--verde);background:var(--verde);box-shadow:0 0 18px rgba(123,228,149,.4)}
+.pos.on .bola{border-color:var(--verde);background:var(--verde);box-shadow:0 0 22px rgba(123,228,149,.5)}
+.pos.novo .bola{animation:brilha .9s ease-out}
 .bola b{font-size:17px;font-weight:900;font-style:italic;color:var(--verde);font-variant-numeric:tabular-nums}
 .pos.on .bola b{color:#08150c}
 .pos .rot{font-size:9px;font-weight:900;letter-spacing:.11em;color:rgba(255,255,255,.6);margin-top:5px}
@@ -123,16 +153,19 @@ h1 em{font-style:italic;color:var(--verde)}
 .pl .why{font-size:9.5px;color:var(--vermelho);font-weight:800;text-transform:uppercase;letter-spacing:.07em}
 
 /* ---- campanha ---- */
-.match{background:var(--carta);border:1px solid var(--linha);border-radius:10px;padding:13px 15px;margin-bottom:7px}
+.match{background:var(--carta);border:1px solid var(--linha);border-radius:10px;padding:13px 15px;margin-bottom:7px;animation:sobe .45s cubic-bezier(.2,.7,.3,1) both}
+.match.vivo{border-color:rgba(123,228,149,.4);box-shadow:0 0 30px rgba(123,228,149,.10)}
 .match .top{display:grid;grid-template-columns:62px minmax(0,1fr) auto;gap:11px;align-items:center}
 .match .fase{font-size:9px;letter-spacing:.13em;color:var(--apagado);font-weight:900}
 .match .opp{font-weight:900;font-size:16px;font-style:italic;letter-spacing:-.02em;
   display:flex;align-items:center;gap:8px;text-transform:uppercase}
 .match .sc{font-size:21px;font-weight:900;font-variant-numeric:tabular-nums;font-style:italic}
 .match .sc.w{color:var(--verde)} .match .sc.l{color:var(--vermelho)} .match .sc.d{color:var(--ouro)}
-.match .clock{font-size:10px;font-weight:900;color:var(--vermelho);font-variant-numeric:tabular-nums}
+.match .clock{font-size:10px;font-weight:900;color:var(--vermelho);font-variant-numeric:tabular-nums;
+  min-width:26px;display:inline-block;text-align:right}
+.match .clock.fim{color:var(--apagado)}
 .ev{border-left:2px solid var(--verde);padding:5px 0 5px 11px;margin-top:7px;font-size:12px;
-  display:flex;gap:9px;align-items:baseline}
+  display:flex;gap:9px;align-items:baseline;animation:entraEsq .35s ease-out both}
 .ev.c{border-color:var(--vermelho)}
 .ev .m{color:var(--apagado);font-weight:900;font-variant-numeric:tabular-nums;min-width:28px}
 .ev .who{font-weight:800}
@@ -158,8 +191,9 @@ h1 em{font-style:italic;color:var(--verde)}
 .opts{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(100%,196px),1fr));gap:7px}
 .opt{background:var(--carta);border:1px solid var(--linha);border-radius:9px;padding:13px 15px;
   text-align:left;transition:border-color .12s,background .12s}
-.opt:hover{border-color:var(--verde-esc)}
-.opt.on{border-color:var(--verde);background:#18291d}
+.opt:hover{border-color:var(--verde-esc);transform:translateY(-2px);box-shadow:0 8px 26px rgba(123,228,149,.10)}
+.opt{transition:border-color .18s,background .18s,transform .18s,box-shadow .18s}
+.opt.on{border-color:var(--verde);background:#18291d;box-shadow:0 0 0 1px var(--verde),0 10px 34px rgba(123,228,149,.16)}
 .opt b{display:block;font-size:19px;font-weight:900;font-style:italic;letter-spacing:-.02em}
 .opt.on b{color:var(--verde)}
 .opt span{display:block;font-size:11.5px;color:var(--apagado);margin-top:4px;line-height:1.4}
@@ -168,18 +202,21 @@ h1 em{font-style:italic;color:var(--verde)}
 .previa b{font-weight:900;font-style:italic;color:var(--claro)}
 .previa b.up{color:var(--verde)} .previa b.down{color:var(--vermelho)}
 
-rodape{display:block;margin-top:54px;padding-top:22px;border-top:1px solid var(--linha);
+rodape{display:block;margin-top:40px;padding-top:22px;border-top:1px solid var(--linha);
   text-align:center;color:var(--apagado);font-size:10px;letter-spacing:.16em;text-transform:uppercase}
 </style>
 </head>
 <body>
 <div class="wrap">
 
-<topo><div class="marca"><span>ZEBRA</span></div></topo>
+<div class="aura" aria-hidden="true"><i class="a"></i><i class="b"></i><i class="c"></i></div>
+
+<topo><div class="marca" id="marca"><span>ZEBRA</span></div></topo>
 
 <section id="scr-home">
   <div class="hero">
-    <div class="tag">O jogo de futebol<br>com quem já vestiu a camisa</div>
+    <div class="glow" aria-hidden="true"></div>
+    <div class="tag" style="position:relative;z-index:2">O jogo de futebol<br>com quem já vestiu a camisa</div>
     <h1>Monte seu time.<br><em>Ganhe a final.</em></h1>
     <p class="sub">O dado sorteia um time campeão da história do futebol brasileiro. Você escala um jogador daquele elenco — e o próximo sorteio pode não ser tão generoso. Sete escolhas e uma campanha de sete jogos.</p>
     <div class="row"><button class="btn" id="go">Jogar agora</button></div>
@@ -225,6 +262,10 @@ rodape{display:block;margin-top:54px;padding-top:22px;border-top:1px solid var(-
   <div class="xi" id="xi"></div>
   <div class="row">
     <button class="btn" id="startCamp">Jogar a campanha</button>
+    <div class="speeds" id="modos2">
+      <button class="sp on" data-modo="auto">Automático</button>
+      <button class="sp" data-modo="manual">Jogo a jogo</button>
+    </div>
     <div class="speeds" id="speeds2">
       <button class="sp on" data-sp="1">Normal</button>
       <button class="sp" data-sp="4">Rápido</button>
@@ -236,13 +277,22 @@ rodape{display:block;margin-top:54px;padding-top:22px;border-top:1px solid var(-
 <section id="scr-camp" hidden>
   <div class="bar">
     <div><div class="tag">A campanha</div></div>
-    <div class="speeds">
-      <button class="sp on" data-sp="1">Normal</button>
-      <button class="sp" data-sp="4">Rápido</button>
-      <button class="sp" data-sp="0">Ultra</button>
+    <div class="row" style="gap:14px">
+      <div class="speeds" id="modos">
+        <button class="sp on" data-modo="auto">Automático</button>
+        <button class="sp" data-modo="manual">Jogo a jogo</button>
+      </div>
+      <div class="speeds">
+        <button class="sp on" data-sp="1">Normal</button>
+        <button class="sp" data-sp="4">Rápido</button>
+        <button class="sp" data-sp="0">Ultra</button>
+      </div>
     </div>
   </div>
   <div id="matches" style="margin-top:16px"></div>
+  <div class="row" id="proxWrap" hidden style="justify-content:center;margin-top:14px">
+    <button class="btn" id="prox">Próximo jogo</button>
+  </div>
   <div id="verdict" hidden class="final">
     <div class="tag">Fim da campanha</div>
     <div class="big" id="vbig"></div>

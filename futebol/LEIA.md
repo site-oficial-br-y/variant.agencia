@@ -31,6 +31,10 @@ próprios elencos da base.
 **A conquista é ganhar a final.** Tudo o mais (overall do time, gols marcados,
 maior goleada) é estatística do resultado, não objetivo.
 
+A campanha roda em **Automático** ou **Jogo a jogo** (espera o clique entre
+as partidas), nas velocidades normal, rápido e ultra, com o relógio da
+partida correndo minuto a minuto.
+
 Travas: jogador escalado desaparece de todos os elencos; time sorteado não repete
 na mesma partida; posição já cheia aparece apagada; o dado rola de novo sozinho
 se nada for clicável, e volta a permitir times repetidos antes de desistir.
@@ -84,4 +88,5 @@ Medido em 800 partidas reais na página e 20.000 campanhas simuladas:
   não tem título grande naquele ano — quem ganhou a Supercopa foi o São Paulo),
   Santos 1968 e Flamengo 1992
 - Repor o Flamengo 2023, removido por não ter conquistado nada naquele ano
+- Cadastro e ranking via Supabase (faltam a URL e a anon key do projeto)
 - Cadastro e ranking via Supabase (faltam a URL e a anon key do projeto)
