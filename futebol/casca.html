@@ -109,30 +109,34 @@ h1 em{font-style:italic;color:var(--verde)}
 
 /* ---- o campo ---- */
 .campo{position:relative;border:1px solid var(--linha);border-radius:12px;
-  margin:18px auto 8px;max-width:640px;
-  padding:16px 9px;aspect-ratio:4/3.6;
+  margin:18px auto 8px;max-width:560px;
+  padding:34px 26px;aspect-ratio:3/4;
   background:repeating-linear-gradient(0deg,#122a19 0 9%,#16351f 9% 18%)}
 .campo .marcacao{position:absolute;inset:11px;border:2px solid rgba(255,255,255,.17);border-radius:4px;pointer-events:none}
 .campo .meio{position:absolute;left:11px;right:11px;top:50%;height:2px;background:rgba(255,255,255,.17);pointer-events:none}
-.campo .circulo{position:absolute;left:50%;top:50%;width:21%;aspect-ratio:1;border:2px solid rgba(255,255,255,.17);
+.campo .circulo{position:absolute;left:50%;top:50%;width:30%;aspect-ratio:1;border:2px solid rgba(255,255,255,.17);
   border-radius:50%;transform:translate(-50%,-50%);pointer-events:none}
-.campo .area{position:absolute;left:50%;transform:translateX(-50%);width:44%;height:15%;
+.campo .area{position:absolute;left:50%;transform:translateX(-50%);width:52%;height:13%;
   border:2px solid rgba(255,255,255,.17);pointer-events:none}
 .campo .area.b{bottom:11px;border-bottom:0} .campo .area.t{top:11px;border-top:0}
-.linhas{position:relative;height:100%;display:grid;grid-template-rows:repeat(4,minmax(0,1fr));z-index:1}
-.faixa{display:flex;justify-content:center;align-items:center;gap:4%}
-.pos{width:calc((100% - (var(--n) - 1) * 4%) / var(--n));max-width:92px;text-align:center}
-.bola{width:100%;aspect-ratio:1;max-width:52px;margin:0 auto;border-radius:50%;
-  border:2px solid var(--verde-esc);background:rgba(10,13,10,.55);
+.linhas{position:relative;height:100%;z-index:1}
+/* a bola fica presa na coordenada; o texto pendura abaixo sem deslocar nada */
+.pos{--d:44px;position:absolute;transform:translate(-50%,-50%);
+  width:var(--d);height:var(--d);text-align:center}
+.bola{width:var(--d);height:var(--d);border-radius:50%;
+  border:2px solid var(--verde-esc);background:rgba(10,13,10,.72);
   display:flex;align-items:center;justify-content:center;transition:all .2s}
+.pos .rot,.pos .quem{position:absolute;left:50%;transform:translateX(-50%);width:82px}
 .pos.on .bola{border-color:var(--verde);background:var(--verde);box-shadow:0 0 22px rgba(123,228,149,.5)}
 .pos.novo .bola{animation:brilha .9s ease-out}
 .bola b{font-size:17px;font-weight:900;font-style:italic;color:var(--verde);font-variant-numeric:tabular-nums}
 .pos.on .bola b{color:#08150c}
-.pos .rot{font-size:9px;font-weight:900;letter-spacing:.11em;color:rgba(255,255,255,.6);margin-top:5px}
-.pos .quem{font-size:11px;font-weight:800;line-height:1.15;margin-top:2px;
-  text-shadow:0 1px 3px rgba(0,0,0,.9);word-break:break-word;min-height:1.15em}
-@media(max-width:520px){.bola b{font-size:14px}.pos .quem{font-size:10px}}
+.pos .rot{top:calc(var(--d) + 3px);font-size:9px;font-weight:900;letter-spacing:.09em;
+  color:rgba(255,255,255,.72);text-shadow:0 1px 4px rgba(0,0,0,.95)}
+.pos .quem{top:calc(var(--d) + 15px);font-size:11px;font-weight:800;line-height:1.15;
+  text-shadow:0 1px 3px rgba(0,0,0,.92);word-break:break-word}
+@media(max-width:560px){.pos{--d:36px}.bola b{font-size:13px}
+  .pos .rot,.pos .quem{width:66px}.pos .rot{font-size:8px}.pos .quem{font-size:9.5px}}
 
 /* ---- elenco sorteado ---- */
 .timehead{display:flex;align-items:center;gap:12px;margin:24px 0 3px}
@@ -188,13 +192,15 @@ h1 em{font-style:italic;color:var(--verde)}
 .ovbox .v{font-size:60px;font-weight:900;font-style:italic;letter-spacing:-.05em;
   color:var(--verde);font-variant-numeric:tabular-nums;line-height:1}
 /* ---- opcoes de tatica ---- */
-.campo.mini{max-width:430px;aspect-ratio:4/3.9;margin:14px auto 4px;padding:12px 8px}
-.campo.mini .bola{max-width:38px;border-style:dashed}
+.campo.mini{max-width:360px;aspect-ratio:3/4.05;margin:14px auto 4px;padding:30px 22px}
+.campo.mini .pos{--d:34px}
+.campo.mini .bola{border-style:dashed}
 .campo.mini .bola b{font-size:13px;color:var(--verde-esc)}
 .campo.mini .rot{font-size:8.5px}
 .campo.mini .quem{display:none}
-.campo.mini.rev{max-width:520px;aspect-ratio:4/3.6}
-.campo.mini.rev .bola{border-style:solid;max-width:46px}
+.campo.mini.rev{max-width:420px;aspect-ratio:3/4}
+.campo.mini.rev .pos{--d:40px}
+.campo.mini.rev .bola{border-style:solid}
 .campo.mini.rev .quem{display:block;font-size:9.5px}
 .campo.mini.rev .pos.on .bola b{color:#08150c}
 

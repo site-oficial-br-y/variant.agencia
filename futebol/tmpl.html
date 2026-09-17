@@ -109,30 +109,34 @@ h1 em{font-style:italic;color:var(--verde)}
 
 /* ---- o campo ---- */
 .campo{position:relative;border:1px solid var(--linha);border-radius:12px;
-  margin:18px auto 8px;max-width:640px;
-  padding:16px 9px;aspect-ratio:4/3.6;
+  margin:18px auto 8px;max-width:560px;
+  padding:34px 26px;aspect-ratio:3/4;
   background:repeating-linear-gradient(0deg,#122a19 0 9%,#16351f 9% 18%)}
 .campo .marcacao{position:absolute;inset:11px;border:2px solid rgba(255,255,255,.17);border-radius:4px;pointer-events:none}
 .campo .meio{position:absolute;left:11px;right:11px;top:50%;height:2px;background:rgba(255,255,255,.17);pointer-events:none}
-.campo .circulo{position:absolute;left:50%;top:50%;width:21%;aspect-ratio:1;border:2px solid rgba(255,255,255,.17);
+.campo .circulo{position:absolute;left:50%;top:50%;width:30%;aspect-ratio:1;border:2px solid rgba(255,255,255,.17);
   border-radius:50%;transform:translate(-50%,-50%);pointer-events:none}
-.campo .area{position:absolute;left:50%;transform:translateX(-50%);width:44%;height:15%;
+.campo .area{position:absolute;left:50%;transform:translateX(-50%);width:52%;height:13%;
   border:2px solid rgba(255,255,255,.17);pointer-events:none}
 .campo .area.b{bottom:11px;border-bottom:0} .campo .area.t{top:11px;border-top:0}
-.linhas{position:relative;height:100%;display:grid;grid-template-rows:repeat(4,minmax(0,1fr));z-index:1}
-.faixa{display:flex;justify-content:center;align-items:center;gap:4%}
-.pos{width:calc((100% - (var(--n) - 1) * 4%) / var(--n));max-width:92px;text-align:center}
-.bola{width:100%;aspect-ratio:1;max-width:52px;margin:0 auto;border-radius:50%;
-  border:2px solid var(--verde-esc);background:rgba(10,13,10,.55);
+.linhas{position:relative;height:100%;z-index:1}
+/* a bola fica presa na coordenada; o texto pendura abaixo sem deslocar nada */
+.pos{--d:44px;position:absolute;transform:translate(-50%,-50%);
+  width:var(--d);height:var(--d);text-align:center}
+.bola{width:var(--d);height:var(--d);border-radius:50%;
+  border:2px solid var(--verde-esc);background:rgba(10,13,10,.72);
   display:flex;align-items:center;justify-content:center;transition:all .2s}
+.pos .rot,.pos .quem{position:absolute;left:50%;transform:translateX(-50%);width:82px}
 .pos.on .bola{border-color:var(--verde);background:var(--verde);box-shadow:0 0 22px rgba(123,228,149,.5)}
 .pos.novo .bola{animation:brilha .9s ease-out}
 .bola b{font-size:17px;font-weight:900;font-style:italic;color:var(--verde);font-variant-numeric:tabular-nums}
 .pos.on .bola b{color:#08150c}
-.pos .rot{font-size:9px;font-weight:900;letter-spacing:.11em;color:rgba(255,255,255,.6);margin-top:5px}
-.pos .quem{font-size:11px;font-weight:800;line-height:1.15;margin-top:2px;
-  text-shadow:0 1px 3px rgba(0,0,0,.9);word-break:break-word;min-height:1.15em}
-@media(max-width:520px){.bola b{font-size:14px}.pos .quem{font-size:10px}}
+.pos .rot{top:calc(var(--d) + 3px);font-size:9px;font-weight:900;letter-spacing:.09em;
+  color:rgba(255,255,255,.72);text-shadow:0 1px 4px rgba(0,0,0,.95)}
+.pos .quem{top:calc(var(--d) + 15px);font-size:11px;font-weight:800;line-height:1.15;
+  text-shadow:0 1px 3px rgba(0,0,0,.92);word-break:break-word}
+@media(max-width:560px){.pos{--d:36px}.bola b{font-size:13px}
+  .pos .rot,.pos .quem{width:66px}.pos .rot{font-size:8px}.pos .quem{font-size:9.5px}}
 
 /* ---- elenco sorteado ---- */
 .timehead{display:flex;align-items:center;gap:12px;margin:24px 0 3px}
@@ -188,13 +192,15 @@ h1 em{font-style:italic;color:var(--verde)}
 .ovbox .v{font-size:60px;font-weight:900;font-style:italic;letter-spacing:-.05em;
   color:var(--verde);font-variant-numeric:tabular-nums;line-height:1}
 /* ---- opcoes de tatica ---- */
-.campo.mini{max-width:430px;aspect-ratio:4/3.9;margin:14px auto 4px;padding:12px 8px}
-.campo.mini .bola{max-width:38px;border-style:dashed}
+.campo.mini{max-width:360px;aspect-ratio:3/4.05;margin:14px auto 4px;padding:30px 22px}
+.campo.mini .pos{--d:34px}
+.campo.mini .bola{border-style:dashed}
 .campo.mini .bola b{font-size:13px;color:var(--verde-esc)}
 .campo.mini .rot{font-size:8.5px}
 .campo.mini .quem{display:none}
-.campo.mini.rev{max-width:520px;aspect-ratio:4/3.6}
-.campo.mini.rev .bola{border-style:solid;max-width:46px}
+.campo.mini.rev{max-width:420px;aspect-ratio:3/4}
+.campo.mini.rev .pos{--d:40px}
+.campo.mini.rev .bola{border-style:solid}
 .campo.mini.rev .quem{display:block;font-size:9.5px}
 .campo.mini.rev .pos.on .bola b{color:#08150c}
 
@@ -332,15 +338,56 @@ const PASSES = 3;
 const ROT = {GOL:'GOL',DEF:'DEF',MEI:'MEI',ATA:'ATA'};
 
 /* DEF-MEI-ATA, sempre 1 goleiro. atk mexe no que você faz, def no que você toma. */
+const P = (g,rot,x,y) => ({g,rot,x,y});
+/* y: 8 = ataque adversario, 92 = proprio gol. x: 0 esquerda, 100 direita */
 const FORMACOES = [
-  {n:'4-4-2',  d:4,m:4,a:2, txt:'O padrão. Equilíbrio sem luxo.'},
-  {n:'4-3-3',  d:4,m:3,a:3, txt:'Três na frente, meio curto.'},
-  {n:'4-2-4',  d:4,m:2,a:4, txt:'O esquema do Brasil de 58 e 62. Ataque total.'},
-  {n:'3-5-2',  d:3,m:5,a:2, txt:'Domínio de meio-campo, zaga exposta.'},
-  {n:'5-3-2',  d:5,m:3,a:2, txt:'Ferrolho. Difícil de furar, difícil de criar.'},
-  {n:'3-4-3',  d:3,m:4,a:3, txt:'Ousado dos dois lados.'},
-  {n:'4-5-1',  d:4,m:5,a:1, txt:'Meio lotado, um homem só na frente.'},
-  {n:'5-4-1',  d:5,m:4,a:1, txt:'Retranca. Joga pelo empate.'},
+  {n:'4-4-2', d:4,m:4,a:2, txt:'O padrão. Equilíbrio sem luxo.', pos:[
+    P('GOL','GOL',50,90),
+    P('DEF','LD',86,66), P('DEF','ZAG',63,76), P('DEF','ZAG',37,76), P('DEF','LE',14,66),
+    P('MEI','MD',86,42), P('MEI','VOL',62,52), P('MEI','VOL',38,52), P('MEI','ME',14,42),
+    P('ATA','ATA',62,18), P('ATA','ATA',38,18)]},
+
+  {n:'4-3-3', d:4,m:3,a:3, txt:'Três na frente, meio curto.', pos:[
+    P('GOL','GOL',50,90),
+    P('DEF','LD',86,66), P('DEF','ZAG',63,76), P('DEF','ZAG',37,76), P('DEF','LE',14,66),
+    P('MEI','VOL',50,58), P('MEI','MEI',70,42), P('MEI','MEI',30,42),
+    P('ATA','PD',82,20), P('ATA','CA',50,14), P('ATA','PE',18,20)]},
+
+  {n:'4-2-4', d:4,m:2,a:4, txt:'O esquema do Brasil de 58 e 62. Ataque total.', pos:[
+    P('GOL','GOL',50,90),
+    P('DEF','LD',86,66), P('DEF','ZAG',63,76), P('DEF','ZAG',37,76), P('DEF','LE',14,66),
+    P('MEI','VOL',62,50), P('MEI','MEI',38,44),
+    P('ATA','PD',86,24), P('ATA','CA',62,14), P('ATA','CA',38,14), P('ATA','PE',14,24)]},
+
+  {n:'3-5-2', d:3,m:5,a:2, txt:'Domínio de meio-campo, zaga exposta.', pos:[
+    P('GOL','GOL',50,90),
+    P('DEF','ZAG',70,76), P('DEF','ZAG',50,80), P('DEF','ZAG',30,76),
+    P('MEI','ALA',90,46), P('MEI','VOL',64,58), P('MEI','MEI',50,42), P('MEI','VOL',36,58), P('MEI','ALA',10,46),
+    P('ATA','ATA',62,17), P('ATA','ATA',38,17)]},
+
+  {n:'5-3-2', d:5,m:3,a:2, txt:'Ferrolho. Difícil de furar, difícil de criar.', pos:[
+    P('GOL','GOL',50,90),
+    P('DEF','ALA',89,58), P('DEF','ZAG',68,78), P('DEF','ZAG',50,82), P('DEF','ZAG',32,78), P('DEF','ALA',11,58),
+    P('MEI','VOL',50,54), P('MEI','MEI',70,40), P('MEI','MEI',30,40),
+    P('ATA','ATA',62,17), P('ATA','ATA',38,17)]},
+
+  {n:'3-4-3', d:3,m:4,a:3, txt:'Ousado dos dois lados.', pos:[
+    P('GOL','GOL',50,90),
+    P('DEF','ZAG',70,76), P('DEF','ZAG',50,80), P('DEF','ZAG',30,76),
+    P('MEI','ALA',88,48), P('MEI','VOL',62,56), P('MEI','VOL',38,56), P('MEI','ALA',12,48),
+    P('ATA','PD',80,19), P('ATA','CA',50,13), P('ATA','PE',20,19)]},
+
+  {n:'4-5-1', d:4,m:5,a:1, txt:'Meio lotado, um homem só na frente.', pos:[
+    P('GOL','GOL',50,90),
+    P('DEF','LD',86,66), P('DEF','ZAG',63,76), P('DEF','ZAG',37,76), P('DEF','LE',14,66),
+    P('MEI','MD',89,44), P('MEI','VOL',63,56), P('MEI','MEI',50,38), P('MEI','VOL',37,56), P('MEI','ME',11,44),
+    P('ATA','CA',50,14)]},
+
+  {n:'5-4-1', d:5,m:4,a:1, txt:'Retranca. Joga pelo empate.', pos:[
+    P('GOL','GOL',50,90),
+    P('DEF','ALA',89,58), P('DEF','ZAG',68,78), P('DEF','ZAG',50,82), P('DEF','ZAG',32,78), P('DEF','ALA',11,58),
+    P('MEI','MD',82,44), P('MEI','VOL',60,54), P('MEI','VOL',40,54), P('MEI','ME',18,44),
+    P('ATA','CA',50,14)]},
 ];
 const ESTILOS = [
   {n:'Defensivo',   k:'def', atk:0.92, sof:0.90, txt:'Segura o resultado.'},
@@ -348,13 +395,6 @@ const ESTILOS = [
   {n:'Ofensivo',    k:'ofe', atk:1.10, sof:1.10, txt:'Vai pra cima e se expõe.'},
 ];
 /* o rotulo e ilustrativo: quem encaixa na vaga e qualquer jogador do grupo */
-const ROTULOS = {
-  GOL:{1:['GOL']},
-  DEF:{3:['ZAG','ZAG','ZAG'], 4:['LD','ZAG','ZAG','LE'], 5:['LD','ZAG','ZAG','ZAG','LE']},
-  MEI:{2:['VOL','VOL'], 3:['VOL','MEI','MEI'], 4:['VOL','VOL','MEI','MEI'], 5:['VOL','VOL','MEI','MEI','MEI']},
-  ATA:{1:['CA'], 2:['ATA','ATA'], 3:['PE','CA','PD'], 4:['PE','ATA','ATA','PD']},
-};
-const rotulosDe = (g,n) => ROTULOS[g][n] || Array(n).fill(g);
 
 const modAtaque = () => (1 + (S.form.a - 3) * 0.09) * S.estilo.atk;
 const modDefesa = () => (1 - (S.form.d - 4) * 0.09 - (S.form.m - 4) * 0.02) * S.estilo.sof;
@@ -365,8 +405,7 @@ function novoJogo(form, estilo){
   const velEscolhida  = +(document.querySelector('.sp[data-sp].on')?.dataset.sp ?? 1);
   S = { passes:PASSES, slots:[], usados:new Set(), sorteados:new Set(),
         atual:null, vel:velEscolhida, modo:modoEscolhido, ultimo:-1, form, estilo };
-  const add = (g,n) => { const r = rotulosDe(g,n); for(let i=0;i<n;i++) S.slots.push({grupo:g, rot:r[i], jog:null}); };
-  add('GOL',1); add('DEF',form.d); add('MEI',form.m); add('ATA',form.a);
+  S.slots = form.pos.map(p => ({grupo:p.g, rot:p.rot, x:p.x, y:p.y, jog:null}));
 }
 const vagasDe = g => S.slots.filter(s=>s.grupo===g && !s.jog).length;
 const completo = () => S.slots.every(s=>s.jog);
@@ -406,27 +445,18 @@ function pintaTatica(){
 }
 
 /* ---------- campo ---------- */
-function desenhaCampo(alvo, linhas, mostrarOver){
-  alvo.innerHTML = linhas.map(fila=>
-    `<div class="faixa" style="--n:${fila.length}">` + fila.map(p=>
-      `<div class="pos${p.jog?' on':''}${p.novo?' novo':''}">
-         <div class="bola"><b>${p.jog ? (mostrarOver ? p.jog.over : '✓') : '+'}</b></div>
-         <div class="rot">${p.rot}</div>
-         <div class="quem">${p.jog ? p.jog.nome : ''}</div>
-       </div>`).join('') + `</div>`).join('');
+function desenhaCampo(alvo, pontos, mostrarOver){
+  alvo.innerHTML = pontos.map(p=>
+    `<div class="pos${p.jog?' on':''}${p.novo?' novo':''}" style="left:${p.x}%;top:${p.y}%">
+       <div class="bola"><b>${p.jog ? (mostrarOver ? p.jog.over : '✓') : '+'}</b></div>
+       <div class="rot">${p.rot}</div>
+       <div class="quem">${p.jog ? p.jog.nome : ''}</div>
+     </div>`).join('');
 }
-function previaCampo(f){
-  desenhaCampo($('campoPrev'), [
-    rotulosDe('ATA', f.a).map(rot=>({rot})),
-    rotulosDe('MEI', f.m).map(rot=>({rot})),
-    rotulosDe('DEF', f.d).map(rot=>({rot})),
-    [{rot:'GOL'}],
-  ]);
-}
+const previaCampo = f => desenhaCampo($('campoPrev'), f.pos.map(p=>({rot:p.rot, x:p.x, y:p.y})));
 function pintaSlots(){
-  desenhaCampo($('campo'), ['ATA','MEI','DEF','GOL'].map(g =>
-    S.slots.filter(s=>s.grupo===g).map(s =>
-      ({rot: s.rot || ROT[s.grupo], jog: s.jog, novo: S.slots.indexOf(s)===S.ultimo}))), false);
+  desenhaCampo($('campo'), S.slots.map((s,i)=>
+    ({rot:s.rot, x:s.x, y:s.y, jog:s.jog, novo:i===S.ultimo})), false);
 }
 function pintaBarra(){
   $('picks').textContent = S.slots.filter(s=>s.jog).length + '/' + S.slots.length;
@@ -500,30 +530,31 @@ async function revelar(){
   S.over = Math.round(xi.reduce((a,p)=>a+p.over,0)/xi.length);
   $('ovTat').textContent = S.form.n + ' · ' + S.estilo.n;
   $('xi').innerHTML = xi.map(p=>`<div class="c"><span class="ov">${p.over}</span><div class="nm">${p.nome}</div><div class="sm">${ROT[p.grupo]} · ${p.de}</div></div>`).join('');
-  const linhas = ['ATA','MEI','DEF','GOL'].map(g =>
-    S.slots.filter(s=>s.grupo===g).map(s => ({rot: s.rot || ROT[s.grupo], jog: s.jog})));
-  desenhaCampo($('campoRev'), linhas, false);
+  const pontos = S.slots.map(s=>({rot:s.rot, x:s.x, y:s.y, jog:s.jog}));
+  desenhaCampo($('campoRev'), pontos, false);
   $('ovTeam').textContent = '··';
   mostra('scr-reveal');
 
   const rapido = S.vel === 0;
   const bolas = [...$('campoRev').querySelectorAll('.pos')];
-  for (let i = bolas.length - 1; i >= 0; i--){
-    if (!rapido) await sleep(110);
-    const b = bolas[i].querySelector('.bola b');
-    const ordem = linhas.flat();
-    b.textContent = ordem[i].jog.over;
+  for (let i = 0; i < bolas.length; i++){
+    if (!rapido) await sleep(105);
+    bolas[i].querySelector('.bola b').textContent = pontos[i].jog.over;
     bolas[i].classList.add('novo');
   }
   if (!rapido) await sleep(260);
-  let n = 0;
-  const alvo = S.over, passo = Math.max(1, Math.round(alvo/22));
-  const sobe = () => {
-    n = Math.min(alvo, n + passo);
-    $('ovTeam').textContent = n;
-    if (n < alvo) requestAnimationFrame(sobe);
+  const alvo = S.over;
+  if (rapido){ $('ovTeam').textContent = alvo; return; }
+  /* conta por tempo, nao por quadro: se a aba perder o foco o numero
+     ainda chega no valor certo em vez de congelar no meio */
+  const DUR = 620, t0 = performance.now();
+  const sobe = agora => {
+    const p = Math.min(1, (agora - t0) / DUR);
+    $('ovTeam').textContent = Math.round(alvo * (1 - Math.pow(1 - p, 3)));
+    if (p < 1) requestAnimationFrame(sobe); else $('ovTeam').textContent = alvo;
   };
-  rapido ? $('ovTeam').textContent = alvo : sobe();
+  requestAnimationFrame(sobe);
+  setTimeout(()=>{ $('ovTeam').textContent = alvo; }, DUR + 120);
 }
 
 /* ---------- simulação ---------- */

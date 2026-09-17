@@ -31,9 +31,13 @@ próprios elencos da base.
 **A conquista é ganhar a final.** Tudo o mais (overall do time, gols marcados,
 maior goleada) é estatística do resultado, não objetivo.
 
-A tela de tática desenha o esquema escolhido num campo, com as posições
-reais de cada linha (4-2-4 mostra PE, ATA, ATA, PD). O rótulo é ilustrativo:
-quem encaixa na vaga é qualquer jogador do grupo (GOL, DEF, MEI ou ATA).
+Cada formação carrega as coordenadas dos seus onze jogadores no campo
+(`pos: [{g, rot, x, y}]`), então o desenho é escalonado como um time de
+verdade: laterais adiantados em relação aos zagueiros, pontas abertos à
+frente dos volantes. Não existe fileira reta.
+
+O rótulo de cada vaga é ilustrativo — a vaga marcada LD aceita qualquer
+defensor. O encaixe continua sendo por grupo (GOL, DEF, MEI, ATA).
 
 O overall fica escondido durante a montagem — a bola marca só ✓. Fechados os
 onze, o campo acende posição por posição com as notas e o overall do time
