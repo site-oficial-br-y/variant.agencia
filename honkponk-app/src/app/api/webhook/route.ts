@@ -59,8 +59,26 @@ export async function POST(request: NextRequest) {
     } else {
       const plan = type
       const months = parseInt(parts[2] || '1', 10) || 1
-      const expiresAt = new Date()
+
+      // Como agora o prazo é somado, a notificação repetida do Mercado Pago daria
+      // um mês de graça. A assinatura guarda o id do último pagamento: se for o
+      // mesmo, já processamos.
+      const { data: assinatura } = await supabase
+        .from('subscriptions').select('mp_subscription_id').eq('user_id', userId).maybeSingle()
+      const ultimoPagamento = (assinatura as { mp_subscription_id?: string | null } | null)?.mp_subscription_id
+      if (ultimoPagamento && ultimoPagamento === String(paymentId)) {
+        return NextResponse.json({ received: true, duplicate: true })
+      }
+
+      // Renova somando ao vencimento que ainda está de pé. Antes contava sempre a
+      // partir de hoje, então quem renovava adiantado perdia os dias que sobravam.
+      const { data: perfil } = await supabase
+        .from('users_profiles').select('plan_expires_at').eq('id', userId).single()
+      const vencimento = (perfil as { plan_expires_at?: string | null } | null)?.plan_expires_at
+      const expiresAt =
+        vencimento && new Date(vencimento).getTime() > Date.now() ? new Date(vencimento) : new Date()
       expiresAt.setMonth(expiresAt.getMonth() + months)
+
       await supabase.from('users_profiles').update({ plan, plan_expires_at: expiresAt.toISOString() }).eq('id', userId)
       await supabase.from('subscriptions').upsert({ user_id: userId, plan, mp_subscription_id: String(paymentId), status: 'active' }, { onConflict: 'user_id' })
     }
