@@ -37,7 +37,9 @@ verdade: laterais adiantados em relação aos zagueiros, pontas abertos à
 frente dos volantes. Não existe fileira reta.
 
 O rótulo de cada vaga é ilustrativo — a vaga marcada LD aceita qualquer
-defensor. O encaixe continua sendo por grupo (GOL, DEF, MEI, ATA).
+defensor. O encaixe é por grupo (GOL, DEF, MEI, ATA) e **fica assim por
+decisão do dono**: exigir a posição exata travaria o dado com frequência
+e não vale o ganho. Não reabrir.
 
 O overall fica escondido durante a montagem — a bola marca só ✓. Fechados os
 onze, o campo acende posição por posição com as notas e o overall do time
