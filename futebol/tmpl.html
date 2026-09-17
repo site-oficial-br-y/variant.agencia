@@ -93,7 +93,7 @@ button{font-family:inherit;cursor:pointer;border:0;background:none;color:inherit
 <header id="scr-home">
   <div class="tag">Protótipo · nome e identidade a definir</div>
   <h1>Monte o time<br>com <em>quem já jogou</em></h1>
-  <p class="sub">O dado sorteia um time campeão da história do futebol brasileiro. Você escala um jogador daquele elenco — dentro do orçamento. Sete escolhas, uma campanha, um placar.</p>
+  <p class="sub">O dado sorteia um time campeão da história do futebol brasileiro. Você escala um jogador daquele elenco — dentro do orçamento. Sete escolhas, uma campanha, um troféu.</p>
   <div class="row"><button class="btn" id="go">Começar</button></div>
 </header>
 
@@ -357,17 +357,20 @@ async function campanha(){
     if (pausa) await sleep(pausa*8);
   }
 
-  const seteAZero = r => r;
   const v = $('verdict'); v.hidden = false;
-  const maior = [...box.querySelectorAll('.sc')].map(s=>s.textContent);
-  const fez7 = maior.some(t=>{const[x,y]=t.split('–').map(n=>+n.trim()); return x>=7 && y===0;});
+  let goleada = null;
+  for (const el of box.querySelectorAll('.sc')){
+    const [x,y] = el.textContent.split('–').map(n=>+n.trim());
+    if (x > y && (!goleada || x-y > goleada.d || (x-y === goleada.d && x > goleada.x)))
+      goleada = {x, y, d:x-y};
+  }
   const onde = String(eliminado);
   $('vbig').textContent = campeao ? 'CAMPEÃO'
     : onde === 'fase de grupos' ? 'CAIU NOS GRUPOS' : 'CAIU NAS ' + onde.toUpperCase();
-  $('vbig').className = 'big' + (fez7 ? ' seven' : '');
+  $('vbig').className = 'big' + (campeao ? ' seven' : '');
   $('vtxt').innerHTML = `Time de <b>${S.over}</b> de overall.<br>
     ${saldoPro} gols marcados, ${saldoContra} sofridos.
-    ${fez7 ? '<br><b style="color:var(--acc)">Teve uma goleada de 7 a 0 no caminho.</b>' : ''}`;
+    ${goleada ? `<br>Maior goleada: <b style="color:var(--acc)">${goleada.x} a ${goleada.y}</b>.` : ''}`;
   v.scrollIntoView({behavior:'smooth'});
 }
 $('startCamp').onclick = campanha;
