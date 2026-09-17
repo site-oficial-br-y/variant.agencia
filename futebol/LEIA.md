@@ -31,6 +31,14 @@ próprios elencos da base.
 **A conquista é ganhar a final.** Tudo o mais (overall do time, gols marcados,
 maior goleada) é estatística do resultado, não objetivo.
 
+A tela de tática desenha o esquema escolhido num campo, com as posições
+reais de cada linha (4-2-4 mostra PE, ATA, ATA, PD). O rótulo é ilustrativo:
+quem encaixa na vaga é qualquer jogador do grupo (GOL, DEF, MEI ou ATA).
+
+O overall fica escondido durante a montagem — a bola marca só ✓. Fechados os
+onze, o campo acende posição por posição com as notas e o overall do time
+conta até o valor final.
+
 A campanha roda em **Automático** ou **Jogo a jogo** (espera o clique entre
 as partidas), nas velocidades normal, rápido e ultra, com o relógio da
 partida correndo minuto a minuto.

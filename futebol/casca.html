@@ -188,6 +188,16 @@ h1 em{font-style:italic;color:var(--verde)}
 .ovbox .v{font-size:60px;font-weight:900;font-style:italic;letter-spacing:-.05em;
   color:var(--verde);font-variant-numeric:tabular-nums;line-height:1}
 /* ---- opcoes de tatica ---- */
+.campo.mini{max-width:430px;aspect-ratio:4/3.9;margin:14px auto 4px;padding:12px 8px}
+.campo.mini .bola{max-width:38px;border-style:dashed}
+.campo.mini .bola b{font-size:13px;color:var(--verde-esc)}
+.campo.mini .rot{font-size:8.5px}
+.campo.mini .quem{display:none}
+.campo.mini.rev{max-width:520px;aspect-ratio:4/3.6}
+.campo.mini.rev .bola{border-style:solid;max-width:46px}
+.campo.mini.rev .quem{display:block;font-size:9.5px}
+.campo.mini.rev .pos.on .bola b{color:#08150c}
+
 .opts{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(100%,196px),1fr));gap:7px}
 .opt{background:var(--carta);border:1px solid var(--linha);border-radius:9px;padding:13px 15px;
   text-align:left;transition:border-color .12s,background .12s}
@@ -231,6 +241,11 @@ rodape{display:block;margin-top:40px;padding-top:22px;border-top:1px solid var(-
 
 <section id="scr-tatica" hidden>
   <div class="bar"><div><div class="tag">Antes de escalar</div><div class="contador">Tática</div></div></div>
+  <div class="campo mini">
+    <div class="marcacao"></div><div class="meio"></div><div class="circulo"></div>
+    <div class="area t"></div><div class="area b"></div>
+    <div class="linhas" id="campoPrev"></div>
+  </div>
   <div class="tag" style="margin:22px 0 9px">Formação</div>
   <div class="opts" id="forms"></div>
   <div class="tag" style="margin:24px 0 9px">Postura</div>
@@ -259,6 +274,11 @@ rodape{display:block;margin-top:40px;padding-top:22px;border-top:1px solid var(-
 <section id="scr-reveal" hidden>
   <div class="tag" style="margin-top:26px">Seu time está pronto</div>
   <div class="ovbox"><div class="v" id="ovTeam"></div><div class="note" style="margin:0">de overall<br>no <b id="ovTat"></b></div></div>
+  <div class="campo mini rev">
+    <div class="marcacao"></div><div class="meio"></div><div class="circulo"></div>
+    <div class="area t"></div><div class="area b"></div>
+    <div class="linhas" id="campoRev"></div>
+  </div>
   <div class="xi" id="xi"></div>
   <div class="row">
     <button class="btn" id="startCamp">Jogar a campanha</button>
