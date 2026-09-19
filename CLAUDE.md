@@ -89,6 +89,19 @@ SaaS B2B de prospecção de leads. O usuário escolhe um tipo de serviço + cida
 - **Máscara radial maior que a própria caixa não dissolve nada**, porque a parte transparente cai fora da área visível.
 - **Véu escuro sobre foto precisa de `z-index`** se a imagem já tiver um, senão fica atrás dela e o texto some.
 - **Supabase corta cada leitura em 1.000 linhas** e `.limit()` não passa por cima: tem que paginar com `range()`.
+- **Ranking montado a partir da tabela de perfis some com quem não tem perfil.** No ZEBRA a
+  conta do dono jogou sete partidas, todas gravadas, e nunca apareceu: faltava a linha dele em
+  `zebra_perfis`, e o `left join` do ranking parte dos perfis. Conta criada antes do gatilho que
+  cria o perfil junto fica órfã e desaparece calada. Antes de culpar a gravação, comparar
+  `select count(*) from <partidas>` com o que a view devolve.
+- **Filtro do PostgREST em coluna de agregação de view volta vazio.** `.gt('partidas', 0)` numa
+  view com `group by` não traz nada, enquanto `.eq('user_id', ...)` na mesma view funciona. Se a
+  lista inteira cabe numa leitura, filtrar no navegador.
+- **`.catch(() => {})` numa leitura de estatística esconde exatamente o que falta ver.** Duas
+  rodadas de diagnóstico se perderam porque o erro nunca chegava à tela.
+- **Pausar todas as animações da página para fotografar apaga a página.** As seções entram com
+  `animation: entra ... both`; congelar tudo trava elas no quadro zero, com opacidade zero. Pausar
+  só o elemento que se quer fotografar.
 - **Comentário JSX solto dentro de `.map()` quebra a sintaxe**, porque a função passa a retornar dois elementos.
 - **Caixa cujos filhos são todos `position:absolute` tem largura intrínseca zero.** Dentro de um flex com `align-items:start` ela encolhe até sumir. No ZEBRA o campo murchou de 358px para 48px assim que a única legenda estática saiu da tela. Declarar `width` na caixa ou `align-items:stretch` no pai.
 - **Dois handlers de clique no mesmo elemento: o segundo apaga o primeiro.** Botões de modo e de velocidade compartilhavam a classe `.sp`, e o `onclick` registrado depois anulou o anterior. Usar seletor com o atributo (`.sp[data-sp]`), não só a classe.
