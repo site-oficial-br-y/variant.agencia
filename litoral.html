@@ -2,7 +2,6 @@
 <html lang="pt-BR">
 <head>
 <meta charset="utf-8">
-<script>if("IntersectionObserver" in window)document.documentElement.className="js";</script>
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <title>Localitoral — casas em Juquehy para aluguel anual</title>
 <meta name="description" content="Duas casas em Juquehy, São Sebastião, para aluguel anual. Valor fechado por mês, com condomínio e IPTU inclusos.">
@@ -46,11 +45,6 @@ header{position:fixed;top:0;left:0;right:0;z-index:60;display:flex;align-items:c
   padding:16px max(18px,env(safe-area-inset-left));
   transition:background .4s,padding .4s,box-shadow .4s}
 header.preso{background:var(--creme);box-shadow:0 1px 0 var(--m14);padding-top:10px;padding-bottom:10px}
-html:not(.js) header{background:var(--creme);box-shadow:0 1px 0 var(--m14)}
-html:not(.js) header .claro-v{display:none}
-html:not(.js) header .escuro-v{display:block}
-html:not(.js) header .logo .nome{filter:none}
-html:not(.js) header .logo .tag{color:var(--m50)}
 .logo{display:flex;align-items:center;gap:11px;text-decoration:none}
 .logo .simb{height:38px;width:auto;transition:height .4s}
 .logo .txt{display:flex;flex-direction:column;gap:3px}
@@ -280,12 +274,11 @@ footer h2{color:#fff;font-size:clamp(28px,4.2vw,48px);max-width:12ch}
 footer a.tel{color:var(--sol);text-decoration:none;font-weight:700}
 
 /* ---------- revelação ---------- */
-.rev{transition:opacity .8s cubic-bezier(.2,.7,.3,1),transform .8s cubic-bezier(.2,.7,.3,1)}
-html.js .rev{opacity:0;transform:translateY(24px)}
-html.js .rev.vis{opacity:1;transform:none}
+@keyframes entra{from{opacity:0;transform:translateY(26px)}to{opacity:1;transform:none}}
+.rev{animation:entra .85s cubic-bezier(.2,.7,.3,1) both}
 @media(prefers-reduced-motion:reduce){
   *{animation-duration:.01ms!important;transition-duration:.01ms!important}
-  .rev{opacity:1;transform:none}html{scroll-behavior:auto}
+  .rev{animation:none}html{scroll-behavior:auto}
 }
 </style>
 </head>
@@ -548,6 +541,7 @@ addEventListener("keydown",e=>{
   if(e.key==="ArrowLeft") cx.querySelector("#ant")?.click();
 });
 
+try{
 const geral = linkZap("Olá! Vi o site da Localitoral e queria mais informações sobre as casas em Juquehy.");
 ["zap-topo","zap-hero","zap-rodape","tel-rodape"].forEach(id=>document.getElementById(id).href = geral);
 
@@ -569,11 +563,7 @@ addEventListener("pointermove",e=>{
   ondas.forEach((o,i)=>{ o.style.transform = "translateX("+(x*(i%2?26:-34))+"px)"; });
 },{passive:true});
 
-setTimeout(()=>document.querySelectorAll(".rev:not(.vis)").forEach(e=>e.classList.add("vis")), 2600);
-const obs = new IntersectionObserver(es=>{
-  es.forEach(e=>{ if(e.isIntersecting){ e.target.classList.add("vis"); obs.unobserve(e.target); } });
-},{threshold:.12,rootMargin:"0px 0px -6% 0px"});
-document.querySelectorAll(".rev").forEach(el=>obs.observe(el));
+}catch(e){}
 </script>
 </body>
 </html>
