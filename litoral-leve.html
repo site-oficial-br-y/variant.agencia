@@ -108,6 +108,7 @@ section{padding:clamp(70px,10vw,124px) 0;position:relative}
 .cab p{margin:0;font-size:clamp(15.5px,1.75vw,18px);color:var(--m70);max-width:50ch}
 @media(min-width:900px){
   .cab{grid-template-columns:minmax(0,1.1fr) minmax(0,.9fr);gap:clamp(30px,5vw,80px);align-items:end}
+  .cab-solo{grid-template-columns:minmax(0,1fr)}
   .cab p{padding-bottom:8px}
 }
 
@@ -380,10 +381,9 @@ footer a.tel{color:var(--sol);text-decoration:none;font-weight:700}
       <path d="M0,0 L1440,0 L1440,42 C1280,14 1120,78 940,62 C760,46 620,4 420,26 C260,44 120,74 0,58 Z"/>
     </svg>
     <div class="wrap">
-      <div class="cab rev">
+      <div class="cab cab-solo rev">
         <div><span class="rot claro">Como funciona</span>
         <h2>Locação anual, pagamento por mês</h2></div>
-        <p>Sem taxa escondida e sem imobiliária no meio. O que está no anúncio é o que se paga todo mês.</p>
       </div>
       <div class="passos rev">
         <div><b>01 · Valor fechado</b><p>O valor do anúncio é o que você paga. Condomínio e IPTU já estão dentro — não chega boleto por fora.</p></div>
