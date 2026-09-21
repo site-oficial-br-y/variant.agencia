@@ -113,6 +113,10 @@ body.trancado{overflow:hidden;height:100%}
   text-transform:uppercase;color:rgba(244,233,216,.42);animation:respira 2.4s ease-in-out infinite;
 }
 .toque span{width:26px;height:1px;background:rgba(232,184,102,.5)}
+.aviso-som{
+  margin-top:-14px;font-size:12px;letter-spacing:.1em;
+  color:rgba(232,184,102,.55);font-family:var(--serif);font-style:italic;
+}
 @keyframes respira{0%,100%{opacity:.35}50%{opacity:.95}}
 @keyframes flutua{0%,100%{transform:translateY(0) rotate(-.6deg)}50%{transform:translateY(-14px) rotate(.6deg)}}
 
@@ -258,6 +262,7 @@ body.trancado{overflow:hidden;height:100%}
     <div class="lacre" id="lacre">&amp;</div>
   </div>
   <div class="toque"><span></span> toque para abrir <span></span></div>
+  <div class="aviso-som">aumenta o volume do celular antes</div>
 </section>
 
 <main id="cena2" aria-hidden="true">
@@ -445,11 +450,11 @@ function ligarSom(){
 }
 function ligarMp3(){
   audio = new Audio(CONFIG.musica);
-  audio.loop = true; audio.volume = 0;
+  audio.loop = true; audio.volume = 1;
   const p = audio.play();
   const subir = ()=>{
     mostrarPlayer();
-    let v=0; const t=setInterval(()=>{v=Math.min(.75,v+.03); audio.volume=v; if(v>=.75) clearInterval(t)},90);
+    audio.volume = 1;
   };
   if(p && p.then) p.then(subir).catch(()=>document.querySelector('#player').classList.add('on'));
   else subir();
@@ -464,10 +469,10 @@ function ligarYoutube(){
       videoId:CONFIG.youtubeId,
       playerVars:{autoplay:1,playsinline:1,controls:0,rel:0},
       events:{
-        onReady:e=>{ e.target.setVolume(70); e.target.playVideo(); },
+        onReady:e=>{ e.target.unMute(); e.target.setVolume(100); e.target.playVideo(); },
         onStateChange:e=>{
           const pl=document.querySelector('#player');
-          if(e.data===YT.PlayerState.PLAYING){ pl.classList.remove('pausado'); document.querySelector('#btnSom').textContent='❚❚'; }
+          if(e.data===YT.PlayerState.PLAYING){ e.target.setVolume(100); pl.classList.remove('pausado'); document.querySelector('#btnSom').textContent='❚❚'; }
           if(e.data===YT.PlayerState.PAUSED){ pl.classList.add('pausado'); document.querySelector('#btnSom').textContent='▶'; }
           if(e.data===YT.PlayerState.ENDED){ e.target.seekTo(0); e.target.playVideo(); }
         },
