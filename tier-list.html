@@ -1,0 +1,465 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<title>Lendas Da Escola — Tier List</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+:root{
+  --bg:#141418;
+  --row:#1c1c22;
+  --line:#2e2e36;
+  --chip:#f2f2f2;
+  --chip-txt:#15151a;
+}
+html,body{height:100%}
+body{
+  background:var(--bg);
+  color:#fff;
+  font-family:'Segoe UI',system-ui,-apple-system,Roboto,sans-serif;
+  padding:18px 14px 40px;
+  overscroll-behavior:none;
+}
+h1{
+  text-align:center;
+  font-size:clamp(28px,7vw,54px);
+  font-weight:900;
+  letter-spacing:-.03em;
+  margin-bottom:4px;
+  background:linear-gradient(90deg,#ffd76e,#ff7b7b,#c86bff,#6bc9ff);
+  -webkit-background-clip:text;background-clip:text;color:transparent;
+}
+.sub{text-align:center;color:rgba(255,255,255,.35);font-size:13px;margin-bottom:18px}
+
+/* ---- tier list ---- */
+.board{max-width:1100px;margin:0 auto;border:2px solid #000;border-radius:6px;overflow:hidden;background:#000}
+.tier{display:flex;align-items:stretch;border-bottom:2px solid #000;min-height:74px}
+.tier:last-child{border-bottom:0}
+.label{
+  flex:0 0 120px;width:120px;
+  display:flex;align-items:center;justify-content:center;
+  font-weight:900;font-size:16px;color:#111;
+  text-align:center;padding:6px 4px;line-height:1.1;
+  overflow-wrap:break-word;word-break:normal;letter-spacing:-.03em;
+  cursor:text;
+}
+.label:focus{outline:2px solid #fff;outline-offset:-3px}
+.drop{
+  flex:1;min-width:0;background:var(--row);
+  display:flex;flex-wrap:wrap;align-content:flex-start;
+  gap:6px;padding:8px;
+  transition:background .15s;
+}
+.drop.over{background:#33333d;box-shadow:inset 0 0 0 2px rgba(255,255,255,.35)}
+
+/* ---- pool ---- */
+.pool-wrap{max-width:1100px;margin:22px auto 0}
+.bar{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-bottom:10px}
+.bar h2{font-size:14px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:rgba(255,255,255,.5);margin-right:auto}
+input[type=search]{
+  background:#1c1c22;border:1px solid var(--line);color:#fff;
+  border-radius:8px;padding:8px 12px;font-size:14px;width:180px;outline:none
+}
+input[type=search]:focus{border-color:#777}
+button{
+  background:#1c1c22;border:1px solid var(--line);color:rgba(255,255,255,.8);
+  border-radius:8px;padding:8px 14px;font-size:13px;font-weight:700;cursor:pointer;transition:.15s
+}
+button:hover{background:#2a2a33;color:#fff}
+button.danger:hover{background:#7a1f2b;border-color:#a3293a;color:#fff}
+#pool{
+  background:var(--row);border:2px solid #000;border-radius:6px;
+  min-height:120px;padding:10px;
+  display:flex;flex-wrap:wrap;align-content:flex-start;gap:6px
+}
+#pool.over{background:#33333d;box-shadow:inset 0 0 0 2px rgba(255,255,255,.35)}
+
+/* ---- chips ---- */
+.chip{
+  background:var(--chip);color:var(--chip-txt);
+  border-radius:6px;padding:9px 11px;
+  font-size:14px;font-weight:700;line-height:1;
+  cursor:grab;user-select:none;touch-action:none;
+  border:1px solid rgba(0,0,0,.25);
+  white-space:nowrap;
+  transition:transform .12s,box-shadow .12s;
+}
+.chip:hover{transform:translateY(-2px);box-shadow:0 4px 12px rgba(0,0,0,.5)}
+.chip.dim{opacity:.18}
+.chip.ghost{opacity:.3}
+.chip.sel{outline:3px solid #ffd76e;outline-offset:1px}
+.chip.flying{
+  position:fixed;z-index:9999;pointer-events:none;cursor:grabbing;
+  transform:rotate(-3deg) scale(1.06);box-shadow:0 12px 30px rgba(0,0,0,.65)
+}
+.hint{text-align:center;color:rgba(255,255,255,.3);font-size:12px;margin-top:16px;line-height:1.6}
+.saved{
+  position:fixed;left:50%;bottom:16px;transform:translateX(-50%);
+  background:#1f1f27;border:1px solid var(--line);color:rgba(255,255,255,.75);
+  padding:8px 16px;border-radius:99px;font-size:12px;font-weight:700;
+  opacity:0;pointer-events:none;transition:opacity .3s
+}
+.saved.on{opacity:1}
+.saved.erro{background:#7a1f2b;border-color:#a3293a;color:#fff}
+#alerta{
+  max-width:1100px;margin:0 auto 14px;background:#4a1420;border:1px solid #8e2437;
+  color:#ffd9df;border-radius:10px;padding:12px 14px;font-size:13.5px;line-height:1.55
+}
+#alerta b{color:#fff}
+[hidden]{display:none!important}
+@media(max-width:600px){
+  .label{flex:0 0 84px;width:84px;font-size:12.5px}
+  .chip{font-size:12.5px;padding:8px 9px}
+  input[type=search]{width:100%}
+}
+</style>
+</head>
+<body>
+
+<div id="alerta" hidden></div>
+<h1>Lendas Da Escola</h1>
+<p class="sub">Arraste os nomes para os níveis · tudo fica salvo automaticamente</p>
+
+<div class="board" id="board"></div>
+
+<div class="pool-wrap">
+  <div class="bar">
+    <h2>Nomes <span id="count"></span></h2>
+    <input type="search" id="busca" placeholder="Buscar nome...">
+    <button id="add">+ Nome</button>
+    <button id="shuffle">Embaralhar</button>
+    <button id="png">Copiar texto</button>
+    <button id="bkp">Baixar backup</button>
+    <button id="rest">Carregar backup</button>
+    <input type="file" id="arq" accept=".json,application/json" hidden>
+    <button class="danger" id="reset">Zerar tudo</button>
+  </div>
+  <div id="pool"></div>
+</div>
+
+<p class="hint">
+  Arraste com o dedo ou o mouse. No celular dá pra tocar no nome e depois tocar no nível.<br>
+  Toque duplo em um nome já colocado devolve ele pra lista. Clique no nome do nível pra renomear ele.
+</p>
+
+<div class="saved" id="toast">salvo</div>
+
+<script>
+const KEY = 'lendas-da-escola-v1';
+
+const TIERS = [
+  {id:'S', label:'Deuses',    color:'#ff7f7f'},
+  {id:'A', label:'Lenda',     color:'#ffbf7f'},
+  {id:'B', label:'Craque',    color:'#ffff7f'},
+  {id:'C', label:'Memorável', color:'#7fff7f'},
+  {id:'D', label:'FDS',       color:'#7fffff'},
+  {id:'E', label:'Lixo',      color:'#bf7fff'}
+];
+
+const NOMES = ["Vinicius","Erick","Gorisch","Gian","Carmazem","Wehby","Lima","Vitinho","Yohann","Caio","Sartori","Campi","Israel","Akio","Cadu","Paris","Pedrini","Togo","Tutu","Machado","Peres","Nick","Prado","Pucharelo","Amadeu","Luiz Felipe","Léo","Miguel","Cimini","Gabriel Nascimento","Lorenzo","Svoah","Sebastian","Ale","Matheus Pique","Vini GK","Gian Lucca","Vitor Macedo","Léo Roque","Greco","Gustavo","Davi","Theo","Ângelo","Marcos","Bueno","Fabiano","Arthur","Gustavo Cunha","Lobão","Saad","Di Caprio","Gabe","Hette","Pepa","Otávio","Bouças","Camargo","Viccenzo","Paulo Arthur","Cleber","Taroba","Hayama","Kauan","Khalil","Jacob","Isaac","Arthurzão","Luigi","Tico","Douglas","Davi Gil","Goya","Davi Amaral","Pedro Pique","Henry","Igor","Francesco","Raul","Thomas","Felipinho","Paulo","Gui","Cleber Negro","Bento","Luke","Zuffo","Breno","Noé","João Miguel","Bernardo","Luquinhas","Açailsson","Emanuel","Viado","Cara","Felps","Max","Denzel","Precioso","Jesus","Rafael","Veneces","Amuletirick","Bornelli","Anacleiton","Atchila","Caio Strobel","Gustavo BMW","Fadon","Punheta","Marcelinho","Pedro Aranha","Duarte","Luca Toni","Zion","Diego Tamer","Matteo","Caike","Nicolau","Luis Ricardo","Enzão","Pedrão","Rebola","Akira","Kaun Basille","Luquinhas 2"];
+
+const board = document.getElementById('board');
+const pool  = document.getElementById('pool');
+const toast = document.getElementById('toast');
+
+let state = load();
+
+function load(){
+  try{
+    const raw = localStorage.getItem(KEY);
+    if(raw){
+      const s = JSON.parse(raw);
+      if(s && s.nomes && s.pos){
+        NOMES.forEach(n=>{
+          if(!s.nomes.includes(n)){ s.nomes.push(n); s.pos[n] = 'pool'; }
+        });
+        return s;
+      }
+    }
+  }catch(e){}
+  return {
+    nomes: NOMES.slice(),
+    labels: Object.fromEntries(TIERS.map(t=>[t.id,t.label])),
+    pos: Object.fromEntries(NOMES.map(n=>[n,'pool'])),
+    ordem: {}
+  };
+}
+
+let podeSalvar = testaStorage();
+function testaStorage(){
+  try{
+    localStorage.setItem('__t','1');
+    const ok = localStorage.getItem('__t') === '1';
+    localStorage.removeItem('__t');
+    return ok;
+  }catch(e){ return false; }
+}
+
+let saveTimer;
+function save(){
+  let ok = false;
+  try{
+    const j = JSON.stringify(state);
+    localStorage.setItem(KEY, j);
+    ok = localStorage.getItem(KEY) === j;
+  }catch(e){ ok = false; }
+
+  clearTimeout(saveTimer);
+  toast.textContent = ok ? 'salvo' : 'NAO SALVOU — baixe o backup';
+  toast.classList.toggle('erro', !ok);
+  toast.classList.add('on');
+  saveTimer = setTimeout(()=>toast.classList.remove('on'), ok ? 900 : 2600);
+  if(!ok) avisar();
+}
+
+function avisar(){
+  const a = document.getElementById('alerta');
+  a.innerHTML = '<b>Atencao: este arquivo nao esta conseguindo salvar.</b><br>' +
+    'Isso acontece quando o HTML e aberto direto do celular (endereco <code>file://</code>) — ' +
+    'o navegador bloqueia a memoria da pagina. Se voce fechar agora, perde tudo.<br>' +
+    'Use o botao <b>Baixar backup</b> antes de sair, ou abra a tier list pelo link online.';
+  a.hidden = false;
+}
+
+/* ---------- render ---------- */
+function build(){
+  board.innerHTML = '';
+  TIERS.forEach(t=>{
+    const row = document.createElement('div');
+    row.className = 'tier';
+
+    const lab = document.createElement('div');
+    lab.className = 'label';
+    lab.style.background = t.color;
+    lab.contentEditable = 'true';
+    lab.spellcheck = false;
+    lab.textContent = state.labels[t.id] ?? t.label;
+    lab.addEventListener('blur', ()=>{
+      state.labels[t.id] = lab.textContent.trim() || t.id;
+      lab.textContent = state.labels[t.id];
+      save();
+    });
+    lab.addEventListener('keydown', e=>{ if(e.key==='Enter'){ e.preventDefault(); lab.blur(); }});
+
+    const drop = document.createElement('div');
+    drop.className = 'drop';
+    drop.dataset.zone = t.id;
+
+    row.append(lab, drop);
+    board.appendChild(row);
+  });
+  pool.dataset.zone = 'pool';
+  paint();
+}
+
+function zoneEl(z){
+  return z === 'pool' ? pool : board.querySelector('.drop[data-zone="'+z+'"]');
+}
+
+function paint(){
+  document.querySelectorAll('[data-zone]').forEach(z=>z.innerHTML='');
+  state.nomes.forEach(n=>{
+    const z = state.pos[n] || 'pool';
+    const el = zoneEl(z) || pool;
+    el.appendChild(chip(n));
+  });
+  document.getElementById('count').textContent =
+    '(' + state.nomes.filter(n=>(state.pos[n]||'pool')==='pool').length + ' na lista / ' + state.nomes.length + ')';
+  filtrar();
+}
+
+function chip(nome){
+  const c = document.createElement('div');
+  c.className = 'chip';
+  c.textContent = nome;
+  c.dataset.nome = nome;
+  return c;
+}
+
+/* ---------- drag (mouse + toque) ---------- */
+let drag = null, selecionado = null;
+
+document.addEventListener('pointerdown', e=>{
+  const c = e.target.closest('.chip');
+  if(!c || c.classList.contains('flying')) return;
+  const r = c.getBoundingClientRect();
+  drag = {
+    chip:c, nome:c.dataset.nome, moved:false,
+    ox:e.clientX - r.left, oy:e.clientY - r.top,
+    x:e.clientX, y:e.clientY, w:r.width, h:r.height,
+    fly:null, lastZone:null
+  };
+});
+
+document.addEventListener('pointermove', e=>{
+  if(!drag) return;
+  const dx = Math.abs(e.clientX - drag.x), dy = Math.abs(e.clientY - drag.y);
+  if(!drag.moved && dx < 5 && dy < 5) return;
+
+  if(!drag.moved){
+    drag.moved = true;
+    const f = drag.chip.cloneNode(true);
+    f.className = 'chip flying';
+    f.style.width = drag.w + 'px';
+    document.body.appendChild(f);
+    drag.fly = f;
+    drag.chip.classList.add('ghost');
+  }
+  e.preventDefault();
+  drag.fly.style.left = (e.clientX - drag.ox) + 'px';
+  drag.fly.style.top  = (e.clientY - drag.oy) + 'px';
+
+  const z = zoneUnder(e.clientX, e.clientY);
+  if(z !== drag.lastZone){
+    document.querySelectorAll('.over').forEach(x=>x.classList.remove('over'));
+    if(z) z.classList.add('over');
+    drag.lastZone = z;
+  }
+}, {passive:false});
+
+document.addEventListener('pointerup', e=>{
+  if(!drag) return;
+  const d = drag; drag = null;
+  document.querySelectorAll('.over').forEach(x=>x.classList.remove('over'));
+
+  if(!d.moved){ toggleSel(d.chip); return; }
+
+  if(d.fly) d.fly.remove();
+  d.chip.classList.remove('ghost');
+
+  const z = zoneUnder(e.clientX, e.clientY);
+  if(z){ mover(d.nome, z.dataset.zone); }
+});
+
+document.addEventListener('pointercancel', ()=>{
+  if(drag){
+    if(drag.fly) drag.fly.remove();
+    drag.chip.classList.remove('ghost');
+    document.querySelectorAll('.over').forEach(x=>x.classList.remove('over'));
+    drag = null;
+  }
+});
+
+function zoneUnder(x,y){
+  const els = document.elementsFromPoint(x,y);
+  for(const el of els){
+    if(el.classList && el.classList.contains('flying')) continue;
+    const z = el.closest && el.closest('[data-zone]');
+    if(z) return z;
+  }
+  return null;
+}
+
+function mover(nome, zona){
+  state.pos[nome] = zona;
+  paint();
+  save();
+}
+
+/* ---------- tocar-e-tocar (celular) ---------- */
+function toggleSel(c){
+  if(selecionado === c.dataset.nome){
+    selecionado = null;
+  }else{
+    selecionado = c.dataset.nome;
+  }
+  document.querySelectorAll('.chip.sel').forEach(x=>x.classList.remove('sel'));
+  if(selecionado){
+    document.querySelectorAll('.chip').forEach(x=>{
+      if(x.dataset.nome === selecionado) x.classList.add('sel');
+    });
+  }
+}
+
+document.addEventListener('click', e=>{
+  const z = e.target.closest('[data-zone]');
+  if(z && selecionado && !e.target.closest('.chip')){
+    mover(selecionado, z.dataset.zone);
+    selecionado = null;
+  }
+});
+
+document.addEventListener('dblclick', e=>{
+  const c = e.target.closest('.chip');
+  if(c){ selecionado = null; mover(c.dataset.nome, 'pool'); }
+});
+
+/* ---------- busca ---------- */
+const busca = document.getElementById('busca');
+busca.addEventListener('input', filtrar);
+function filtrar(){
+  const q = busca.value.trim().toLowerCase();
+  document.querySelectorAll('.chip').forEach(c=>{
+    c.classList.toggle('dim', !!q && !c.dataset.nome.toLowerCase().includes(q));
+  });
+}
+
+/* ---------- botões ---------- */
+document.getElementById('add').onclick = ()=>{
+  const n = (prompt('Nome novo:') || '').trim();
+  if(!n) return;
+  if(state.nomes.includes(n)){ alert('Esse nome já está na lista.'); return; }
+  state.nomes.push(n);
+  state.pos[n] = 'pool';
+  paint(); save();
+};
+
+document.getElementById('shuffle').onclick = ()=>{
+  const p = state.nomes.filter(n=>(state.pos[n]||'pool')==='pool');
+  for(let i=p.length-1;i>0;i--){ const j=Math.floor(Math.random()*(i+1)); [p[i],p[j]]=[p[j],p[i]]; }
+  const resto = state.nomes.filter(n=>(state.pos[n]||'pool')!=='pool');
+  state.nomes = resto.concat(p);
+  paint(); save();
+};
+
+document.getElementById('reset').onclick = ()=>{
+  if(!confirm('Tirar todo mundo dos níveis e voltar pra lista?')) return;
+  state.nomes.forEach(n=>state.pos[n]='pool');
+  paint(); save();
+};
+
+document.getElementById('bkp').onclick = ()=>{
+  const blob = new Blob([JSON.stringify(state)], {type:'application/json'});
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = 'lendas-da-escola-backup.json';
+  document.body.appendChild(a); a.click(); a.remove();
+  setTimeout(()=>URL.revokeObjectURL(a.href), 2000);
+};
+
+document.getElementById('rest').onclick = ()=>document.getElementById('arq').click();
+document.getElementById('arq').onchange = e=>{
+  const f = e.target.files[0]; if(!f) return;
+  const r = new FileReader();
+  r.onload = ()=>{
+    try{
+      const s2 = JSON.parse(r.result);
+      if(!s2 || !s2.nomes || !s2.pos) throw 0;
+      NOMES.forEach(n=>{ if(!s2.nomes.includes(n)){ s2.nomes.push(n); s2.pos[n]='pool'; } });
+      state = s2;
+      build(); save();
+      alert('Backup carregado!');
+    }catch(err){ alert('Esse arquivo nao e um backup valido.'); }
+  };
+  r.readAsText(f);
+  e.target.value = '';
+};
+
+document.getElementById('png').onclick = ()=>{
+  let txt = 'LENDAS DA ESCOLA\n\n';
+  TIERS.forEach(tr=>{
+    const nomes = state.nomes.filter(n=>state.pos[n]===tr.id);
+    txt += (state.labels[tr.id]||tr.id).toUpperCase() + ': ' + (nomes.join(', ') || '—') + '\n\n';
+  });
+  navigator.clipboard?.writeText(txt).then(
+    ()=>alert('Tier list copiada como texto! É só colar no WhatsApp.\n\nPra imagem, use o print do celular.'),
+    ()=>alert(txt)
+  );
+};
+
+build();
+if(!podeSalvar) avisar();
+</script>
+</body>
+</html>
