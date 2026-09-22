@@ -138,8 +138,14 @@ export function SearchResults({ params, userId, plan = 'free', onLimitReached }:
   const segQueries: string[] = Array.isArray(SEGMENT_QUERIES[params.segment])
     ? SEGMENT_QUERIES[params.segment] as string[]
     : [params.segment]
-  const maxResults = PLANS[plan]?.maxResults ?? 5
-  const canExport = PLANS[plan]?.exportExcel ?? false
+  // `maxResults` é null de propósito nos planos pagos: quer dizer ilimitado.
+  // Escrito como `PLANS[plan]?.maxResults ?? 5`, o `??` tratava esse null como
+  // ausente e trocava por 5, então todo assinante via o mesmo teto do grátis,
+  // mesmo a página de planos prometendo resultado ilimitado. O padrão tem que
+  // ser o plano inteiro, não o campo.
+  const planConfig = PLANS[plan] ?? PLANS.free
+  const maxResults = planConfig.maxResults
+  const canExport = planConfig.exportExcel
   const displayCount = useCountUp(results.length, 900)
 
   const runSearch = useCallback(async () => {
