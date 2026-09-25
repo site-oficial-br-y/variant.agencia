@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Roleta</title>
+<style>
+  :root{
+    --bg1:#1a0b2e; --bg2:#3b0f4f; --accent:#ffcc00; --text:#fff;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{
+    min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;
+    font-family:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;color:var(--text);
+    background:radial-gradient(circle at 30% 20%,var(--bg2),var(--bg1) 70%);
+    overflow-x:hidden;padding:24px 16px;gap:24px;
+  }
+  h1{font-size:clamp(2rem,6vw,3.2rem);font-weight:900;letter-spacing:-.03em;text-shadow:0 4px 20px rgba(255,204,0,.35)}
+  .wrap{position:relative;width:min(88vw,460px);aspect-ratio:1}
+  canvas{width:100%;height:100%;border-radius:50%;box-shadow:0 0 0 10px #2a1240,0 0 0 14px var(--accent),0 20px 60px rgba(0,0,0,.6)}
+  .pointer{
+    position:absolute;top:-18px;left:50%;transform:translateX(-50%);width:0;height:0;
+    border-left:20px solid transparent;border-right:20px solid transparent;border-top:40px solid var(--accent);
+    filter:drop-shadow(0 4px 6px rgba(0,0,0,.5));z-index:2;
+  }
+  .hub{
+    position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:18%;aspect-ratio:1;border-radius:50%;
+    background:radial-gradient(circle at 35% 35%,#fff6c2,var(--accent) 60%,#b88a00);box-shadow:0 4px 14px rgba(0,0,0,.5);z-index:2;
+  }
+  button{
+    font:inherit;font-weight:800;font-size:1.25rem;padding:14px 48px;border:none;border-radius:999px;cursor:pointer;
+    color:#1a0b2e;background:var(--accent);box-shadow:0 8px 24px rgba(255,204,0,.35);transition:transform .15s,box-shadow .15s,opacity .2s;
+  }
+  button:hover:not(:disabled){transform:translateY(-2px) scale(1.03);box-shadow:0 12px 30px rgba(255,204,0,.5)}
+  button:disabled{opacity:.5;cursor:not-allowed}
+  #result{min-height:2.4em;font-size:clamp(1.3rem,4vw,1.8rem);font-weight:800;text-align:center}
+  #result span{color:var(--accent)}
+  .pop{animation:pop .5s ease}
+  @keyframes pop{0%{transform:scale(.6);opacity:0}70%{transform:scale(1.15)}100%{transform:scale(1);opacity:1}}
+  #history{display:flex;flex-wrap:wrap;gap:8px;justify-content:center;max-width:520px}
+  #history div{background:rgba(255,255,255,.1);padding:6px 12px;border-radius:999px;font-size:.9rem}
+</style>
+</head>
+<body>
+  <h1>🎡 Roleta</h1>
+  <div class="wrap">
+    <div class="pointer"></div>
+    <canvas id="wheel" width="920" height="920"></canvas>
+    <div class="hub"></div>
+  </div>
+  <button id="spin">GIRAR</button>
+  <div id="result"></div>
+  <div id="history"></div>
+
+<script>
+const names = ["Gian","Erick","Lima","Vini","Gorisch","Gabriel","Webhy","Vitinho","Yohan"];
+const colors = ["#ff4d6d","#ff9f1c","#ffd23f","#3bceac","#0ead69","#3a86ff","#8338ec","#ff006e","#fb5607"];
+const canvas = document.getElementById("wheel");
+const ctx = canvas.getContext("2d");
+const btn = document.getElementById("spin");
+const resultEl = document.getElementById("result");
+const historyEl = document.getElementById("history");
+const N = names.length, SEG = 2*Math.PI/N, R = canvas.width/2;
+let rotation = 0, spinning = false, spins = 0;
+
+function draw(){
+  ctx.clearRect(0,0,canvas.width,canvas.height);
+  ctx.save();
+  ctx.translate(R,R);
+  ctx.rotate(rotation);
+  for(let i=0;i<N;i++){
+    ctx.beginPath();
+    ctx.moveTo(0,0);
+    ctx.arc(0,0,R,i*SEG,(i+1)*SEG);
+    ctx.closePath();
+    ctx.fillStyle = colors[i];
+    ctx.fill();
+    ctx.strokeStyle = "rgba(255,255,255,.6)";
+    ctx.lineWidth = 4;
+    ctx.stroke();
+    ctx.save();
+    ctx.rotate(i*SEG + SEG/2);
+    ctx.textAlign = "right";
+    ctx.textBaseline = "middle";
+    ctx.fillStyle = "#fff";
+    ctx.font = "800 44px system-ui, sans-serif";
+    ctx.shadowColor = "rgba(0,0,0,.45)";
+    ctx.shadowBlur = 6;
+    ctx.fillText(names[i], R-36, 0);
+    ctx.restore();
+  }
+  ctx.restore();
+}
+
+function pickIndex(){
+  const yohan = names.indexOf("Yohan");
+  if(spins % 2 === 0) return yohan;
+  const others = names.map((_,i)=>i).filter(i=>i!==yohan);
+  return others[Math.floor(Math.random()*others.length)];
+}
+
+function spin(){
+  if(spinning) return;
+  spinning = true;
+  btn.disabled = true;
+  resultEl.textContent = "";
+  spins++;
+  const idx = pickIndex();
+
+  const jitter = (Math.random()-.5) * SEG * .7;
+  const target = -Math.PI/2 - (idx*SEG + SEG/2) + jitter;
+  const current = ((rotation % (2*Math.PI)) + 2*Math.PI) % (2*Math.PI);
+  let delta = ((target - current) % (2*Math.PI) + 2*Math.PI) % (2*Math.PI);
+  delta += 2*Math.PI * (5 + Math.floor(Math.random()*3));
+
+  const start = rotation, duration = 5000 + Math.random()*1000, t0 = performance.now();
+  const ease = t => 1 - Math.pow(1-t, 4);
+
+  function frame(now){
+    const t = Math.min((now - t0)/duration, 1);
+    rotation = start + delta*ease(t);
+    draw();
+    if(t < 1) requestAnimationFrame(frame);
+    else finish(idx);
+  }
+  requestAnimationFrame(frame);
+}
+
+function finish(idx){
+  spinning = false;
+  btn.disabled = false;
+  resultEl.innerHTML = `Caiu no <span>${names[idx]}</span>!`;
+  resultEl.classList.remove("pop"); void resultEl.offsetWidth; resultEl.classList.add("pop");
+  const chip = document.createElement("div");
+  chip.textContent = `#${spins} ${names[idx]}`;
+  historyEl.prepend(chip);
+}
+
+btn.addEventListener("click", spin);
+draw();
+</script>
+</body>
+</html>
