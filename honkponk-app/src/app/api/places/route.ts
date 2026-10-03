@@ -128,11 +128,20 @@ export async function GET(req: NextRequest) {
     const location = searchParams.get('location') || ''
     const radius = parseFloat(searchParams.get('radius') || '20000')
     const keyword = searchParams.get('keyword') || ''
+    // Página seguinte da mesma consulta. O Google devolve 20 por vez e entrega um
+    // token pra pedir as próximas, até 60 no total. Sem isso a lista travava em 20
+    // por palavra-chave, e o usuário via sempre as mesmas empresas.
+    const pageToken = searchParams.get('pagetoken') || ''
+    // Busca profunda: o cache guarda os resultados mas não o token da página
+    // seguinte, então servir do cache aqui deixaria o usuário preso na página 1.
+    // Só a primeira página da busca profunda pula o cache; as seguintes usam normal.
+    const deep = searchParams.get('deep') === '1' && !pageToken
     const [lat, lng] = location.split(',').map(Number)
 
     // 1) Tenta o cache antes de chamar o Google (economia de API)
-    const cacheKey = `nearby:${keyword.toLowerCase()}:${lat.toFixed(2)}:${lng.toFixed(2)}:${Math.round(radius)}`
-    if (supabaseCache) {
+    // O token entra na chave: sem isso a página 2 devolveria o cache da página 1.
+    const cacheKey = `nearby:${keyword.toLowerCase()}:${lat.toFixed(2)}:${lng.toFixed(2)}:${Math.round(radius)}${pageToken ? ':' + pageToken.slice(0, 32) : ''}`
+    if (supabaseCache && !deep) {
       try {
         const { data: cached } = await supabaseCache.from('places_cache').select('results, created_at').eq('cache_key', cacheKey).maybeSingle()
         if (cached && cached.created_at && (Date.now() - new Date(cached.created_at).getTime()) < CACHE_TTL_MS) {
@@ -141,7 +150,7 @@ export async function GET(req: NextRequest) {
       } catch { /* cache falhou, segue pro Google */ }
     }
 
-    const body = {
+    const body: Record<string, unknown> = {
       textQuery: keyword,
       locationBias: {
         circle: {
@@ -152,6 +161,7 @@ export async function GET(req: NextRequest) {
       languageCode: 'pt-BR',
       maxResultCount: 20,
     }
+    if (pageToken) body.pageToken = pageToken
 
     logApiCall('places')
     const res = await fetch('https://places.googleapis.com/v1/places:searchText', {
@@ -159,7 +169,7 @@ export async function GET(req: NextRequest) {
       headers: {
         'Content-Type': 'application/json',
         'X-Goog-Api-Key': GOOGLE_KEY,
-        'X-Goog-FieldMask': 'places.id,places.displayName,places.formattedAddress,places.rating,places.userRatingCount,places.websiteUri,places.nationalPhoneNumber,places.currentOpeningHours',
+        'X-Goog-FieldMask': 'nextPageToken,places.id,places.displayName,places.formattedAddress,places.rating,places.userRatingCount,places.websiteUri,places.nationalPhoneNumber,places.currentOpeningHours',
       },
       body: JSON.stringify(body),
     })
@@ -183,7 +193,7 @@ export async function GET(req: NextRequest) {
       } catch { /* ignora erro de cache */ }
     }
 
-    return NextResponse.json({ results, status: data.error ? 'ERROR' : 'OK', _raw_error: data.error })
+    return NextResponse.json({ results, status: data.error ? 'ERROR' : 'OK', nextPageToken: data.nextPageToken || null, _raw_error: data.error })
   }
 
   if (action === 'details') {

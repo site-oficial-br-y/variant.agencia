@@ -32,7 +32,19 @@ async function geocodeCity(city: string): Promise<{ lat: number; lng: number }> 
 }
 
 async function fetchPlaces(query: string, lat: number, lng: number, radius: number): Promise<any[]> {
-  const res = await fetch(`/api/places?action=nearby&location=${lat},${lng}&radius=${radius}&keyword=${encodeURIComponent(query)}`)
+  const { results } = await fetchPlacesPage(query, lat, lng, radius)
+  return results
+}
+
+/** Uma página do Google: até 20 resultados mais o token da próxima, quando existe. */
+async function fetchPlacesPage(
+  query: string, lat: number, lng: number, radius: number,
+  opts: { pageToken?: string; deep?: boolean } = {},
+): Promise<{ results: any[]; nextPageToken: string | null }> {
+  const extra =
+    (opts.pageToken ? `&pagetoken=${encodeURIComponent(opts.pageToken)}` : '') +
+    (opts.deep ? '&deep=1' : '')
+  const res = await fetch(`/api/places?action=nearby&location=${lat},${lng}&radius=${radius}&keyword=${encodeURIComponent(query)}${extra}`)
   const data = await res.json().catch(() => ({}))
   if (res.status === 401) {
     throw new SearchUnavailableError(SESSION_EXPIRED)
@@ -43,13 +55,26 @@ async function fetchPlaces(query: string, lat: number, lng: number, radius: numb
   if (!res.ok || data.status === 'ERROR' || data.error) {
     throw new SearchUnavailableError('A busca está indisponível no momento. Tente de novo em alguns minutos.')
   }
-  return data.results || []
+  return { results: data.results || [], nextPageToken: data.nextPageToken || null }
 }
 
-async function fetchPlacesCity(query: string, lat: number, lng: number, maxResults: number | null): Promise<any[]> {
+async function fetchPlacesCity(query: string, lat: number, lng: number, maxResults: number | null, deep = false): Promise<any[]> {
   // Um único raio amplo cobre a região; raios múltiplos se sobrepõem e desperdiçam chamadas de API
   const radius = maxResults !== null && maxResults <= 20 ? 20000 : 45000
-  return fetchPlaces(query, lat, lng, radius)
+  if (!deep) return fetchPlaces(query, lat, lng, radius)
+
+  // Busca profunda: percorre as páginas seguintes da mesma palavra-chave.
+  // O Google entrega no máximo 3 páginas de 20 por consulta.
+  const todos: any[] = []
+  let token: string | null = null
+  for (let pagina = 0; pagina < 3; pagina++) {
+    const r: { results: any[]; nextPageToken: string | null } =
+      await fetchPlacesPage(query, lat, lng, radius, { pageToken: token || undefined, deep: pagina === 0 })
+    todos.push(...r.results)
+    if (!r.nextPageToken) break
+    token = r.nextPageToken
+  }
+  return todos
 }
 
 const BRAZIL_CITIES = [
@@ -133,6 +158,9 @@ export function SearchResults({ params, userId, plan = 'free', onLimitReached }:
   const [aiFiltering, setAiFiltering] = useState(false)
   // true quando nada bateu no filtro do serviço e a lista mostra a região inteira
   const [showingOutsideFilter, setShowingOutsideFilter] = useState(false)
+  // true depois de uma busca profunda: evita oferecer o botão de novo, já que o
+  // Google não entrega mais que três páginas por palavra-chave.
+  const [deepUsed, setDeepUsed] = useState(false)
 
   const meta = SERVICE_META[params.service] || SERVICE_META.outros
   const segQueries: string[] = Array.isArray(SEGMENT_QUERIES[params.segment])
@@ -148,7 +176,11 @@ export function SearchResults({ params, userId, plan = 'free', onLimitReached }:
   const canExport = planConfig.exportExcel
   const displayCount = useCountUp(results.length, 900)
 
-  const runSearch = useCallback(async () => {
+  // `deep` só chega por clique no botão de busca profunda. Os outros botões
+  // chamam runSearch() sem argumento, por isso estão envolvidos em arrow: passar
+  // a função direta no onClick mandaria o evento do clique como `deep`.
+  const runSearch = useCallback(async (deep = false) => {
+    setDeepUsed(deep)
     setLoading(true)
     setError('')
     setSearched(false)
@@ -179,7 +211,10 @@ export function SearchResults({ params, userId, plan = 'free', onLimitReached }:
       }
 
       // Ilimitado usa até 3 palavras-chave (variedade); planos limitados usam 1 (economia de API)
-      const queries = maxResults === null ? segQueries.slice(0, 3) : segQueries.slice(0, 1)
+      // Busca profunda usa todas as palavras-chave do segmento; a normal usa 3.
+      const queries = maxResults === null
+        ? segQueries.slice(0, deep ? segQueries.length : 3)
+        : segQueries.slice(0, 1)
       let raw: any[] = []
       if (params.allBrazil) {
         raw = await fetchPlacesBrazil(queries[0], (city, done) => {
@@ -187,7 +222,7 @@ export function SearchResults({ params, userId, plan = 'free', onLimitReached }:
           setProgressDone(done)
         })
       } else {
-        const batches = await Promise.all(queries.map(q => fetchPlacesCity(q, lat, lng, maxResults)))
+        const batches = await Promise.all(queries.map(q => fetchPlacesCity(q, lat, lng, maxResults, deep)))
         const seen = new Set<string>()
         for (const batch of batches) {
           for (const p of batch) {
@@ -307,7 +342,7 @@ export function SearchResults({ params, userId, plan = 'free', onLimitReached }:
         <div style={{ fontSize: '3rem', marginBottom: 16 }}>{meta.icon}</div>
         <h3 style={{ fontSize: '1.3rem', fontWeight: 800, marginBottom: 8 }}>{meta.name}</h3>
         <p style={{ color: 'rgba(255,255,255,.5)', marginBottom: 28, maxWidth: 420, margin: '0 auto 28px' }}>{meta.filterLabel}</p>
-        <button onClick={runSearch} style={{ background: 'linear-gradient(135deg,#e879a0,#c2185b)', color: '#fff', border: 'none', borderRadius: 14, padding: '16px 36px', fontSize: '1rem', fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit', boxShadow: '0 8px 30px rgba(232,121,160,.35)' }}>
+        <button onClick={() => runSearch()} style={{ background: 'linear-gradient(135deg,#e879a0,#c2185b)', color: '#fff', border: 'none', borderRadius: 14, padding: '16px 36px', fontSize: '1rem', fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit', boxShadow: '0 8px 30px rgba(232,121,160,.35)' }}>
           🔍 Buscar leads agora
         </button>
       </div>
@@ -365,7 +400,7 @@ export function SearchResults({ params, userId, plan = 'free', onLimitReached }:
       <div style={{ textAlign: 'center', padding: '60px 24px', background: 'rgba(251,146,60,.05)', border: '1px solid rgba(251,146,60,.15)', borderRadius: 16 }}>
         <div style={{ fontSize: '2rem', marginBottom: 12 }}>⚠️</div>
         <p style={{ color: '#fb923c', marginBottom: 20, fontWeight: 600 }}>{error}</p>
-        <button onClick={runSearch} style={{ background: 'rgba(255,255,255,.08)', color: '#fff', border: '1px solid rgba(255,255,255,.15)', borderRadius: 12, padding: '12px 24px', fontSize: '.9rem', fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit' }}>Tentar novamente</button>
+        <button onClick={() => runSearch()} style={{ background: 'rgba(255,255,255,.08)', color: '#fff', border: '1px solid rgba(255,255,255,.15)', borderRadius: 12, padding: '12px 24px', fontSize: '.9rem', fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit' }}>Tentar novamente</button>
       </div>
     )
   }
@@ -381,7 +416,7 @@ export function SearchResults({ params, userId, plan = 'free', onLimitReached }:
           <span style={{ fontSize: '.8rem', color: 'rgba(255,255,255,.35)' }}>{meta.filterLabel}</span>
         </div>
         <div style={{ display: 'flex', gap: 8 }}>
-          <button onClick={runSearch} style={{ background: 'rgba(255,255,255,.05)', color: 'rgba(255,255,255,.6)', border: '1px solid rgba(255,255,255,.1)', borderRadius: 10, padding: '8px 14px', fontSize: '.8rem', fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit' }}>↻ Atualizar</button>
+          <button onClick={() => runSearch()} style={{ background: 'rgba(255,255,255,.05)', color: 'rgba(255,255,255,.6)', border: '1px solid rgba(255,255,255,.1)', borderRadius: 10, padding: '8px 14px', fontSize: '.8rem', fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit' }}>↻ Atualizar</button>
           {results.length > 0 && canExport && (
             <button onClick={handleExport} style={{ background: exported ? 'rgba(74,222,128,.12)' : 'rgba(255,255,255,.05)', color: exported ? '#4ade80' : 'rgba(255,255,255,.6)', border: `1px solid ${exported ? 'rgba(74,222,128,.25)' : 'rgba(255,255,255,.1)'}`, borderRadius: 10, padding: '8px 14px', fontSize: '.8rem', fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit' }}>
               {exported ? '✓ Exportado' : '⬇ Excel'}
@@ -481,6 +516,30 @@ export function SearchResults({ params, userId, plan = 'free', onLimitReached }:
           })}
         </div>
       )}
+
+      {/* Busca profunda: pede as páginas seguintes ao Google e usa todas as
+          palavras-chave do segmento. Cada clique é chamada paga, por isso é
+          botão e não comportamento automático. */}
+      {searched && !loading && !error && results.length > 0 && !params.allBrazil && maxResults === null && !deepUsed && (
+        <div style={{ textAlign: 'center', marginTop: 28 }}>
+          <button
+            onClick={() => runSearch(true)}
+            style={{ background: 'rgba(255,255,255,.06)', color: '#fff', border: '1px solid rgba(248,182,200,.3)', borderRadius: 12, padding: '14px 28px', fontSize: '.92rem', fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit' }}
+          >
+            Pesquisar mais nesta cidade
+          </button>
+          <div style={{ marginTop: 10, fontSize: '.78rem', color: 'rgba(255,255,255,.4)' }}>
+            Procura mais fundo na mesma região e traz empresas que não vieram na primeira busca
+          </div>
+        </div>
+      )}
+
+      {searched && !loading && deepUsed && (
+        <div style={{ textAlign: 'center', marginTop: 28, fontSize: '.8rem', color: 'rgba(255,255,255,.4)' }}>
+          Essa é a lista completa que encontramos para esta cidade.
+        </div>
+      )}
+
       <style>{`
         .lead-card:hover { border-color: rgba(248,182,200,.28) !important; background: rgba(255,255,255,.05) !important; }
         @keyframes pulse { 0%,100%{opacity:.6} 50%{opacity:1} }
