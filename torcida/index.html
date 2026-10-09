@@ -260,7 +260,7 @@ html,body{height:100%;background:#03050a;overflow:hidden;
     </div>
   </div>
 
-  <div id="versao">v6</div>
+  <div id="versao">v7</div>
 
   <div id="semConector">conector desligado: nenhum presente está chegando</div>
 
@@ -737,13 +737,22 @@ addEventListener('keydown', e => {
   if (k === 'n') proximaFaixa(true)
 })
 
-if (MUSICAS.length) {
-  faixas = MUSICAS
+function carregarLista(lista) {
+  if (!lista || !lista.length) return
+  faixas = lista
   sortearOrdem()
   proximaFaixa(false)
   document.getElementById('somFaixa').textContent =
     faixas.length + ' músicas: clique em ♪ pra começar'
 }
+
+/* Duas origens porque são dois jeitos de abrir o jogo. O arquivo único já vem
+   com a lista dentro, porque aberto solto ele não consegue ler arquivo do
+   lado. Servido por HTTP, a lista vem do musicas/lista.json, que o gerador
+   escreve: assim subir uma música nova não exige mexer no HTML. */
+if (MUSICAS.length) carregarLista(MUSICAS)
+else fetch('musicas/lista.json').then(r => r.json()).then(nomes =>
+  carregarLista(nomes.map(n => 'musicas/' + n))).catch(() => {})
 
 /* ---------- modo de teste ----------
    Tecla D liga e desliga presentes aleatórios. Clique numa raia avança ela. */
