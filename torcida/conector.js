@@ -139,6 +139,14 @@ live.on('chat', d => {
   mandar({ tipo: 'comentario', id: quem.id, apelido: quem.apelido, texto: d.content || d.comment || '' })
 })
 
+live.on('like', d => {
+  // A curtida chega em lotes: a pessoa segura o coração e o TikTok manda de
+  // uma vez quantas foram. Sem ler likeCount a mão pesada contaria igual à leve.
+  const quem = quemE(d)
+  const quantas = Number(d.likeCount) || Number(d.likes) || 1
+  mandar({ tipo: 'curtida', id: quem.id, apelido: quem.apelido, quantidade: quantas })
+})
+
 live.on('gift', d => {
   // Presente que pode ser segurado chega em várias partes enquanto a pessoa
   // segura o botão. Só vale quando ela solta, senão conta repetido.
