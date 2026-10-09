@@ -176,6 +176,28 @@ html,body{height:100%;background:#03050a;overflow:hidden;
 #versao{position:absolute;right:10px;bottom:6px;z-index:9;font-size:16px;
   color:rgba(255,255,255,.3);font-weight:800;letter-spacing:1px}
 
+/* ---------- som ---------- */
+/* O controle fica pequeno e apagado no canto porque ele aparece na
+   transmissão: serve pra mexer na música sem sair do jogo, não pra ser visto.
+   O painel some sozinho depois de mexer. */
+#som{position:absolute;left:10px;bottom:6px;z-index:9;display:flex;align-items:flex-end;gap:10px}
+#somBtn{width:34px;height:34px;border-radius:50%;border:2px solid rgba(255,255,255,.22);
+  background:rgba(8,11,18,.8);color:rgba(255,255,255,.55);font-size:17px;font-weight:900;
+  cursor:pointer;display:grid;place-items:center;padding:0}
+#somBtn.tocando{border-color:rgba(255,210,63,.65);color:#ffd23f}
+#somPainel{display:none;background:rgba(8,11,18,.95);border:2px solid rgba(255,255,255,.14);
+  border-radius:12px;padding:10px 12px;min-width:300px}
+#somPainel.on{display:block}
+#somFaixa{font-size:15px;font-weight:800;color:rgba(255,255,255,.75);margin-bottom:8px;
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:330px}
+#somLinha{display:flex;align-items:center;gap:8px}
+#somLinha button{border:2px solid rgba(255,255,255,.18);background:rgba(255,255,255,.06);
+  color:rgba(255,255,255,.7);border-radius:8px;padding:4px 10px;font-size:14px;font-weight:800;
+  cursor:pointer}
+#somVol{width:96px}
+#somAdd{font-size:13px;color:rgba(255,255,255,.45);margin-top:8px;cursor:pointer;
+  text-decoration:underline}
+
 /* ---------- vitória ---------- */
 #faixa{position:absolute;inset:0;display:none;align-items:center;justify-content:center;
   background:rgba(3,5,10,.86);z-index:8}
@@ -224,7 +246,21 @@ html,body{height:100%;background:#03050a;overflow:hidden;
 
   <div id="base"></div>
 
-  <div id="versao">v5</div>
+  <div id="som">
+    <button id="somBtn" title="música (M liga e desliga, N pula)">♪</button>
+    <div id="somPainel">
+      <div id="somFaixa">nenhuma música carregada</div>
+      <div id="somLinha">
+        <button id="somPlay">tocar</button>
+        <button id="somNext">pular</button>
+        <input id="somVol" type="range" min="0" max="100" value="35">
+      </div>
+      <div id="somAdd">escolher músicas do computador</div>
+      <input id="somArquivos" type="file" accept="audio/*" multiple hidden>
+    </div>
+  </div>
+
+  <div id="versao">v6</div>
 
   <div id="semConector">conector desligado: nenhum presente está chegando</div>
 
@@ -600,6 +636,114 @@ function ligarConector(porta) {
   ws.onerror = () => { try { ws.close() } catch {} }
 }
 ligarConector(21213)
+
+/* ---------- música ----------
+   A lista sai da pasta musicas/, preenchida pelo gerar-arquivo-unico.py. Quem
+   abrir o arquivo solto, sem a pasta do lado, ainda pode escolher os arquivos
+   na mão pelo painel. O navegador não deixa tocar som sem um clique antes, por
+   isso existe o botão: sem ele a música simplesmente não começava. */
+const MUSICAS = [/*LISTA_DE_MUSICAS*/]
+
+const audio = new Audio()
+audio.volume = .35
+let faixas = []
+let ordem = []
+let naOrdem = -1
+
+function nomeDaFaixa(f) {
+  const nome = typeof f === 'string' ? f.split('/').pop() : f.name
+  return decodeURIComponent(nome).replace(/\.[a-z0-9]+$/i, '')
+}
+
+function sortearOrdem() {
+  ordem = faixas.map((_, i) => i)
+  for (let i = ordem.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1))
+    ;[ordem[i], ordem[j]] = [ordem[j], ordem[i]]
+  }
+  naOrdem = -1
+}
+
+function proximaFaixa(tocar) {
+  if (!faixas.length) return
+  naOrdem += 1
+  // Acabou a volta: sorteia de novo, pra não repetir sempre na mesma sequência.
+  if (naOrdem >= ordem.length) sortearOrdem(), naOrdem = 0
+  const f = faixas[ordem[naOrdem]]
+  audio.src = typeof f === 'string' ? f : URL.createObjectURL(f)
+  document.getElementById('somFaixa').textContent = nomeDaFaixa(f)
+  if (tocar) audio.play().catch(() => {})
+}
+
+audio.addEventListener('ended', () => proximaFaixa(true))
+// Arquivo quebrado ou formato que o navegador não abre não pode travar a fila.
+audio.addEventListener('error', () => { if (faixas.length > 1) proximaFaixa(true) })
+
+function marcarBotao() {
+  // Enquanto nada tocou, o texto é o convite pra apertar o botão. Depois do
+  // primeiro play ele vira o nome da faixa e não volta mais atrás.
+  if (!audio.paused && faixas.length) {
+    const f = faixas[ordem[naOrdem]]
+    if (f) document.getElementById('somFaixa').textContent = nomeDaFaixa(f)
+  }
+  document.getElementById('somBtn').classList.toggle('tocando', !audio.paused)
+  document.getElementById('somPlay').textContent = audio.paused ? 'tocar' : 'pausar'
+}
+audio.addEventListener('play', marcarBotao)
+audio.addEventListener('pause', marcarBotao)
+
+function alternarMusica() {
+  if (!faixas.length) return abrirPainel()
+  if (audio.paused) {
+    if (!audio.src) proximaFaixa(false)
+    audio.play().catch(() => {})
+  } else audio.pause()
+}
+
+let sumir = null
+function abrirPainel() {
+  const p = document.getElementById('somPainel')
+  p.classList.add('on')
+  clearTimeout(sumir)
+  sumir = setTimeout(() => p.classList.remove('on'), 9000)
+}
+
+document.getElementById('somBtn').addEventListener('click', () => {
+  const p = document.getElementById('somPainel')
+  if (p.classList.contains('on')) { p.classList.remove('on'); clearTimeout(sumir) }
+  else abrirPainel()
+})
+document.getElementById('somPlay').addEventListener('click', () => { alternarMusica(); abrirPainel() })
+document.getElementById('somNext').addEventListener('click', () => { proximaFaixa(true); abrirPainel() })
+document.getElementById('somVol').addEventListener('input', e => {
+  audio.volume = e.target.value / 100
+  abrirPainel()
+})
+document.getElementById('somAdd').addEventListener('click', () =>
+  document.getElementById('somArquivos').click())
+document.getElementById('somArquivos').addEventListener('change', e => {
+  const novos = Array.from(e.target.files || [])
+  if (!novos.length) return
+  faixas = novos
+  sortearOrdem()
+  proximaFaixa(true)
+  abrirPainel()
+})
+
+addEventListener('keydown', e => {
+  if (e.target.tagName === 'INPUT') return
+  const k = e.key.toLowerCase()
+  if (k === 'm') alternarMusica()
+  if (k === 'n') proximaFaixa(true)
+})
+
+if (MUSICAS.length) {
+  faixas = MUSICAS
+  sortearOrdem()
+  proximaFaixa(false)
+  document.getElementById('somFaixa').textContent =
+    faixas.length + ' músicas: clique em ♪ pra começar'
+}
 
 /* ---------- modo de teste ----------
    Tecla D liga e desliga presentes aleatórios. Clique numa raia avança ela. */
