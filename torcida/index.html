@@ -1,0 +1,588 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<title>Qual torcida é maior</title>
+<style>
+/* Tela vertical 1080x1920, do tamanho da live. Escala sozinha pra caber em
+   qualquer janela, então dá pra conferir no navegador antes de abrir o OBS. */
+*{margin:0;padding:0;box-sizing:border-box}
+html,body{height:100%;background:#03050a;overflow:hidden;
+  font-family:'Archivo','Inter',system-ui,sans-serif;user-select:none}
+#palco{position:absolute;top:50%;left:50%;width:1080px;height:1920px;transform-origin:center;
+  overflow:hidden;color:#fff;background:#05070e}
+#palco.tremer{animation:tremer .42s cubic-bezier(.36,.07,.19,.97)}
+@keyframes tremer{
+  10%,90%{transform:translate(calc(-50% - 6px),-50%) scale(var(--e))}
+  20%,80%{transform:translate(calc(-50% + 9px),calc(-50% - 4px)) scale(var(--e))}
+  30%,50%,70%{transform:translate(calc(-50% - 12px),calc(-50% + 5px)) scale(var(--e))}
+  40%,60%{transform:translate(calc(-50% + 12px),-50%) scale(var(--e))}
+}
+
+/* ---------- fundo ---------- */
+#fundo{position:absolute;inset:0;background:url('fundo.webp') center/cover no-repeat;
+  animation:respira 24s ease-in-out infinite}
+@keyframes respira{0%,100%{transform:scale(1.06)}50%{transform:scale(1.14) translateY(-18px)}}
+/* véu escuro: sem ele o texto branco some no gramado claro */
+#veu{position:absolute;inset:0;
+  background:linear-gradient(180deg,rgba(3,6,14,.92) 0%,rgba(3,6,14,.62) 24%,
+             rgba(3,6,14,.38) 55%,rgba(3,6,14,.86) 100%)}
+#holofote{position:absolute;inset:0;pointer-events:none;
+  background:radial-gradient(ellipse 70% 40% at 50% 12%,rgba(180,210,255,.18),transparent 70%)}
+
+/* ---------- topo ---------- */
+#topo{position:absolute;top:0;left:0;right:0;z-index:4;padding:34px 40px 0;text-align:center}
+#titulo{font-size:66px;font-weight:900;letter-spacing:-2.5px;line-height:.94;text-transform:uppercase;
+  text-shadow:0 6px 30px rgba(0,0,0,.95)}
+#titulo b{color:#ffd23f;display:inline-block;animation:bate 1.6s ease-in-out infinite}
+@keyframes bate{0%,100%{transform:scale(1)}50%{transform:scale(1.06)}}
+#rodada{display:inline-block;margin-top:12px;padding:6px 24px;border:3px solid rgba(255,210,63,.5);
+  border-radius:999px;font-size:23px;font-weight:900;letter-spacing:4px;color:#ffd23f;
+  background:rgba(0,0,0,.45)}
+
+/* O que faz gastar em live não é o jogo, é aparecer na tela. Esta faixa mostra
+   quem mais empurrou na rodada, e serve de alvo: dá pra tomar o lugar. */
+#topTorcedor{display:inline-flex;align-items:center;gap:12px;margin-top:12px;
+  padding:9px 20px;border-radius:999px;border:3px solid rgba(255,210,63,.55);
+  background:rgba(8,11,18,.86)}
+#topTorcedor[hidden]{display:none}
+#topTorcedor .rot{font-size:18px;font-weight:900;letter-spacing:3px;color:rgba(255,255,255,.5)}
+#topTorcedor .quem{font-size:27px;font-weight:900;color:#ffd23f;max-width:420px;
+  overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+#topTorcedor .qnt{font-size:23px;font-weight:900;color:rgba(255,255,255,.7);font-variant-numeric:tabular-nums}
+#topTorcedor.trocou{animation:trocou .7s cubic-bezier(.2,1.6,.4,1)}
+@keyframes trocou{0%{transform:scale(1)}40%{transform:scale(1.12);border-color:#fff}100%{transform:scale(1)}}
+
+/* ---------- linha de chegada ---------- */
+/* Quadriculado de verdade: duas fileiras alternadas, como bandeira de chegada.
+   O xadrez vem de um gradiente cônico repetido, que é o jeito curto de fazer
+   tabuleiro em CSS; uma única fileira de listras não lê como linha de chegada. */
+#chegada{position:absolute;left:0;right:0;top:292px;height:76px;z-index:3;
+  background:repeating-conic-gradient(#fff 0% 25%,#15181f 0% 50%) 0 0 / 38px 38px;
+  border-top:5px solid #ffd23f;border-bottom:5px solid #ffd23f;
+  box-shadow:0 0 46px rgba(255,255,255,.45),0 0 110px rgba(255,210,63,.45),
+             inset 0 0 40px rgba(0,0,0,.5);
+  animation:anda 2.4s linear infinite}
+@keyframes anda{to{background-position:76px 0}}
+#chegada.flash{animation:anda 2.4s linear infinite,flash .6s ease 3}
+@keyframes flash{0%,100%{filter:none}50%{filter:brightness(2.2) saturate(1.4)}}
+#chegada-txt{position:absolute;left:0;right:0;top:248px;z-index:4;text-align:center;
+  font-size:26px;font-weight:900;letter-spacing:9px;color:#ffd23f;
+  text-shadow:0 3px 16px rgba(0,0,0,1)}
+
+/* ---------- pista ---------- */
+/* O rodapé cresceu com o quadro de regras. A pista precisa parar acima dele:
+   o corredor em zero ainda desce meia bolha mais a sigla e o número, uns 80px
+   abaixo da borda, e estava caindo em cima dos avisos. */
+#pista{position:absolute;left:28px;right:28px;top:376px;bottom:446px;z-index:3}
+.raia{position:absolute;top:0;bottom:0;border-left:2px solid rgba(255,255,255,.07)}
+.raia:last-child{border-right:2px solid rgba(255,255,255,.07)}
+.rastro{position:absolute;left:50%;transform:translateX(-50%);width:16px;bottom:0;border-radius:8px;
+  transition:height .55s cubic-bezier(.17,.89,.32,1.15);height:0}
+.rastro::after{content:'';position:absolute;inset:0;border-radius:8px;
+  background:linear-gradient(0deg,transparent,rgba(255,255,255,.5));
+  background-size:100% 120px;animation:sobe 1.3s linear infinite}
+@keyframes sobe{to{background-position:0 -120px}}
+
+/* o corredor: escudo do time que vai subindo */
+.corredor{position:absolute;left:50%;width:72px;overflow:visible;transform:translate(-50%,50%);
+  transition:bottom .55s cubic-bezier(.17,.89,.32,1.15);text-align:center;z-index:2}
+/* A bolinha é clara por dentro: escudo tem muita cor escura e sumia no fundo
+   do time. O anel por fora é que carrega a cor do clube. */
+.bolha{position:relative;width:70px;height:70px;margin:0 auto;overflow:visible;border-radius:50%;
+  display:grid;place-items:center;border:4px solid rgba(255,255,255,.85);
+  box-shadow:0 6px 22px rgba(0,0,0,.85);background:rgba(248,250,255,.94)}
+.bolha img{position:absolute;inset:0;width:100%;height:100%;object-fit:contain;z-index:2;padding:7px;border-radius:50%}
+.bolha span{font-size:34px;line-height:1}
+/* Selo do presente do time, grudado no escudo: sem isso ninguém descobre qual
+   presente pertence a quem. */
+/* Selo do presente do time, grudado no escudo: sem isso ninguém descobre qual
+   presente pertence a quem. Grande o bastante pra reconhecer o desenho na tela
+   do celular, que é onde a live é assistida. */
+.selo{position:absolute;right:-7px;top:-7px;width:38px;height:38px;border-radius:50%;
+  background:rgba(10,13,20,.96);border:3px solid rgba(255,255,255,.75);
+  box-shadow:0 3px 12px rgba(0,0,0,.9);display:grid;place-items:center;font-size:22px;z-index:3}
+.selo img{position:absolute;inset:0;width:100%;height:100%;object-fit:contain;padding:4px;z-index:2}
+.sigla{margin-top:4px;font-size:18px;font-weight:900;letter-spacing:-.5px;
+  text-shadow:0 0 3px #000,2px 2px 0 rgba(0,0,0,.95),-2px 2px 0 rgba(0,0,0,.95),
+              2px -2px 0 rgba(0,0,0,.95),-2px -2px 0 rgba(0,0,0,.95)}
+.moedas{font-size:19px;font-weight:900;font-variant-numeric:tabular-nums;color:#ffd23f;
+  text-shadow:0 2px 8px rgba(0,0,0,1)}
+.moedas.pulo{animation:pulo .45s cubic-bezier(.2,1.6,.4,1)}
+@keyframes pulo{0%{transform:scale(1)}45%{transform:scale(1.7)}100%{transform:scale(1)}}
+.corredor.lider .bolha{border-color:#ffd23f;box-shadow:0 0 30px rgba(255,210,63,.85)}
+.corredor.quase .bolha{animation:quase .55s ease-in-out infinite}
+@keyframes quase{0%,100%{box-shadow:0 0 24px rgba(255,80,80,.7)}50%{box-shadow:0 0 58px rgba(255,80,80,1)}}
+.coroa{position:absolute;top:-30px;left:50%;transform:translateX(-50%);font-size:26px;white-space:nowrap}
+
+/* ---------- presente voando ---------- */
+.voando{position:absolute;z-index:7;font-size:72px;line-height:1;pointer-events:none;
+  filter:drop-shadow(0 6px 18px rgba(0,0,0,.9))}
+.voando img{width:96px;height:96px;object-fit:contain;display:block}
+#particulas{position:absolute;inset:0;pointer-events:none;z-index:6}
+
+/* ---------- base ---------- */
+#base{position:absolute;left:0;right:0;bottom:0;z-index:5;padding:20px 36px 30px;
+  background:linear-gradient(transparent,rgba(3,5,10,.96) 34%)}
+/* Altura livre e no máximo três: com altura fixa o aviso mais antigo ficava
+   cortado ao meio na borda de cima. */
+#fila{display:flex;flex-direction:column-reverse;gap:7px;margin-bottom:14px;min-height:108px;justify-content:flex-start}
+.aviso{background:rgba(8,11,18,.9);border:3px solid rgba(255,210,63,.42);border-radius:12px;
+  padding:7px 15px;font-size:23px;font-weight:900;align-self:flex-start;
+  animation:entraAviso .3s cubic-bezier(.2,1.6,.4,1)}
+.aviso span{color:#ffd23f}
+@keyframes entraAviso{from{opacity:0;transform:translateY(20px) scale(.85)}to{opacity:1;transform:none}}
+/* Quadro fixo das regras: quem entra na live tem poucos segundos pra entender.
+   A frase que troca sozinha fica embaixo, como reforço, não como explicação. */
+/* São dois caminhos, não dois passos: numerado como 1 e 2 dava a entender que
+   era obrigatório comentar antes de cada presente. */
+#regras{display:flex;flex-direction:column;gap:9px;margin-bottom:14px;align-items:stretch}
+.regra{display:flex;align-items:center;gap:13px;background:rgba(8,11,18,.9);
+  border:3px solid rgba(255,210,63,.4);border-radius:14px;padding:11px 18px;
+  font-size:25px;font-weight:800;color:rgba(255,255,255,.9)}
+.regra i{font-style:normal;width:34px;height:34px;flex:none;border-radius:50%;
+  background:#ffd23f;color:#111;font-weight:900;font-size:21px;display:grid;place-items:center}
+.regra b{color:#ffd23f}
+#instrucao{text-align:center;font-size:30px;font-weight:900;color:rgba(255,255,255,.88);
+  transition:opacity .3s;text-shadow:0 2px 12px rgba(0,0,0,1)}
+#instrucao b{color:#ffd23f}
+
+/* Aviso de conector desligado. Some sozinho quando conecta, pra não aparecer
+   na transmissão quando está tudo certo. Serve pra enxergar o problema na hora,
+   em vez de descobrir no fim da live que nada estava chegando. */
+#semConector{position:absolute;left:50%;transform:translateX(-50%);top:16px;z-index:9;
+  background:rgba(200,30,30,.92);border-radius:999px;padding:8px 22px;
+  font-size:21px;font-weight:900;letter-spacing:.5px;display:none}
+#semConector.on{display:block}
+
+/* ---------- vitória ---------- */
+#faixa{position:absolute;inset:0;display:none;align-items:center;justify-content:center;
+  background:rgba(3,5,10,.86);z-index:8}
+#faixa.on{display:flex;animation:surge .3s ease}
+@keyframes surge{from{opacity:0}to{opacity:1}}
+#faixa .caixa{text-align:center;padding:50px 80px;border-radius:30px;border:5px solid #ffd23f;
+  background:rgba(8,11,18,.96);box-shadow:0 0 120px rgba(255,210,63,.45);
+  animation:entraCaixa .5s cubic-bezier(.2,1.7,.4,1)}
+@keyframes entraCaixa{from{transform:scale(.6) rotate(-4deg);opacity:0}to{transform:none;opacity:1}}
+#faixa .top{font-size:31px;letter-spacing:9px;color:#ffd23f;font-weight:900}
+#faixa img{height:150px;margin:18px auto 4px;display:none}
+#faixa .time{font-size:94px;font-weight:900;letter-spacing:-4px;line-height:1}
+#faixa .baixo{margin-top:12px;font-size:28px;color:rgba(255,255,255,.62);font-weight:800}
+</style>
+</head>
+<body>
+<div id="palco">
+  <div id="fundo"></div>
+  <div id="veu"></div>
+  <div id="holofote"></div>
+
+  <div id="topo">
+    <div id="titulo">Qual torcida<br>é <b>maior</b>?</div>
+    <div id="rodada">RODADA 1</div>
+    <div id="topTorcedor" hidden>
+      <span class="rot">MAIOR TORCEDOR</span>
+      <span class="quem" id="topNome">—</span>
+      <span class="qnt" id="topQnt">0</span>
+    </div>
+  </div>
+
+  <div id="chegada-txt">LINHA DE CHEGADA</div>
+  <div id="chegada"></div>
+
+  <div id="pista"></div>
+  <canvas id="particulas" width="1080" height="1920"></canvas>
+
+  <div id="base">
+    <div id="fila"></div>
+    <div id="regras">
+      <div class="regra"><i>1</i> <span>comenta o nome do <b>seu time</b></span></div>
+      <div class="regra"><i>2</i> <span>manda <b>qualquer presente</b>, ele empurra o seu time</span></div>
+    </div>
+    <div id="instrucao">manda o presente do seu time pra <b>ele subir</b></div>
+  </div>
+
+  <div id="semConector">conector desligado: nenhum presente está chegando</div>
+
+  <div id="faixa">
+    <div class="caixa">
+      <div class="top">CHEGOU PRIMEIRO</div>
+      <img id="faixa-escudo" alt="">
+      <div class="time" id="faixa-time">FLAMENGO</div>
+      <div class="baixo" id="faixa-placar">1 corrida ganha</div>
+    </div>
+  </div>
+</div>
+
+<script>
+/* ---------- times ----------
+   Cada time tem o presente dele. Mandar aquele presente faz aquele time subir,
+   sem precisar comentar nada.
+
+   O avanço é o valor em moedas do presente, que o próprio TikTok informa. Por
+   isso não existe tabela de pontos: presente caro empurra mais porque custou
+   mais, e nenhum time fica em desvantagem por ter caído com presente barato.
+
+   `presente` é o nome que o TikTok envia, em minúsculas. CONFIRA numa live de
+   teste: o conector imprime o nome real de cada presente no terminal. Se um
+   presente não estiver pontuando, é esse texto que está diferente.
+
+   `escudo` é opcional: faltando o arquivo, o emoji aparece no lugar. */
+/* Cada time tem um presente de 1 moeda só dele. Mandar aquele presente faz
+   aquele time subir, sem precisar comentar nada.
+
+   São todos de 1 moeda de propósito: assim qualquer pessoa participa, e a
+   disputa vira de torcida em vez de quem tem mais dinheiro. Quem quiser
+   empurrar forte manda presente caro e escolhe o time no comentário.
+
+   `presentes` aceita vários nomes porque o TikTok manda o nome do presente no
+   idioma da conta: às vezes "rose", às vezes "rosa". Qualquer um da lista vale.
+   CONFIRA numa live de teste: o conector salva em presentes-vistos.txt o nome
+   exato de cada presente que chegar. Se algum não estiver pontuando, é só
+   acrescentar o nome que apareceu lá na lista do time. */
+const TIMES = [
+  { nome:'FLAMENGO',      sigla:'FLA', emo:'🌹', presentes:['rose','rosa'],
+    cor:'#E21B1B', escudo:'escudos/flamengo.png' , icone:'presentes/rosa.png' },
+  { nome:'CORINTHIANS',   sigla:'COR', emo:'🎵', presentes:['tiktok'],
+    cor:'#EDEDED', escudo:'escudos/corinthians.png' , icone:'presentes/tiktok.png' },
+  { nome:'PALMEIRAS',     sigla:'PAL', emo:'🍦', presentes:['ice cream cone','casquinha de sorvete','sorvete'],
+    cor:'#0B7A3F', escudo:'escudos/palmeiras.png' , icone:'presentes/sorvete.png' },
+  { nome:'SÃO PAULO',     sigla:'SPFC',emo:'❤️', presentes:['heart me'],
+    cor:'#D4192B', escudo:'escudos/sao-paulo.png' , icone:'presentes/heart-me.png' },
+  { nome:'SANTOS',        sigla:'SAN', emo:'👍', presentes:['thumbs up','good job','bom trabalho'],
+    cor:'#FAFAFA', escudo:'escudos/santos.png' , icone:'presentes/bom-trabalho.png' },
+  { nome:'VASCO',         sigla:'VAS', emo:'🤍', presentes:['white rose','rosa branca'],
+    cor:'#CFCFCF', escudo:'escudos/vasco.png' , icone:'presentes/rosa-branca.png' },
+  { nome:'BOTAFOGO',      sigla:'BOT', emo:'🎮', presentes:['gg','bom jogo'],
+    cor:'#9A9A9A', escudo:'escudos/botafogo.png' , icone:'presentes/gg.png' },
+  { nome:'FLUMINENSE',    sigla:'FLU', emo:'🥰', presentes:['love you','amo você','amo voce'],
+    cor:'#7A1B2E', escudo:'escudos/fluminense.png' , icone:'presentes/amo-voce.png' },
+  { nome:'GRÊMIO',        sigla:'GRE', emo:'🍰', presentes:['cake slice','fatia de bolo'],
+    cor:'#0B6BD6', escudo:'escudos/gremio.png' , icone:'presentes/estilo-livre.png' },
+  { nome:'INTERNACIONAL', sigla:'INT', emo:'🐱', presentes:['amazing','incrível','incrivel'],
+    cor:'#B0102A', escudo:'escudos/internacional.png' , icone:'presentes/incrivel.png' },
+  { nome:'CRUZEIRO',      sigla:'CRU', emo:'😉', presentes:['cute wink','piscadinha'],
+    cor:'#2B5BD7', escudo:'escudos/cruzeiro.png' , icone:'presentes/piscadinha.png' },
+  { nome:'ATLÉTICO-MG',   sigla:'CAM', emo:'✨', presentes:['glow stick','bastão brilhante','bastao brilhante'],
+    cor:'#C4C4C4', escudo:'escudos/atletico-mg.png' , icone:'presentes/bastao.png' },
+  { nome:'BAHIA',         sigla:'BAH', emo:'🎈', presentes:['pop'],
+    cor:'#1E72D0', escudo:'escudos/bahia.png' , icone:'presentes/pop.png' },
+  { nome:'SPORT',         sigla:'SPT', emo:'🎸', presentes:['free style','estilo livre'],
+    cor:'#C8102E', escudo:'escudos/sport.png' , icone:'presentes/classicas.png' },
+]
+
+const META = 300          // moedas pra cruzar a linha de chegada
+const estado = TIMES.map(t => ({ ...t, moedas: 0, coroas: 0 }))
+/* Quanto cada pessoa empurrou na rodada. Zera junto com a corrida. */
+const empurrou = new Map()
+let topAtual = ''
+let rodada = 1
+let travado = false
+
+/* ---------- monta a pista ---------- */
+const pista = document.getElementById('pista')
+const largura = 100 / estado.length
+
+estado.forEach((t, i) => {
+  const raia = document.createElement('div')
+  raia.className = 'raia'
+  raia.style.left = (i * largura) + '%'
+  raia.style.width = largura + '%'
+  raia.innerHTML =
+    '<div class="rastro" style="background:linear-gradient(0deg,' + t.cor + '66,' + t.cor + ')"></div>' +
+    '<div class="corredor" style="bottom:0">' +
+      '<div class="coroa"></div>' +
+      '<div class="bolha" style="border-color:' + t.cor + '">' +
+        '<img src="' + t.escudo + '" alt="" onerror="this.remove()">' +
+        '<span>' + t.emo + '</span>' +
+      '</div>' +
+      
+      '<div class="sigla">' + t.sigla + '</div>' +
+      '<div class="moedas">0</div>' +
+    '</div>'
+  pista.appendChild(raia)
+})
+const corredores = [...document.querySelectorAll('.corredor')]
+const rastros = [...document.querySelectorAll('.rastro')]
+
+function pintar() {
+  const maior = Math.max(...estado.map(t => t.moedas))
+  estado.forEach((t, i) => {
+    const frac = Math.min(1, t.moedas / META)
+    const c = corredores[i]
+    c.style.bottom = (frac * 100) + '%'
+    rastros[i].style.height = (frac * 100) + '%'
+    c.querySelector('.moedas').textContent = t.moedas
+    c.querySelector('.coroa').textContent = '👑'.repeat(Math.min(t.coroas, 3))
+    c.classList.toggle('lider', t.moedas > 0 && t.moedas === maior)
+    c.classList.toggle('quase', frac >= .8 && frac < 1)
+  })
+}
+
+/* ---------- partículas ---------- */
+const cv = document.getElementById('particulas')
+const ctx = cv.getContext('2d')
+let pedacos = []
+
+function explodir(x, y, cor, quantos) {
+  for (let i = 0; i < quantos; i++) {
+    const a = Math.random() * Math.PI * 2
+    const v = 4 + Math.random() * 12
+    pedacos.push({ x, y, vx: Math.cos(a) * v, vy: Math.sin(a) * v - 4,
+      g: .42, vida: 1, cor, tam: 5 + Math.random() * 10, giro: Math.random() * 6 })
+  }
+}
+function chuvaDeConfete(cor) {
+  for (let i = 0; i < 280; i++) {
+    pedacos.push({ x: Math.random() * 1080, y: -40 - Math.random() * 500,
+      vx: (Math.random() - .5) * 4, vy: 5 + Math.random() * 9, g: .07, vida: 1,
+      cor: Math.random() < .55 ? cor : '#ffd23f', tam: 8 + Math.random() * 15, giro: Math.random() * 6 })
+  }
+}
+function quadro() {
+  ctx.clearRect(0, 0, 1080, 1920)
+  pedacos = pedacos.filter(p => p.vida > 0 && p.y < 2000)
+  for (const p of pedacos) {
+    p.x += p.vx; p.y += p.vy; p.vy += p.g; p.giro += .22; p.vida -= .006
+    ctx.save(); ctx.translate(p.x, p.y); ctx.rotate(p.giro)
+    ctx.globalAlpha = Math.max(0, p.vida); ctx.fillStyle = p.cor
+    ctx.fillRect(-p.tam / 2, -p.tam / 2, p.tam, p.tam * .62)
+    ctx.restore()
+  }
+  requestAnimationFrame(quadro)
+}
+quadro()
+
+/* posição do corredor dentro do palco, pra mirar o presente e a explosão */
+function ondeEsta(i) {
+  const r = corredores[i].getBoundingClientRect()
+  const p = document.getElementById('palco').getBoundingClientRect()
+  const e = p.width / 1080
+  return { x: (r.left - p.left) / e + r.width / e / 2, y: (r.top - p.top) / e + 35 }
+}
+
+function voar(emo, i, aoChegar) {
+  const alvo = ondeEsta(i)
+  const saidaX = 120 + Math.random() * 840
+  const el = document.createElement('div')
+  el.className = 'voando'
+  // Usa a imagem do presente quando existe; o emoji fica de reserva pra quando
+  // o arquivo não estiver lá.
+  const t = estado[i]
+  if (t.icone) {
+    const img = document.createElement('img')
+    img.src = t.icone
+    img.onerror = () => { el.textContent = emo }
+    el.appendChild(img)
+  } else {
+    el.textContent = emo
+  }
+  el.style.left = saidaX + 'px'
+  el.style.top = '1780px'
+  document.getElementById('palco').appendChild(el)
+  el.animate([
+    { transform: 'translate(0,0) scale(.5)', opacity: 0 },
+    { transform: 'translate(0,-240px) scale(1.3) rotate(16deg)', opacity: 1, offset: .35 },
+    { transform: 'translate(' + (alvo.x - saidaX) + 'px,' + (alvo.y - 1780) + 'px) scale(.65) rotate(-12deg)', opacity: 1 },
+  ], { duration: 800, easing: 'cubic-bezier(.3,.1,.2,1)' }).onfinish = () => { el.remove(); aoChegar() }
+}
+
+/* ---------- avisos ---------- */
+const fila = document.getElementById('fila')
+function avisar(html) {
+  const d = document.createElement('div')
+  d.className = 'aviso'
+  d.innerHTML = html
+  fila.appendChild(d)
+  while (fila.children.length > 3) fila.removeChild(fila.firstChild)
+  setTimeout(() => d.remove(), 7000)
+}
+
+function tremer() {
+  const p = document.getElementById('palco')
+  p.classList.remove('tremer'); void p.offsetWidth; p.classList.add('tremer')
+}
+
+/* ---------- avanço ---------- */
+function avancar(i, moedas, quem, emo) {
+  if (travado || i < 0 || i >= estado.length) return
+  const t = estado[i]
+
+  voar(emo || t.emo, i, () => {
+    // O presente leva um tempo voando. Se a corrida acabou nesse meio tempo, o
+    // avanço não vale mais: sem isso dois times cruzavam a linha na mesma corrida.
+    if (travado) return
+    t.moedas += moedas
+    const onde = ondeEsta(i)
+    explodir(onde.x, onde.y, t.cor, moedas >= 100 ? 70 : 24)
+    // acumula pra faixa do maior torcedor
+    const chave = quem || 'alguém'
+    empurrou.set(chave, (empurrou.get(chave) || 0) + moedas)
+    pintarTop()
+
+    const m = corredores[i].querySelector('.moedas')
+    m.classList.remove('pulo'); void m.offsetWidth; m.classList.add('pulo')
+    if (moedas >= 50) tremer()
+    if (t.moedas >= META) return vencer(i)
+    pintar()
+  })
+
+  avisar('<span>' + (quem || 'alguém') + '</span> ' + (emo || t.emo) + ' +' + moedas + ' ' + t.sigla)
+}
+
+function pintarTop() {
+  if (!empurrou.size) return
+  let nome = '', total = 0
+  for (const [k, v] of empurrou) if (v > total) { nome = k; total = v }
+  const cx = document.getElementById('topTorcedor')
+  cx.hidden = false
+  document.getElementById('topNome').textContent = nome
+  document.getElementById('topQnt').textContent = total
+  if (nome !== topAtual) {
+    topAtual = nome
+    cx.classList.remove('trocou'); void cx.offsetWidth; cx.classList.add('trocou')
+  }
+}
+
+const faixa = document.getElementById('faixa')
+function vencer(i) {
+  travado = true
+  const t = estado[i]
+  t.coroas++
+  pintar()
+  chuvaDeConfete(t.cor)
+  tremer()
+  const lc = document.getElementById('chegada')
+  lc.classList.remove('flash'); void lc.offsetWidth; lc.classList.add('flash')
+  const fe = document.getElementById('faixa-escudo')
+  fe.style.display = 'none'
+  fe.onload = () => { fe.style.display = 'block' }
+  fe.onerror = () => { fe.style.display = 'none' }
+  fe.src = t.escudo
+  document.getElementById('faixa-time').textContent = t.nome
+  document.getElementById('faixa-time').style.color = t.cor
+  document.getElementById('faixa-placar').textContent =
+    t.coroas + (t.coroas === 1 ? ' corrida ganha' : ' corridas ganhas')
+  faixa.classList.add('on')
+  setTimeout(() => {
+    faixa.classList.remove('on')
+    estado.forEach(x => { x.moedas = 0 })
+    empurrou.clear()
+    topAtual = ''
+    document.getElementById('topTorcedor').hidden = true
+    rodada++
+    document.getElementById('rodada').textContent = 'RODADA ' + rodada
+    travado = false
+    pintar()
+  }, 4300)
+}
+
+/* ---------- frases que trocam sozinhas ---------- */
+const FRASES = [
+  'qualquer presente serve, <b>vale o valor em moedas</b>',
+  'quem mais empurrar <b>aparece aqui em cima</b>',
+  'primeiro a cruzar a linha <b>vence a corrida</b>',
+  'seu time está atrás? <b>faz alguma coisa</b>',
+  'ainda não escolheu? <b>comenta o nome do time</b>',
+]
+let fraseAtual = 0
+setInterval(() => {
+  fraseAtual = (fraseAtual + 1) % FRASES.length
+  const el = document.getElementById('instrucao')
+  el.style.opacity = '0'
+  setTimeout(() => { el.innerHTML = FRASES[fraseAtual]; el.style.opacity = '1' }, 300)
+}, 5200)
+
+/* ---------- identificar o time citado ---------- */
+function acharTime(texto) {
+  const t = (texto || '').toUpperCase()
+  const apelidos = {
+    'FLAMENGO':['FLAMENGO','MENGO','MENGAO','MENGÃO','FLA'],
+    'CORINTHIANS':['CORINTHIANS','CORINTIANS','TIMAO','TIMÃO','SCCP'],
+    'PALMEIRAS':['PALMEIRAS','PORCO','VERDAO','VERDÃO'],
+    'SÃO PAULO':['SAO PAULO','SÃO PAULO','SPFC'],
+    'SANTOS':['SANTOS','PEIXE'],
+    'VASCO':['VASCO','CRUZMALTINO'],
+    'BOTAFOGO':['BOTAFOGO','FOGAO','FOGÃO','GLORIOSO'],
+    'FLUMINENSE':['FLUMINENSE','FLU'],
+    'GRÊMIO':['GREMIO','GRÊMIO','IMORTAL'],
+    'INTERNACIONAL':['INTERNACIONAL','INTER','COLORADO'],
+    'CRUZEIRO':['CRUZEIRO','RAPOSA','CABULOSO'],
+    'ATLÉTICO-MG':['ATLETICO','ATLÉTICO','GALO'],
+    'BAHIA':['BAHIA','ESQUADRAO'],
+    'SPORT':['SPORT','LEAO DA ILHA','LEÃO DA ILHA'],
+  }
+  for (let i = 0; i < estado.length; i++) {
+    const l = apelidos[estado[i].nome] || [estado[i].nome]
+    if (l.some(a => t.includes(a))) return i
+  }
+  return -1
+}
+
+/* ---------- entrada da live ----------
+   Quem comentou o nome de um time fica marcado como torcedor dele, pros
+   presentes que não pertencem a nenhum time. */
+const torcedores = new Map()
+
+function avisoConector(ligado) {
+  document.getElementById('semConector').classList.toggle('on', !ligado)
+}
+avisoConector(false)
+
+function ligarConector(porta) {
+  let ws
+  try { ws = new WebSocket('ws://localhost:' + porta) } catch { avisoConector(false); return }
+  ws.onopen = () => avisoConector(true)
+  ws.onmessage = ev => {
+    let msg
+    try { msg = JSON.parse(ev.data) } catch { return }
+
+    if (msg.tipo === 'comentario') {
+      const alvo = acharTime(msg.texto)
+      if (alvo < 0) return
+      torcedores.set(msg.id || msg.apelido, alvo)
+      avancar(alvo, 1, msg.apelido, '💬')
+      return
+    }
+
+    if (msg.tipo === 'presente') {
+      // O time vem do comentário, não do presente. Caçar um presente específico
+      // no meio de centenas afastava a maioria; assim qualquer presente serve.
+      const alvo = torcedores.has(msg.id || msg.apelido)
+        ? torcedores.get(msg.id || msg.apelido) : -1
+      if (alvo < 0) return
+      avancar(alvo, (msg.moedas || 1) * (msg.quantidade || 1), msg.apelido, estado[alvo].emo)
+    }
+  }
+  ws.onclose = () => { avisoConector(false); setTimeout(() => ligarConector(porta), 4000) }
+  ws.onerror = () => { try { ws.close() } catch {} }
+}
+ligarConector(21213)
+
+/* ---------- modo de teste ----------
+   Tecla D liga e desliga presentes aleatórios. Clique numa raia avança ela. */
+let demo = null
+addEventListener('keydown', e => {
+  if (e.key.toLowerCase() !== 'd') return
+  if (demo) { clearInterval(demo); demo = null; return }
+  demo = setInterval(() => {
+    const i = Math.floor(Math.random() * estado.length)
+    const moedas = [1, 1, 1, 5, 10, 30, 99][Math.floor(Math.random() * 7)]
+    avancar(i, moedas, 'teste' + Math.floor(Math.random() * 99), estado[i].emo)
+  }, 620)
+})
+document.querySelectorAll('.raia').forEach((r, i) =>
+  r.addEventListener('click', () => avancar(i, 10, 'clique', estado[i].emo)))
+
+/* ---------- escala ---------- */
+function encaixar() {
+  const e = Math.min(innerWidth / 1080, innerHeight / 1920)
+  const p = document.getElementById('palco')
+  p.style.setProperty('--e', e)
+  p.style.transform = 'translate(-50%,-50%) scale(' + e + ')'
+}
+addEventListener('resize', encaixar)
+encaixar()
+pintar()
+</script>
+</body>
+</html>
