@@ -25,6 +25,19 @@ s = re.sub(r"escudo:\s*'(escudos/[^']+)'", troca, s)
 s = re.sub(r"icone:\s*'(presentes/[^']+)'", lambda m: "icone:'%s'" % embutir(m.group(1))
           if os.path.exists(m.group(1)) else m.group(0), s)
 
+# A música fica fora do base64 de propósito: uma faixa de três minutos pesa
+# mais que o jogo inteiro, e o arquivo ficaria pesado demais pra abrir. O
+# caminho entra relativo, que é como o conector serve a pasta na live.
+if os.path.isdir('musicas'):
+    sons = sorted(a for a in os.listdir('musicas')
+                  if a.lower().endswith(('.mp3', '.m4a', '.ogg', '.wav', '.aac')))
+    if sons:
+        lista = ','.join("'musicas/%s'" % a.replace("'", "\\'") for a in sons)
+        s = s.replace('/*LISTA_DE_MUSICAS*/', lista)
+        print('músicas na lista:', len(sons))
+    else:
+        print('pasta musicas vazia: o painel deixa escolher do computador')
+
 faltando = re.findall(r"escudos/[^']+", s) + re.findall(r"presentes/[^']+", s)
 if faltando:
     print('sem arquivo, seguem no emoji:', ', '.join(sorted(set(faltando))))
