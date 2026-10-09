@@ -35,6 +35,13 @@ for (const lugar of [__dirname, path.join(__dirname, '..')]) {
   } catch {}
 }
 if (chave) {
+  // Cada versão da biblioteca recebe a chave num lugar. Na 1.2.x ela vai nos
+  // parâmetros extras do assinador; nas novas existe um SignConfig. Define as
+  // duas, assim funciona sem depender da versão instalada.
+  if (lib.signatureProvider && lib.signatureProvider.config) {
+    lib.signatureProvider.config.extraParams =
+      Object.assign({}, lib.signatureProvider.config.extraParams, { apiKey: chave })
+  }
   if (lib.SignConfig) lib.SignConfig.apiKey = chave
   console.log('Chave de assinatura carregada.')
 } else {
