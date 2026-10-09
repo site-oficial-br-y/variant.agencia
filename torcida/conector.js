@@ -20,6 +20,20 @@ const path = require('path')
 // nas novas é TikTokLiveConnection. Aceita as duas pra não quebrar na atualização.
 const lib = require('tiktok-live-connector')
 const Conexao = lib.TikTokLiveConnection || lib.WebcastPushConnection
+
+/* Chave do serviço que assina a conexão com o TikTok. Sem ela a conexão é
+   recusada com 403 quando o limite gratuito compartilhado estoura. Pega a sua
+   em eulerstream.com, cola no arquivo chave.txt ao lado deste, e pronto.
+   O arquivo fica fora do repositório de propósito: é segredo seu. */
+let chave = process.env.EULER_API_KEY || ''
+try { chave = (fs.readFileSync(path.join(__dirname, 'chave.txt'), 'utf8') || '').trim() || chave } catch {}
+if (chave) {
+  if (lib.SignConfig) lib.SignConfig.apiKey = chave
+  console.log('Chave de assinatura carregada.')
+} else {
+  console.log('Sem chave de assinatura. Se der erro 403, crie o arquivo chave.txt')
+  console.log('com a chave de eulerstream.com dentro.')
+}
 if (!Conexao) {
   console.error('Não achei a classe de conexão na biblioteca. Rode: npm install tiktok-live-connector')
   process.exit(1)
@@ -78,7 +92,7 @@ http.createServer((req, res) => {
 console.log('Servidor pronto em ws://localhost:' + PORTA)
 console.log('Procurando a live de @' + usuario + '...')
 
-const live = new Conexao(usuario)
+const live = new Conexao(usuario, chave ? { signApiKey: chave } : {})
 
 live.connect()
   .then(info => console.log('Conectado à live. ID da sala:', info.roomId))
