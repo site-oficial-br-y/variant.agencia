@@ -85,6 +85,8 @@ const PORTA_SITE = 8080
 const TIPOS = {
   '.html': 'text/html; charset=utf-8', '.js': 'text/javascript', '.css': 'text/css',
   '.png': 'image/png', '.webp': 'image/webp', '.jpg': 'image/jpeg', '.svg': 'image/svg+xml',
+  '.json': 'application/json', '.mp3': 'audio/mpeg', '.m4a': 'audio/mp4',
+  '.ogg': 'audio/ogg', '.wav': 'audio/wav',
 }
 
 http.createServer((req, res) => {
