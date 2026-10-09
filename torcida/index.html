@@ -40,6 +40,19 @@ html,body{height:100%;background:#03050a;overflow:hidden;
   border-radius:999px;font-size:23px;font-weight:900;letter-spacing:4px;color:#ffd23f;
   background:rgba(0,0,0,.45)}
 
+/* O que faz gastar em live não é o jogo, é aparecer na tela. Esta faixa mostra
+   quem mais empurrou na rodada, e serve de alvo: dá pra tomar o lugar. */
+#topTorcedor{display:inline-flex;align-items:center;gap:12px;margin-top:12px;
+  padding:9px 20px;border-radius:999px;border:3px solid rgba(255,210,63,.55);
+  background:rgba(8,11,18,.86)}
+#topTorcedor[hidden]{display:none}
+#topTorcedor .rot{font-size:18px;font-weight:900;letter-spacing:3px;color:rgba(255,255,255,.5)}
+#topTorcedor .quem{font-size:27px;font-weight:900;color:#ffd23f;max-width:420px;
+  overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+#topTorcedor .qnt{font-size:23px;font-weight:900;color:rgba(255,255,255,.7);font-variant-numeric:tabular-nums}
+#topTorcedor.trocou{animation:trocou .7s cubic-bezier(.2,1.6,.4,1)}
+@keyframes trocou{0%{transform:scale(1)}40%{transform:scale(1.12);border-color:#fff}100%{transform:scale(1)}}
+
 /* ---------- linha de chegada ---------- */
 /* Quadriculado de verdade: duas fileiras alternadas, como bandeira de chegada.
    O xadrez vem de um gradiente cônico repetido, que é o jeito curto de fazer
@@ -158,6 +171,11 @@ html,body{height:100%;background:#03050a;overflow:hidden;
   <div id="topo">
     <div id="titulo">Qual torcida<br>é <b>maior</b>?</div>
     <div id="rodada">RODADA 1</div>
+    <div id="topTorcedor" hidden>
+      <span class="rot">MAIOR TORCEDOR</span>
+      <span class="quem" id="topNome">—</span>
+      <span class="qnt" id="topQnt">0</span>
+    </div>
   </div>
 
   <div id="chegada-txt">LINHA DE CHEGADA</div>
@@ -169,8 +187,8 @@ html,body{height:100%;background:#03050a;overflow:hidden;
   <div id="base">
     <div id="fila"></div>
     <div id="regras">
-      <div class="regra"><i>A</i> <span>manda o <b>presente do seu time</b>, o do selinho</span></div>
-      <div class="regra"><i>B</i> <span>ou comenta o time <b>uma vez</b> e manda qualquer presente</span></div>
+      <div class="regra"><i>1</i> <span>comenta o nome do <b>seu time</b></span></div>
+      <div class="regra"><i>2</i> <span>manda <b>qualquer presente</b>, ele empurra o seu time</span></div>
     </div>
     <div id="instrucao">manda o presente do seu time pra <b>ele subir</b></div>
   </div>
@@ -244,6 +262,9 @@ const TIMES = [
 
 const META = 300          // moedas pra cruzar a linha de chegada
 const estado = TIMES.map(t => ({ ...t, moedas: 0, coroas: 0 }))
+/* Quanto cada pessoa empurrou na rodada. Zera junto com a corrida. */
+const empurrou = new Map()
+let topAtual = ''
 let rodada = 1
 let travado = false
 
@@ -264,10 +285,7 @@ estado.forEach((t, i) => {
         '<img src="' + t.escudo + '" alt="" onerror="this.remove()">' +
         '<span>' + t.emo + '</span>' +
       '</div>' +
-      '<div class="selo">' +
-        '<img src="' + t.icone + '" alt="" onerror="this.remove()">' +
-        '<span>' + t.emo + '</span>' +
-      '</div>' +
+      
       '<div class="sigla">' + t.sigla + '</div>' +
       '<div class="moedas">0</div>' +
     '</div>'
@@ -386,6 +404,11 @@ function avancar(i, moedas, quem, emo) {
     t.moedas += moedas
     const onde = ondeEsta(i)
     explodir(onde.x, onde.y, t.cor, moedas >= 100 ? 70 : 24)
+    // acumula pra faixa do maior torcedor
+    const chave = quem || 'alguém'
+    empurrou.set(chave, (empurrou.get(chave) || 0) + moedas)
+    pintarTop()
+
     const m = corredores[i].querySelector('.moedas')
     m.classList.remove('pulo'); void m.offsetWidth; m.classList.add('pulo')
     if (moedas >= 50) tremer()
@@ -394,6 +417,20 @@ function avancar(i, moedas, quem, emo) {
   })
 
   avisar('<span>' + (quem || 'alguém') + '</span> ' + (emo || t.emo) + ' +' + moedas + ' ' + t.sigla)
+}
+
+function pintarTop() {
+  if (!empurrou.size) return
+  let nome = '', total = 0
+  for (const [k, v] of empurrou) if (v > total) { nome = k; total = v }
+  const cx = document.getElementById('topTorcedor')
+  cx.hidden = false
+  document.getElementById('topNome').textContent = nome
+  document.getElementById('topQnt').textContent = total
+  if (nome !== topAtual) {
+    topAtual = nome
+    cx.classList.remove('trocou'); void cx.offsetWidth; cx.classList.add('trocou')
+  }
 }
 
 const faixa = document.getElementById('faixa')
@@ -419,6 +456,9 @@ function vencer(i) {
   setTimeout(() => {
     faixa.classList.remove('on')
     estado.forEach(x => { x.moedas = 0 })
+    empurrou.clear()
+    topAtual = ''
+    document.getElementById('topTorcedor').hidden = true
     rodada++
     document.getElementById('rodada').textContent = 'RODADA ' + rodada
     travado = false
@@ -428,11 +468,11 @@ function vencer(i) {
 
 /* ---------- frases que trocam sozinhas ---------- */
 const FRASES = [
-  'cada time também tem <b>um presente só dele</b>',
-  'o valor em moedas <b>vira avanço</b>',
+  'qualquer presente serve, <b>vale o valor em moedas</b>',
+  'quem mais empurrar <b>aparece aqui em cima</b>',
   'primeiro a cruzar a linha <b>vence a corrida</b>',
   'seu time está atrás? <b>faz alguma coisa</b>',
-  'presente de <b>1 moeda</b> já conta',
+  'ainda não escolheu? <b>comenta o nome do time</b>',
 ]
 let fraseAtual = 0
 setInterval(() => {
@@ -489,9 +529,9 @@ function ligarConector(porta) {
     }
 
     if (msg.tipo === 'presente') {
-      const nome = String(msg.presente || '').toLowerCase()
-      let alvo = estado.findIndex(t => t.presentes.includes(nome))
-      if (alvo < 0) alvo = torcedores.has(msg.id || msg.apelido)
+      // O time vem do comentário, não do presente. Caçar um presente específico
+      // no meio de centenas afastava a maioria; assim qualquer presente serve.
+      const alvo = torcedores.has(msg.id || msg.apelido)
         ? torcedores.get(msg.id || msg.apelido) : -1
       if (alvo < 0) return
       avancar(alvo, (msg.moedas || 1) * (msg.quantidade || 1), msg.apelido, estado[alvo].emo)

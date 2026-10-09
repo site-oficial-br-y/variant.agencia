@@ -30,19 +30,21 @@ largura 1080 e altura 1920. A tela escala sozinha pra qualquer tamanho.
 
 ## Como o público joga
 
-São duas formas, e as duas estão escritas na tela:
+Uma regra só, escrita na tela:
 
-**A) Manda o presente do time.** Cada time tem um presente de 1 moeda só dele,
-mostrado no selinho ao lado do escudo. Mandou aquele presente, o time sobe.
-Não precisa comentar nada.
+**1. Comenta o nome do time.** Aceita apelido: mengão, timão, verdão, peixe,
+galo. Isso marca a pessoa como torcedora daquele time e já dá +1.
 
-**B) Comenta o nome do time uma vez.** Aceita apelido: mengão, timão, verdão,
-peixe, galo. A partir dali, qualquer presente que a pessoa mandar vai pro time
-dela, e o avanço é o valor em moedas: presente de 10 sobe 10, de 100 sobe 100.
+**2. Manda qualquer presente.** Ele empurra o time dela, e o avanço é o valor em
+moedas: presente de 10 sobe 10, de 100 sobe 100.
 
-A forma A é pra quem quer gastar pouco, a B é pra quem quer mandar presente
-caro. Todos os presentes de time custam 1 moeda de propósito, pra disputa ser
-de torcida e não de quem tem mais dinheiro.
+Antes cada time tinha um presente específico. Não funcionava: vários estão
+enterrados no painel do TikTok, e ninguém caça presente no meio de centenas.
+Agora qualquer presente serve, e a pessoa manda o que ela já ia mandar.
+
+**A faixa do maior torcedor**, no topo, mostra quem mais empurrou na rodada.
+É ela que faz gastar: dá pra tomar o lugar de alguém e aparecer na tela. Zera
+junto com a corrida.
 
 Primeiro a cruzar a linha de chegada vence a corrida e ganha uma coroa.
 
