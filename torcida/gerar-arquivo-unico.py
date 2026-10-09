@@ -7,7 +7,7 @@ qualquer lugar, inclusive no celular sem internet.
 
 Rode de dentro da pasta torcida:  python3 gerar-arquivo-unico.py
 """
-import base64, os, re
+import base64, json, os, re
 
 def embutir(caminho):
     tipo = 'image/webp' if caminho.endswith('.webp') else 'image/png'
@@ -34,6 +34,9 @@ if os.path.isdir('musicas'):
     if sons:
         lista = ','.join("'musicas/%s'" % a.replace("'", "\\'") for a in sons)
         s = s.replace('/*LISTA_DE_MUSICAS*/', lista)
+        # O index.html não leva a lista embutida: ele lê este arquivo. Assim
+        # subir uma música nova é só rodar o gerador, sem editar o HTML.
+        json.dump(sons, open('musicas/lista.json', 'w'), ensure_ascii=False)
         print('músicas na lista:', len(sons))
     else:
         print('pasta musicas vazia: o painel deixa escolher do computador')
