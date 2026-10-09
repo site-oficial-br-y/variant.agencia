@@ -122,16 +122,25 @@ html,body{height:100%;background:#03050a;overflow:hidden;
 #particulas{position:absolute;inset:0;pointer-events:none;z-index:6}
 
 /* ---------- base ---------- */
-#base{position:absolute;left:0;right:0;bottom:0;z-index:5;padding:20px 36px 30px;
+/* Só o escurecido do rodapé, pra fileira de times não brigar com o gramado.
+   O mural de avisos saiu daqui: no rodapé ele ficava atrás do chat do TikTok. */
+#base{position:absolute;left:0;right:0;bottom:0;height:150px;z-index:5;
   background:linear-gradient(transparent,rgba(3,5,10,.96) 34%)}
-/* Altura livre e no máximo três: com altura fixa o aviso mais antigo ficava
-   cortado ao meio na borda de cima. */
-#fila{display:flex;flex-direction:column-reverse;gap:7px;min-height:108px;justify-content:flex-start}
-.aviso{background:rgba(8,11,18,.9);border:3px solid rgba(255,210,63,.42);border-radius:12px;
-  padding:7px 15px;font-size:23px;font-weight:900;align-self:flex-start;
-  animation:entraAviso .3s cubic-bezier(.2,1.6,.4,1)}
-.aviso span{color:#ffd23f}
-@keyframes entraAviso{from{opacity:0;transform:translateY(20px) scale(.85)}to{opacity:1;transform:none}}
+
+/* ---------- mural: quem escolheu e quem empurrou ---------- */
+/* Vem logo abaixo das regras, porque é o que prova que comentar funciona:
+   a pessoa escreve o nome do time e se vê na tela em menos de um segundo. */
+#fila{display:flex;flex-direction:column;gap:8px;align-items:flex-start}
+.aviso{display:flex;align-items:center;gap:12px;max-width:100%;
+  background:rgba(8,11,18,.9);border:3px solid rgba(255,210,63,.42);border-left-width:10px;
+  border-radius:12px;padding:8px 16px 8px 13px;font-size:26px;font-weight:900;
+  animation:entraAviso .32s cubic-bezier(.2,1.6,.4,1)}
+.aviso img{width:44px;height:44px;flex:none;object-fit:contain;border-radius:50%;
+  background:rgba(255,255,255,.9);padding:3px}
+.aviso .quem{color:#ffd23f}
+.aviso .time{letter-spacing:-.5px}
+.aviso .mais{margin-left:2px;color:#4ade80}
+@keyframes entraAviso{from{opacity:0;transform:translateX(-26px) scale(.9)}to{opacity:1;transform:none}}
 /* Quadro fixo das regras: quem entra na live tem poucos segundos pra entender.
    A frase que troca sozinha fica embaixo, como reforço, não como explicação. */
 /* São dois caminhos, não dois passos: numerado como 1 e 2 dava a entender que
@@ -207,14 +216,13 @@ html,body{height:100%;background:#03050a;overflow:hidden;
       <div class="regra"><i>2</i> <span>manda <b>qualquer presente</b> pra ele subir</span></div>
     </div>
     <div id="instrucao">presente mais caro <b>empurra mais</b></div>
+    <div id="fila"></div>
   </div>
 
   <div id="pista"></div>
   <canvas id="particulas" width="1080" height="1920"></canvas>
 
-  <div id="base">
-    <div id="fila"></div>
-  </div>
+  <div id="base"></div>
 
   <div id="versao">v5</div>
 
@@ -405,13 +413,24 @@ function voar(emo, i, aoChegar) {
 
 /* ---------- avisos ---------- */
 const fila = document.getElementById('fila')
-function avisar(html) {
+/* O mais novo entra por cima e empurra os outros pra baixo, como chat. O
+   escudo vai junto porque de relance ele se lê mais rápido que a sigla, e a
+   borda esquerda pega a cor do time pra dar pra acompanhar sem ler nada. */
+function avisar(html, i) {
+  const t = i >= 0 ? estado[i] : null
   const d = document.createElement('div')
   d.className = 'aviso'
-  d.innerHTML = html
-  fila.appendChild(d)
-  while (fila.children.length > 3) fila.removeChild(fila.firstChild)
-  setTimeout(() => d.remove(), 7000)
+  if (t) d.style.borderLeftColor = t.cor
+  const escudo = t && t.escudo ? '<img src="' + t.escudo + '" alt="" onerror="this.remove()">' : ''
+  d.innerHTML = escudo + '<div>' + html + '</div>'
+  fila.insertBefore(d, fila.firstChild)
+  while (fila.children.length > 4) fila.removeChild(fila.lastChild)
+  setTimeout(() => d.remove(), 8000)
+}
+
+function escaparTexto(s) {
+  return String(s || 'alguém').replace(/[&<>"]/g, c =>
+    ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]))
 }
 
 function tremer() {
@@ -443,7 +462,8 @@ function avancar(i, moedas, quem, emo) {
     pintar()
   })
 
-  avisar('<span>' + (quem || 'alguém') + '</span> ' + (emo || t.emo) + ' +' + moedas + ' ' + t.sigla)
+  avisar('<span class="quem">' + escaparTexto(quem) + '</span> empurrou o '
+    + '<span class="time">' + t.nome + '</span> <span class="mais">+' + moedas + '</span>', i)
 }
 
 function pintarTop() {
@@ -562,7 +582,8 @@ function ligarConector(porta) {
       const chave = msg.id || msg.apelido
       if (torcedores.get(chave) === alvo) return
       torcedores.set(chave, alvo)
-      avisar('<span>' + (msg.apelido || 'alguém') + '</span> escolheu ' + estado[alvo].sigla)
+      avisar('<span class="quem">' + escaparTexto(msg.apelido) + '</span> escolheu o '
+        + '<span class="time">' + estado[alvo].nome + '</span>', alvo)
       return
     }
 
