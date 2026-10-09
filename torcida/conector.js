@@ -12,6 +12,7 @@
  */
 
 const { WebSocketServer } = require('ws')
+const fs = require('fs')
 
 // A biblioteca mudou de nome entre versões: nas antigas é WebcastPushConnection,
 // nas novas é TikTokLiveConnection. Aceita as duas pra não quebrar na atualização.
@@ -85,11 +86,28 @@ live.on('gift', d => {
     moedas,
   })
 
-  // Imprime o nome exato que o TikTok manda. É esse texto que vai no campo
-  // `presente` da lista de times dentro do index.html.
-  console.log('presente:', JSON.stringify((d.giftName || '').toLowerCase()),
-              '| moedas:', moedas, '| x' + (d.repeatCount || 1), '|', d.nickname)
+  // Imprime e guarda o nome exato que o TikTok manda. É esse texto que vai na
+  // lista `presentes` do time, dentro do index.html. Fica em arquivo porque o
+  // terminal rola e some, e depois de uma live cheia não dá pra achar de novo.
+  const nome = (d.giftName || '').toLowerCase()
+  console.log('presente:', JSON.stringify(nome), '| moedas:', moedas,
+              '| x' + (d.repeatCount || 1), '|', d.nickname)
+  anotar(nome, moedas)
 })
+
+/* Catálogo dos presentes vistos, um por linha, sem repetir. */
+const vistos = new Map()
+function anotar(nome, moedas) {
+  if (!nome || vistos.has(nome)) return
+  vistos.set(nome, moedas)
+  const linhas = [...vistos.entries()]
+    .sort((a, b) => a[1] - b[1] || a[0].localeCompare(b[0]))
+    .map(([n, m]) => String(m).padStart(6) + ' moedas   ' + n)
+  fs.writeFileSync('presentes-vistos.txt',
+    'Presentes que apareceram na live, do mais barato pro mais caro.\n' +
+    'Copie o nome pra lista `presentes` do time, no index.html.\n\n' +
+    linhas.join('\n') + '\n')
+}
 
 live.on('disconnected', () => console.log('A live caiu ou terminou.'))
 live.on('streamEnd', () => console.log('A transmissão foi encerrada.'))

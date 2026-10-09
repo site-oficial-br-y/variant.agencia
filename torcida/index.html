@@ -58,7 +58,10 @@ html,body{height:100%;background:#03050a;overflow:hidden;
   text-shadow:0 3px 16px rgba(0,0,0,1)}
 
 /* ---------- pista ---------- */
-#pista{position:absolute;left:28px;right:28px;top:376px;bottom:286px;z-index:3}
+/* O rodapé cresceu com o quadro de regras. A pista precisa parar acima dele:
+   o corredor em zero ainda desce meia bolha mais a sigla e o número, uns 80px
+   abaixo da borda, e estava caindo em cima dos avisos. */
+#pista{position:absolute;left:28px;right:28px;top:376px;bottom:382px;z-index:3}
 .raia{position:absolute;top:0;bottom:0;border-left:2px solid rgba(255,255,255,.07)}
 .raia:last-child{border-right:2px solid rgba(255,255,255,.07)}
 .rastro{position:absolute;left:50%;transform:translateX(-50%);width:16px;bottom:0;border-radius:8px;
@@ -69,15 +72,20 @@ html,body{height:100%;background:#03050a;overflow:hidden;
 @keyframes sobe{to{background-position:0 -120px}}
 
 /* o corredor: escudo do time que vai subindo */
-.corredor{position:absolute;left:50%;width:72px;transform:translate(-50%,50%);
+.corredor{position:absolute;left:50%;width:72px;overflow:visible;transform:translate(-50%,50%);
   transition:bottom .55s cubic-bezier(.17,.89,.32,1.15);text-align:center;z-index:2}
 /* A bolinha é clara por dentro: escudo tem muita cor escura e sumia no fundo
    do time. O anel por fora é que carrega a cor do clube. */
-.bolha{position:relative;width:70px;height:70px;margin:0 auto;border-radius:50%;
+.bolha{position:relative;width:70px;height:70px;margin:0 auto;overflow:visible;border-radius:50%;
   display:grid;place-items:center;border:4px solid rgba(255,255,255,.85);
-  box-shadow:0 6px 22px rgba(0,0,0,.85);overflow:hidden;background:rgba(248,250,255,.94)}
-.bolha img{position:absolute;inset:0;width:100%;height:100%;object-fit:contain;z-index:2;padding:7px}
+  box-shadow:0 6px 22px rgba(0,0,0,.85);background:rgba(248,250,255,.94)}
+.bolha img{position:absolute;inset:0;width:100%;height:100%;object-fit:contain;z-index:2;padding:7px;border-radius:50%}
 .bolha span{font-size:34px;line-height:1}
+/* Selo do presente do time, grudado no escudo: sem isso ninguém descobre qual
+   presente pertence a quem. */
+.selo{position:absolute;right:-4px;top:-4px;width:30px;height:30px;border-radius:50%;
+  background:rgba(10,13,20,.95);border:2px solid rgba(255,255,255,.6);
+  display:grid;place-items:center;font-size:16px;z-index:3}
 .sigla{margin-top:4px;font-size:18px;font-weight:900;letter-spacing:-.5px;
   text-shadow:0 0 3px #000,2px 2px 0 rgba(0,0,0,.95),-2px 2px 0 rgba(0,0,0,.95),
               2px -2px 0 rgba(0,0,0,.95),-2px -2px 0 rgba(0,0,0,.95)}
@@ -106,6 +114,15 @@ html,body{height:100%;background:#03050a;overflow:hidden;
   animation:entraAviso .3s cubic-bezier(.2,1.6,.4,1)}
 .aviso span{color:#ffd23f}
 @keyframes entraAviso{from{opacity:0;transform:translateY(20px) scale(.85)}to{opacity:1;transform:none}}
+/* Quadro fixo das regras: quem entra na live tem poucos segundos pra entender.
+   A frase que troca sozinha fica embaixo, como reforço, não como explicação. */
+#regras{display:flex;gap:12px;justify-content:center;margin-bottom:14px}
+.regra{display:flex;align-items:center;gap:11px;background:rgba(8,11,18,.88);
+  border:3px solid rgba(255,210,63,.4);border-radius:14px;padding:11px 18px;
+  font-size:25px;font-weight:800;color:rgba(255,255,255,.9)}
+.regra i{font-style:normal;width:34px;height:34px;flex:none;border-radius:50%;
+  background:#ffd23f;color:#111;font-weight:900;font-size:21px;display:grid;place-items:center}
+.regra b{color:#ffd23f}
 #instrucao{text-align:center;font-size:30px;font-weight:900;color:rgba(255,255,255,.88);
   transition:opacity .3s;text-shadow:0 2px 12px rgba(0,0,0,1)}
 #instrucao b{color:#ffd23f}
@@ -144,6 +161,10 @@ html,body{height:100%;background:#03050a;overflow:hidden;
 
   <div id="base">
     <div id="fila"></div>
+    <div id="regras">
+      <div class="regra"><i>1</i> <span>comenta o nome do <b>seu time</b></span></div>
+      <div class="regra"><i>2</i> <span>manda <b>qualquer presente</b> e ele sobe</span></div>
+    </div>
     <div id="instrucao">manda o presente do seu time pra <b>ele subir</b></div>
   </div>
 
@@ -171,21 +192,47 @@ html,body{height:100%;background:#03050a;overflow:hidden;
    presente não estiver pontuando, é esse texto que está diferente.
 
    `escudo` é opcional: faltando o arquivo, o emoji aparece no lugar. */
+/* Cada time tem um presente de 1 moeda só dele. Mandar aquele presente faz
+   aquele time subir, sem precisar comentar nada.
+
+   São todos de 1 moeda de propósito: assim qualquer pessoa participa, e a
+   disputa vira de torcida em vez de quem tem mais dinheiro. Quem quiser
+   empurrar forte manda presente caro e escolhe o time no comentário.
+
+   `presentes` aceita vários nomes porque o TikTok manda o nome do presente no
+   idioma da conta: às vezes "rose", às vezes "rosa". Qualquer um da lista vale.
+   CONFIRA numa live de teste: o conector salva em presentes-vistos.txt o nome
+   exato de cada presente que chegar. Se algum não estiver pontuando, é só
+   acrescentar o nome que apareceu lá na lista do time. */
 const TIMES = [
-  { nome:'FLAMENGO',      sigla:'FLA', emo:'🌹', presente:'rose',           cor:'#E21B1B', escudo:'escudos/flamengo.png' },
-  { nome:'CORINTHIANS',   sigla:'COR', emo:'🎵', presente:'tiktok',         cor:'#EDEDED', escudo:'escudos/corinthians.png' },
-  { nome:'PALMEIRAS',     sigla:'PAL', emo:'🍦', presente:'ice cream cone', cor:'#0B7A3F', escudo:'escudos/palmeiras.png' },
-  { nome:'SÃO PAULO',     sigla:'SPFC',emo:'❤️', presente:'heart me',       cor:'#D4192B', escudo:'escudos/sao-paulo.png' },
-  { nome:'SANTOS',        sigla:'SAN', emo:'👍', presente:'thumbs up',      cor:'#FAFAFA', escudo:'escudos/santos.png' },
-  { nome:'VASCO',         sigla:'VAS', emo:'☕', presente:'coffee',         cor:'#CFCFCF', escudo:'escudos/vasco.png' },
-  { nome:'BOTAFOGO',      sigla:'BOT', emo:'🎤', presente:'mic',            cor:'#9A9A9A', escudo:'escudos/botafogo.png' },
-  { nome:'FLUMINENSE',    sigla:'FLU', emo:'🫰', presente:'finger heart',   cor:'#7A1B2E', escudo:'escudos/fluminense.png' },
-  { nome:'GRÊMIO',        sigla:'GRE', emo:'🍰', presente:'cake slice',     cor:'#0B6BD6', escudo:'escudos/gremio.png' },
-  { nome:'INTERNACIONAL', sigla:'INT', emo:'🌊', presente:'ocean heart',    cor:'#B0102A', escudo:'escudos/internacional.png' },
-  { nome:'CRUZEIRO',      sigla:'CRU', emo:'🧸', presente:'hand hearts',    cor:'#2B5BD7', escudo:'escudos/cruzeiro.png' },
-  { nome:'ATLÉTICO-MG',   sigla:'CAM', emo:'🕶️', presente:'sunglasses',     cor:'#C4C4C4', escudo:'escudos/atletico-mg.png' },
-  { nome:'BAHIA',         sigla:'BAH', emo:'🌺', presente:'perfume',        cor:'#1E72D0', escudo:'escudos/bahia.png' },
-  { nome:'SPORT',         sigla:'SPT', emo:'🦁', presente:'lion',           cor:'#C8102E', escudo:'escudos/sport.png' },
+  { nome:'FLAMENGO',      sigla:'FLA', emo:'🌹', presentes:['rose','rosa'],
+    cor:'#E21B1B', escudo:'escudos/flamengo.png' },
+  { nome:'CORINTHIANS',   sigla:'COR', emo:'🎵', presentes:['tiktok'],
+    cor:'#EDEDED', escudo:'escudos/corinthians.png' },
+  { nome:'PALMEIRAS',     sigla:'PAL', emo:'🍦', presentes:['ice cream cone','casquinha de sorvete','sorvete'],
+    cor:'#0B7A3F', escudo:'escudos/palmeiras.png' },
+  { nome:'SÃO PAULO',     sigla:'SPFC',emo:'❤️', presentes:['heart me'],
+    cor:'#D4192B', escudo:'escudos/sao-paulo.png' },
+  { nome:'SANTOS',        sigla:'SAN', emo:'👍', presentes:['thumbs up','good job','bom trabalho'],
+    cor:'#FAFAFA', escudo:'escudos/santos.png' },
+  { nome:'VASCO',         sigla:'VAS', emo:'🤍', presentes:['white rose','rosa branca'],
+    cor:'#CFCFCF', escudo:'escudos/vasco.png' },
+  { nome:'BOTAFOGO',      sigla:'BOT', emo:'🎮', presentes:['gg','bom jogo'],
+    cor:'#9A9A9A', escudo:'escudos/botafogo.png' },
+  { nome:'FLUMINENSE',    sigla:'FLU', emo:'🥰', presentes:['love you','amo você','amo voce'],
+    cor:'#7A1B2E', escudo:'escudos/fluminense.png' },
+  { nome:'GRÊMIO',        sigla:'GRE', emo:'🍰', presentes:['cake slice','fatia de bolo'],
+    cor:'#0B6BD6', escudo:'escudos/gremio.png' },
+  { nome:'INTERNACIONAL', sigla:'INT', emo:'🐱', presentes:['amazing','incrível','incrivel'],
+    cor:'#B0102A', escudo:'escudos/internacional.png' },
+  { nome:'CRUZEIRO',      sigla:'CRU', emo:'😉', presentes:['cute wink','piscadinha'],
+    cor:'#2B5BD7', escudo:'escudos/cruzeiro.png' },
+  { nome:'ATLÉTICO-MG',   sigla:'CAM', emo:'✨', presentes:['glow stick','bastão brilhante','bastao brilhante'],
+    cor:'#C4C4C4', escudo:'escudos/atletico-mg.png' },
+  { nome:'BAHIA',         sigla:'BAH', emo:'🎈', presentes:['pop'],
+    cor:'#1E72D0', escudo:'escudos/bahia.png' },
+  { nome:'SPORT',         sigla:'SPT', emo:'🎸', presentes:['free style','estilo livre'],
+    cor:'#C8102E', escudo:'escudos/sport.png' },
 ]
 
 const META = 300          // moedas pra cruzar a linha de chegada
@@ -210,6 +257,7 @@ estado.forEach((t, i) => {
         '<img src="' + t.escudo + '" alt="" onerror="this.remove()">' +
         '<span>' + t.emo + '</span>' +
       '</div>' +
+      '<div class="selo">' + t.emo + '</div>' +
       '<div class="sigla">' + t.sigla + '</div>' +
       '<div class="moedas">0</div>' +
     '</div>'
@@ -360,12 +408,11 @@ function vencer(i) {
 
 /* ---------- frases que trocam sozinhas ---------- */
 const FRASES = [
-  'manda o presente do seu time pra <b>ele subir</b>',
-  'cada time tem <b>o presente dele</b>',
+  'cada time também tem <b>um presente só dele</b>',
   'o valor em moedas <b>vira avanço</b>',
   'primeiro a cruzar a linha <b>vence a corrida</b>',
-  'comenta o nome do time pra <b>escolher seu lado</b>',
   'seu time está atrás? <b>faz alguma coisa</b>',
+  'presente de <b>1 moeda</b> já conta',
 ]
 let fraseAtual = 0
 setInterval(() => {
@@ -423,7 +470,7 @@ function ligarConector(porta) {
 
     if (msg.tipo === 'presente') {
       const nome = String(msg.presente || '').toLowerCase()
-      let alvo = estado.findIndex(t => t.presente === nome)
+      let alvo = estado.findIndex(t => t.presentes.includes(nome))
       if (alvo < 0) alvo = torcedores.has(msg.id || msg.apelido)
         ? torcedores.get(msg.id || msg.apelido) : -1
       if (alvo < 0) return

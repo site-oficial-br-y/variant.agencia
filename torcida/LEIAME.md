@@ -30,18 +30,18 @@ largura 1080 e altura 1920. A tela escala sozinha pra qualquer tamanho.
 
 ## Como o público joga
 
-**Cada time tem o presente dele.** Está na bolinha do corredor: Flamengo é a rosa,
-Palmeiras é o sorvete, Santos é o joinha, e assim por diante.
+Está escrito na tela, em duas regras:
 
-Mandou o presente, o time sobe. Não precisa comentar nada.
+**1. Comenta o nome do time.** Aceita apelido: mengão, timão, verdão, peixe,
+galo. Isso marca a pessoa como torcedora e já dá +1.
 
-**O avanço é o valor em moedas do presente.** Presente de 1 moeda dá 1 ponto,
-presente de 99 sobe 99. Assim nenhum time fica em desvantagem por ter caído com
-um presente barato, e quem empurra mais é quem gastou mais.
+**2. Manda qualquer presente.** Ele vai pro time que ela escolheu, e o avanço é
+o valor em moedas: presente de 10 sobe 10, de 100 sobe 100.
 
-Quem comenta o nome de um time também ganha +1 e fica marcado como torcedor
-dele. Serve pra quem não quer gastar, e pros presentes que não são de time
-nenhum.
+**Atalho:** cada time também tem um presente de 1 moeda só dele, mostrado no
+selinho ao lado do escudo. Mandar aquele presente pontua direto, sem precisar
+comentar. São todos de 1 moeda de propósito, pra qualquer pessoa conseguir
+participar.
 
 Primeiro a cruzar a linha de chegada vence a corrida e ganha uma coroa.
 
@@ -51,16 +51,14 @@ Tudo que você vai querer trocar está no começo do `<script>` do `index.html`:
 
 - **`TIMES`** — lista de times, com o presente, a sigla e a cor de cada um. Acrescentar time é somar uma linha.
 
-  **O campo `presente` precisa bater com o nome exato que o TikTok envia.** Os
-  que estão lá são o meu palpite. Numa live de teste, o conector imprime no
-  terminal o nome real de cada presente que chegar, assim:
+  **O campo `presentes` é uma lista de nomes.** O TikTok manda o nome do
+  presente no idioma da conta, às vezes "rose", às vezes "rosa", por isso cada
+  time aceita vários. Os que estão lá são o meu palpite.
 
-  ```
-  presente: "rose" | moedas: 1 | x1 | fulano
-  ```
-
-  É só copiar o texto entre aspas pro campo `presente` do time. Faz isso uma vez
-  e nunca mais precisa mexer.
+  Durante a live o conector salva um arquivo **`presentes-vistos.txt`** com o
+  nome exato e o valor de cada presente que apareceu, do mais barato pro mais
+  caro. Se algum presente não estiver pontuando, abre esse arquivo e acrescenta
+  o nome que está lá na lista do time. Faz isso uma vez e nunca mais precisa.
 - **`META`** — quantas moedas levam até a linha de chegada. Menor, corrida mais
   rápida. Está em 300.
 - **`fundo.webp`** — a foto do estádio. Trocar o arquivo troca o cenário.
