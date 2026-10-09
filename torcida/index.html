@@ -74,7 +74,7 @@ html,body{height:100%;background:#03050a;overflow:hidden;
 /* O rodapé cresceu com o quadro de regras. A pista precisa parar acima dele:
    o corredor em zero ainda desce meia bolha mais a sigla e o número, uns 80px
    abaixo da borda, e estava caindo em cima dos avisos. */
-#pista{position:absolute;left:28px;right:28px;top:376px;bottom:476px;z-index:3}
+#pista{position:absolute;left:28px;right:28px;top:376px;bottom:300px;z-index:3}
 .raia{position:absolute;top:0;bottom:0;border-left:2px solid rgba(255,255,255,.07)}
 .raia:last-child{border-right:2px solid rgba(255,255,255,.07)}
 .rastro{position:absolute;left:50%;transform:translateX(-50%);width:16px;bottom:0;border-radius:8px;
@@ -126,7 +126,7 @@ html,body{height:100%;background:#03050a;overflow:hidden;
   background:linear-gradient(transparent,rgba(3,5,10,.96) 34%)}
 /* Altura livre e no máximo três: com altura fixa o aviso mais antigo ficava
    cortado ao meio na borda de cima. */
-#fila{display:flex;flex-direction:column-reverse;gap:7px;margin-bottom:14px;min-height:108px;justify-content:flex-start}
+#fila{display:flex;flex-direction:column-reverse;gap:7px;min-height:108px;justify-content:flex-start}
 .aviso{background:rgba(8,11,18,.9);border:3px solid rgba(255,210,63,.42);border-radius:12px;
   padding:7px 15px;font-size:23px;font-weight:900;align-self:flex-start;
   animation:entraAviso .3s cubic-bezier(.2,1.6,.4,1)}
@@ -136,7 +136,12 @@ html,body{height:100%;background:#03050a;overflow:hidden;
    A frase que troca sozinha fica embaixo, como reforço, não como explicação. */
 /* São dois caminhos, não dois passos: numerado como 1 e 2 dava a entender que
    era obrigatório comentar antes de cada presente. */
-#regras{display:flex;flex-direction:column;gap:9px;margin-bottom:14px;align-items:stretch}
+/* As regras moram logo abaixo da linha de chegada. No rodapé elas sumiam: é
+   ali que o TikTok empilha comentário e presente por cima da transmissão.
+   Ficam atrás dos corredores, então quando um time chega perto de vencer ele
+   passa por cima, o que não atrapalha: nessa hora ninguém está lendo regra. */
+#aviso-topo{position:absolute;left:36px;right:36px;top:400px;z-index:2;pointer-events:none}
+#regras{display:flex;flex-direction:column;gap:9px;margin-bottom:12px;align-items:stretch}
 .regra{display:flex;align-items:center;gap:16px;background:rgba(8,11,18,.92);
   border:4px solid rgba(255,210,63,.5);border-radius:16px;padding:15px 22px;
   font-size:32px;font-weight:800;color:#fff}
@@ -196,19 +201,22 @@ html,body{height:100%;background:#03050a;overflow:hidden;
   <div id="chegada-txt">LINHA DE CHEGADA</div>
   <div id="chegada"></div>
 
+  <div id="aviso-topo">
+    <div id="regras">
+      <div class="regra"><i>1</i> <span>comenta o nome do time pra <b>escolher seu lado</b></span></div>
+      <div class="regra"><i>2</i> <span>manda <b>qualquer presente</b> pra ele subir</span></div>
+    </div>
+    <div id="instrucao">presente mais caro <b>empurra mais</b></div>
+  </div>
+
   <div id="pista"></div>
   <canvas id="particulas" width="1080" height="1920"></canvas>
 
   <div id="base">
     <div id="fila"></div>
-    <div id="regras">
-      <div class="regra"><i>1</i> <span>comenta o nome do time pra <b>escolher seu lado</b></span></div>
-      <div class="regra"><i>2</i> <span>manda <b>qualquer presente</b> pra ele subir</span></div>
-    </div>
-    <div id="instrucao">manda o presente do seu time pra <b>ele subir</b></div>
   </div>
 
-  <div id="versao">v4</div>
+  <div id="versao">v5</div>
 
   <div id="semConector">conector desligado: nenhum presente está chegando</div>
 
@@ -486,9 +494,10 @@ function vencer(i) {
 }
 
 /* ---------- frases que trocam sozinhas ---------- */
+/* Nada de repetir as duas regras que estão logo acima: aqui só o que elas não
+   dizem, senão a frase vira ruído em cima do texto que a pessoa já leu. */
 const FRASES = [
-  'comentar <b>escolhe o time</b>, presente <b>faz subir</b>',
-  'qualquer presente serve, vale <b>o valor em moedas</b>',
+  'presente mais caro <b>empurra mais</b>',
   'quem mais empurrar <b>aparece aqui em cima</b>',
   'primeiro a cruzar a linha <b>vence a corrida</b>',
   'seu time está atrás? <b>vai deixar assim?</b>',
