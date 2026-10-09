@@ -20,13 +20,21 @@ npm install
 node conector.js SEU_USUARIO
 ```
 
+Ele faz duas coisas: lê a live e serve o jogo em **http://localhost:8080**.
+
 Precisa estar ao vivo no momento. O jogo se conecta sozinho e reconecta se cair,
 então não importa qual você abre primeiro.
 
-**3. O OBS**
+**3. A transmissão**
 
-Adiciona uma fonte de **Navegador** apontando pro arquivo `index.html`, com
-largura 1080 e altura 1920. A tela escala sozinha pra qualquer tamanho.
+No **TikTok LIVE Studio**: Adicionar origem, **Vincular**, liga **Resolução
+personalizada** em 1080x1920 e cola `http://localhost:8080`.
+
+No **OBS**: fonte de **Navegador**, mesma URL, mesma resolução.
+
+Não use captura de janela. O monitor não tem 1920 de altura, então a janela
+sai menor e você acaba dando zoom pra preencher, o que borra tudo. Pela URL o
+jogo é desenhado direto no tamanho certo.
 
 ## Como o público joga
 

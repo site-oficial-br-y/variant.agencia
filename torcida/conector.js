@@ -13,6 +13,8 @@
 
 const { WebSocketServer } = require('ws')
 const fs = require('fs')
+const http = require('http')
+const path = require('path')
 
 // A biblioteca mudou de nome entre versões: nas antigas é WebcastPushConnection,
 // nas novas é TikTokLiveConnection. Aceita as duas pra não quebrar na atualização.
@@ -45,6 +47,33 @@ function mandar(objeto) {
     if (ws.readyState === 1) ws.send(texto)
   }
 }
+
+/* ---------- servidor do jogo ----------
+   O TikTok LIVE Studio só aceita endereço de internet na fonte de link, não
+   aceita caminho de arquivo. Então o conector também serve a pasta por HTTP:
+   assim dá pra apontar a fonte pra http://localhost:8080 e o jogo é desenhado
+   direto em 1080x1920, sem captura de janela e sem zoom borrando. */
+const PORTA_SITE = 8080
+const TIPOS = {
+  '.html': 'text/html; charset=utf-8', '.js': 'text/javascript', '.css': 'text/css',
+  '.png': 'image/png', '.webp': 'image/webp', '.jpg': 'image/jpeg', '.svg': 'image/svg+xml',
+}
+
+http.createServer((req, res) => {
+  let pedido = decodeURIComponent((req.url || '/').split('?')[0])
+  if (pedido === '/') pedido = '/index.html'
+  // impede sair da pasta com ../
+  const arquivo = path.join(__dirname, path.normalize(pedido).replace(/^(\.\.[\/\\])+/, ''))
+  if (!arquivo.startsWith(__dirname)) { res.writeHead(403); return res.end('fora da pasta') }
+  fs.readFile(arquivo, (erro, dados) => {
+    if (erro) { res.writeHead(404); return res.end('não achei ' + pedido) }
+    res.writeHead(200, { 'Content-Type': TIPOS[path.extname(arquivo).toLowerCase()] || 'application/octet-stream' })
+    res.end(dados)
+  })
+}).listen(PORTA_SITE, () => {
+  console.log('Jogo servido em http://localhost:' + PORTA_SITE)
+  console.log('Cole esse endereço na fonte de link do LIVE Studio, com resolução 1080x1920.')
+})
 
 console.log('Servidor pronto em ws://localhost:' + PORTA)
 console.log('Procurando a live de @' + usuario + '...')
