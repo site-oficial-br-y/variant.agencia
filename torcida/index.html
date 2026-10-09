@@ -64,7 +64,12 @@ html,body{height:100%;background:#03050a;overflow:hidden;
 .nome{font-size:35px;font-weight:900;letter-spacing:-.5px;white-space:nowrap;color:#fff;
   text-shadow:0 0 3px #000,0 0 3px #000,2px 2px 0 rgba(0,0,0,.9),-2px 2px 0 rgba(0,0,0,.9),
               2px -2px 0 rgba(0,0,0,.9),-2px -2px 0 rgba(0,0,0,.9),0 3px 16px rgba(0,0,0,.9)}
-.emo-time{font-size:40px;filter:drop-shadow(0 2px 8px rgba(0,0,0,.9))}
+/* O escudo fica em cima do emoji. Se o arquivo não existir, o onerror tira a
+   imagem e o emoji aparece sozinho, então falta de escudo nunca deixa buraco. */
+.marca{position:relative;width:52px;height:52px;flex:none;display:grid;place-items:center}
+.escudo{position:absolute;inset:0;width:100%;height:100%;object-fit:contain;z-index:2;
+  filter:drop-shadow(0 2px 8px rgba(0,0,0,.9))}
+.emo-time{font-size:40px;line-height:1;filter:drop-shadow(0 2px 8px rgba(0,0,0,.9))}
 .coroas{font-size:25px;letter-spacing:1px;filter:drop-shadow(0 2px 6px rgba(0,0,0,.9))}
 .pontos{margin-left:auto;font-size:36px;font-weight:900;font-variant-numeric:tabular-nums;
   text-shadow:0 2px 12px rgba(0,0,0,.95)}
@@ -140,6 +145,7 @@ html,body{height:100%;background:#03050a;overflow:hidden;
   <div id="faixa">
     <div class="caixa">
       <div class="top">VENCEU A RODADA</div>
+      <img id="faixa-escudo" alt="" style="height:150px;margin:18px auto 6px;display:none">
       <div class="time" id="faixa-time">FLAMENGO</div>
       <div class="baixo" id="faixa-placar">1 rodada ganha</div>
     </div>
@@ -162,20 +168,20 @@ html,body{height:100%;background:#03050a;overflow:hidden;
    teste: o conector imprime o nome real de cada presente no terminal. Se um
    presente não estiver pontuando, é esse texto que está diferente. */
 const TIMES = [
-  { nome: 'FLAMENGO',      emo: '🌹', presente: 'rose',           de: '#E21B1B', para: '#141414' },
-  { nome: 'CORINTHIANS',   emo: '🎵', presente: 'tiktok',         de: '#EDEDED', para: '#1A1A1A' },
-  { nome: 'PALMEIRAS',     emo: '🍦', presente: 'ice cream cone', de: '#0B7A3F', para: '#063F22' },
-  { nome: 'SÃO PAULO',     emo: '❤️', presente: 'heart me',       de: '#D4192B', para: '#F2F2F2' },
-  { nome: 'SANTOS',        emo: '👍', presente: 'thumbs up',      de: '#FAFAFA', para: '#777777' },
-  { nome: 'VASCO',         emo: '☕', presente: 'coffee',         de: '#141414', para: '#EDEDED' },
-  { nome: 'BOTAFOGO',      emo: '🎤', presente: 'mic',            de: '#2A2A2A', para: '#C9C9C9' },
-  { nome: 'FLUMINENSE',    emo: '🫰', presente: 'finger heart',   de: '#7A1B2E', para: '#0B6B3A' },
-  { nome: 'GRÊMIO',        emo: '🍰', presente: 'cake slice',     de: '#0B4DA2', para: '#141414' },
-  { nome: 'INTERNACIONAL', emo: '🌊', presente: 'ocean heart',    de: '#B0102A', para: '#141414' },
-  { nome: 'CRUZEIRO',      emo: '🧸', presente: 'hand hearts',    de: '#1B3FA0', para: '#0A1E52' },
-  { nome: 'ATLÉTICO-MG',   emo: '🕶️', presente: 'sunglasses',     de: '#1A1A1A', para: '#9A9A9A' },
-  { nome: 'BAHIA',         emo: '🌺', presente: 'perfume',        de: '#0B4DA2', para: '#D4192B' },
-  { nome: 'SPORT',         emo: '🦁', presente: 'lion',           de: '#C8102E', para: '#141414' },
+  { nome: 'FLAMENGO',      emo: '🌹', presente: 'rose',           de: '#E21B1B', para: '#141414' , escudo: 'escudos/flamengo.png' },
+  { nome: 'CORINTHIANS',   emo: '🎵', presente: 'tiktok',         de: '#EDEDED', para: '#1A1A1A' , escudo: 'escudos/corinthians.png' },
+  { nome: 'PALMEIRAS',     emo: '🍦', presente: 'ice cream cone', de: '#0B7A3F', para: '#063F22' , escudo: 'escudos/palmeiras.png' },
+  { nome: 'SÃO PAULO',     emo: '❤️', presente: 'heart me',       de: '#D4192B', para: '#F2F2F2' , escudo: 'escudos/sao-paulo.png' },
+  { nome: 'SANTOS',        emo: '👍', presente: 'thumbs up',      de: '#FAFAFA', para: '#777777' , escudo: 'escudos/santos.png' },
+  { nome: 'VASCO',         emo: '☕', presente: 'coffee',         de: '#141414', para: '#EDEDED' , escudo: 'escudos/vasco.png' },
+  { nome: 'BOTAFOGO',      emo: '🎤', presente: 'mic',            de: '#2A2A2A', para: '#C9C9C9' , escudo: 'escudos/botafogo.png' },
+  { nome: 'FLUMINENSE',    emo: '🫰', presente: 'finger heart',   de: '#7A1B2E', para: '#0B6B3A' , escudo: 'escudos/fluminense.png' },
+  { nome: 'GRÊMIO',        emo: '🍰', presente: 'cake slice',     de: '#0B4DA2', para: '#141414' , escudo: 'escudos/gremio.png' },
+  { nome: 'INTERNACIONAL', emo: '🌊', presente: 'ocean heart',    de: '#B0102A', para: '#141414' , escudo: 'escudos/internacional.png' },
+  { nome: 'CRUZEIRO',      emo: '🧸', presente: 'hand hearts',    de: '#1B3FA0', para: '#0A1E52' , escudo: 'escudos/cruzeiro.png' },
+  { nome: 'ATLÉTICO-MG',   emo: '🕶️', presente: 'sunglasses',     de: '#1A1A1A', para: '#9A9A9A' , escudo: 'escudos/atletico-mg.png' },
+  { nome: 'BAHIA',         emo: '🌺', presente: 'perfume',        de: '#0B4DA2', para: '#D4192B' , escudo: 'escudos/bahia.png' },
+  { nome: 'SPORT',         emo: '🦁', presente: 'lion',           de: '#C8102E', para: '#141414' , escudo: 'escudos/sport.png' },
 ]
 
 const META = 300   // moedas pra encher a barra
@@ -191,7 +197,10 @@ estado.forEach(t => {
   linha.innerHTML =
     '<div class="preencher" style="background:linear-gradient(90deg,' + t.de + ',' + t.para + ')"></div>' +
     '<div class="conteudo">' +
-      '<span class="emo-time">' + t.emo + '</span>' +
+      '<span class="marca">' +
+        '<img class="escudo" src="' + t.escudo + '" alt="" onerror="this.remove()">' +
+        '<span class="emo-time">' + t.emo + '</span>' +
+      '</span>' +
       '<span class="nome">' + t.nome + '</span>' +
       '<span class="coroas"></span>' +
       '<span class="pontos">0</span>' +
@@ -341,6 +350,11 @@ function vencer(indice) {
   pintar()
   chuvaDeConfete(t.de)
   tremer()
+  const fe = document.getElementById('faixa-escudo')
+  fe.onerror = () => { fe.style.display = 'none' }
+  fe.onload = () => { fe.style.display = 'block' }
+  fe.style.display = 'none'
+  fe.src = t.escudo
   document.getElementById('faixa-time').textContent = t.nome
   document.getElementById('faixa-time').style.color = t.de === '#141414' || t.de === '#1A1A1A' ? '#fff' : t.de
   document.getElementById('faixa-placar').textContent =
