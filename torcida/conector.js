@@ -26,7 +26,14 @@ const Conexao = lib.TikTokLiveConnection || lib.WebcastPushConnection
    em eulerstream.com, cola no arquivo chave.txt ao lado deste, e pronto.
    O arquivo fica fora do repositório de propósito: é segredo seu. */
 let chave = process.env.EULER_API_KEY || ''
-try { chave = (fs.readFileSync(path.join(__dirname, 'chave.txt'), 'utf8') || '').trim() || chave } catch {}
+// Procura na pasta do script e na de cima: a extração do zip costuma deixar
+// uma pasta dentro da outra, e o arquivo acaba caindo na de fora.
+for (const lugar of [__dirname, path.join(__dirname, '..')]) {
+  try {
+    const lido = (fs.readFileSync(path.join(lugar, 'chave.txt'), 'utf8') || '').trim()
+    if (lido) { chave = lido; break }
+  } catch {}
+}
 if (chave) {
   if (lib.SignConfig) lib.SignConfig.apiKey = chave
   console.log('Chave de assinatura carregada.')
