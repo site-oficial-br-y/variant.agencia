@@ -1,0 +1,470 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<title>Qual torcida é maior</title>
+<style>
+/* Tela vertical 1080x1920, do tamanho da live. Escala sozinha pra caber em
+   qualquer janela, então dá pra conferir no navegador antes de abrir o OBS. */
+*{margin:0;padding:0;box-sizing:border-box}
+html,body{height:100%;background:#03050a;overflow:hidden;
+  font-family:'Archivo','Inter',system-ui,sans-serif;user-select:none}
+#palco{position:absolute;top:50%;left:50%;width:1080px;height:1920px;transform-origin:center;
+  background:#05070e;color:#fff;overflow:hidden}
+#palco.tremer{animation:tremer .42s cubic-bezier(.36,.07,.19,.97)}
+@keyframes tremer{
+  10%,90%{transform:translate(calc(-50% - 6px),-50%) scale(var(--e))}
+  20%,80%{transform:translate(calc(-50% + 9px),calc(-50% - 4px)) scale(var(--e))}
+  30%,50%,70%{transform:translate(calc(-50% - 12px),calc(-50% + 5px)) scale(var(--e))}
+  40%,60%{transform:translate(calc(-50% + 12px),-50%) scale(var(--e))}
+}
+
+/* fundo vivo: luzes que giram devagar, pra tela nunca parecer parada */
+.luz{position:absolute;border-radius:50%;filter:blur(90px);pointer-events:none;opacity:.55}
+#luz1{width:900px;height:900px;background:#1b3fa0;left:-260px;top:-180px;animation:vai1 18s ease-in-out infinite}
+#luz2{width:820px;height:820px;background:#a0122b;right:-240px;top:420px;animation:vai2 22s ease-in-out infinite}
+#luz3{width:760px;height:760px;background:#0b7a3f;left:120px;bottom:-260px;animation:vai1 26s ease-in-out infinite reverse}
+@keyframes vai1{0%,100%{transform:translate(0,0)}50%{transform:translate(120px,90px)}}
+@keyframes vai2{0%,100%{transform:translate(0,0)}50%{transform:translate(-140px,-70px)}}
+#grade{position:absolute;inset:0;pointer-events:none;opacity:.25;
+  background-image:linear-gradient(rgba(255,255,255,.05) 2px,transparent 2px),
+                   linear-gradient(90deg,rgba(255,255,255,.05) 2px,transparent 2px);
+  background-size:70px 70px;animation:anda 7s linear infinite}
+@keyframes anda{to{background-position:70px 70px}}
+
+#particulas{position:absolute;inset:0;pointer-events:none;z-index:6}
+
+/* ---------- topo ---------- */
+#topo{position:relative;z-index:3;padding:38px 54px 20px;text-align:center}
+#titulo{font-size:74px;font-weight:900;letter-spacing:-2.5px;line-height:.95;text-transform:uppercase;
+  text-shadow:0 6px 30px rgba(0,0,0,.7)}
+#titulo b{color:#ffd23f;display:inline-block;animation:bate 1.6s ease-in-out infinite}
+@keyframes bate{0%,100%{transform:scale(1)}50%{transform:scale(1.07)}}
+#sub{margin-top:12px;font-size:31px;color:rgba(255,255,255,.62);font-weight:700}
+#rodada{display:inline-block;margin-top:16px;padding:7px 28px;border:3px solid rgba(255,210,63,.45);
+  border-radius:999px;font-size:25px;font-weight:900;letter-spacing:4px;color:#ffd23f;
+  background:rgba(255,210,63,.08)}
+
+/* ---------- barras ---------- */
+#lista{position:relative;z-index:3;padding:0 40px;display:flex;flex-direction:column;gap:10px}
+.linha{position:relative;height:82px;border-radius:15px;overflow:hidden;background:rgba(255,255,255,.055);
+  border:3px solid rgba(255,255,255,.08);display:flex;align-items:center;
+  transition:border-color .3s,box-shadow .3s,transform .18s}
+.preencher{position:absolute;left:0;top:0;bottom:0;width:0%;
+  transition:width .5s cubic-bezier(.17,.89,.32,1.15)}
+/* brilho correndo em cima do preenchimento, dá sensação de energia */
+.preencher::after{content:'';position:absolute;inset:0;
+  background:linear-gradient(100deg,transparent 20%,rgba(255,255,255,.45) 50%,transparent 80%);
+  background-size:260px 100%;animation:corre 1.6s linear infinite}
+@keyframes corre{to{background-position:260px 0}}
+.conteudo{position:relative;display:flex;align-items:center;width:100%;padding:0 22px;gap:14px}
+/* Contorno escuro em volta: o mesmo texto precisa ser legível tanto em cima da
+   barra clara (Santos, Corinthians cheios) quanto no fundo escuro quando a barra
+   está vazia. Branco com contorno resolve os dois sem trocar de cor. */
+.nome{font-size:35px;font-weight:900;letter-spacing:-.5px;white-space:nowrap;color:#fff;
+  text-shadow:0 0 3px #000,0 0 3px #000,2px 2px 0 rgba(0,0,0,.9),-2px 2px 0 rgba(0,0,0,.9),
+              2px -2px 0 rgba(0,0,0,.9),-2px -2px 0 rgba(0,0,0,.9),0 3px 16px rgba(0,0,0,.9)}
+.coroas{font-size:25px;letter-spacing:1px;filter:drop-shadow(0 2px 6px rgba(0,0,0,.9))}
+.pontos{margin-left:auto;font-size:36px;font-weight:900;font-variant-numeric:tabular-nums;
+  text-shadow:0 2px 12px rgba(0,0,0,.95)}
+.pontos.pulo{animation:pulo .45s cubic-bezier(.2,1.6,.4,1)}
+@keyframes pulo{0%{transform:scale(1)}45%{transform:scale(1.55);color:#ffd23f}100%{transform:scale(1)}}
+.linha.lider{border-color:#ffd23f;box-shadow:0 0 34px rgba(255,210,63,.4)}
+.linha.quase{animation:quase .6s ease-in-out infinite}
+@keyframes quase{0%,100%{box-shadow:0 0 30px rgba(255,80,80,.5)}50%{box-shadow:0 0 60px rgba(255,80,80,.95)}}
+.linha.batida{animation:batida .35s cubic-bezier(.2,1.8,.4,1)}
+@keyframes batida{0%{transform:scale(1)}40%{transform:scale(1.035)}100%{transform:scale(1)}}
+
+/* ---------- presente voando ---------- */
+.voando{position:absolute;z-index:7;font-size:78px;pointer-events:none;
+  filter:drop-shadow(0 6px 18px rgba(0,0,0,.8))}
+
+/* ---------- base ---------- */
+#base{position:absolute;left:0;right:0;bottom:0;z-index:4;padding:24px 40px 34px;
+  background:linear-gradient(transparent,rgba(3,5,10,.97) 30%)}
+#presentes{display:flex;justify-content:center;gap:12px;flex-wrap:wrap}
+.presente{display:flex;align-items:center;gap:9px;background:rgba(255,255,255,.08);
+  border:3px solid rgba(255,255,255,.14);border-radius:16px;padding:11px 19px}
+.presente.acende{animation:acende 1s ease}
+@keyframes acende{0%,100%{border-color:rgba(255,255,255,.14);transform:scale(1)}
+  40%{border-color:#ffd23f;transform:scale(1.12);box-shadow:0 0 30px rgba(255,210,63,.6)}}
+.presente .emo{font-size:36px}
+.presente .val{font-size:27px;font-weight:900;color:#ffd23f}
+.presente .qnt{font-size:21px;color:rgba(255,255,255,.55);font-weight:800}
+#instrucao{margin-top:20px;text-align:center;font-size:31px;font-weight:900;color:rgba(255,255,255,.82)}
+#instrucao b{color:#ffd23f}
+
+/* ---------- vitória ---------- */
+#faixa{position:absolute;inset:0;display:none;align-items:center;justify-content:center;
+  background:rgba(3,5,10,.86);z-index:8}
+#faixa.on{display:flex;animation:surge .35s ease}
+@keyframes surge{from{opacity:0}to{opacity:1}}
+#faixa .caixa{text-align:center;padding:56px 86px;border-radius:30px;border:5px solid #ffd23f;
+  background:rgba(8,11,18,.96);box-shadow:0 0 120px rgba(255,210,63,.45);animation:entraCaixa .5s cubic-bezier(.2,1.7,.4,1)}
+@keyframes entraCaixa{from{transform:scale(.6) rotate(-4deg);opacity:0}to{transform:none;opacity:1}}
+#faixa .top{font-size:33px;letter-spacing:9px;color:#ffd23f;font-weight:900}
+#faixa .time{font-size:106px;font-weight:900;letter-spacing:-4px;margin-top:8px;line-height:1}
+#faixa .baixo{margin-top:14px;font-size:29px;color:rgba(255,255,255,.62);font-weight:800}
+
+/* ---------- avisos no canto ---------- */
+#fila{position:absolute;right:40px;top:296px;z-index:5;display:flex;flex-direction:column;gap:8px;align-items:flex-end}
+.aviso{background:rgba(8,11,18,.92);border:3px solid rgba(255,210,63,.45);border-radius:13px;
+  padding:9px 17px;font-size:24px;font-weight:900;animation:entraAviso .32s cubic-bezier(.2,1.6,.4,1)}
+.aviso span{color:#ffd23f}
+@keyframes entraAviso{from{opacity:0;transform:translateX(50px) scale(.8)}to{opacity:1;transform:none}}
+</style>
+</head>
+<body>
+<div id="palco">
+  <div class="luz" id="luz1"></div>
+  <div class="luz" id="luz2"></div>
+  <div class="luz" id="luz3"></div>
+  <div id="grade"></div>
+
+  <div id="topo">
+    <div id="titulo">Qual torcida<br>é <b>maior</b>?</div>
+    <div id="sub">mande presente pro seu time</div>
+    <div id="rodada">RODADA 1</div>
+  </div>
+
+  <div id="lista"></div>
+  <div id="fila"></div>
+  <canvas id="particulas" width="1080" height="1920"></canvas>
+
+  <div id="base">
+    <div id="presentes"></div>
+    <div id="instrucao">primeiro a encher a barra <b>vence a rodada</b></div>
+  </div>
+
+  <div id="faixa">
+    <div class="caixa">
+      <div class="top">VENCEU A RODADA</div>
+      <div class="time" id="faixa-time">FLAMENGO</div>
+      <div class="baixo" id="faixa-placar">1 rodada ganha</div>
+    </div>
+  </div>
+</div>
+
+<script>
+/* ---------- times ----------
+   Escudo é marca registrada, então a barra usa cor e nome. O nome identifica,
+   a cor é só o clima. Para acrescentar time, basta somar aqui. */
+const TIMES = [
+  { nome: 'FLAMENGO',      de: '#E21B1B', para: '#141414', texto: '#fff' },
+  { nome: 'CORINTHIANS',   de: '#EDEDED', para: '#1A1A1A', texto: '#fff' },
+  { nome: 'PALMEIRAS',     de: '#0B7A3F', para: '#063F22', texto: '#fff' },
+  { nome: 'SÃO PAULO',     de: '#D4192B', para: '#F2F2F2', texto: '#fff' },
+  { nome: 'SANTOS',        de: '#FAFAFA', para: '#777777', texto: '#111' },
+  { nome: 'VASCO',         de: '#141414', para: '#EDEDED', texto: '#fff' },
+  { nome: 'BOTAFOGO',      de: '#2A2A2A', para: '#C9C9C9', texto: '#fff' },
+  { nome: 'FLUMINENSE',    de: '#7A1B2E', para: '#0B6B3A', texto: '#fff' },
+  { nome: 'GRÊMIO',        de: '#0B4DA2', para: '#141414', texto: '#fff' },
+  { nome: 'INTERNACIONAL', de: '#B0102A', para: '#141414', texto: '#fff' },
+  { nome: 'CRUZEIRO',      de: '#1B3FA0', para: '#0A1E52', texto: '#fff' },
+  { nome: 'ATLÉTICO-MG',   de: '#1A1A1A', para: '#9A9A9A', texto: '#fff' },
+  { nome: 'BAHIA',         de: '#0B4DA2', para: '#D4192B', texto: '#fff' },
+  { nome: 'SPORT',         de: '#C8102E', para: '#141414', texto: '#fff' },
+]
+
+/* `nomes` são os identificadores que o TikTok envia no evento de presente. */
+const PRESENTES = [
+  { emo: '🌹', titulo: 'Rosa',    pontos: 1,   nomes: ['rose'] },
+  { emo: '🍦', titulo: 'Sorvete', pontos: 5,   nomes: ['ice cream cone', 'ice cream'] },
+  { emo: '🧸', titulo: 'Urso',    pontos: 10,  nomes: ['hand hearts', 'teddy bear'] },
+  { emo: '🦁', titulo: 'Leão',    pontos: 100, nomes: ['lion'] },
+]
+
+const META = 100
+const estado = TIMES.map(t => ({ ...t, pontos: 0, coroas: 0 }))
+let rodada = 1
+let travado = false
+
+/* ---------- montagem ---------- */
+const lista = document.getElementById('lista')
+estado.forEach(t => {
+  const linha = document.createElement('div')
+  linha.className = 'linha'
+  linha.innerHTML =
+    '<div class="preencher" style="background:linear-gradient(90deg,' + t.de + ',' + t.para + ')"></div>' +
+    '<div class="conteudo">' +
+      '<span class="nome">' + t.nome + '</span>' +
+      '<span class="coroas"></span>' +
+      '<span class="pontos">0</span>' +
+    '</div>'
+  lista.appendChild(linha)
+})
+const linhas = [...document.querySelectorAll('.linha')]
+
+const caixaPresentes = document.getElementById('presentes')
+PRESENTES.forEach(p => {
+  const d = document.createElement('div')
+  d.className = 'presente'
+  d.innerHTML = '<span class="emo">' + p.emo + '</span><span class="val">+' + p.pontos + '</span>' +
+                '<span class="qnt">' + p.titulo + '</span>'
+  caixaPresentes.appendChild(d)
+})
+const caixas = [...document.querySelectorAll('.presente')]
+
+function pintar() {
+  const maior = Math.max(...estado.map(t => t.pontos))
+  estado.forEach((t, i) => {
+    const l = linhas[i]
+    const pct = Math.min(100, (t.pontos / META) * 100)
+    l.querySelector('.preencher').style.width = pct + '%'
+    l.querySelector('.pontos').textContent = t.pontos
+    l.querySelector('.coroas').textContent = '👑'.repeat(Math.min(t.coroas, 5))
+    l.classList.toggle('lider', t.pontos > 0 && t.pontos === maior)
+    l.classList.toggle('quase', pct >= 80 && pct < 100)   // alerta de reta final
+  })
+}
+
+/* ---------- partículas ---------- */
+const cv = document.getElementById('particulas')
+const ctx = cv.getContext('2d')
+let pedacos = []
+
+function explodir(x, y, cor, quantos) {
+  for (let i = 0; i < quantos; i++) {
+    const a = Math.random() * Math.PI * 2
+    const v = 4 + Math.random() * 13
+    pedacos.push({
+      x, y, vx: Math.cos(a) * v, vy: Math.sin(a) * v - 4,
+      g: 0.42, vida: 1, cor, tam: 5 + Math.random() * 11, giro: Math.random() * 6,
+    })
+  }
+}
+
+function chuvaDeConfete(cor) {
+  for (let i = 0; i < 260; i++) {
+    pedacos.push({
+      x: Math.random() * 1080, y: -40 - Math.random() * 500,
+      vx: (Math.random() - .5) * 4, vy: 5 + Math.random() * 9,
+      g: 0.07, vida: 1, cor: Math.random() < .55 ? cor : '#ffd23f',
+      tam: 8 + Math.random() * 16, giro: Math.random() * 6,
+    })
+  }
+}
+
+function quadro() {
+  ctx.clearRect(0, 0, 1080, 1920)
+  pedacos = pedacos.filter(p => p.vida > 0 && p.y < 2000)
+  for (const p of pedacos) {
+    p.x += p.vx; p.y += p.vy; p.vy += p.g; p.giro += .22; p.vida -= .006
+    ctx.save()
+    ctx.translate(p.x, p.y); ctx.rotate(p.giro)
+    ctx.globalAlpha = Math.max(0, p.vida)
+    ctx.fillStyle = p.cor
+    ctx.fillRect(-p.tam / 2, -p.tam / 2, p.tam, p.tam * .62)
+    ctx.restore()
+  }
+  requestAnimationFrame(quadro)
+}
+quadro()
+
+/* ---------- presente voando até a barra ---------- */
+function voar(emo, indice, aoChegar) {
+  const alvo = linhas[indice].getBoundingClientRect()
+  const palco = document.getElementById('palco').getBoundingClientRect()
+  const escala = palco.width / 1080
+  const destinoX = (alvo.left - palco.left) / escala + 120
+  const destinoY = (alvo.top - palco.top) / escala + 20
+
+  const el = document.createElement('div')
+  el.className = 'voando'
+  el.textContent = emo
+  el.style.left = (120 + Math.random() * 760) + 'px'
+  el.style.top = '1700px'
+  document.getElementById('palco').appendChild(el)
+
+  el.animate(
+    [
+      { transform: 'translate(0,0) scale(.5) rotate(0deg)', opacity: 0 },
+      { transform: 'translate(0,-260px) scale(1.35) rotate(18deg)', opacity: 1, offset: .35 },
+      { transform: 'translate(' + (destinoX - parseFloat(el.style.left)) + 'px,' +
+                   (destinoY - 1700) + 'px) scale(.7) rotate(-14deg)', opacity: 1 },
+    ],
+    { duration: 820, easing: 'cubic-bezier(.3,.1,.2,1)' }
+  ).onfinish = () => { el.remove(); aoChegar() }
+}
+
+/* ---------- avisos ---------- */
+const fila = document.getElementById('fila')
+function avisar(html) {
+  const d = document.createElement('div')
+  d.className = 'aviso'
+  d.innerHTML = html
+  fila.appendChild(d)
+  if (fila.children.length > 5) fila.removeChild(fila.firstChild)
+  setTimeout(() => d.remove(), 6500)
+}
+
+/* ---------- pontuação ---------- */
+function tremer() {
+  const p = document.getElementById('palco')
+  p.classList.remove('tremer'); void p.offsetWidth; p.classList.add('tremer')
+}
+
+function pontuar(indice, pontos, quem, emo) {
+  if (travado || indice < 0 || indice >= estado.length) return
+  const t = estado[indice]
+
+  // acende o cartão do presente correspondente, pra ensinar quem está chegando agora
+  const cx = caixas[PRESENTES.findIndex(p => p.emo === emo)]
+  if (cx) { cx.classList.remove('acende'); void cx.offsetWidth; cx.classList.add('acende') }
+
+  voar(emo || '🌹', indice, () => {
+    // O presente leva um tempo voando até a barra. Se a rodada terminou nesse
+    // meio tempo, os pontos não podem mais valer: sem isso dois times chegavam
+    // a 100 na mesma rodada e os dois ganhavam coroa.
+    if (travado) return
+    t.pontos += pontos
+    const l = linhas[indice]
+    const r = l.getBoundingClientRect()
+    const palco = document.getElementById('palco').getBoundingClientRect()
+    const esc = palco.width / 1080
+    explodir((r.left - palco.left) / esc + 150, (r.top - palco.top) / esc + 41, t.de, pontos >= 100 ? 70 : 26)
+
+    l.classList.remove('batida'); void l.offsetWidth; l.classList.add('batida')
+    const np = l.querySelector('.pontos')
+    np.classList.remove('pulo'); void np.offsetWidth; np.classList.add('pulo')
+    if (pontos >= 50) tremer()
+
+    if (t.pontos >= META) return vencer(indice)
+    pintar()
+  })
+
+  avisar('<span>' + (quem || 'alguém') + '</span> ' + (emo || '') + ' +' + pontos + ' ' + t.nome)
+}
+
+const faixa = document.getElementById('faixa')
+function vencer(indice) {
+  travado = true
+  const t = estado[indice]
+  t.coroas++
+  pintar()
+  chuvaDeConfete(t.de)
+  tremer()
+  document.getElementById('faixa-time').textContent = t.nome
+  document.getElementById('faixa-time').style.color = t.de === '#141414' || t.de === '#1A1A1A' ? '#fff' : t.de
+  document.getElementById('faixa-placar').textContent =
+    t.coroas + (t.coroas === 1 ? ' rodada ganha' : ' rodadas ganhas')
+  faixa.classList.add('on')
+  setTimeout(() => {
+    faixa.classList.remove('on')
+    estado.forEach(x => { x.pontos = 0 })
+    rodada++
+    document.getElementById('rodada').textContent = 'RODADA ' + rodada
+    travado = false
+    pintar()
+  }, 4300)
+}
+
+/* ---------- a frase de baixo muda sozinha, pra tela nunca parecer parada ---------- */
+const FRASES = [
+  'primeiro a encher a barra <b>vence a rodada</b>',
+  'comenta o nome do time pra <b>escolher seu lado</b>',
+  'depois de escolher, <b>seu presente vai pro seu time</b>',
+  '<b>🦁 Leão</b> vale 100 de uma vez',
+  'seu time está perdendo? <b>faz alguma coisa</b>',
+]
+let fraseAtual = 0
+setInterval(() => {
+  fraseAtual = (fraseAtual + 1) % FRASES.length
+  const el = document.getElementById('instrucao')
+  el.style.opacity = '0'
+  setTimeout(() => { el.innerHTML = FRASES[fraseAtual]; el.style.opacity = '1' }, 300)
+}, 5200)
+document.getElementById('instrucao').style.transition = 'opacity .3s'
+
+/* ---------- identificar o time citado ---------- */
+function acharTime(texto) {
+  const t = (texto || '').toUpperCase()
+  const apelidos = {
+    'FLAMENGO': ['FLAMENGO', 'MENGO', 'MENGAO', 'MENGÃO', 'FLA'],
+    'CORINTHIANS': ['CORINTHIANS', 'CORINTIANS', 'TIMAO', 'TIMÃO', 'SCCP'],
+    'PALMEIRAS': ['PALMEIRAS', 'PORCO', 'VERDAO', 'VERDÃO'],
+    'SÃO PAULO': ['SAO PAULO', 'SÃO PAULO', 'SPFC'],
+    'SANTOS': ['SANTOS', 'PEIXE'],
+    'VASCO': ['VASCO', 'CRUZMALTINO'],
+    'BOTAFOGO': ['BOTAFOGO', 'FOGAO', 'FOGÃO', 'GLORIOSO'],
+    'FLUMINENSE': ['FLUMINENSE', 'FLU'],
+    'GRÊMIO': ['GREMIO', 'GRÊMIO', 'IMORTAL'],
+    'INTERNACIONAL': ['INTERNACIONAL', 'INTER', 'COLORADO'],
+    'CRUZEIRO': ['CRUZEIRO', 'RAPOSA', 'CABULOSO'],
+    'ATLÉTICO-MG': ['ATLETICO', 'ATLÉTICO', 'GALO'],
+    'BAHIA': ['BAHIA', 'ESQUADRAO'],
+    'SPORT': ['SPORT', 'LEAO DA ILHA', 'LEÃO DA ILHA'],
+  }
+  for (let i = 0; i < estado.length; i++) {
+    const lista = apelidos[estado[i].nome] || [estado[i].nome]
+    if (lista.some(a => t.includes(a))) return i
+  }
+  return -1
+}
+
+/* ---------- entrada da live ----------
+   O conector manda os eventos por WebSocket. Sem ele rodando, o jogo continua
+   funcionando no modo de teste abaixo. */
+/* Quem comentou o nome de um time fica marcado como torcedor dele. Assim o
+   presente seguinte da mesma pessoa já vai pro time certo, sem ela precisar
+   escrever de novo. Sem isso não dá pra saber pra quem o presente foi. */
+const torcedores = new Map()
+
+function ligarConector(porta) {
+  let ws
+  try { ws = new WebSocket('ws://localhost:' + porta) } catch { return }
+  ws.onmessage = ev => {
+    let msg
+    try { msg = JSON.parse(ev.data) } catch { return }
+
+    if (msg.tipo === 'comentario') {
+      const alvo = acharTime(msg.texto)
+      if (alvo < 0) return
+      torcedores.set(msg.id || msg.apelido, alvo)
+      pontuar(alvo, 1, msg.apelido, '💬')
+      return
+    }
+
+    if (msg.tipo === 'presente') {
+      const p = PRESENTES.find(x => x.nomes.includes(String(msg.presente || '').toLowerCase()))
+      const pontos = (p ? p.pontos : 1) * (msg.quantidade || 1)
+      // Ordem de preferência: time escolhido antes, time citado no apelido, sorteio.
+      let alvo = torcedores.has(msg.id || msg.apelido)
+        ? torcedores.get(msg.id || msg.apelido)
+        : acharTime(msg.apelido)
+      if (alvo < 0) alvo = Math.floor(Math.random() * estado.length)
+      pontuar(alvo, pontos, msg.apelido, p ? p.emo : '🎁')
+    }
+  }
+  ws.onclose = () => setTimeout(() => ligarConector(porta), 4000)
+  ws.onerror = () => { try { ws.close() } catch {} }
+}
+ligarConector(21213)
+
+/* ---------- modo de teste ----------
+   Tecla D liga e desliga presentes aleatórios. Clique numa barra dá pontos. */
+let demo = null
+addEventListener('keydown', e => {
+  if (e.key.toLowerCase() !== 'd') return
+  if (demo) { clearInterval(demo); demo = null; return }
+  demo = setInterval(() => {
+    const i = Math.floor(Math.random() * estado.length)
+    const p = PRESENTES[Math.floor(Math.random() * PRESENTES.length)]
+    pontuar(i, p.pontos, 'teste' + Math.floor(Math.random() * 99), p.emo)
+  }, 650)
+})
+linhas.forEach((l, i) => l.addEventListener('click', () => pontuar(i, 10, 'clique', '🧸')))
+
+/* ---------- escala ---------- */
+function encaixar() {
+  const e = Math.min(innerWidth / 1080, innerHeight / 1920)
+  const p = document.getElementById('palco')
+  p.style.setProperty('--e', e)
+  p.style.transform = 'translate(-50%,-50%) scale(' + e + ')'
+}
+addEventListener('resize', encaixar)
+encaixar()
+pintar()
+</script>
+</body>
+</html>
