@@ -73,3 +73,17 @@ LEIAME de lá. Faltando algum, o emoji do time aparece no lugar e nada quebra.
 Vale saber: escudo de time é marca registrada, e em live monetizada pode dar
 reclamação. Se preferir não arriscar, é só não colocar os arquivos: o jogo
 funciona igual com os emojis.
+
+## Arquivo único
+
+`qual-torcida-e-maior.html` é o jogo inteiro num arquivo só, com os escudos e o
+estádio embutidos em base64. Serve pra abrir no celular ou mandar pra alguém:
+funciona sem internet e sem a pasta ao lado.
+
+Para transmitir, use o `index.html` normal, que é o que fica fácil de editar.
+
+Depois de mexer no `index.html` ou trocar algum escudo, gere de novo:
+
+```
+python3 gerar-arquivo-unico.py
+```
