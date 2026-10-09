@@ -72,14 +72,23 @@ live.on('gift', d => {
   const segurável = d.giftType === 1
   if (segurável && !d.repeatEnd) return
 
+  // diamondCount é o valor do presente em moedas. É ele que vira ponto no jogo,
+  // então presente caro empurra mais porque custou mais.
+  const moedas = d.diamondCount || 1
+
   mandar({
     tipo: 'presente',
     id: d.userId || d.uniqueId,
     apelido: d.nickname || d.uniqueId,
     presente: (d.giftName || '').toLowerCase(),
     quantidade: d.repeatCount || 1,
+    moedas,
   })
-  console.log(d.nickname, 'mandou', d.repeatCount || 1, 'x', d.giftName)
+
+  // Imprime o nome exato que o TikTok manda. É esse texto que vai no campo
+  // `presente` da lista de times dentro do index.html.
+  console.log('presente:', JSON.stringify((d.giftName || '').toLowerCase()),
+              '| moedas:', moedas, '| x' + (d.repeatCount || 1), '|', d.nickname)
 })
 
 live.on('disconnected', () => console.log('A live caiu ou terminou.'))

@@ -64,6 +64,7 @@ html,body{height:100%;background:#03050a;overflow:hidden;
 .nome{font-size:35px;font-weight:900;letter-spacing:-.5px;white-space:nowrap;color:#fff;
   text-shadow:0 0 3px #000,0 0 3px #000,2px 2px 0 rgba(0,0,0,.9),-2px 2px 0 rgba(0,0,0,.9),
               2px -2px 0 rgba(0,0,0,.9),-2px -2px 0 rgba(0,0,0,.9),0 3px 16px rgba(0,0,0,.9)}
+.emo-time{font-size:40px;filter:drop-shadow(0 2px 8px rgba(0,0,0,.9))}
 .coroas{font-size:25px;letter-spacing:1px;filter:drop-shadow(0 2px 6px rgba(0,0,0,.9))}
 .pontos{margin-left:auto;font-size:36px;font-weight:900;font-variant-numeric:tabular-nums;
   text-shadow:0 2px 12px rgba(0,0,0,.95)}
@@ -149,32 +150,35 @@ html,body{height:100%;background:#03050a;overflow:hidden;
 /* ---------- times ----------
    Escudo é marca registrada, então a barra usa cor e nome. O nome identifica,
    a cor é só o clima. Para acrescentar time, basta somar aqui. */
+/* Cada time tem o presente dele. Mandar aquele presente pontua pra aquele time,
+   sem precisar comentar nada.
+
+   O ponto é o valor em moedas do presente, que o próprio TikTok informa. Por
+   isso não existe tabela de pontos aqui: presente caro empurra mais porque
+   custou mais, e nenhum time fica em desvantagem por ter caído com um presente
+   barato.
+
+   `presente` é o nome que o TikTok envia, em minúsculas. CONFIRA numa live de
+   teste: o conector imprime o nome real de cada presente no terminal. Se um
+   presente não estiver pontuando, é esse texto que está diferente. */
 const TIMES = [
-  { nome: 'FLAMENGO',      de: '#E21B1B', para: '#141414', texto: '#fff' },
-  { nome: 'CORINTHIANS',   de: '#EDEDED', para: '#1A1A1A', texto: '#fff' },
-  { nome: 'PALMEIRAS',     de: '#0B7A3F', para: '#063F22', texto: '#fff' },
-  { nome: 'SÃO PAULO',     de: '#D4192B', para: '#F2F2F2', texto: '#fff' },
-  { nome: 'SANTOS',        de: '#FAFAFA', para: '#777777', texto: '#111' },
-  { nome: 'VASCO',         de: '#141414', para: '#EDEDED', texto: '#fff' },
-  { nome: 'BOTAFOGO',      de: '#2A2A2A', para: '#C9C9C9', texto: '#fff' },
-  { nome: 'FLUMINENSE',    de: '#7A1B2E', para: '#0B6B3A', texto: '#fff' },
-  { nome: 'GRÊMIO',        de: '#0B4DA2', para: '#141414', texto: '#fff' },
-  { nome: 'INTERNACIONAL', de: '#B0102A', para: '#141414', texto: '#fff' },
-  { nome: 'CRUZEIRO',      de: '#1B3FA0', para: '#0A1E52', texto: '#fff' },
-  { nome: 'ATLÉTICO-MG',   de: '#1A1A1A', para: '#9A9A9A', texto: '#fff' },
-  { nome: 'BAHIA',         de: '#0B4DA2', para: '#D4192B', texto: '#fff' },
-  { nome: 'SPORT',         de: '#C8102E', para: '#141414', texto: '#fff' },
+  { nome: 'FLAMENGO',      emo: '🌹', presente: 'rose',           de: '#E21B1B', para: '#141414' },
+  { nome: 'CORINTHIANS',   emo: '🎵', presente: 'tiktok',         de: '#EDEDED', para: '#1A1A1A' },
+  { nome: 'PALMEIRAS',     emo: '🍦', presente: 'ice cream cone', de: '#0B7A3F', para: '#063F22' },
+  { nome: 'SÃO PAULO',     emo: '❤️', presente: 'heart me',       de: '#D4192B', para: '#F2F2F2' },
+  { nome: 'SANTOS',        emo: '👍', presente: 'thumbs up',      de: '#FAFAFA', para: '#777777' },
+  { nome: 'VASCO',         emo: '☕', presente: 'coffee',         de: '#141414', para: '#EDEDED' },
+  { nome: 'BOTAFOGO',      emo: '🎤', presente: 'mic',            de: '#2A2A2A', para: '#C9C9C9' },
+  { nome: 'FLUMINENSE',    emo: '🫰', presente: 'finger heart',   de: '#7A1B2E', para: '#0B6B3A' },
+  { nome: 'GRÊMIO',        emo: '🍰', presente: 'cake slice',     de: '#0B4DA2', para: '#141414' },
+  { nome: 'INTERNACIONAL', emo: '🌊', presente: 'ocean heart',    de: '#B0102A', para: '#141414' },
+  { nome: 'CRUZEIRO',      emo: '🧸', presente: 'hand hearts',    de: '#1B3FA0', para: '#0A1E52' },
+  { nome: 'ATLÉTICO-MG',   emo: '🕶️', presente: 'sunglasses',     de: '#1A1A1A', para: '#9A9A9A' },
+  { nome: 'BAHIA',         emo: '🌺', presente: 'perfume',        de: '#0B4DA2', para: '#D4192B' },
+  { nome: 'SPORT',         emo: '🦁', presente: 'lion',           de: '#C8102E', para: '#141414' },
 ]
 
-/* `nomes` são os identificadores que o TikTok envia no evento de presente. */
-const PRESENTES = [
-  { emo: '🌹', titulo: 'Rosa',    pontos: 1,   nomes: ['rose'] },
-  { emo: '🍦', titulo: 'Sorvete', pontos: 5,   nomes: ['ice cream cone', 'ice cream'] },
-  { emo: '🧸', titulo: 'Urso',    pontos: 10,  nomes: ['hand hearts', 'teddy bear'] },
-  { emo: '🦁', titulo: 'Leão',    pontos: 100, nomes: ['lion'] },
-]
-
-const META = 100
+const META = 300   // moedas pra encher a barra
 const estado = TIMES.map(t => ({ ...t, pontos: 0, coroas: 0 }))
 let rodada = 1
 let travado = false
@@ -187,6 +191,7 @@ estado.forEach(t => {
   linha.innerHTML =
     '<div class="preencher" style="background:linear-gradient(90deg,' + t.de + ',' + t.para + ')"></div>' +
     '<div class="conteudo">' +
+      '<span class="emo-time">' + t.emo + '</span>' +
       '<span class="nome">' + t.nome + '</span>' +
       '<span class="coroas"></span>' +
       '<span class="pontos">0</span>' +
@@ -195,15 +200,11 @@ estado.forEach(t => {
 })
 const linhas = [...document.querySelectorAll('.linha')]
 
-const caixaPresentes = document.getElementById('presentes')
-PRESENTES.forEach(p => {
-  const d = document.createElement('div')
-  d.className = 'presente'
-  d.innerHTML = '<span class="emo">' + p.emo + '</span><span class="val">+' + p.pontos + '</span>' +
-                '<span class="qnt">' + p.titulo + '</span>'
-  caixaPresentes.appendChild(d)
-})
-const caixas = [...document.querySelectorAll('.presente')]
+/* O rodapé não lista mais presente fixo: cada time já mostra o dele na barra.
+   Aqui fica só a regra, que é o que a pessoa nova precisa entender em segundos. */
+document.getElementById('presentes').innerHTML =
+  '<div class="presente"><span class="val">cada time tem o presente dele</span></div>' +
+  '<div class="presente"><span class="qnt">o valor em moedas vira ponto</span></div>'
 
 function pintar() {
   const maior = Math.max(...estado.map(t => t.pontos))
@@ -308,10 +309,6 @@ function pontuar(indice, pontos, quem, emo) {
   if (travado || indice < 0 || indice >= estado.length) return
   const t = estado[indice]
 
-  // acende o cartão do presente correspondente, pra ensinar quem está chegando agora
-  const cx = caixas[PRESENTES.findIndex(p => p.emo === emo)]
-  if (cx) { cx.classList.remove('acende'); void cx.offsetWidth; cx.classList.add('acende') }
-
   voar(emo || '🌹', indice, () => {
     // O presente leva um tempo voando até a barra. Se a rodada terminou nesse
     // meio tempo, os pontos não podem mais valer: sem isso dois times chegavam
@@ -361,10 +358,10 @@ function vencer(indice) {
 
 /* ---------- a frase de baixo muda sozinha, pra tela nunca parecer parada ---------- */
 const FRASES = [
-  'primeiro a encher a barra <b>vence a rodada</b>',
-  'comenta o nome do time pra <b>escolher seu lado</b>',
-  'depois de escolher, <b>seu presente vai pro seu time</b>',
-  '<b>🦁 Leão</b> vale 100 de uma vez',
+  'cada time tem <b>o presente dele</b>',
+  'manda o presente do seu time pra <b>empurrar a barra</b>',
+  'o valor em moedas <b>vira ponto</b>',
+  'primeiro a encher <b>vence a rodada</b>',
   'seu time está perdendo? <b>faz alguma coisa</b>',
 ]
 let fraseAtual = 0
@@ -426,14 +423,15 @@ function ligarConector(porta) {
     }
 
     if (msg.tipo === 'presente') {
-      const p = PRESENTES.find(x => x.nomes.includes(String(msg.presente || '').toLowerCase()))
-      const pontos = (p ? p.pontos : 1) * (msg.quantidade || 1)
-      // Ordem de preferência: time escolhido antes, time citado no apelido, sorteio.
-      let alvo = torcedores.has(msg.id || msg.apelido)
-        ? torcedores.get(msg.id || msg.apelido)
-        : acharTime(msg.apelido)
-      if (alvo < 0) alvo = Math.floor(Math.random() * estado.length)
-      pontuar(alvo, pontos, msg.apelido, p ? p.emo : '🎁')
+      const nome = String(msg.presente || '').toLowerCase()
+      // O time é o dono daquele presente. Presente que não é de nenhum time
+      // ainda vale, e vai pro time que a pessoa escolheu no comentário.
+      let alvo = estado.findIndex(t => t.presente === nome)
+      if (alvo < 0) alvo = torcedores.has(msg.id || msg.apelido)
+        ? torcedores.get(msg.id || msg.apelido) : -1
+      if (alvo < 0) return
+      const moedas = (msg.moedas || 1) * (msg.quantidade || 1)
+      pontuar(alvo, moedas, msg.apelido, estado[alvo].emo)
     }
   }
   ws.onclose = () => setTimeout(() => ligarConector(porta), 4000)
@@ -449,11 +447,11 @@ addEventListener('keydown', e => {
   if (demo) { clearInterval(demo); demo = null; return }
   demo = setInterval(() => {
     const i = Math.floor(Math.random() * estado.length)
-    const p = PRESENTES[Math.floor(Math.random() * PRESENTES.length)]
-    pontuar(i, p.pontos, 'teste' + Math.floor(Math.random() * 99), p.emo)
+    const moedas = [1, 1, 1, 5, 10, 30, 99][Math.floor(Math.random() * 7)]
+    pontuar(i, moedas, 'teste' + Math.floor(Math.random() * 99), estado[i].emo)
   }, 650)
 })
-linhas.forEach((l, i) => l.addEventListener('click', () => pontuar(i, 10, 'clique', '🧸')))
+linhas.forEach((l, i) => l.addEventListener('click', () => pontuar(i, 10, 'clique', estado[i].emo)))
 
 /* ---------- escala ---------- */
 function encaixar() {
