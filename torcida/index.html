@@ -61,7 +61,7 @@ html,body{height:100%;background:#03050a;overflow:hidden;
 /* O rodapé cresceu com o quadro de regras. A pista precisa parar acima dele:
    o corredor em zero ainda desce meia bolha mais a sigla e o número, uns 80px
    abaixo da borda, e estava caindo em cima dos avisos. */
-#pista{position:absolute;left:28px;right:28px;top:376px;bottom:382px;z-index:3}
+#pista{position:absolute;left:28px;right:28px;top:376px;bottom:446px;z-index:3}
 .raia{position:absolute;top:0;bottom:0;border-left:2px solid rgba(255,255,255,.07)}
 .raia:last-child{border-right:2px solid rgba(255,255,255,.07)}
 .rastro{position:absolute;left:50%;transform:translateX(-50%);width:16px;bottom:0;border-radius:8px;
@@ -83,9 +83,13 @@ html,body{height:100%;background:#03050a;overflow:hidden;
 .bolha span{font-size:34px;line-height:1}
 /* Selo do presente do time, grudado no escudo: sem isso ninguém descobre qual
    presente pertence a quem. */
-.selo{position:absolute;right:-4px;top:-4px;width:30px;height:30px;border-radius:50%;
-  background:rgba(10,13,20,.95);border:2px solid rgba(255,255,255,.6);
-  display:grid;place-items:center;font-size:16px;z-index:3}
+/* Selo do presente do time, grudado no escudo: sem isso ninguém descobre qual
+   presente pertence a quem. Grande o bastante pra reconhecer o desenho na tela
+   do celular, que é onde a live é assistida. */
+.selo{position:absolute;right:-7px;top:-7px;width:38px;height:38px;border-radius:50%;
+  background:rgba(10,13,20,.96);border:3px solid rgba(255,255,255,.75);
+  box-shadow:0 3px 12px rgba(0,0,0,.9);display:grid;place-items:center;font-size:22px;z-index:3}
+.selo img{position:absolute;inset:0;width:100%;height:100%;object-fit:contain;padding:4px;z-index:2}
 .sigla{margin-top:4px;font-size:18px;font-weight:900;letter-spacing:-.5px;
   text-shadow:0 0 3px #000,2px 2px 0 rgba(0,0,0,.95),-2px 2px 0 rgba(0,0,0,.95),
               2px -2px 0 rgba(0,0,0,.95),-2px -2px 0 rgba(0,0,0,.95)}
@@ -99,8 +103,9 @@ html,body{height:100%;background:#03050a;overflow:hidden;
 .coroa{position:absolute;top:-30px;left:50%;transform:translateX(-50%);font-size:26px;white-space:nowrap}
 
 /* ---------- presente voando ---------- */
-.voando{position:absolute;z-index:7;font-size:72px;pointer-events:none;
+.voando{position:absolute;z-index:7;font-size:72px;line-height:1;pointer-events:none;
   filter:drop-shadow(0 6px 18px rgba(0,0,0,.9))}
+.voando img{width:96px;height:96px;object-fit:contain;display:block}
 #particulas{position:absolute;inset:0;pointer-events:none;z-index:6}
 
 /* ---------- base ---------- */
@@ -116,8 +121,10 @@ html,body{height:100%;background:#03050a;overflow:hidden;
 @keyframes entraAviso{from{opacity:0;transform:translateY(20px) scale(.85)}to{opacity:1;transform:none}}
 /* Quadro fixo das regras: quem entra na live tem poucos segundos pra entender.
    A frase que troca sozinha fica embaixo, como reforço, não como explicação. */
-#regras{display:flex;gap:12px;justify-content:center;margin-bottom:14px}
-.regra{display:flex;align-items:center;gap:11px;background:rgba(8,11,18,.88);
+/* São dois caminhos, não dois passos: numerado como 1 e 2 dava a entender que
+   era obrigatório comentar antes de cada presente. */
+#regras{display:flex;flex-direction:column;gap:9px;margin-bottom:14px;align-items:stretch}
+.regra{display:flex;align-items:center;gap:13px;background:rgba(8,11,18,.9);
   border:3px solid rgba(255,210,63,.4);border-radius:14px;padding:11px 18px;
   font-size:25px;font-weight:800;color:rgba(255,255,255,.9)}
 .regra i{font-style:normal;width:34px;height:34px;flex:none;border-radius:50%;
@@ -162,8 +169,8 @@ html,body{height:100%;background:#03050a;overflow:hidden;
   <div id="base">
     <div id="fila"></div>
     <div id="regras">
-      <div class="regra"><i>1</i> <span>comenta o nome do <b>seu time</b></span></div>
-      <div class="regra"><i>2</i> <span>manda <b>qualquer presente</b> e ele sobe</span></div>
+      <div class="regra"><i>A</i> <span>manda o <b>presente do seu time</b>, o do selinho</span></div>
+      <div class="regra"><i>B</i> <span>ou comenta o time <b>uma vez</b> e manda qualquer presente</span></div>
     </div>
     <div id="instrucao">manda o presente do seu time pra <b>ele subir</b></div>
   </div>
@@ -206,33 +213,33 @@ html,body{height:100%;background:#03050a;overflow:hidden;
    acrescentar o nome que apareceu lá na lista do time. */
 const TIMES = [
   { nome:'FLAMENGO',      sigla:'FLA', emo:'🌹', presentes:['rose','rosa'],
-    cor:'#E21B1B', escudo:'escudos/flamengo.png' },
+    cor:'#E21B1B', escudo:'escudos/flamengo.png' , icone:'presentes/rosa.png' },
   { nome:'CORINTHIANS',   sigla:'COR', emo:'🎵', presentes:['tiktok'],
-    cor:'#EDEDED', escudo:'escudos/corinthians.png' },
+    cor:'#EDEDED', escudo:'escudos/corinthians.png' , icone:'presentes/tiktok.png' },
   { nome:'PALMEIRAS',     sigla:'PAL', emo:'🍦', presentes:['ice cream cone','casquinha de sorvete','sorvete'],
-    cor:'#0B7A3F', escudo:'escudos/palmeiras.png' },
+    cor:'#0B7A3F', escudo:'escudos/palmeiras.png' , icone:'presentes/sorvete.png' },
   { nome:'SÃO PAULO',     sigla:'SPFC',emo:'❤️', presentes:['heart me'],
-    cor:'#D4192B', escudo:'escudos/sao-paulo.png' },
+    cor:'#D4192B', escudo:'escudos/sao-paulo.png' , icone:'presentes/heart-me.png' },
   { nome:'SANTOS',        sigla:'SAN', emo:'👍', presentes:['thumbs up','good job','bom trabalho'],
-    cor:'#FAFAFA', escudo:'escudos/santos.png' },
+    cor:'#FAFAFA', escudo:'escudos/santos.png' , icone:'presentes/bom-trabalho.png' },
   { nome:'VASCO',         sigla:'VAS', emo:'🤍', presentes:['white rose','rosa branca'],
-    cor:'#CFCFCF', escudo:'escudos/vasco.png' },
+    cor:'#CFCFCF', escudo:'escudos/vasco.png' , icone:'presentes/rosa-branca.png' },
   { nome:'BOTAFOGO',      sigla:'BOT', emo:'🎮', presentes:['gg','bom jogo'],
-    cor:'#9A9A9A', escudo:'escudos/botafogo.png' },
+    cor:'#9A9A9A', escudo:'escudos/botafogo.png' , icone:'presentes/gg.png' },
   { nome:'FLUMINENSE',    sigla:'FLU', emo:'🥰', presentes:['love you','amo você','amo voce'],
-    cor:'#7A1B2E', escudo:'escudos/fluminense.png' },
+    cor:'#7A1B2E', escudo:'escudos/fluminense.png' , icone:'presentes/amo-voce.png' },
   { nome:'GRÊMIO',        sigla:'GRE', emo:'🍰', presentes:['cake slice','fatia de bolo'],
-    cor:'#0B6BD6', escudo:'escudos/gremio.png' },
+    cor:'#0B6BD6', escudo:'escudos/gremio.png' , icone:'presentes/estilo-livre.png' },
   { nome:'INTERNACIONAL', sigla:'INT', emo:'🐱', presentes:['amazing','incrível','incrivel'],
-    cor:'#B0102A', escudo:'escudos/internacional.png' },
+    cor:'#B0102A', escudo:'escudos/internacional.png' , icone:'presentes/incrivel.png' },
   { nome:'CRUZEIRO',      sigla:'CRU', emo:'😉', presentes:['cute wink','piscadinha'],
-    cor:'#2B5BD7', escudo:'escudos/cruzeiro.png' },
+    cor:'#2B5BD7', escudo:'escudos/cruzeiro.png' , icone:'presentes/piscadinha.png' },
   { nome:'ATLÉTICO-MG',   sigla:'CAM', emo:'✨', presentes:['glow stick','bastão brilhante','bastao brilhante'],
-    cor:'#C4C4C4', escudo:'escudos/atletico-mg.png' },
+    cor:'#C4C4C4', escudo:'escudos/atletico-mg.png' , icone:'presentes/bastao.png' },
   { nome:'BAHIA',         sigla:'BAH', emo:'🎈', presentes:['pop'],
-    cor:'#1E72D0', escudo:'escudos/bahia.png' },
+    cor:'#1E72D0', escudo:'escudos/bahia.png' , icone:'presentes/pop.png' },
   { nome:'SPORT',         sigla:'SPT', emo:'🎸', presentes:['free style','estilo livre'],
-    cor:'#C8102E', escudo:'escudos/sport.png' },
+    cor:'#C8102E', escudo:'escudos/sport.png' , icone:'presentes/classicas.png' },
 ]
 
 const META = 300          // moedas pra cruzar a linha de chegada
@@ -257,7 +264,10 @@ estado.forEach((t, i) => {
         '<img src="' + t.escudo + '" alt="" onerror="this.remove()">' +
         '<span>' + t.emo + '</span>' +
       '</div>' +
-      '<div class="selo">' + t.emo + '</div>' +
+      '<div class="selo">' +
+        '<img src="' + t.icone + '" alt="" onerror="this.remove()">' +
+        '<span>' + t.emo + '</span>' +
+      '</div>' +
       '<div class="sigla">' + t.sigla + '</div>' +
       '<div class="moedas">0</div>' +
     '</div>'
@@ -327,7 +337,17 @@ function voar(emo, i, aoChegar) {
   const saidaX = 120 + Math.random() * 840
   const el = document.createElement('div')
   el.className = 'voando'
-  el.textContent = emo
+  // Usa a imagem do presente quando existe; o emoji fica de reserva pra quando
+  // o arquivo não estiver lá.
+  const t = estado[i]
+  if (t.icone) {
+    const img = document.createElement('img')
+    img.src = t.icone
+    img.onerror = () => { el.textContent = emo }
+    el.appendChild(img)
+  } else {
+    el.textContent = emo
+  }
   el.style.left = saidaX + 'px'
   el.style.top = '1780px'
   document.getElementById('palco').appendChild(el)

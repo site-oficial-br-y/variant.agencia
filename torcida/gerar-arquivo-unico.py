@@ -22,8 +22,10 @@ def troca(m):
     return "escudo:'%s'" % embutir(caminho) if os.path.exists(caminho) else m.group(0)
 
 s = re.sub(r"escudo:\s*'(escudos/[^']+)'", troca, s)
+s = re.sub(r"icone:\s*'(presentes/[^']+)'", lambda m: "icone:'%s'" % embutir(m.group(1))
+          if os.path.exists(m.group(1)) else m.group(0), s)
 
-faltando = re.findall(r"escudos/[^']+", s)
+faltando = re.findall(r"escudos/[^']+", s) + re.findall(r"presentes/[^']+", s)
 if faltando:
     print('sem arquivo, seguem no emoji:', ', '.join(sorted(set(faltando))))
 

@@ -30,18 +30,19 @@ largura 1080 e altura 1920. A tela escala sozinha pra qualquer tamanho.
 
 ## Como o público joga
 
-Está escrito na tela, em duas regras:
+São duas formas, e as duas estão escritas na tela:
 
-**1. Comenta o nome do time.** Aceita apelido: mengão, timão, verdão, peixe,
-galo. Isso marca a pessoa como torcedora e já dá +1.
+**A) Manda o presente do time.** Cada time tem um presente de 1 moeda só dele,
+mostrado no selinho ao lado do escudo. Mandou aquele presente, o time sobe.
+Não precisa comentar nada.
 
-**2. Manda qualquer presente.** Ele vai pro time que ela escolheu, e o avanço é
-o valor em moedas: presente de 10 sobe 10, de 100 sobe 100.
+**B) Comenta o nome do time uma vez.** Aceita apelido: mengão, timão, verdão,
+peixe, galo. A partir dali, qualquer presente que a pessoa mandar vai pro time
+dela, e o avanço é o valor em moedas: presente de 10 sobe 10, de 100 sobe 100.
 
-**Atalho:** cada time também tem um presente de 1 moeda só dele, mostrado no
-selinho ao lado do escudo. Mandar aquele presente pontua direto, sem precisar
-comentar. São todos de 1 moeda de propósito, pra qualquer pessoa conseguir
-participar.
+A forma A é pra quem quer gastar pouco, a B é pra quem quer mandar presente
+caro. Todos os presentes de time custam 1 moeda de propósito, pra disputa ser
+de torcida e não de quem tem mais dinheiro.
 
 Primeiro a cruzar a linha de chegada vence a corrida e ganha uma coroa.
 
@@ -62,6 +63,8 @@ Tudo que você vai querer trocar está no começo do `<script>` do `index.html`:
 - **`META`** — quantas moedas levam até a linha de chegada. Menor, corrida mais
   rápida. Está em 300.
 - **`fundo.webp`** — a foto do estádio. Trocar o arquivo troca o cenário.
+- **`presentes/`** — a figura de cada presente, recortada do painel do TikTok.
+  Faltando alguma, o emoji do time aparece no lugar.
 
 ## Escudos
 
