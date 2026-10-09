@@ -41,17 +41,24 @@ html,body{height:100%;background:#03050a;overflow:hidden;
   background:rgba(0,0,0,.45)}
 
 /* ---------- linha de chegada ---------- */
-#chegada{position:absolute;left:0;right:0;top:300px;height:34px;z-index:3;
-  background:repeating-linear-gradient(90deg,#fff 0 34px,#111 34px 68px);
-  box-shadow:0 0 42px rgba(255,255,255,.5),0 0 90px rgba(255,210,63,.35);
-  animation:anda 1.1s linear infinite}
-@keyframes anda{to{background-position:68px 0}}
-#chegada-txt{position:absolute;left:0;right:0;top:252px;z-index:4;text-align:center;
+/* Quadriculado de verdade: duas fileiras alternadas, como bandeira de chegada.
+   O xadrez vem de um gradiente cônico repetido, que é o jeito curto de fazer
+   tabuleiro em CSS; uma única fileira de listras não lê como linha de chegada. */
+#chegada{position:absolute;left:0;right:0;top:292px;height:76px;z-index:3;
+  background:repeating-conic-gradient(#fff 0% 25%,#15181f 0% 50%) 0 0 / 38px 38px;
+  border-top:5px solid #ffd23f;border-bottom:5px solid #ffd23f;
+  box-shadow:0 0 46px rgba(255,255,255,.45),0 0 110px rgba(255,210,63,.45),
+             inset 0 0 40px rgba(0,0,0,.5);
+  animation:anda 2.4s linear infinite}
+@keyframes anda{to{background-position:76px 0}}
+#chegada.flash{animation:anda 2.4s linear infinite,flash .6s ease 3}
+@keyframes flash{0%,100%{filter:none}50%{filter:brightness(2.2) saturate(1.4)}}
+#chegada-txt{position:absolute;left:0;right:0;top:248px;z-index:4;text-align:center;
   font-size:26px;font-weight:900;letter-spacing:9px;color:#ffd23f;
   text-shadow:0 3px 16px rgba(0,0,0,1)}
 
 /* ---------- pista ---------- */
-#pista{position:absolute;left:28px;right:28px;top:334px;bottom:286px;z-index:3}
+#pista{position:absolute;left:28px;right:28px;top:376px;bottom:286px;z-index:3}
 .raia{position:absolute;top:0;bottom:0;border-left:2px solid rgba(255,255,255,.07)}
 .raia:last-child{border-right:2px solid rgba(255,255,255,.07)}
 .rastro{position:absolute;left:50%;transform:translateX(-50%);width:16px;bottom:0;border-radius:8px;
@@ -64,10 +71,12 @@ html,body{height:100%;background:#03050a;overflow:hidden;
 /* o corredor: escudo do time que vai subindo */
 .corredor{position:absolute;left:50%;width:72px;transform:translate(-50%,50%);
   transition:bottom .55s cubic-bezier(.17,.89,.32,1.15);text-align:center;z-index:2}
+/* A bolinha é clara por dentro: escudo tem muita cor escura e sumia no fundo
+   do time. O anel por fora é que carrega a cor do clube. */
 .bolha{position:relative;width:70px;height:70px;margin:0 auto;border-radius:50%;
-  display:grid;place-items:center;border:4px solid rgba(255,255,255,.75);
-  box-shadow:0 6px 22px rgba(0,0,0,.8);overflow:hidden}
-.bolha img{position:absolute;inset:0;width:100%;height:100%;object-fit:contain;z-index:2;padding:6px}
+  display:grid;place-items:center;border:4px solid rgba(255,255,255,.85);
+  box-shadow:0 6px 22px rgba(0,0,0,.85);overflow:hidden;background:rgba(248,250,255,.94)}
+.bolha img{position:absolute;inset:0;width:100%;height:100%;object-fit:contain;z-index:2;padding:7px}
 .bolha span{font-size:34px;line-height:1}
 .sigla{margin-top:4px;font-size:18px;font-weight:900;letter-spacing:-.5px;
   text-shadow:0 0 3px #000,2px 2px 0 rgba(0,0,0,.95),-2px 2px 0 rgba(0,0,0,.95),
@@ -197,7 +206,7 @@ estado.forEach((t, i) => {
     '<div class="rastro" style="background:linear-gradient(0deg,' + t.cor + '66,' + t.cor + ')"></div>' +
     '<div class="corredor" style="bottom:0">' +
       '<div class="coroa"></div>' +
-      '<div class="bolha" style="background:linear-gradient(160deg,' + t.cor + ',#0a0d14)">' +
+      '<div class="bolha" style="border-color:' + t.cor + '">' +
         '<img src="' + t.escudo + '" alt="" onerror="this.remove()">' +
         '<span>' + t.emo + '</span>' +
       '</div>' +
@@ -327,6 +336,8 @@ function vencer(i) {
   pintar()
   chuvaDeConfete(t.cor)
   tremer()
+  const lc = document.getElementById('chegada')
+  lc.classList.remove('flash'); void lc.offsetWidth; lc.classList.add('flash')
   const fe = document.getElementById('faixa-escudo')
   fe.style.display = 'none'
   fe.onload = () => { fe.style.display = 'block' }
