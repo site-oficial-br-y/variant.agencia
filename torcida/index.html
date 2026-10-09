@@ -195,8 +195,8 @@ html,body{height:100%;background:#03050a;overflow:hidden;
   <div id="base">
     <div id="fila"></div>
     <div id="regras">
-      <div class="regra"><i>1</i> <span>comenta o nome do <b>seu time</b></span></div>
-      <div class="regra"><i>2</i> <span>manda <b>qualquer presente</b>, ele empurra o seu time</span></div>
+      <div class="regra"><i>1</i> <span>comenta o nome do time pra <b>escolher seu lado</b></span></div>
+      <div class="regra"><i>2</i> <span>manda <b>qualquer presente</b> pra ele subir</span></div>
     </div>
     <div id="instrucao">manda o presente do seu time pra <b>ele subir</b></div>
   </div>
@@ -478,11 +478,11 @@ function vencer(i) {
 
 /* ---------- frases que trocam sozinhas ---------- */
 const FRASES = [
-  'qualquer presente serve, <b>vale o valor em moedas</b>',
+  'comentar <b>escolhe o time</b>, presente <b>faz subir</b>',
+  'qualquer presente serve, vale <b>o valor em moedas</b>',
   'quem mais empurrar <b>aparece aqui em cima</b>',
   'primeiro a cruzar a linha <b>vence a corrida</b>',
-  'seu time está atrás? <b>faz alguma coisa</b>',
-  'ainda não escolheu? <b>comenta o nome do time</b>',
+  'seu time está atrás? <b>vai deixar assim?</b>',
 ]
 let fraseAtual = 0
 setInterval(() => {
@@ -537,10 +537,14 @@ function ligarConector(porta) {
     try { msg = JSON.parse(ev.data) } catch { return }
 
     if (msg.tipo === 'comentario') {
+      // O comentário só escolhe o lado, não faz subir. Quem empurra é presente:
+      // dar ponto de graça tirava o motivo de mandar presente.
       const alvo = acharTime(msg.texto)
       if (alvo < 0) return
-      torcedores.set(msg.id || msg.apelido, alvo)
-      avancar(alvo, 1, msg.apelido, '💬')
+      const chave = msg.id || msg.apelido
+      if (torcedores.get(chave) === alvo) return
+      torcedores.set(chave, alvo)
+      avisar('<span>' + (msg.apelido || 'alguém') + '</span> escolheu ' + estado[alvo].sigla)
       return
     }
 
