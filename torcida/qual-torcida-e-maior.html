@@ -147,6 +147,14 @@ html,body{height:100%;background:#03050a;overflow:hidden;
   transition:opacity .3s;text-shadow:0 2px 12px rgba(0,0,0,1)}
 #instrucao b{color:#ffd23f}
 
+/* Aviso de conector desligado. Some sozinho quando conecta, pra não aparecer
+   na transmissão quando está tudo certo. Serve pra enxergar o problema na hora,
+   em vez de descobrir no fim da live que nada estava chegando. */
+#semConector{position:absolute;left:50%;transform:translateX(-50%);top:16px;z-index:9;
+  background:rgba(200,30,30,.92);border-radius:999px;padding:8px 22px;
+  font-size:21px;font-weight:900;letter-spacing:.5px;display:none}
+#semConector.on{display:block}
+
 /* ---------- vitória ---------- */
 #faixa{position:absolute;inset:0;display:none;align-items:center;justify-content:center;
   background:rgba(3,5,10,.86);z-index:8}
@@ -192,6 +200,8 @@ html,body{height:100%;background:#03050a;overflow:hidden;
     </div>
     <div id="instrucao">manda o presente do seu time pra <b>ele subir</b></div>
   </div>
+
+  <div id="semConector">conector desligado: nenhum presente está chegando</div>
 
   <div id="faixa">
     <div class="caixa">
@@ -513,9 +523,15 @@ function acharTime(texto) {
    presentes que não pertencem a nenhum time. */
 const torcedores = new Map()
 
+function avisoConector(ligado) {
+  document.getElementById('semConector').classList.toggle('on', !ligado)
+}
+avisoConector(false)
+
 function ligarConector(porta) {
   let ws
-  try { ws = new WebSocket('ws://localhost:' + porta) } catch { return }
+  try { ws = new WebSocket('ws://localhost:' + porta) } catch { avisoConector(false); return }
+  ws.onopen = () => avisoConector(true)
   ws.onmessage = ev => {
     let msg
     try { msg = JSON.parse(ev.data) } catch { return }
@@ -537,7 +553,7 @@ function ligarConector(porta) {
       avancar(alvo, (msg.moedas || 1) * (msg.quantidade || 1), msg.apelido, estado[alvo].emo)
     }
   }
-  ws.onclose = () => setTimeout(() => ligarConector(porta), 4000)
+  ws.onclose = () => { avisoConector(false); setTimeout(() => ligarConector(porta), 4000) }
   ws.onerror = () => { try { ws.close() } catch {} }
 }
 ligarConector(21213)
