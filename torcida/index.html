@@ -157,6 +157,11 @@ html,body{height:100%;background:#03050a;overflow:hidden;
   font-size:20px;font-weight:900;letter-spacing:.5px;display:none}
 #semConector.on{display:block}
 
+/* Marcador de versão: serve pra saber de relance qual build está no ar, em vez
+   de ficar adivinhando se a publicação pegou. */
+#versao{position:absolute;right:10px;bottom:6px;z-index:9;font-size:16px;
+  color:rgba(255,255,255,.3);font-weight:800;letter-spacing:1px}
+
 /* ---------- vitória ---------- */
 #faixa{position:absolute;inset:0;display:none;align-items:center;justify-content:center;
   background:rgba(3,5,10,.86);z-index:8}
@@ -202,6 +207,8 @@ html,body{height:100%;background:#03050a;overflow:hidden;
     </div>
     <div id="instrucao">manda o presente do seu time pra <b>ele subir</b></div>
   </div>
+
+  <div id="versao">v4</div>
 
   <div id="semConector">conector desligado: nenhum presente está chegando</div>
 
