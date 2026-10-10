@@ -111,13 +111,10 @@ html,body{height:100%;background:#000;overflow:hidden;
 .lutador{position:absolute;bottom:44px;width:360px;height:470px;z-index:4}
 .lutador.esq{left:52px}
 .lutador.dir{right:52px}
-.corpo{position:absolute;inset:0;z-index:1;transform-origin:center bottom;
-  animation:respira 2.8s ease-in-out infinite}
-.lutador.dir .corpo{transform:scaleX(-1);animation-name:respiraDir}
-@keyframes respira{0%,100%{transform:scaleY(1)}50%{transform:scaleY(1.016)}}
-@keyframes respiraDir{0%,100%{transform:scaleX(-1) scaleY(1)}
-  50%{transform:scaleX(-1) scaleY(1.016)}}
-.pose{position:absolute;left:50%;bottom:0;max-width:100%;max-height:100%;
+/* Nada de respiração em CSS: quem dá vida agora é o ciclo de quadros. */
+.corpo{position:absolute;inset:0;z-index:1;transform-origin:center bottom}
+.lutador.dir .corpo{transform:scaleX(-1)}
+.pose{position:absolute;left:50%;bottom:-6.4%;height:100%;width:auto;max-width:none;
   transform:translateX(-50%);opacity:0;pointer-events:none;
   filter:drop-shadow(0 4px 3px rgba(0,0,0,.45))}
 .pose.on{opacity:1}
@@ -294,7 +291,7 @@ html,body{height:100%;background:#000;overflow:hidden;
     </div>
   </div>
 
-  <div id="versao">v6</div>
+  <div id="versao">v7</div>
   <div id="semConector">conector desligado: nada está chegando da live</div>
 </div>
 
@@ -314,8 +311,21 @@ const LADOS = [
   { nome:'FLÁVIO', cor:'#4da3ff', pasta:'flavio',
     palavras:['flavio','flavinho','bolsonaro','bolso','22','azul'] },
 ]
-const POSES = ['parado', 'soco', 'chute', 'avanco', 'defesa', 'caido', 'vitoria']
-const GOLPES = ['soco', 'chute', 'avanco']
+/* ---------- clipes ----------
+   Cada clipe é uma lista de quadros e o tempo de cada um. `loop` roda sem
+   parar, `segura` para no último quadro, e o resto volta pro parado quando
+   acaba. Parado é o ciclo de passada: é ele que tira o ar de boneco colado
+   na tela, porque o lutador nunca fica no mesmo desenho duas vezes seguidas. */
+const CLIPES = {
+  parado:  { q: ['andar1','andar2','andar3','andar4','andar5','andar6'], ms: 115, loop: true },
+  soco:    { q: ['golpe1'], ms: 230 },
+  chute:   { q: ['golpe2'], ms: 280 },
+  forte:   { q: ['golpe3','golpe5'], ms: 175 },
+  dano:    { q: ['defesa'], ms: 300 },
+  caido:   { q: ['caido'], ms: 1, segura: true },
+  vitoria: { q: ['vitoria'], ms: 1, segura: true },
+}
+const QUADROS = [...new Set(Object.values(CLIPES).flatMap(c => c.q))]
 
 const VIDA = 100          // dano pra zerar a barra do outro
 const ROUNDS_PRA_GANHAR = 3
@@ -326,21 +336,21 @@ const estado = LADOS.map(() => ({ hp: VIDA, rounds: 0, forca: 0 }))
 const apoio = [new Map(), new Map()]
 const apoioTopo = ['', '']
 const caixas = [document.getElementById('lutA'), document.getElementById('lutB')]
-const poses = [{}, {}]
-const voltarPose = [null, null]
+const quadros = [{}, {}]
+const tocando = [null, null]
 let travado = false
 let round = 1
 
 /* ---------- montagem ---------- */
 LADOS.forEach((l, i) => {
   const corpo = caixas[i].querySelector('.corpo')
-  POSES.forEach(p => {
+  QUADROS.forEach(q => {
     const img = new Image()
-    img.className = 'pose' + (p === 'parado' ? ' on' : '')
-    img.src = sprite(l.pasta + '-' + p)
+    img.className = 'pose'
+    img.src = sprite(l.pasta + '-' + q)
     img.alt = ''
     corpo.appendChild(img)
-    poses[i][p] = img
+    quadros[i][q] = img
   })
   document.getElementById(i ? 'rostoB' : 'rostoA').src = sprite(l.pasta + '-rosto')
   const nome = document.getElementById(i ? 'nomeB' : 'nomeA')
@@ -359,12 +369,29 @@ for (let r = ROUNDS_PRA_GANHAR - 1; r >= 0; r--) {
   bolinhas.insertAdjacentHTML('beforeend', '<div class="bolinha dir" data-l="1" data-r="' + r + '"></div>')
 }
 
-function mostrarPose(i, pose, voltarEm) {
+/* Troca de quadro é trocar qual imagem está visível: todas já estão
+   carregadas e empilhadas no mesmo lugar. Com src mudando na hora do golpe a
+   primeira troca piscava, porque a imagem ainda não tinha vindo. */
+function verQuadro(i, nome) {
   const atual = caixas[i].querySelector('.pose.on')
   if (atual) atual.classList.remove('on')
-  ;(poses[i][pose] || poses[i].parado).classList.add('on')
-  clearTimeout(voltarPose[i])
-  if (voltarEm) voltarPose[i] = setTimeout(() => mostrarPose(i, 'parado'), voltarEm)
+  const img = quadros[i][nome]
+  if (img) img.classList.add('on')
+}
+
+function tocar(i, clipe) {
+  const c = CLIPES[clipe] || CLIPES.parado
+  clearTimeout(tocando[i])
+  let n = 0
+  const passo = () => {
+    verQuadro(i, c.q[n])
+    n += 1
+    if (n < c.q.length) { tocando[i] = setTimeout(passo, c.ms); return }
+    if (c.loop) { n = 0; tocando[i] = setTimeout(passo, c.ms); return }
+    if (c.segura) return
+    tocando[i] = setTimeout(() => tocar(i, 'parado'), c.ms)
+  }
+  passo()
 }
 
 function pintar() {
@@ -394,10 +421,9 @@ function golpear(lado, forca, quem, origem) {
   estado[lado].forca += forca
   estado[alvo].hp -= forca
 
-  // Golpe fraco é soco, médio é chute, forte é o avanço com rastro.
-  const pose = forca >= 50 ? 'avanco' : forca >= 10 ? 'chute' : 'soco'
-  mostrarPose(lado, pose, 460)
-  mostrarPose(alvo, 'defesa', 420)
+  // Golpe fraco é soco, médio é chute, forte é a sequência de dois.
+  tocar(lado, forca >= 50 ? 'forte' : forca >= 10 ? 'chute' : 'soco')
+  tocar(alvo, 'dano')
   caixas[lado].classList.remove('ataca'); void caixas[lado].offsetWidth
   caixas[lado].classList.add('ataca')
   caixas[alvo].classList.remove('apanha'); void caixas[alvo].offsetWidth
@@ -476,8 +502,8 @@ function nocaute(vencedor) {
   estado[perdedor].hp = 0
   pintar()
 
-  mostrarPose(perdedor, 'caido')
-  mostrarPose(vencedor, 'vitoria')
+  tocar(perdedor, 'caido')
+  tocar(vencedor, 'vitoria')
   caixas[perdedor].querySelector('.corpo').style.animation = 'none'
   tremer()
   const clarao = document.getElementById('clarao')
@@ -493,7 +519,7 @@ function nocaute(vencedor) {
   setTimeout(() => {
     ko.classList.remove('on')
     caixas[perdedor].querySelector('.corpo').style.animation = ''
-    mostrarPose(0, 'parado'); mostrarPose(1, 'parado')
+    tocar(0, 'parado'); tocar(1, 'parado')
     estado.forEach(e => { e.hp = VIDA; e.forca = 0 })
     if (venceuTudo) estado.forEach(e => { e.rounds = 0 })
     apoio.forEach(m => m.clear())
@@ -747,6 +773,8 @@ function encaixar() {
 addEventListener('resize', encaixar)
 encaixar()
 pintar()
+tocar(0, 'parado')
+tocar(1, 'parado')
 </script>
 </body>
 </html>

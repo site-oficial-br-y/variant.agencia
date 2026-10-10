@@ -23,13 +23,33 @@ node conector.js seuusuario
 
 e abrir http://localhost:8080 no Chrome.
 
-## Fotos
+## Quadros de animação
 
-Coloque `lula.png` e `flavio.png` em `fotos/`, de preferência recortados, com
-fundo transparente e de corpo inteiro. Sem os arquivos entra um boneco da cor
-do lado e o jogo funciona igual.
+Os sprites ficam em `sprites/`, um arquivo por quadro, no formato
+`<quem>-<quadro>.png`. Os clipes são montados no `index.html`, em `CLIPES`:
 
-Depois de trocar as fotos, rode:
+| clipe | quando toca | quadros |
+|---|---|---|
+| parado | o tempo todo | andar1 a andar6, em laço |
+| soco | golpe abaixo de 10 | golpe1 |
+| chute | golpe de 10 a 49 | golpe2 |
+| forte | golpe de 50 pra cima | golpe3 e golpe5 |
+| dano | quem apanha | defesa |
+| caido | perdeu o round | caido |
+| vitoria | ganhou o round | vitoria |
+
+Pra gerar quadro novo, peça folha de animação ao gerador de imagem assim:
+
+> sprite sheet, 6 frames, 3 columns x 2 rows, idle breathing cycle, same
+> character, same scale, feet on the same baseline, side view facing right,
+> black background, pixel art
+
+O que não pode faltar: **mesma escala, mesmo chão, fundo preto** e, de
+preferência, a linha do chão desenhada, que é o que o extrator usa de régua.
+Uma folha por movimento, um quadro por célula. Folha com efeito vazando de
+uma célula pra outra não dá pra cortar.
+
+Depois de trocar sprites, rode:
 
 ```
 python3 gerar-arquivo-unico.py
