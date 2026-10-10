@@ -108,7 +108,7 @@ html,body{height:100%;background:#000;overflow:hidden;
    Cada pose é uma imagem empilhada no mesmo lugar, alinhada pelo pé: trocar
    de pose é trocar qual está visível. Com `src` trocando na hora do golpe a
    primeira troca piscava, porque a imagem ainda não tinha carregado. */
-.lutador{position:absolute;bottom:52px;width:360px;height:470px;z-index:4}
+.lutador{position:absolute;bottom:8px;width:360px;height:470px;z-index:4}
 .lutador.esq{left:52px}
 .lutador.dir{right:52px}
 .corpo{position:absolute;inset:0;animation:respira 2.8s ease-in-out infinite}
@@ -120,7 +120,7 @@ html,body{height:100%;background:#000;overflow:hidden;
   transform:translateX(-50%);opacity:0;pointer-events:none;
   filter:drop-shadow(0 16px 20px rgba(0,0,0,.55))}
 .pose.on{opacity:1}
-.sombra{position:absolute;left:50%;bottom:4px;width:220px;height:28px;margin-left:-110px;
+.sombra{position:absolute;left:50%;bottom:92px;width:190px;height:24px;margin-left:-95px;
   border-radius:50%;background:radial-gradient(ellipse,rgba(0,0,0,.6),transparent 70%)}
 
 .lutador.ataca .corpo{animation:soco .42s cubic-bezier(.3,1.5,.4,1)}
@@ -293,7 +293,7 @@ html,body{height:100%;background:#000;overflow:hidden;
     </div>
   </div>
 
-  <div id="versao">v3</div>
+  <div id="versao">v4</div>
   <div id="semConector">conector desligado: nada está chegando da live</div>
 </div>
 
