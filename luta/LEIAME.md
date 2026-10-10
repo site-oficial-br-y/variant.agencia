@@ -31,9 +31,10 @@ Os sprites ficam em `sprites/`, um arquivo por quadro, no formato
 | clipe | quando toca | quadros |
 |---|---|---|
 | parado | o tempo todo | andar1 a andar6, em laço |
-| soco | golpe abaixo de 10 | golpe1 |
-| chute | golpe de 10 a 49 | golpe2 |
-| forte | golpe de 50 pra cima | golpe3 e golpe5 |
+| soco | golpe abaixo de 5 | golpe1 |
+| chute | golpe de 5 a 19 | golpe2 |
+| forte | golpe de 20 a 49 | golpe3 e golpe5 |
+| especial | golpe de 50 pra cima | esp1 a esp7 |
 | dano | quem apanha | defesa |
 | caido | perdeu o round | caido |
 | vitoria | ganhou o round | vitoria |
@@ -46,8 +47,9 @@ Pra gerar quadro novo, peça folha de animação ao gerador de imagem assim:
 
 O que não pode faltar: **mesma escala, mesmo chão, fundo preto** e, de
 preferência, a linha do chão desenhada, que é o que o extrator usa de régua.
-Uma folha por movimento, um quadro por célula. Folha com efeito vazando de
-uma célula pra outra não dá pra cortar.
+Uma folha por movimento. O efeito pode vazar pra célula vizinha, como o raio
+do especial: o extrator acha o lutador pelos dois pés encostando no chão e
+estende o quadro dele até onde o próximo lutador aparece.
 
 Depois de trocar sprites, rode:
 
