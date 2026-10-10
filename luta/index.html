@@ -291,7 +291,7 @@ html,body{height:100%;background:#000;overflow:hidden;
     </div>
   </div>
 
-  <div id="versao">v7</div>
+  <div id="versao">v8</div>
   <div id="semConector">conector desligado: nada está chegando da live</div>
 </div>
 
@@ -321,6 +321,10 @@ const CLIPES = {
   soco:    { q: ['golpe1'], ms: 230 },
   chute:   { q: ['golpe2'], ms: 280 },
   forte:   { q: ['golpe3','golpe5'], ms: 175 },
+  // O especial é o prêmio do presente caro: carrega a bola, dispara o raio
+  // atravessando a tela e termina na explosão. Quase um segundo de tela, que
+  // é o que faz valer a pena mandar o presente grande em vez de três baratos.
+  especial:{ q: ['esp1','esp2','esp3','esp4','esp5','esp6','esp7'], ms: 135 },
   dano:    { q: ['defesa'], ms: 300 },
   caido:   { q: ['caido'], ms: 1, segura: true },
   vitoria: { q: ['vitoria'], ms: 1, segura: true },
@@ -421,8 +425,10 @@ function golpear(lado, forca, quem, origem) {
   estado[lado].forca += forca
   estado[alvo].hp -= forca
 
-  // Golpe fraco é soco, médio é chute, forte é a sequência de dois.
-  tocar(lado, forca >= 50 ? 'forte' : forca >= 10 ? 'chute' : 'soco')
+  // Quanto mais pesado o golpe, maior a animação.
+  const clipe = forca >= 50 ? 'especial' : forca >= 20 ? 'forte'
+              : forca >= 5 ? 'chute' : 'soco'
+  tocar(lado, clipe)
   tocar(alvo, 'dano')
   caixas[lado].classList.remove('ataca'); void caixas[lado].offsetWidth
   caixas[lado].classList.add('ataca')
