@@ -1,0 +1,746 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<title>Quem ganha a luta</title>
+<style>
+/* Tela vertical 1080x1920, do tamanho da live. Escala sozinha pra caber em
+   qualquer janela, então dá pra conferir no navegador antes de abrir o OBS. */
+*{margin:0;padding:0;box-sizing:border-box}
+html,body{height:100%;background:#03050a;overflow:hidden;
+  font-family:'Archivo','Inter',system-ui,sans-serif;user-select:none}
+#palco{position:absolute;top:50%;left:50%;width:1080px;height:1920px;transform-origin:center;
+  overflow:hidden;color:#fff;background:#07060c}
+#palco.tremer{animation:tremer .42s cubic-bezier(.36,.07,.19,.97)}
+@keyframes tremer{
+  10%,90%{transform:translate(calc(-50% - 7px),-50%) scale(var(--e))}
+  20%,80%{transform:translate(calc(-50% + 10px),calc(-50% - 5px)) scale(var(--e))}
+  30%,50%,70%{transform:translate(calc(-50% - 13px),calc(-50% + 6px)) scale(var(--e))}
+  40%,60%{transform:translate(calc(-50% + 13px),-50%) scale(var(--e))}
+}
+
+/* ---------- arena ----------
+   Desenhada em CSS porque foto de ringue some atrás dos lutadores e ainda
+   pesa. Plateia é um campo de pontos, chão é um degradê em perspectiva com
+   linhas que fogem pro fundo: barato e lê como ringue mesmo pequeno. */
+#fundo{position:absolute;inset:0;background:
+  radial-gradient(ellipse 80% 50% at 50% 8%,rgba(120,150,255,.16),transparent 72%),
+  linear-gradient(180deg,#0a0a14 0%,#120d1c 46%,#1b1020 62%,#0a0710 100%)}
+#plateia{position:absolute;left:0;right:0;top:300px;height:560px;opacity:.5;
+  background-image:
+    radial-gradient(circle,rgba(255,255,255,.22) 1.6px,transparent 2px),
+    radial-gradient(circle,rgba(255,180,90,.16) 1.4px,transparent 2px);
+  background-size:26px 22px,41px 33px;background-position:0 0,13px 11px;
+  -webkit-mask-image:linear-gradient(180deg,transparent,#000 35%,#000 70%,transparent);
+          mask-image:linear-gradient(180deg,transparent,#000 35%,#000 70%,transparent);
+  animation:plateia 5s ease-in-out infinite}
+@keyframes plateia{0%,100%{opacity:.4}50%{opacity:.62}}
+#chao{position:absolute;left:0;right:0;bottom:0;height:720px;
+  background:linear-gradient(180deg,rgba(58,20,36,0) 0%,#3a1424 16%,#581a2e 46%,#2a0d18 100%)}
+#chao::before{content:'';position:absolute;inset:0;
+  background:repeating-linear-gradient(90deg,rgba(255,255,255,.05) 0 2px,transparent 2px 86px);
+  -webkit-mask-image:linear-gradient(180deg,transparent,#000 40%);
+          mask-image:linear-gradient(180deg,transparent,#000 40%)}
+#holofote{position:absolute;inset:0;pointer-events:none;
+  background:radial-gradient(ellipse 58% 30% at 50% 74%,rgba(255,225,170,.17),transparent 68%)}
+#veu{position:absolute;inset:0;pointer-events:none;
+  background:linear-gradient(180deg,rgba(4,4,10,.9) 0%,rgba(4,4,10,.45) 26%,
+             rgba(4,4,10,.2) 58%,rgba(4,4,10,.8) 100%)}
+
+/* ---------- topo ---------- */
+#topo{position:absolute;top:0;left:0;right:0;z-index:5;padding:30px 40px 0;text-align:center}
+#titulo{font-size:64px;font-weight:900;letter-spacing:-2.5px;line-height:.94;text-transform:uppercase;
+  text-shadow:0 6px 30px rgba(0,0,0,.95)}
+#titulo b{color:#ffd23f;display:inline-block;animation:bate 1.6s ease-in-out infinite}
+@keyframes bate{0%,100%{transform:scale(1)}50%{transform:scale(1.06)}}
+#rodada{display:inline-block;margin-top:10px;padding:6px 24px;border:3px solid rgba(255,210,63,.5);
+  border-radius:999px;font-size:23px;font-weight:900;letter-spacing:4px;color:#ffd23f;
+  background:rgba(0,0,0,.45)}
+
+/* ---------- barras de vida ----------
+   Duas barras espelhadas, que é como todo jogo de luta mostra. A barra
+   fantasma atrás desce devagar depois da cheia: é ela que faz o estrago ser
+   visível, porque a barra sozinha cai rápido demais pra alguém reparar. */
+#vida{position:absolute;left:30px;right:30px;top:212px;z-index:5;
+  display:grid;grid-template-columns:minmax(0,1fr) auto minmax(0,1fr);gap:14px;align-items:start}
+.lado .topo{display:flex;align-items:center;gap:10px;margin-bottom:7px}
+.lado.dir .topo{flex-direction:row-reverse}
+.lado .nome{font-size:30px;font-weight:900;letter-spacing:-.5px;white-space:nowrap;
+  overflow:hidden;text-overflow:ellipsis}
+.lado .hp{font-size:25px;font-weight:900;color:rgba(255,255,255,.65);
+  font-variant-numeric:tabular-nums;margin-left:auto}
+.lado.dir .hp{margin-left:0;margin-right:auto}
+.barra{position:relative;height:36px;border-radius:7px;overflow:hidden;
+  background:rgba(0,0,0,.72);border:3px solid rgba(255,255,255,.22)}
+.barra i{position:absolute;top:0;bottom:0;display:block}
+.barra .fantasma{background:#ffd23f;transition:width .9s ease .35s}
+.barra .cheia{transition:width .22s cubic-bezier(.2,1.4,.4,1)}
+.lado.esq .barra i{right:0}
+.lado.dir .barra i{left:0}
+#vs{font-size:40px;font-weight:900;color:#ffd23f;align-self:center;
+  text-shadow:0 4px 18px rgba(0,0,0,.9);animation:bate 1.6s ease-in-out infinite}
+.lado.baixa .barra{animation:piscaBarra .6s ease-in-out infinite}
+@keyframes piscaBarra{0%,100%{border-color:rgba(255,255,255,.22)}50%{border-color:#ff5c5c}}
+
+/* ---------- regras e mural ----------
+   Ficam logo abaixo das barras porque o rodapé é onde o TikTok empilha o chat
+   por cima da transmissão: lá ninguém lê. */
+#aviso-topo{position:absolute;left:34px;right:34px;top:330px;z-index:4;pointer-events:none}
+#regras{display:flex;flex-direction:column;gap:9px;margin-bottom:11px}
+.regra{display:flex;align-items:center;gap:15px;background:rgba(6,6,12,.9);
+  border:4px solid rgba(255,210,63,.45);border-radius:16px;padding:14px 20px;
+  font-size:31px;font-weight:800;color:#fff}
+.regra i{font-style:normal;width:42px;height:42px;flex:none;border-radius:50%;
+  background:#ffd23f;color:#111;font-weight:900;font-size:26px;display:grid;place-items:center}
+.regra b{color:#ffd23f}
+#instrucao{text-align:center;font-size:29px;font-weight:900;color:rgba(255,255,255,.88);
+  transition:opacity .3s;text-shadow:0 2px 12px rgba(0,0,0,1)}
+#instrucao b{color:#ffd23f}
+#fila{display:flex;flex-direction:column;gap:8px;align-items:flex-start;margin-top:11px}
+.aviso{display:flex;align-items:center;gap:12px;max-width:100%;
+  background:rgba(6,6,12,.9);border:3px solid rgba(255,255,255,.14);border-left-width:10px;
+  border-radius:12px;padding:8px 16px 8px 13px;font-size:25px;font-weight:900;
+  animation:entraAviso .32s cubic-bezier(.2,1.6,.4,1)}
+.aviso .quem{color:#ffd23f}
+.aviso .mais{color:#4ade80}
+.aviso .time{color:#fff}
+@keyframes entraAviso{from{opacity:0;transform:translateX(-26px) scale(.9)}to{opacity:1;transform:none}}
+
+/* ---------- lutadores ----------
+   Cada um vive numa caixa fixa, e a animação mexe só no filho: assim o golpe
+   não empurra o outro de lugar nem muda o ponto onde o impacto é desenhado. */
+#arena{position:absolute;left:0;right:0;bottom:250px;height:900px;z-index:3}
+.lutador{position:absolute;bottom:0;width:430px;height:860px}
+.lutador.esq{left:22px}
+.lutador.dir{right:22px}
+.corpo{position:absolute;inset:0;display:flex;align-items:flex-end;justify-content:center;
+  animation:respira 2.6s ease-in-out infinite}
+.lutador.dir .corpo{transform:scaleX(-1)}
+@keyframes respira{0%,100%{transform:translateY(0) scale(1)}50%{transform:translateY(-14px) scale(1.012)}}
+.lutador.dir .corpo{animation-name:respiraDir}
+@keyframes respiraDir{0%,100%{transform:scaleX(-1) translateY(0)}50%{transform:scaleX(-1) translateY(-14px)}}
+.corpo img{max-width:100%;max-height:100%;object-fit:contain;display:block;
+  filter:drop-shadow(0 22px 34px rgba(0,0,0,.85))}
+/* Enquanto a foto não existe, entra um boneco: dá pra testar o jogo inteiro
+   sem imagem nenhuma e dá pra ver o enquadramento que a foto vai ocupar. */
+.boneco{width:330px;height:700px;position:relative;filter:drop-shadow(0 22px 30px rgba(0,0,0,.8))}
+.boneco .cabeca{position:absolute;left:50%;top:0;width:188px;height:188px;margin-left:-94px;
+  border-radius:50%;background:currentColor;opacity:.92}
+.boneco .tronco{position:absolute;left:50%;top:196px;width:252px;height:300px;margin-left:-126px;
+  border-radius:84px 84px 54px 54px;background:currentColor;opacity:.92}
+.boneco .perna{position:absolute;top:486px;width:94px;height:218px;border-radius:40px;
+  background:currentColor;opacity:.92}
+.boneco .perna.a{left:52px}
+.boneco .perna.b{right:52px}
+/* O lado direito é espelhado pra olhar pro oponente, e o espelho inverteria a
+   letra junto. Desvira só ela. */
+.boneco .inicial{position:absolute;left:0;right:0;top:46px;text-align:center;font-size:96px;
+  font-weight:900;color:rgba(0,0,0,.55)}
+.lutador.dir .boneco .inicial{transform:scaleX(-1)}
+.sombra{position:absolute;left:50%;bottom:-16px;width:330px;height:46px;margin-left:-165px;
+  border-radius:50%;background:radial-gradient(ellipse,rgba(0,0,0,.72),transparent 70%)}
+
+.lutador.ataca .corpo{animation:soco .34s cubic-bezier(.3,1.5,.4,1)}
+@keyframes soco{0%{transform:translateX(0)}45%{transform:translateX(150px) rotate(5deg) scale(1.05)}
+  100%{transform:translateX(0)}}
+.lutador.dir.ataca .corpo{animation-name:socoDir}
+@keyframes socoDir{0%{transform:scaleX(-1) translateX(0)}
+  45%{transform:scaleX(-1) translateX(150px) rotate(5deg) scale(1.05)}
+  100%{transform:scaleX(-1) translateX(0)}}
+.lutador.apanha .corpo{animation:leva .34s ease-out}
+@keyframes leva{0%{transform:translateX(0)}30%{transform:translateX(-62px) rotate(-7deg)}
+  100%{transform:translateX(0)}}
+.lutador.dir.apanha .corpo{animation-name:levaDir}
+@keyframes levaDir{0%{transform:scaleX(-1) translateX(0)}
+  30%{transform:scaleX(-1) translateX(-62px) rotate(-7deg)}
+  100%{transform:scaleX(-1) translateX(0)}}
+.lutador.apanha .corpo img,.lutador.apanha .boneco{animation:clarao .3s ease-out}
+@keyframes clarao{0%,100%{filter:none}35%{filter:brightness(2.6) saturate(.2)}}
+.lutador.caiu .corpo{animation:none;transform:rotate(-78deg) translateY(130px);opacity:.75;
+  transition:transform .7s cubic-bezier(.3,1.2,.5,1),opacity .7s}
+.lutador.dir.caiu .corpo{transform:scaleX(-1) rotate(-78deg) translateY(130px)}
+
+/* impacto e número do dano */
+.impacto{position:absolute;z-index:6;pointer-events:none;width:230px;height:230px;
+  margin:-115px 0 0 -115px;background:
+    radial-gradient(circle,rgba(255,255,255,.98) 0%,rgba(255,210,63,.85) 26%,transparent 62%);
+  animation:estoura .4s ease-out forwards}
+@keyframes estoura{from{transform:scale(.3) rotate(0);opacity:1}
+  to{transform:scale(1.5) rotate(28deg);opacity:0}}
+.dano{position:absolute;z-index:7;pointer-events:none;font-size:62px;font-weight:900;
+  color:#fff;text-shadow:0 0 18px rgba(0,0,0,.9),0 5px 0 rgba(0,0,0,.55);
+  animation:sobeDano .9s cubic-bezier(.2,1.3,.4,1) forwards}
+@keyframes sobeDano{0%{transform:translate(-50%,0) scale(.5);opacity:0}
+  25%{transform:translate(-50%,-40px) scale(1.25);opacity:1}
+  100%{transform:translate(-50%,-190px) scale(1);opacity:0}}
+#combo{position:absolute;left:0;right:0;top:1180px;z-index:6;text-align:center;
+  font-size:74px;font-weight:900;color:#ffd23f;letter-spacing:-2px;opacity:0;
+  text-shadow:0 0 30px rgba(0,0,0,.95)}
+#combo.on{animation:combo .9s cubic-bezier(.2,1.5,.4,1)}
+@keyframes combo{0%{opacity:0;transform:scale(.4) rotate(-8deg)}
+  30%{opacity:1;transform:scale(1.1) rotate(2deg)}100%{opacity:0;transform:scale(1)}}
+
+/* ---------- rodapé ---------- */
+#base{position:absolute;left:0;right:0;bottom:0;height:250px;z-index:5;padding:22px 34px;
+  background:linear-gradient(transparent,rgba(3,4,10,.96) 32%);
+  display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:18px;align-items:end}
+.placar{border-radius:16px;border:3px solid rgba(255,255,255,.14);background:rgba(6,6,12,.82);
+  padding:12px 16px}
+.placar .quem{font-size:19px;font-weight:900;letter-spacing:2px;color:rgba(255,255,255,.45)}
+.placar .nome{font-size:28px;font-weight:900;white-space:nowrap;overflow:hidden;
+  text-overflow:ellipsis;margin-top:2px}
+.placar .linha{display:flex;align-items:center;justify-content:space-between;margin-top:8px}
+.placar .rounds{font-size:21px;font-weight:900;color:#ffd23f;letter-spacing:2px}
+.placar .forca{font-size:21px;font-weight:900;color:rgba(255,255,255,.6);
+  font-variant-numeric:tabular-nums}
+
+#semConector{position:absolute;left:0;right:0;top:0;z-index:9;text-align:center;
+  background:rgba(200,30,30,.95);padding:7px 16px;
+  font-size:20px;font-weight:900;letter-spacing:.5px;display:none}
+#semConector.on{display:block}
+#versao{position:absolute;right:10px;bottom:6px;z-index:9;font-size:16px;
+  color:rgba(255,255,255,.3);font-weight:800;letter-spacing:1px}
+
+/* ---------- som ---------- */
+#som{position:absolute;left:10px;bottom:6px;z-index:9;display:flex;align-items:flex-end;gap:10px}
+#somBtn{width:34px;height:34px;border-radius:50%;border:2px solid rgba(255,255,255,.22);
+  background:rgba(8,11,18,.8);color:rgba(255,255,255,.55);font-size:17px;font-weight:900;
+  cursor:pointer;display:grid;place-items:center;padding:0}
+#somBtn.tocando{border-color:rgba(255,210,63,.65);color:#ffd23f}
+#somPainel{display:none;background:rgba(8,11,18,.95);border:2px solid rgba(255,255,255,.14);
+  border-radius:12px;padding:10px 12px;min-width:300px}
+#somPainel.on{display:block}
+#somFaixa{font-size:15px;font-weight:800;color:rgba(255,255,255,.75);margin-bottom:8px;
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:330px}
+#somLinha{display:flex;align-items:center;gap:8px}
+#somLinha button{border:2px solid rgba(255,255,255,.18);background:rgba(255,255,255,.06);
+  color:rgba(255,255,255,.7);border-radius:8px;padding:4px 10px;font-size:14px;font-weight:800;
+  cursor:pointer}
+#somVol{width:96px}
+#somAdd{font-size:13px;color:rgba(255,255,255,.45);margin-top:8px;cursor:pointer;
+  text-decoration:underline}
+
+/* ---------- fim do round ---------- */
+#faixa{position:absolute;inset:0;display:none;align-items:center;justify-content:center;
+  background:rgba(3,3,8,.86);z-index:8}
+#faixa.on{display:flex;animation:surge .3s ease}
+@keyframes surge{from{opacity:0}to{opacity:1}}
+#faixa .caixa{text-align:center;padding:46px 74px;border-radius:30px;border:5px solid #ffd23f;
+  background:rgba(8,8,14,.96);box-shadow:0 0 120px rgba(255,210,63,.45);
+  animation:entraCaixa .5s cubic-bezier(.2,1.7,.4,1)}
+@keyframes entraCaixa{from{transform:scale(.6) rotate(-4deg);opacity:0}to{transform:none;opacity:1}}
+#faixa .ko{font-size:150px;font-weight:900;letter-spacing:-6px;line-height:.9;color:#ffd23f}
+#faixa .time{font-size:82px;font-weight:900;letter-spacing:-3px;line-height:1;margin-top:8px}
+#faixa .baixo{margin-top:12px;font-size:27px;color:rgba(255,255,255,.62);font-weight:800}
+</style>
+</head>
+<body>
+<div id="palco">
+  <div id="fundo"></div>
+  <div id="plateia"></div>
+  <div id="chao"></div>
+  <div id="holofote"></div>
+  <div id="veu"></div>
+
+  <div id="topo">
+    <div id="titulo">Quem ganha<br>a <b>luta</b>?</div>
+    <div id="rodada">ROUND 1</div>
+  </div>
+
+  <div id="vida">
+    <div class="lado esq" id="vidaA">
+      <div class="topo"><div class="nome" id="nomeA">—</div><div class="hp" id="hpA">100</div></div>
+      <div class="barra"><i class="fantasma"></i><i class="cheia"></i></div>
+    </div>
+    <div id="vs">VS</div>
+    <div class="lado dir" id="vidaB">
+      <div class="topo"><div class="nome" id="nomeB">—</div><div class="hp" id="hpB">100</div></div>
+      <div class="barra"><i class="fantasma"></i><i class="cheia"></i></div>
+    </div>
+  </div>
+
+  <div id="aviso-topo">
+    <div id="regras">
+      <div class="regra"><i>1</i> <span>comenta o nome de <b>quem você apoia</b></span></div>
+      <div class="regra"><i>2</i> <span>curtida, comentário e presente <b>dão o golpe</b></span></div>
+    </div>
+    <div id="instrucao">quem zerar a barra do outro <b>vence o round</b></div>
+    <div id="fila"></div>
+  </div>
+
+  <div id="arena">
+    <div class="lutador esq" id="lutA"><div class="corpo"></div><div class="sombra"></div></div>
+    <div class="lutador dir" id="lutB"><div class="corpo"></div><div class="sombra"></div></div>
+  </div>
+
+  <div id="combo"></div>
+
+  <div id="base">
+    <div class="placar" id="placarA">
+      <div class="quem">MAIOR APOIADOR</div>
+      <div class="nome" id="apoioA">—</div>
+      <div class="linha"><span class="rounds" id="roundsA">0 ROUNDS</span>
+        <span class="forca" id="forcaA">0</span></div>
+    </div>
+    <div class="placar" id="placarB">
+      <div class="quem">MAIOR APOIADOR</div>
+      <div class="nome" id="apoioB">—</div>
+      <div class="linha"><span class="rounds" id="roundsB">0 ROUNDS</span>
+        <span class="forca" id="forcaB">0</span></div>
+    </div>
+  </div>
+
+  <div id="som">
+    <button id="somBtn" title="música (M liga e desliga, N pula)">♪</button>
+    <div id="somPainel">
+      <div id="somFaixa">nenhuma música carregada</div>
+      <div id="somLinha">
+        <button id="somPlay">tocar</button>
+        <button id="somNext">pular</button>
+        <input id="somVol" type="range" min="0" max="100" value="35">
+      </div>
+      <div id="somAdd">escolher músicas do computador</div>
+      <input id="somArquivos" type="file" accept="audio/*" multiple hidden>
+    </div>
+  </div>
+
+  <div id="versao">v1</div>
+  <div id="semConector">conector desligado: nada está chegando da live</div>
+
+  <div id="faixa">
+    <div class="caixa">
+      <div class="ko">K.O.</div>
+      <div class="time" id="faixa-nome">—</div>
+      <div class="baixo" id="faixa-placar">1 round ganho</div>
+    </div>
+  </div>
+</div>
+
+<script>
+/* ---------- os dois lados ----------
+   `palavras` é o que o comentário precisa conter pra escolher o lado. Vale
+   qualquer pedaço da lista, em qualquer caixa, sem acento. A foto é opcional:
+   faltando o arquivo entra um boneco da cor do lado, e o jogo roda igual.
+   Troque os nomes aqui pra fazer qualquer outra dupla. */
+const LADOS = [
+  { nome:'LULA',   cor:'#e8413c', foto:'fotos/lula.png',
+    palavras:['lula','luiz','inacio','13','pt','vermelho'] },
+  { nome:'FLAVIO', cor:'#2f7de1', foto:'fotos/flavio.png',
+    palavras:['flavio','flavinho','bolsonaro','bolso','22','azul'] },
+]
+
+const VIDA = 100          // dano pra zerar a barra do outro
+const ESPERA_COMENTARIO = 8000
+const POR_CURTIDA = 25
+
+const estado = LADOS.map(() => ({ hp: VIDA, rounds: 0, forca: 0 }))
+const apoio = [new Map(), new Map()]
+const apoioTopo = ['', '']
+const lados = [document.getElementById('lutA'), document.getElementById('lutB')]
+let travado = false
+let round = 1
+
+/* ---------- montagem ---------- */
+LADOS.forEach((l, i) => {
+  const corpo = lados[i].querySelector('.corpo')
+  const img = new Image()
+  img.alt = l.nome
+  img.onerror = () => {
+    // Sem foto o boneco assume, pra nunca ficar um buraco na tela.
+    img.remove()
+    const b = document.createElement('div')
+    b.className = 'boneco'
+    b.style.color = l.cor
+    b.innerHTML = '<div class="cabeca"></div><div class="tronco"></div>'
+      + '<div class="perna a"></div><div class="perna b"></div>'
+      + '<div class="inicial">' + l.nome[0] + '</div>'
+    corpo.appendChild(b)
+  }
+  img.src = l.foto
+  corpo.appendChild(img)
+
+  document.getElementById(i ? 'nomeB' : 'nomeA').textContent = l.nome
+  document.getElementById(i ? 'nomeB' : 'nomeA').style.color = l.cor
+  const barra = document.getElementById(i ? 'vidaB' : 'vidaA').querySelector('.cheia')
+  barra.style.background = 'linear-gradient(180deg,' + l.cor + ',' + escurecer(l.cor) + ')'
+  document.getElementById(i ? 'placarB' : 'placarA').style.borderColor = l.cor + '66'
+})
+
+function escurecer(hex) {
+  const n = parseInt(hex.slice(1), 16)
+  const f = v => Math.max(0, Math.round(v * .62))
+  return 'rgb(' + f(n >> 16 & 255) + ',' + f(n >> 8 & 255) + ',' + f(n & 255) + ')'
+}
+
+function pintar() {
+  estado.forEach((e, i) => {
+    const frac = Math.max(0, e.hp) / VIDA * 100
+    const caixa = document.getElementById(i ? 'vidaB' : 'vidaA')
+    caixa.querySelector('.cheia').style.width = frac + '%'
+    caixa.querySelector('.fantasma').style.width = frac + '%'
+    caixa.classList.toggle('baixa', e.hp > 0 && e.hp <= VIDA * .25)
+    document.getElementById(i ? 'hpB' : 'hpA').textContent = Math.max(0, Math.round(e.hp))
+    document.getElementById(i ? 'roundsB' : 'roundsA').textContent =
+      e.rounds + (e.rounds === 1 ? ' ROUND' : ' ROUNDS')
+    document.getElementById(i ? 'forcaB' : 'forcaA').textContent = e.forca
+  })
+}
+
+/* ---------- golpe ----------
+   Quem apanha é o outro lado: o ponto que a pessoa gera vira dano no
+   adversário, que é o que faz as duas barras andarem com uma ação só. */
+let combos = [0, 0]
+let comboAte = [0, 0]
+
+function golpear(lado, forca, quem, origem) {
+  if (travado || lado < 0 || lado > 1) return
+  const alvo = 1 - lado
+  estado[lado].forca += forca
+  estado[alvo].hp -= forca
+
+  lados[lado].classList.remove('ataca'); void lados[lado].offsetWidth
+  lados[lado].classList.add('ataca')
+  lados[alvo].classList.remove('apanha'); void lados[alvo].offsetWidth
+  lados[alvo].classList.add('apanha')
+
+  impacto(alvo, forca)
+  if (forca >= 50) tremer()
+
+  // combo: golpes seguidos do mesmo lado dentro de três segundos
+  const agora = Date.now()
+  combos[lado] = agora < comboAte[lado] ? combos[lado] + 1 : 1
+  comboAte[lado] = agora + 3000
+  if (combos[lado] >= 3) mostrarCombo(combos[lado], LADOS[lado].cor)
+
+  const chave = quem || 'alguém'
+  apoio[lado].set(chave, (apoio[lado].get(chave) || 0) + forca)
+  pintarApoio(lado)
+
+  avisar('<span class="quem">' + escaparTexto(quem) + '</span> ' + origem + ' '
+    + '<span class="mais">+' + forca + '</span>', lado)
+
+  pintar()
+  if (estado[alvo].hp <= 0) nocaute(lado)
+}
+
+function impacto(alvo, forca) {
+  const caixa = lados[alvo]
+  const el = document.createElement('div')
+  el.className = 'impacto'
+  const tam = Math.min(380, 190 + forca * 2.4)
+  el.style.width = el.style.height = tam + 'px'
+  el.style.margin = (-tam / 2) + 'px 0 0 ' + (-tam / 2) + 'px'
+  el.style.left = (alvo ? 38 : 62) + '%'
+  el.style.top = '36%'
+  caixa.appendChild(el)
+  setTimeout(() => el.remove(), 420)
+
+  const n = document.createElement('div')
+  n.className = 'dano'
+  n.textContent = '-' + forca
+  n.style.left = '50%'
+  n.style.top = '24%'
+  n.style.color = forca >= 50 ? '#ffd23f' : '#fff'
+  caixa.appendChild(n)
+  setTimeout(() => n.remove(), 950)
+}
+
+function mostrarCombo(n, cor) {
+  const el = document.getElementById('combo')
+  el.textContent = 'COMBO x' + n
+  el.style.color = cor
+  el.classList.remove('on'); void el.offsetWidth; el.classList.add('on')
+}
+
+function tremer() {
+  const p = document.getElementById('palco')
+  p.classList.remove('tremer'); void p.offsetWidth; p.classList.add('tremer')
+}
+
+function pintarApoio(lado) {
+  let nome = '', total = 0
+  for (const [k, v] of apoio[lado]) if (v > total) { nome = k; total = v }
+  if (!nome) return
+  const el = document.getElementById(lado ? 'apoioB' : 'apoioA')
+  el.textContent = nome
+  if (nome !== apoioTopo[lado]) {
+    apoioTopo[lado] = nome
+    el.animate([{ transform: 'scale(1)' }, { transform: 'scale(1.14)' }, { transform: 'scale(1)' }],
+      { duration: 500, easing: 'cubic-bezier(.2,1.6,.4,1)' })
+  }
+}
+
+/* ---------- fim do round ---------- */
+function nocaute(vencedor) {
+  travado = true
+  const perdedor = 1 - vencedor
+  estado[vencedor].rounds += 1
+  estado[perdedor].hp = 0
+  pintar()
+  lados[perdedor].classList.add('caiu')
+  tremer()
+
+  const faixa = document.getElementById('faixa')
+  document.getElementById('faixa-nome').textContent = LADOS[vencedor].nome
+  document.getElementById('faixa-nome').style.color = LADOS[vencedor].cor
+  document.getElementById('faixa-placar').textContent =
+    estado[vencedor].rounds + (estado[vencedor].rounds === 1 ? ' round ganho' : ' rounds ganhos')
+  faixa.classList.add('on')
+
+  setTimeout(() => {
+    faixa.classList.remove('on')
+    lados[perdedor].classList.remove('caiu')
+    estado.forEach(e => { e.hp = VIDA; e.forca = 0 })
+    apoio.forEach(m => m.clear())
+    apoioTopo[0] = apoioTopo[1] = ''
+    document.getElementById('apoioA').textContent = '—'
+    document.getElementById('apoioB').textContent = '—'
+    combos = [0, 0]
+    round += 1
+    document.getElementById('rodada').textContent = 'ROUND ' + round
+    travado = false
+    pintar()
+  }, 4300)
+}
+
+/* ---------- frases que trocam sozinhas ----------
+   Descrevem o jogo e nunca pedem presente: pedido repetido e pressão emocional
+   são o que faz o TikTok suspender os presentes da live. */
+const FRASES = [
+  'quem zerar a barra do outro <b>vence o round</b>',
+  'a cada <b>25 curtidas</b> o seu lado dá 1 de dano',
+  'comentar o nome <b>dá 1</b> a cada 8 segundos',
+  'quem mais bateu <b>aparece aqui embaixo</b>',
+  'acabando o round <b>começa outro na hora</b>',
+]
+let fraseAtual = 0
+setInterval(() => {
+  fraseAtual = (fraseAtual + 1) % FRASES.length
+  const el = document.getElementById('instrucao')
+  el.style.opacity = '0'
+  setTimeout(() => { el.innerHTML = FRASES[fraseAtual]; el.style.opacity = '1' }, 300)
+}, 5200)
+
+/* ---------- mural ---------- */
+const fila = document.getElementById('fila')
+function avisar(html, lado) {
+  const d = document.createElement('div')
+  d.className = 'aviso'
+  if (lado >= 0) d.style.borderLeftColor = LADOS[lado].cor
+  d.innerHTML = html
+  fila.insertBefore(d, fila.firstChild)
+  while (fila.children.length > 4) fila.removeChild(fila.lastChild)
+  setTimeout(() => d.remove(), 8000)
+}
+
+function escaparTexto(s) {
+  return String(s || 'alguém').replace(/[&<>"]/g, c =>
+    ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]))
+}
+
+/* ---------- achar o lado citado ---------- */
+function semAcento(s) {
+  return (s || '').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '')
+}
+function acharLado(texto) {
+  const t = semAcento(texto)
+  for (let i = 0; i < LADOS.length; i++) {
+    for (const p of LADOS[i].palavras) if (t.includes(p)) return i
+  }
+  return -1
+}
+
+/* ---------- entrada da live ---------- */
+const escolhido = new Map()
+const curtidas = new Map()
+const ultimoPonto = new Map()
+
+function deixarPontuar(chave, espera) {
+  const agora = Date.now()
+  if (agora - (ultimoPonto.get(chave) || 0) < espera) return false
+  ultimoPonto.set(chave, agora)
+  return true
+}
+
+function avisoConector(ligado) {
+  document.getElementById('semConector').classList.toggle('on', !ligado)
+}
+
+function ligarConector(porta) {
+  let ws
+  try { ws = new WebSocket('ws://localhost:' + porta) } catch { avisoConector(false); return }
+  ws.onopen = () => avisoConector(true)
+  ws.onmessage = ev => {
+    let msg
+    try { msg = JSON.parse(ev.data) } catch { return }
+    const chave = msg.id || msg.apelido
+
+    if (msg.tipo === 'comentario') {
+      const lado = acharLado(msg.texto)
+      if (lado < 0) return
+      const trocou = escolhido.get(chave) !== lado
+      escolhido.set(chave, lado)
+      if (trocou) {
+        avisar('<span class="quem">' + escaparTexto(msg.apelido) + '</span> está com o '
+          + '<span class="time">' + LADOS[lado].nome + '</span>', lado)
+      }
+      if (deixarPontuar(chave, ESPERA_COMENTARIO)) golpear(lado, 1, msg.apelido, 'comentou')
+      return
+    }
+
+    if (msg.tipo === 'curtida') {
+      const lado = escolhido.has(chave) ? escolhido.get(chave) : -1
+      if (lado < 0) return
+      // Curtida é de graça e vem às centenas, então vale fração: só a cada
+      // POR_CURTIDA acumuladas sai um ponto de dano.
+      const total = (curtidas.get(chave) || 0) + (msg.quantidade || 1)
+      const pontos = Math.floor(total / POR_CURTIDA)
+      curtidas.set(chave, total - pontos * POR_CURTIDA)
+      if (pontos > 0) golpear(lado, pontos, msg.apelido, 'curtiu')
+      return
+    }
+
+    if (msg.tipo === 'presente') {
+      const lado = escolhido.has(chave) ? escolhido.get(chave) : -1
+      if (lado < 0) return
+      golpear(lado, (msg.moedas || 1) * (msg.quantidade || 1), msg.apelido, 'mandou presente')
+    }
+  }
+  ws.onclose = () => { avisoConector(false); setTimeout(() => ligarConector(porta), 4000) }
+  ws.onerror = () => { try { ws.close() } catch {} }
+}
+ligarConector(21213)
+
+/* ---------- música ----------
+   A lista sai da pasta musicas/, preenchida pelo gerar-arquivo-unico.py. Quem
+   abrir o arquivo solto, sem a pasta do lado, ainda pode escolher os arquivos
+   na mão pelo painel. O navegador não deixa tocar som sem um clique antes. */
+const MUSICAS = ['musicas/alex-morgan-phonk-aggressive-drift-night-573644.mp3','musicas/arpmedia-phonk-phonk-music-577836.mp3','musicas/atlasaudio-chill-vibe-593032.mp3','musicas/folk_tales-vibe-good-vibes-566520.mp3','musicas/jonasblakewood-summer-vibe-summer-vibe-music-567329.mp3','musicas/jonasblakewood-vibe-vibe-music-567327.mp3','musicas/nastelbom-vibe-437341.mp3','musicas/prettyjohn1-vibe-527072.mp3','musicas/sosin-phonk-phonk-music-585571.mp3','musicas/sub_clair-brazilian-phonk-instrumental-579507.mp3','musicas/sub_clair-brazilian-phonk-instrumental-585588.mp3','musicas/the_mountain-phonk-496452.mp3','musicas/the_mountain-urban-vibe-136933.mp3','musicas/the_mountain-vibe-song-593086.mp3','musicas/the_mountain-weekend-vibe-147926.mp3','musicas/velariomusic-chill-vibe-591472.mp3']
+
+const audio = new Audio()
+audio.volume = .35
+let faixas = []
+let ordem = []
+let naOrdem = -1
+
+function nomeDaFaixa(f) {
+  const nome = typeof f === 'string' ? f.split('/').pop() : f.name
+  return decodeURIComponent(nome).replace(/\.[a-z0-9]+$/i, '')
+}
+
+function sortearOrdem() {
+  ordem = faixas.map((_, i) => i)
+  for (let i = ordem.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1))
+    ;[ordem[i], ordem[j]] = [ordem[j], ordem[i]]
+  }
+  naOrdem = -1
+}
+
+function proximaFaixa(tocar) {
+  if (!faixas.length) return
+  naOrdem += 1
+  if (naOrdem >= ordem.length) sortearOrdem(), naOrdem = 0
+  const f = faixas[ordem[naOrdem]]
+  audio.src = typeof f === 'string' ? f : URL.createObjectURL(f)
+  document.getElementById('somFaixa').textContent = nomeDaFaixa(f)
+  if (tocar) audio.play().catch(() => {})
+}
+
+audio.addEventListener('ended', () => proximaFaixa(true))
+audio.addEventListener('error', () => { if (faixas.length > 1) proximaFaixa(true) })
+
+function marcarBotao() {
+  if (!audio.paused && faixas.length) {
+    const f = faixas[ordem[naOrdem]]
+    if (f) document.getElementById('somFaixa').textContent = nomeDaFaixa(f)
+  }
+  document.getElementById('somBtn').classList.toggle('tocando', !audio.paused)
+  document.getElementById('somPlay').textContent = audio.paused ? 'tocar' : 'pausar'
+}
+audio.addEventListener('play', marcarBotao)
+audio.addEventListener('pause', marcarBotao)
+
+function alternarMusica() {
+  if (!faixas.length) return abrirPainel()
+  if (audio.paused) {
+    if (!audio.src) proximaFaixa(false)
+    audio.play().catch(() => {})
+  } else audio.pause()
+}
+
+let sumir = null
+function abrirPainel() {
+  const p = document.getElementById('somPainel')
+  p.classList.add('on')
+  clearTimeout(sumir)
+  sumir = setTimeout(() => p.classList.remove('on'), 9000)
+}
+
+document.getElementById('somBtn').addEventListener('click', () => {
+  const p = document.getElementById('somPainel')
+  if (p.classList.contains('on')) { p.classList.remove('on'); clearTimeout(sumir) }
+  else abrirPainel()
+})
+document.getElementById('somPlay').addEventListener('click', () => { alternarMusica(); abrirPainel() })
+document.getElementById('somNext').addEventListener('click', () => { proximaFaixa(true); abrirPainel() })
+document.getElementById('somVol').addEventListener('input', e => {
+  audio.volume = e.target.value / 100
+  abrirPainel()
+})
+document.getElementById('somAdd').addEventListener('click', () =>
+  document.getElementById('somArquivos').click())
+document.getElementById('somArquivos').addEventListener('change', e => {
+  const novos = Array.from(e.target.files || [])
+  if (!novos.length) return
+  faixas = novos
+  sortearOrdem()
+  proximaFaixa(true)
+  abrirPainel()
+})
+
+addEventListener('keydown', e => {
+  if (e.target.tagName === 'INPUT') return
+  const k = e.key.toLowerCase()
+  if (k === 'm') alternarMusica()
+  if (k === 'n') proximaFaixa(true)
+})
+
+function carregarLista(lista) {
+  if (!lista || !lista.length) return
+  faixas = lista
+  sortearOrdem()
+  proximaFaixa(false)
+  document.getElementById('somFaixa').textContent =
+    faixas.length + ' músicas: clique em ♪ pra começar'
+}
+if (MUSICAS.length) carregarLista(MUSICAS)
+else fetch('musicas/lista.json').then(r => r.json()).then(nomes =>
+  carregarLista(nomes.map(n => 'musicas/' + n))).catch(() => {})
+
+/* ---------- modo de teste ----------
+   Tecla D liga e desliga golpes aleatórios. Clique num lutador bate por ele. */
+let demo = null
+addEventListener('keydown', e => {
+  if (e.target.tagName === 'INPUT' || e.key.toLowerCase() !== 'd') return
+  if (demo) { clearInterval(demo); demo = null; return }
+  demo = setInterval(() => {
+    const lado = Math.random() < .5 ? 0 : 1
+    const forca = [1, 1, 1, 5, 10, 30, 99][Math.floor(Math.random() * 7)]
+    golpear(lado, forca, 'teste' + Math.floor(Math.random() * 99), 'mandou presente')
+  }, 700)
+})
+lados.forEach((el, i) => el.addEventListener('click', () => golpear(i, 10, 'clique', 'bateu')))
+
+function encaixar() {
+  const e = Math.min(innerWidth / 1080, innerHeight / 1920)
+  const p = document.getElementById('palco')
+  p.style.setProperty('--e', e)
+  p.style.transform = 'translate(-50%,-50%) scale(' + e + ')'
+}
+addEventListener('resize', encaixar)
+encaixar()
+pintar()
+</script>
+</body>
+</html>
