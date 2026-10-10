@@ -1,0 +1,13 @@
+Coloque aqui os arquivos de música (.mp3, .m4a, .ogg ou .wav).
+
+O jogo toca tudo o que estiver nesta pasta, em ordem sorteada, e recomeça
+quando acaba. Não precisa renomear nada: o nome do arquivo é o que aparece
+no canto da tela.
+
+Use música livre de direito autoral, senão a live pode ser silenciada:
+  pixabay.com/music
+  studio.youtube.com (aba Áudio)
+  youtube.com/@NoCopyrightSounds
+
+Depois de colocar os arquivos aqui, rode de dentro da pasta torcida:
+  python3 gerar-arquivo-unico.py
