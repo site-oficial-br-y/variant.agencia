@@ -206,6 +206,28 @@ html,body{height:100%;background:#000;overflow:hidden;
   100%{transform:scale(1)}}
 #ko .quem{margin-top:4px;font-size:64px;font-weight:900;letter-spacing:-2px;
   text-shadow:5px 5px 0 #000,-3px -3px 0 #000,3px -3px 0 #000,-3px 3px 0 #000}
+/* ---------- cutscene do golpe final ----------
+   Vídeo em tela cheia por cima de tudo quando cai um presente muito caro. O
+   fundo preto emoldura, porque o vídeo é deitado e a tela é em pé; faixas em
+   cima e embaixo deixam cinema em vez de sobra vazia. */
+#cena-golpe{position:absolute;inset:0;z-index:10;display:none;
+  background:radial-gradient(ellipse 90% 60% at 50% 50%,#1a0d0d,#000 80%)}
+#cena-golpe.on{display:block;animation:surge .25s ease}
+#cena-golpe::after{content:'';position:absolute;inset:0;z-index:12;pointer-events:none;
+  opacity:.22;background:repeating-linear-gradient(180deg,rgba(0,0,0,.6) 0 2px,transparent 2px 4px)}
+#video-golpe{position:absolute;top:50%;left:0;width:100%;transform:translateY(-50%);display:block;
+  border-top:6px solid #ffd23f;border-bottom:6px solid #ffd23f;
+  box-shadow:0 0 0 3px #000,0 0 90px rgba(255,210,63,.4)}
+#cena-faixa{position:absolute;left:0;right:0;top:230px;z-index:13;text-align:center;
+  font-size:64px;font-weight:900;letter-spacing:5px;color:#ffd23f;
+  text-shadow:5px 5px 0 #000,-3px -3px 0 #000,3px -3px 0 #000,-3px 3px 0 #000;
+  animation:piscaFaixa 1s steps(2) infinite}
+@keyframes piscaFaixa{0%,100%{opacity:1}50%{opacity:.5}}
+#cena-quem{position:absolute;left:0;right:0;bottom:250px;z-index:13;text-align:center;
+  font-size:76px;font-weight:900;letter-spacing:-2px;
+  text-shadow:5px 5px 0 #000,-3px -3px 0 #000,3px -3px 0 #000,-3px 3px 0 #000}
+#cena-quem::before{content:'GOLPE DE ';font-size:34px;color:rgba(255,255,255,.55);
+  letter-spacing:3px;display:block;margin-bottom:4px}
 #clarao{position:absolute;inset:0;z-index:8;background:#fff;opacity:0;pointer-events:none}
 #clarao.on{animation:bateClarao .5s steps(3) forwards}
 @keyframes bateClarao{0%{opacity:.95}100%{opacity:0}}
@@ -274,6 +296,12 @@ html,body{height:100%;background:#000;overflow:hidden;
   <div id="ko"><img id="koArte" alt=""><div class="quem" id="koNome">—</div></div>
   <div id="clarao"></div>
 
+  <div id="cena-golpe">
+    <video id="video-golpe" playsinline preload="auto"></video>
+    <div id="cena-faixa">GOLPE FINAL</div>
+    <div id="cena-quem">—</div>
+  </div>
+
   <div id="scan"></div>
   <div id="vinheta"></div>
 
@@ -291,7 +319,7 @@ html,body{height:100%;background:#000;overflow:hidden;
     </div>
   </div>
 
-  <div id="versao">v10</div>
+  <div id="versao">v11</div>
   <div id="semConector">conector desligado: nada está chegando da live</div>
 </div>
 
@@ -330,6 +358,15 @@ const CLIPES = {
   vitoria: { q: ['vitoria'], ms: 1, segura: true },
 }
 const QUADROS = [...new Set(Object.values(CLIPES).flatMap(c => c.q))]
+
+/* Presente a partir deste valor em moedas dispara a cutscene em vídeo em vez
+   da animação normal. Alto de propósito: é pra ser evento raro, o momento que
+   faz a live toda parar. O dano continua sendo o valor em moedas. */
+const MOEDAS_CUTSCENE = 500
+const CUTSCENES = { 0: 'cutscene-lula.mp4', 1: 'cutscene-flavio.mp4' }
+/* No arquivo único o gerador troca isto pelo vídeo em base64; aberto servido,
+   fica vazio e o caminho do arquivo é usado direto. */
+const VIDEOS = {/*VIDEOS_EMBUTIDOS*/}
 
 const VIDA = 100          // dano pra zerar a barra do outro
 const ROUNDS_PRA_GANHAR = 3
@@ -604,6 +641,46 @@ function avisoConector(ligado) {
   document.getElementById('palco').classList.toggle('semcon', !ligado)
 }
 
+/* ---------- cutscene em vídeo ----------
+   Trava a luta, toca o vídeo em tela cheia e, quando ele acaba, aplica o golpe
+   e solta a trava. Som ligado se o navegador deixar (depois do primeiro clique
+   ele deixa); se bloquear, toca mudo em vez de travar o jogo. Se o arquivo não
+   abrir, cai no golpe normal na hora, pra nunca ficar preso numa tela preta. */
+let cenaRodando = false
+const CENA_MAX = 7000   // trava de segurança: nenhum vídeo passa disso
+
+function tocarCutscene(lado, quem, aoFim) {
+  const palco = document.getElementById('cena-golpe')
+  const vid = document.getElementById('video-golpe')
+  cenaRodando = true
+  travado = true
+
+  let encerrado = false
+  const encerrar = () => {
+    if (encerrado) return
+    encerrado = true
+    clearTimeout(trava)
+    try { vid.pause() } catch {}
+    palco.classList.remove('on')
+    cenaRodando = false
+    travado = false
+    aoFim()
+  }
+
+  document.getElementById('cena-quem').textContent = quem || ''
+  document.getElementById('cena-quem').style.color = LADOS[lado].cor
+  vid.onended = encerrar
+  vid.onerror = encerrar
+  // No arquivo único o vídeo vem embutido em VIDEOS; servido por HTTP, vem do
+  // arquivo ao lado. O mesmo truque dos sprites.
+  vid.src = VIDEOS[CUTSCENES[lado]] || CUTSCENES[lado]
+  vid.currentTime = 0
+  vid.muted = false
+  palco.classList.add('on')
+  const trava = setTimeout(encerrar, CENA_MAX)
+  vid.play().catch(() => { vid.muted = true; vid.play().catch(encerrar) })
+}
+
 function ligarConector(porta) {
   let ws
   try { ws = new WebSocket('ws://localhost:' + porta) } catch { avisoConector(false); return }
@@ -641,7 +718,14 @@ function ligarConector(porta) {
     if (msg.tipo === 'presente') {
       const lado = escolhido.has(chave) ? escolhido.get(chave) : -1
       if (lado < 0) return
-      golpear(lado, (msg.moedas || 1) * (msg.quantidade || 1), msg.apelido, 'mandou presente')
+      const forca = (msg.moedas || 1) * (msg.quantidade || 1)
+      // Presente muito caro ganha a cutscene em vídeo. O dano é o mesmo, só a
+      // apresentação muda: o vídeo toca por cima e o golpe cai quando acaba.
+      if (forca >= MOEDAS_CUTSCENE && CUTSCENES[lado] && !cenaRodando) {
+        tocarCutscene(lado, msg.apelido, () => golpear(lado, forca, msg.apelido, 'GOLPE FINAL'))
+      } else {
+        golpear(lado, forca, msg.apelido, 'mandou presente')
+      }
     }
   }
   ws.onclose = () => { avisoConector(false); setTimeout(() => ligarConector(porta), 4000) }

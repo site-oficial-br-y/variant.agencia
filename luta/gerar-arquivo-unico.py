@@ -9,8 +9,8 @@ Rode de dentro da pasta luta:  python3 gerar-arquivo-unico.py
 import base64, json, os, re
 
 def embutir(caminho):
-    tipo = {'.webp': 'image/webp', '.jpg': 'image/jpeg', '.jpeg': 'image/jpeg'}.get(
-        os.path.splitext(caminho)[1].lower(), 'image/png')
+    tipo = {'.webp': 'image/webp', '.jpg': 'image/jpeg', '.jpeg': 'image/jpeg',
+            '.mp4': 'video/mp4'}.get(os.path.splitext(caminho)[1].lower(), 'image/png')
     with open(caminho, 'rb') as f:
         return 'data:%s;base64,%s' % (tipo, base64.b64encode(f.read()).decode())
 
@@ -44,6 +44,13 @@ if os.path.isdir('musicas'):
         print('músicas na lista:', len(sons))
     else:
         print('pasta musicas vazia: o painel deixa escolher do computador')
+
+# As cutscenes entram embutidas no arquivo único, pra ele abrir sozinho e já
+# tocar o vídeo. Pesa uns 5 MB a mais, mas é o que faz o .bat ser tudo-em-um.
+videos = ["'%s':'%s'" % (arq, embutir(arq))
+          for arq in sorted(os.listdir('.')) if arq.startswith('cutscene-') and arq.endswith('.mp4')]
+s = s.replace('/*VIDEOS_EMBUTIDOS*/', ','.join(videos))
+print('cutscenes embutidas:', len(videos))
 
 faltando = re.findall(r"sprites/[A-Za-z0-9_-]+\.[a-z]+", s)
 if faltando:
