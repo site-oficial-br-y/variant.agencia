@@ -58,3 +58,9 @@ if faltando:
 
 open('quem-ganha-a-luta.html', 'w').write(s)
 print('quem-ganha-a-luta.html', os.path.getsize('quem-ganha-a-luta.html') // 1024, 'KB')
+
+# Versão de teste: a mesma, com o painel de botões ligado. window.TESTE entra
+# antes do script do jogo, então ele já nasce com os botões aparecendo.
+teste = s.replace('<body>', '<body>\n<script>window.TESTE = true</script>', 1)
+open('teste-luta.html', 'w').write(teste)
+print('teste-luta.html', os.path.getsize('teste-luta.html') // 1024, 'KB')

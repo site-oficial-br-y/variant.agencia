@@ -228,6 +228,20 @@ html,body{height:100%;background:#000;overflow:hidden;
   text-shadow:5px 5px 0 #000,-3px -3px 0 #000,3px -3px 0 #000,-3px 3px 0 #000}
 #cena-quem::before{content:'GOLPE DE ';font-size:34px;color:rgba(255,255,255,.55);
   letter-spacing:3px;display:block;margin-bottom:4px}
+/* ---------- painel de teste ----------
+   Só aparece no arquivo de teste ou com #teste no fim do endereço. Fica por
+   cima de tudo, com os botões que disparam cada golpe dos dois lados sem
+   precisar de live nem conector. */
+#painel-teste{position:absolute;left:0;right:0;bottom:0;z-index:20;display:none;
+  justify-content:center;gap:24px;padding:16px 14px;flex-wrap:wrap;
+  background:rgba(4,4,10,.94);border-top:4px solid #ffd23f}
+#painel-teste.on{display:flex}
+#painel-teste .tcol{display:flex;flex-direction:column;gap:8px;align-items:stretch}
+#painel-teste .tlabel{font-size:20px;font-weight:900;text-align:center;letter-spacing:1px}
+#painel-teste button{font-size:22px;font-weight:900;padding:10px 20px;border-radius:10px;
+  border:3px solid rgba(255,255,255,.3);background:rgba(255,255,255,.08);color:#fff;cursor:pointer}
+#painel-teste button:active{transform:scale(.95)}
+#painel-teste .tesp{border-color:#ffd23f;color:#ffd23f}
 #clarao{position:absolute;inset:0;z-index:8;background:#fff;opacity:0;pointer-events:none}
 #clarao.on{animation:bateClarao .5s steps(3) forwards}
 @keyframes bateClarao{0%{opacity:.95}100%{opacity:0}}
@@ -293,6 +307,28 @@ html,body{height:100%;background:#000;overflow:hidden;
     </div>
   </div>
 
+  <div id="painel-teste">
+    <div class="tcol">
+      <span class="tlabel" style="color:#ff5a4d">LULA</span>
+      <button data-lado="0" data-forca="3">soco</button>
+      <button data-lado="0" data-forca="30">chute</button>
+      <button data-lado="0" data-forca="80">forte</button>
+      <button data-lado="0" data-forca="250" class="tesp">CUTSCENE</button>
+    </div>
+    <div class="tcol">
+      <button data-geral="curtida">+curtida</button>
+      <button data-geral="comentario">+comentário</button>
+      <button data-geral="limpa">zerar</button>
+    </div>
+    <div class="tcol">
+      <span class="tlabel" style="color:#4da3ff">FLÁVIO</span>
+      <button data-lado="1" data-forca="3">soco</button>
+      <button data-lado="1" data-forca="30">chute</button>
+      <button data-lado="1" data-forca="80">forte</button>
+      <button data-lado="1" data-forca="250" class="tesp">CUTSCENE</button>
+    </div>
+  </div>
+
   <div id="ko"><img id="koArte" alt=""><div class="quem" id="koNome">—</div></div>
   <div id="clarao"></div>
 
@@ -319,7 +355,7 @@ html,body{height:100%;background:#000;overflow:hidden;
     </div>
   </div>
 
-  <div id="versao">v13</div>
+  <div id="versao">v14</div>
   <div id="semConector">conector desligado: nada está chegando da live</div>
 </div>
 
@@ -719,18 +755,22 @@ function ligarConector(porta) {
     if (msg.tipo === 'presente') {
       const lado = escolhido.has(chave) ? escolhido.get(chave) : -1
       if (lado < 0) return
-      const forca = (msg.moedas || 1) * (msg.quantidade || 1)
-      // Presente muito caro ganha a cutscene em vídeo. O dano é o mesmo, só a
-      // apresentação muda: o vídeo toca por cima e o golpe cai quando acaba.
-      if (forca >= MOEDAS_CUTSCENE && CUTSCENES[lado] && !cenaRodando) {
-        tocarCutscene(lado, msg.apelido, () => golpear(lado, forca, msg.apelido, 'GOLPE FINAL'))
-      } else {
-        golpear(lado, forca, msg.apelido, 'mandou presente')
-      }
+      presentear(lado, (msg.moedas || 1) * (msg.quantidade || 1), msg.apelido)
     }
   }
   ws.onclose = () => { avisoConector(false); setTimeout(() => ligarConector(porta), 4000) }
   ws.onerror = () => { try { ws.close() } catch {} }
+}
+
+/* Presente a partir de MOEDAS_CUTSCENE ganha a cutscene em vídeo; abaixo disso
+   é o golpe de sprite. O dano é o mesmo nos dois, só a apresentação muda. Os
+   botões de teste chamam esta mesma função, pra testar o caminho real. */
+function presentear(lado, forca, quem) {
+  if (forca >= MOEDAS_CUTSCENE && CUTSCENES[lado] && !cenaRodando) {
+    tocarCutscene(lado, quem, () => golpear(lado, forca, quem, 'GOLPE FINAL'))
+  } else {
+    golpear(lado, forca, quem, 'mandou presente')
+  }
 }
 ligarConector(21213)
 
@@ -866,6 +906,36 @@ encaixar()
 pintar()
 tocar(0, 'parado')
 tocar(1, 'parado')
+
+/* ---------- painel de teste ----------
+   Liga no arquivo de teste (window.TESTE) ou com #teste no endereço. Cada
+   botão chama o mesmo caminho da live: presentear decide entre golpe e
+   cutscene, e curtida e comentário passam pela regra normal. Nomes de teste
+   diferentes a cada clique, pra o jogo tratar como pessoas diferentes. */
+let contaTeste = 0
+function testeComenta(lado) {
+  const nome = 'teste' + (++contaTeste)
+  escolhido.set(nome, lado)
+  avisar('<span class="quem">' + nome + '</span> entrou com ' + LADOS[lado].nome, lado)
+  golpear(lado, 1, nome, 'comentou')
+}
+function ligarPainelTeste() {
+  const painel = document.getElementById('painel-teste')
+  painel.classList.add('on')
+  painel.querySelectorAll('button').forEach(b => b.addEventListener('click', () => {
+    const geral = b.dataset.geral
+    if (geral === 'limpa') {
+      estado.forEach(e => { e.hp = VIDA; e.forca = 0 }); pintar(); return
+    }
+    if (geral === 'curtida') {
+      const lado = estado[0].hp <= estado[1].hp ? 0 : 1
+      golpear(lado, 1, 'teste', 'curtiu'); return
+    }
+    if (geral === 'comentario') { testeComenta(Math.random() < .5 ? 0 : 1); return }
+    presentear(+b.dataset.lado, +b.dataset.forca, 'matheus')
+  }))
+}
+if (window.TESTE || location.hash === '#teste') ligarPainelTeste()
 </script>
 </body>
 </html>
