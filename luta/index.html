@@ -128,6 +128,14 @@ html,body{height:100%;background:#000;overflow:hidden;
   transform:translateX(-50%);opacity:0;pointer-events:none;
   filter:drop-shadow(0 4px 3px rgba(0,0,0,.45))}
 .pose.on{opacity:1}
+/* Lutador caído: camada própria no chão, porque a arte deitada é larga e baixa
+   e não cabe na caixa em pé. Entra pela lateral de quem perdeu, no nível do
+   piso, e some no reinício do round. */
+#tombado{position:absolute;bottom:40px;z-index:2;width:46%;height:auto;display:none;
+  filter:drop-shadow(0 6px 6px rgba(0,0,0,.5))}
+#tombado.on{display:block;animation:cai .5s cubic-bezier(.3,1.2,.5,1)}
+@keyframes cai{0%{opacity:0;transform:translateY(-40px) rotate(8deg)}
+  100%{opacity:1;transform:none}}
 .sombra{position:absolute;z-index:0;left:50%;bottom:2px;width:240px;height:20px;margin-left:-120px;
   border-radius:50%;background:radial-gradient(ellipse,rgba(0,0,0,.62),transparent 72%)}
 
@@ -260,6 +268,8 @@ html,body{height:100%;background:#000;overflow:hidden;
     <div class="lutador esq" id="lutA"><div class="corpo"></div><div class="sombra"></div></div>
     <div class="lutador dir" id="lutB"><div class="corpo"></div><div class="sombra"></div></div>
 
+    <img id="tombado" alt="">
+
     <div id="combo"></div>
   </div>
 
@@ -358,7 +368,7 @@ html,body{height:100%;background:#000;overflow:hidden;
     </div>
   </div>
 
-  <div id="versao">v16</div>
+  <div id="versao">v17</div>
   <div id="semConector">conector desligado: nada está chegando da live</div>
 </div>
 
@@ -378,6 +388,33 @@ const LADOS = [
   { nome:'FLÁVIO', cor:'#4da3ff', pasta:'flavio',
     palavras:['flavio','flavinho','bolsonaro','bolso','22','azul'] },
 ]
+
+/* ---------- efeitos sonoros ----------
+   Som de fliperama: soco, chute, impacto, K.O., o "ready fight" no começo do
+   round e o game over no fim da luta. Cada efeito é clonado na hora de tocar,
+   pra sobrepor a música e os outros sons sem cortar. O navegador só libera som
+   depois de um clique; o botão de música já serve de liberação, e antes disso
+   o efeito falha calado em vez de travar o jogo. No arquivo único o som vem
+   embutido em SONS; servido por HTTP, vem da pasta sons ao lado. */
+const SONS_SRC = {
+  soco: 'sons/soco.mp3', chute: 'sons/chute.mp3', impacto: 'sons/impacto.mp3',
+  ko: 'sons/ko.mp3', ready: 'sons/ready.mp3', gameover: 'sons/gameover.mp3',
+}
+const SONS = {/*SONS_EMBUTIDOS*/}
+const VOL_SOM = { soco: .7, chute: .7, impacto: .9, ko: 1, ready: .9, gameover: .9 }
+const efeitos = {}
+for (const [nome, caminho] of Object.entries(SONS_SRC)) {
+  const a = new Audio(SONS[caminho] || caminho)
+  a.preload = 'auto'
+  efeitos[nome] = a
+}
+function tocarSom(nome) {
+  const base = efeitos[nome]
+  if (!base) return
+  const s = base.cloneNode()
+  s.volume = VOL_SOM[nome] != null ? VOL_SOM[nome] : .8
+  s.play().catch(() => {})
+}
 /* ---------- clipes ----------
    Cada clipe é uma lista de quadros e o tempo de cada um. `loop` roda sem
    parar, `segura` para no último quadro, e o resto volta pro parado quando
@@ -398,7 +435,9 @@ const CLIPES = {
   // atravessando a tela e termina na explosão. Quase um segundo de tela, que
   // é o que faz valer a pena mandar o presente grande em vez de três baratos.
   especial:{ q: ['esp1','esp2','esp3','esp4','esp5','esp6','esp7'], ms: 150 },
-  dano:    { q: ['defesa'], ms: 300 },
+  // Quem apanha recua de verdade, na pose de reação. Antes era a de defesa,
+  // que parecia que estava bloqueando, não levando o golpe.
+  dano:    { q: ['reacao'], ms: 320 },
   vitoria: { q: ['vitoria'], ms: 1, segura: true },
 }
 const QUADROS = [...new Set(Object.values(CLIPES).flatMap(c => c.q))]
@@ -511,8 +550,9 @@ function golpear(lado, forca, quem, origem, semAtacante) {
   estado[alvo].hp -= forca
 
   if (!semAtacante) {
-    // Quanto mais pesado o golpe, maior a animação.
+    // Quanto mais pesado o golpe, maior a animação e mais seco o som.
     const clipe = forca >= 20 ? 'forte' : forca >= 5 ? 'chute' : 'soco'
+    tocarSom(clipe === 'forte' ? 'impacto' : clipe)
     tocar(lado, clipe)
     caixas[lado].classList.remove('ataca'); void caixas[lado].offsetWidth
     caixas[lado].classList.add('ataca')
@@ -525,6 +565,9 @@ function golpear(lado, forca, quem, origem, semAtacante) {
     avisar('<span class="quem">' + escaparTexto(quem) + '</span> ' + origem
       + ' <span class="mais">+' + forca + '</span>', lado)
   }
+
+  // O golpe final que vem depois do vídeo também bate forte no ouvido.
+  if (semAtacante) tocarSom('impacto')
 
   tocar(alvo, 'dano')
   caixas[alvo].classList.remove('apanha'); void caixas[alvo].offsetWidth
@@ -599,16 +642,24 @@ function nocaute(vencedor) {
   estado[perdedor].hp = 0
   pintar()
 
-  // O perdedor cai inclinado a partir de um quadro limpo (defesa), em vez do
-  // sprite de ajoelhado, que vinha com uma aura de abertura grudada e cortada
-  // num retângulo. O vencedor fica na pose de vitória.
-  tocar(perdedor, 'dano')
+  // O perdedor some em pé e aparece deitado no chão, na arte de caído, do lado
+  // dele. O vencedor fica na pose de vitória.
+  caixas[perdedor].querySelector('.corpo').style.visibility = 'hidden'
+  const tombado = document.getElementById('tombado')
+  tombado.src = sprite(LADOS[perdedor].pasta + '-tombado')
+  // Deita no canto de quem perdeu, com a cabeça pro próprio canto e os pés pro
+  // centro, que é como se cai ao levar o golpe. As duas artes vêm com a cabeça
+  // em lados opostos, então as duas espelham: a do Lula fica cabeça pra
+  // esquerda, a do Flávio cabeça pra direita.
+  if (perdedor === 0) { tombado.style.left = '2%'; tombado.style.right = 'auto' }
+  else { tombado.style.right = '2%'; tombado.style.left = 'auto' }
+  tombado.style.transform = 'scaleX(-1)'
+  tombado.classList.remove('on'); void tombado.offsetWidth; tombado.classList.add('on')
   tocar(vencedor, 'vitoria')
-  caixas[perdedor].querySelector('.corpo').style.animation = 'none'
-  caixas[perdedor].classList.add('derrubado')
   tremer()
   const clarao = document.getElementById('clarao')
   clarao.classList.remove('on'); void clarao.offsetWidth; clarao.classList.add('on')
+  tocarSom('ko')
 
   const ko = document.getElementById('ko')
   const nome = document.getElementById('koNome')
@@ -616,11 +667,13 @@ function nocaute(vencedor) {
   nome.textContent = venceuTudo ? LADOS[vencedor].nome + ' VENCEU A LUTA' : LADOS[vencedor].nome
   nome.style.color = LADOS[vencedor].cor
   ko.classList.add('on')
+  // Fechou a luta inteira: entra o game over, por cima do K.O.
+  if (venceuTudo) setTimeout(() => tocarSom('gameover'), 700)
 
   setTimeout(() => {
     ko.classList.remove('on')
-    caixas[perdedor].classList.remove('derrubado')
-    caixas[perdedor].querySelector('.corpo').style.animation = ''
+    document.getElementById('tombado').classList.remove('on')
+    caixas[perdedor].querySelector('.corpo').style.visibility = ''
     tocar(0, 'parado'); tocar(1, 'parado')
     estado.forEach(e => { e.hp = VIDA; e.forca = 0 })
     if (venceuTudo) estado.forEach(e => { e.rounds = 0 })
@@ -633,8 +686,12 @@ function nocaute(vencedor) {
     document.getElementById('round').textContent = 'ROUND ' + round
     travado = false
     pintar()
+    anunciarRound()   // "ready fight" do novo round
   }, 4600)
 }
+
+/* Grito de "ready fight" no começo de cada round, como no fliperama. */
+function anunciarRound() { tocarSom('ready') }
 
 /* ---------- frases que trocam sozinhas ----------
    Descrevem o jogo e nunca pedem presente: pedido repetido e pressão emocional

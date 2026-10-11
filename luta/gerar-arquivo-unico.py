@@ -52,6 +52,14 @@ videos = ["'%s':'%s'" % (arq, embutir(arq))
 s = s.replace('/*VIDEOS_EMBUTIDOS*/', ','.join(videos))
 print('cutscenes embutidas:', len(videos))
 
+# Efeitos de fliperama: pequenos, entram embutidos pelo caminho 'sons/<arq>',
+# que é a chave que o SONS_SRC usa.
+if os.path.isdir('sons'):
+    sfx = ["'sons/%s':'%s'" % (arq, embutir('sons/' + arq))
+           for arq in sorted(os.listdir('sons')) if arq.endswith('.mp3')]
+    s = s.replace('/*SONS_EMBUTIDOS*/', ','.join(sfx))
+    print('efeitos embutidos:', len(sfx))
+
 faltando = re.findall(r"sprites/[A-Za-z0-9_-]+\.[a-z]+", s)
 if faltando:
     print('sprite que não achei:', ', '.join(sorted(set(faltando))))
