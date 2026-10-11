@@ -324,8 +324,8 @@ html,body{height:100%;background:#000;overflow:hidden;
   <div id="painel-teste">
     <div class="tcol">
       <span class="tlabel" style="color:#ff5a4d">LULA</span>
-      <button data-lado="0" data-forca="3">soco</button>
-      <button data-lado="0" data-forca="30">chute</button>
+      <button data-lado="0" data-forca="5">soco</button>
+      <button data-lado="0" data-forca="20">chute</button>
       <button data-lado="0" data-forca="80">forte</button>
       <button data-lado="0" data-forca="250" class="tesp">CUTSCENE</button>
     </div>
@@ -336,8 +336,8 @@ html,body{height:100%;background:#000;overflow:hidden;
     </div>
     <div class="tcol">
       <span class="tlabel" style="color:#4da3ff">FLÁVIO</span>
-      <button data-lado="1" data-forca="3">soco</button>
-      <button data-lado="1" data-forca="30">chute</button>
+      <button data-lado="1" data-forca="5">soco</button>
+      <button data-lado="1" data-forca="20">chute</button>
       <button data-lado="1" data-forca="80">forte</button>
       <button data-lado="1" data-forca="250" class="tesp">CUTSCENE</button>
     </div>
@@ -368,7 +368,7 @@ html,body{height:100%;background:#000;overflow:hidden;
     </div>
   </div>
 
-  <div id="versao">v18</div>
+  <div id="versao">v19</div>
   <div id="semConector">conector desligado: nada está chegando da live</div>
 </div>
 
@@ -565,8 +565,9 @@ function golpear(lado, forca, quem, origem, semAtacante) {
   estado[alvo].hp -= forca
 
   if (!semAtacante) {
-    // Quanto mais pesado o golpe, maior a animação e mais seco o som.
-    const clipe = forca >= 20 ? 'forte' : forca >= 5 ? 'chute' : 'soco'
+    // Faixa de força -> golpe. Pequeno é soco, médio é chute, grande é o soco
+    // forte. Acima de MOEDAS_CUTSCENE já entra a cutscene em vídeo, antes daqui.
+    const clipe = forca >= 50 ? 'forte' : forca >= 10 ? 'chute' : 'soco'
     tocarSom(clipe === 'forte' ? 'impacto' : clipe)
     tocar(lado, clipe)
     caixas[lado].classList.remove('ataca'); void caixas[lado].offsetWidth
