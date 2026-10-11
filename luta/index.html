@@ -117,11 +117,13 @@ html,body{height:100%;background:#000;overflow:hidden;
 @keyframes respira{0%,100%{transform:translateY(0)}50%{transform:translateY(-7px)}}
 .corpo{position:absolute;inset:0;z-index:1;transform-origin:center bottom}
 .lutador.dir .corpo{transform:scaleX(-1)}
-/* Queda do nocaute: tomba pra trás, escurece e desliza um pouco. Feito por
-   cima de um quadro limpo, sem depender de arte de ajoelhado. */
-.lutador.derrubado .corpo{transform:rotate(-74deg) translate(-40px,30px);
-  filter:brightness(.35) saturate(.4);transition:transform .6s cubic-bezier(.3,1.3,.5,1),filter .6s}
-.lutador.dir.derrubado .corpo{transform:scaleX(-1) rotate(-74deg) translate(-40px,30px)}
+/* Queda do nocaute: cambaleia pra trás e afunda, escurecido. Tombar na
+   horizontal estourava a borda da arena e ainda saía rígido; esta inclinação
+   curta fica dentro do quadro e lê como derrubado. A arte de verdade (um
+   lutador caído no chão) deixa isso perfeito, e é o que peço pro dono gerar. */
+.lutador.derrubado .corpo{transform-origin:center bottom;transform:rotate(-18deg) translateY(16px);
+  filter:brightness(.4) saturate(.4);transition:transform .55s cubic-bezier(.3,1.2,.5,1),filter .55s}
+.lutador.dir.derrubado .corpo{transform:scaleX(-1) rotate(-18deg) translateY(16px)}
 .pose{position:absolute;left:50%;bottom:-6.4%;height:100%;width:auto;max-width:none;
   transform:translateX(-50%);opacity:0;pointer-events:none;
   filter:drop-shadow(0 4px 3px rgba(0,0,0,.45))}
@@ -356,7 +358,7 @@ html,body{height:100%;background:#000;overflow:hidden;
     </div>
   </div>
 
-  <div id="versao">v15</div>
+  <div id="versao">v16</div>
   <div id="semConector">conector desligado: nada está chegando da live</div>
 </div>
 
@@ -386,9 +388,12 @@ const CLIPES = {
   // tremelique, porque é passada de andar, e eles não andam. O movimento vivo
   // vem da respiração em CSS, suave, no lugar do pisca-pisca.
   parado:  { q: ['andar1'], ms: 1000, loop: true },
+  // Cada golpe é um quadro só, limpo. O forte antes juntava um soco e um joelho
+  // que não se encaixavam; agora é o soco forte pra frente, que é o que o
+  // impulso do ataque (.ataca) e a faísca vendem como pancada.
   soco:    { q: ['golpe1'], ms: 230 },
   chute:   { q: ['golpe2'], ms: 280 },
-  forte:   { q: ['golpe3','golpe5'], ms: 175 },
+  forte:   { q: ['golpe3'], ms: 300 },
   // O especial é o prêmio do presente caro: carrega a bola, dispara o raio
   // atravessando a tela e termina na explosão. Quase um segundo de tela, que
   // é o que faz valer a pena mandar o presente grande em vez de três baratos.
@@ -496,39 +501,48 @@ function pintar() {
 let combos = [0, 0]
 let comboAte = [0, 0]
 
-function golpear(lado, forca, quem, origem) {
+/* semAtacante: o golpe final que vem depois do vídeo não reanima o atacante
+   (o vídeo já mostrou o ataque) e não escreve no mural de novo, só resolve o
+   dano, a reação de quem apanha e o K.O. */
+function golpear(lado, forca, quem, origem, semAtacante) {
   if (travado || lado < 0 || lado > 1) return
   const alvo = 1 - lado
   estado[lado].forca += forca
   estado[alvo].hp -= forca
 
-  // Quanto mais pesado o golpe, maior a animação.
-  const clipe = forca >= 50 ? 'especial' : forca >= 20 ? 'forte'
-              : forca >= 5 ? 'chute' : 'soco'
-  tocar(lado, clipe)
+  if (!semAtacante) {
+    // Quanto mais pesado o golpe, maior a animação.
+    const clipe = forca >= 20 ? 'forte' : forca >= 5 ? 'chute' : 'soco'
+    tocar(lado, clipe)
+    caixas[lado].classList.remove('ataca'); void caixas[lado].offsetWidth
+    caixas[lado].classList.add('ataca')
+
+    const agora = Date.now()
+    combos[lado] = agora < comboAte[lado] ? combos[lado] + 1 : 1
+    comboAte[lado] = agora + 3000
+    if (combos[lado] >= 3) mostrarCombo(combos[lado], LADOS[lado].cor)
+
+    avisar('<span class="quem">' + escaparTexto(quem) + '</span> ' + origem
+      + ' <span class="mais">+' + forca + '</span>', lado)
+  }
+
   tocar(alvo, 'dano')
-  caixas[lado].classList.remove('ataca'); void caixas[lado].offsetWidth
-  caixas[lado].classList.add('ataca')
   caixas[alvo].classList.remove('apanha'); void caixas[alvo].offsetWidth
   caixas[alvo].classList.add('apanha')
-
   faiscar(alvo, forca)
   if (forca >= 50) tremer()
-
-  const agora = Date.now()
-  combos[lado] = agora < comboAte[lado] ? combos[lado] + 1 : 1
-  comboAte[lado] = agora + 3000
-  if (combos[lado] >= 3) mostrarCombo(combos[lado], LADOS[lado].cor)
 
   const chave = quem || 'alguém'
   apoio[lado].set(chave, (apoio[lado].get(chave) || 0) + forca)
   pintarApoio(lado)
 
-  avisar('<span class="quem">' + escaparTexto(quem) + '</span> ' + origem
-    + ' <span class="mais">+' + forca + '</span>', lado)
-
   pintar()
-  if (estado[alvo].hp <= 0) nocaute(lado)
+  // Enquanto o vídeo roda, nenhum outro golpe pode derrubar: o nocaute espera
+  // o golpe final, pra o K.O. não aparecer no meio da cutscene.
+  if (estado[alvo].hp <= 0) {
+    if (cenaRodando) { estado[alvo].hp = 1; pintar() }
+    else nocaute(lado)
+  }
 }
 
 function faiscar(alvo, forca) {
@@ -687,15 +701,17 @@ function avisoConector(ligado) {
 }
 
 /* ---------- cutscene em vídeo ----------
-   O vídeo toca SÓ na arena, por cima dos lutadores, e a live NÃO para: barras,
-   mural e placar seguem, e presente que cair durante o vídeo continua contando.
-   O dano do golpe já foi aplicado antes (quem chama é o presentear), então aqui
-   é só a imagem. cenaRodando impede dois vídeos ao mesmo tempo. Se o arquivo
-   não abrir ou passar do tempo, o vídeo some e a arena volta a aparecer. */
+   O vídeo toca SÓ na arena, por cima dos lutadores. A live NÃO para: barras,
+   mural e placar seguem, e presente pequeno que cair durante o vídeo continua
+   contando. O golpe final só é resolvido no fim do vídeo: aí o dano cai e, se
+   zerar a barra, entra o K.O. Assim o vídeo é a ação e o nocaute vem depois,
+   na ordem certa. cenaRodando impede dois vídeos juntos e segura o nocaute de
+   qualquer outro golpe enquanto o vídeo roda. Se o arquivo não abrir ou passar
+   do tempo, resolve na hora, pra nunca ficar preso. */
 let cenaRodando = false
 const CENA_MAX = 7000   // trava de segurança: nenhum vídeo passa disso
 
-function tocarCutscene(lado, quem) {
+function tocarCutscene(lado, quem, forca) {
   const palco = document.getElementById('cena-golpe')
   const vid = document.getElementById('video-golpe')
   cenaRodando = true
@@ -708,6 +724,8 @@ function tocarCutscene(lado, quem) {
     try { vid.pause() } catch {}
     palco.classList.remove('on')
     cenaRodando = false
+    // Agora sim o golpe cai: o vídeo mostrou o ataque, aqui vem o resultado.
+    golpear(lado, forca, quem, 'GOLPE FINAL', true)
   }
 
   document.getElementById('cena-quem').textContent = quem || ''
@@ -772,10 +790,16 @@ function ligarConector(porta) {
    é o golpe de sprite. O dano é o mesmo nos dois, só a apresentação muda. Os
    botões de teste chamam esta mesma função, pra testar o caminho real. */
 function presentear(lado, forca, quem) {
-  // O golpe (dano, barra, mural) acontece sempre, igual a qualquer presente.
-  golpear(lado, forca, quem, forca >= MOEDAS_CUTSCENE ? 'GOLPE FINAL' : 'mandou presente')
-  // Presente grande ainda roda o vídeo por cima da arena, sem parar a live.
-  if (forca >= MOEDAS_CUTSCENE && CUTSCENES[lado] && !cenaRodando) tocarCutscene(lado, quem)
+  // Presente grande é o golpe final: o vídeo toca na arena e SÓ quando ele
+  // acaba o golpe cai e, se zerar a barra, entra o K.O. Aplicar o dano antes
+  // fazia o K.O. aparecer no meio do vídeo e o perdedor voltar de pé.
+  if (forca >= MOEDAS_CUTSCENE && CUTSCENES[lado] && !cenaRodando) {
+    avisar('<span class="quem">' + escaparTexto(quem) + '</span> GOLPE FINAL '
+      + '<span class="mais">+' + forca + '</span>', lado)
+    tocarCutscene(lado, quem, forca)
+  } else {
+    golpear(lado, forca, quem, 'mandou presente')
+  }
 }
 ligarConector(21213)
 
