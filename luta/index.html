@@ -3,6 +3,11 @@
 <head>
 <meta charset="utf-8">
 <title>Quem ganha a luta</title>
+<!-- Fonte de fliperama pros títulos e regras. Carrega online; sem internet
+     cai no Archivo, que já é bold. -->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Anton&display=swap" rel="stylesheet">
 <style>
 /* Tela vertical 1080x1920, do tamanho da live. Escala sozinha pra caber em
    qualquer janela, então dá pra conferir no navegador antes de abrir o OBS. */
@@ -84,17 +89,21 @@ html,body{height:100%;background:#000;overflow:hidden;
 .bolinha.dir.on{background:#4da3ff;border-color:#fff}
 
 /* ---------- regras e mural ---------- */
-#aviso-topo{position:absolute;left:30px;right:30px;top:316px;z-index:5;pointer-events:none}
-#regras{display:flex;flex-direction:column;gap:9px;margin-bottom:10px}
-.regra{display:flex;align-items:center;gap:15px;background:rgba(6,6,12,.88);
-  border:4px solid rgba(255,210,63,.5);border-radius:14px;padding:13px 19px;
-  font-size:30px;font-weight:800;color:#fff}
-.regra i{font-style:normal;width:40px;height:40px;flex:none;border-radius:50%;
-  background:#ffd23f;color:#111;font-weight:900;font-size:25px;display:grid;place-items:center}
+#aviso-topo{position:absolute;left:26px;right:26px;top:300px;z-index:5;pointer-events:none}
+#tituloRegras{font-family:'Anton',sans-serif;font-size:42px;letter-spacing:2px;color:#ffd23f;
+  text-align:center;margin-bottom:10px;text-shadow:4px 4px 0 #000,-2px -2px 0 #000,2px -2px 0 #000,-2px 2px 0 #000}
+#regras{display:flex;flex-direction:column;gap:9px}
+.regra{display:flex;align-items:center;gap:16px;background:rgba(6,6,12,.9);
+  border:4px solid rgba(255,210,63,.55);border-radius:15px;padding:12px 20px;
+  font-family:'Anton',sans-serif;font-size:35px;font-weight:400;letter-spacing:.5px;color:#fff;
+  line-height:1.04}
+.regra i{font-style:normal;width:50px;height:50px;flex:none;border-radius:50%;
+  background:#ffd23f;color:#111;font-family:'Anton',sans-serif;font-size:32px;
+  display:grid;place-items:center}
 .regra b{color:#ffd23f}
-#instrucao{text-align:center;font-size:28px;font-weight:900;color:#fff;
-  transition:opacity .3s;text-shadow:2px 2px 0 #000,0 2px 14px rgba(0,0,0,.9)}
-#instrucao b{color:#ffd23f}
+.regra .vermelho{color:#ff5a4d}
+.regra .verde{color:#4da3ff}
+#instrucao{display:none}
 #fila{display:flex;flex-direction:column;gap:7px;align-items:flex-start;margin-top:11px}
 .aviso{display:flex;align-items:center;gap:11px;max-width:100%;
   background:rgba(6,6,12,.9);border:3px solid rgba(255,255,255,.16);border-left-width:10px;
@@ -240,6 +249,11 @@ html,body{height:100%;background:#000;overflow:hidden;
   text-shadow:4px 4px 0 #000,-2px -2px 0 #000,2px -2px 0 #000,-2px 2px 0 #000}
 #cena-quem::before{content:'GOLPE DE ';font-size:26px;color:rgba(255,255,255,.6);
   letter-spacing:3px;display:block;margin-bottom:2px}
+/* Véu preto sobre a arena: aparece no fim da cutscene pra cobrir a emenda
+   entre o vídeo (que acaba no espaço) e o K.O. na arena, e depois some. */
+#cena-fade{position:absolute;left:0;right:0;top:779px;height:741px;z-index:7;background:#000;
+  opacity:0;pointer-events:none;transition:opacity .4s ease}
+#cena-fade.on{opacity:1}
 /* ---------- painel de teste ----------
    Só aparece no arquivo de teste ou com #teste no fim do endereço. Fica por
    cima de tudo, com os botões que disparam cada golpe dos dois lados sem
@@ -300,9 +314,12 @@ html,body{height:100%;background:#000;overflow:hidden;
   </div>
 
   <div id="aviso-topo">
+    <div id="tituloRegras">COMO JOGAR</div>
     <div id="regras">
-      <div class="regra"><i>1</i> <span>comenta o nome de <b>quem você apoia</b></span></div>
-      <div class="regra"><i>2</i> <span>curtida, comentário e presente <b>dão o golpe</b></span></div>
+      <div class="regra"><i>1</i> <span>COMENTE <b class="vermelho">LULA</b> OU <b class="verde">FLÁVIO</b> PRA ESCOLHER SEU LADO</span></div>
+      <div class="regra"><i>2</i> <span>CURTIDA E COMENTÁRIO <b>EMPURRAM</b> SEU LUTADOR</span></div>
+      <div class="regra"><i>3</i> <span>PRESENTE <b>BATE FORTE</b> — QUANTO MAIS CARO, MAIOR O GOLPE</span></div>
+      <div class="regra"><i>4</i> <span>ZERE A VIDA DO OUTRO. <b>3 ROUNDS</b> VENCEM A LUTA</span></div>
     </div>
     <div id="instrucao">quem zerar a barra do outro <b>vence o round</b></div>
     <div id="fila"></div>
@@ -350,6 +367,7 @@ html,body{height:100%;background:#000;overflow:hidden;
     <video id="video-golpe" playsinline preload="auto" muted></video>
     <div id="cena-quem">—</div>
   </div>
+  <div id="cena-fade"></div>
 
   <div id="scan"></div>
   <div id="vinheta"></div>
@@ -368,7 +386,7 @@ html,body{height:100%;background:#000;overflow:hidden;
     </div>
   </div>
 
-  <div id="versao">v20</div>
+  <div id="versao">v21</div>
   <div id="semConector">conector desligado: nada está chegando da live</div>
 </div>
 
@@ -463,6 +481,10 @@ const QUADROS = [...new Set(Object.values(CLIPES).flatMap(c => c.q))]
    O dano continua sendo o valor em moedas. */
 const MOEDAS_CUTSCENE = 200
 const CUTSCENES = { 0: 'cutscene-lula.mp4', 1: 'cutscene-flavio.mp4' }
+/* A Galáxia é o presente mais caro: finalização absurda com câmera própria,
+   num gatilho acima da cutscene normal. */
+const MOEDAS_GALAXIA = 1000
+const CUTSCENES_GALAXIA = { 0: 'cutscene-galaxia-lula.mp4', 1: 'cutscene-galaxia-flavio.mp4' }
 /* No arquivo único o gerador troca isto pelo vídeo em base64; aberto servido,
    fica vazio e o caminho do arquivo é usado direto. */
 const VIDEOS = {/*VIDEOS_EMBUTIDOS*/}
@@ -713,10 +735,11 @@ function anunciarRound() { tocarSom('ready') }
    Descrevem o jogo e nunca pedem presente: pedido repetido e pressão emocional
    são o que faz o TikTok suspender os presentes da live. */
 const FRASES = [
-  'quem zerar a barra do outro <b>vence o round</b>',
-  'a cada <b>25 curtidas</b> o seu lado dá 1 de dano',
-  'comentar o nome <b>dá 1</b> a cada 8 segundos',
-  'três rounds <b>fecham a luta</b>',
+  'presente <b>maior</b> faz um golpe <b>maior</b>',
+  'a cada <b>25 curtidas</b> o seu lado dá um golpe',
+  'comentar o nome <b>bate</b> a cada 8 segundos',
+  'presente de <b>200+</b> chama o golpe final em vídeo',
+  'mande <b>GALÁXIA</b> pro super ataque',
   'quem mais bateu <b>aparece aqui embaixo</b>',
 ]
 let fraseAtual = 0
@@ -784,9 +807,10 @@ function avisoConector(ligado) {
 let cenaRodando = false
 const CENA_MAX = 7000   // trava de segurança: nenhum vídeo passa disso
 
-function tocarCutscene(lado, quem, forca) {
+function tocarCutscene(lado, quem, forca, arquivo) {
   const palco = document.getElementById('cena-golpe')
   const vid = document.getElementById('video-golpe')
+  const fade = document.getElementById('cena-fade')
   cenaRodando = true
 
   let encerrado = false
@@ -794,20 +818,29 @@ function tocarCutscene(lado, quem, forca) {
     if (encerrado) return
     encerrado = true
     clearTimeout(trava)
-    try { vid.pause() } catch {}
-    palco.classList.remove('on')
-    cenaRodando = false
-    // Agora sim o golpe cai: o vídeo mostrou o ataque, aqui vem o resultado.
-    golpear(lado, forca, quem, 'GOLPE FINAL', true)
+    // Fade pro preto antes de voltar pro jogo: o vídeo da Galáxia termina no
+    // espaço, com a câmera fora do lugar, então cortar seco pro K.O. dava um
+    // tranco. O preto cobre a emenda e o K.O. aparece já na arena.
+    fade.classList.add('on')
+    setTimeout(() => {
+      try { vid.pause() } catch {}
+      palco.classList.remove('on')
+      cenaRodando = false
+      // Agora sim o golpe cai: o vídeo mostrou o ataque, aqui vem o resultado.
+      golpear(lado, forca, quem, 'GOLPE FINAL', true)
+      // Tira o preto, revelando a arena (ou o K.O.) por baixo.
+      setTimeout(() => fade.classList.remove('on'), 60)
+    }, 420)
   }
 
   document.getElementById('cena-quem').textContent = quem || ''
   document.getElementById('cena-quem').style.color = LADOS[lado].cor
+  fade.classList.remove('on')
   vid.onended = encerrar
   vid.onerror = encerrar
   // No arquivo único o vídeo vem embutido em VIDEOS; servido por HTTP, vem do
   // arquivo ao lado. O mesmo truque dos sprites.
-  vid.src = VIDEOS[CUTSCENES[lado]] || CUTSCENES[lado]
+  vid.src = VIDEOS[arquivo] || arquivo
   vid.currentTime = 0
   vid.muted = false
   palco.classList.add('on')
@@ -865,11 +898,14 @@ function ligarConector(porta) {
 function presentear(lado, forca, quem) {
   // Presente grande é o golpe final: o vídeo toca na arena e SÓ quando ele
   // acaba o golpe cai e, se zerar a barra, entra o K.O. Aplicar o dano antes
-  // fazia o K.O. aparecer no meio do vídeo e o perdedor voltar de pé.
-  if (forca >= MOEDAS_CUTSCENE && CUTSCENES[lado] && !cenaRodando) {
-    avisar('<span class="quem">' + escaparTexto(quem) + '</span> GOLPE FINAL '
-      + '<span class="mais">+' + forca + '</span>', lado)
-    tocarCutscene(lado, quem, forca)
+  // fazia o K.O. aparecer no meio do vídeo e o perdedor voltar de pé. A
+  // Galáxia (mais cara) tem o próprio vídeo; abaixo dela vai a cutscene comum.
+  const galaxia = forca >= MOEDAS_GALAXIA && CUTSCENES_GALAXIA[lado]
+  const comum = forca >= MOEDAS_CUTSCENE && CUTSCENES[lado]
+  if ((galaxia || comum) && !cenaRodando) {
+    avisar('<span class="quem">' + escaparTexto(quem) + '</span> '
+      + (galaxia ? 'GALÁXIA' : 'GOLPE FINAL') + ' <span class="mais">+' + forca + '</span>', lado)
+    tocarCutscene(lado, quem, forca, galaxia ? CUTSCENES_GALAXIA[lado] : CUTSCENES[lado])
   } else {
     golpear(lado, forca, quem, 'mandou presente')
   }
