@@ -122,10 +122,9 @@ html,body{height:100%;background:#000;overflow:hidden;
 .lutador{position:absolute;bottom:44px;width:360px;height:470px;z-index:4}
 .lutador.esq{left:52px}
 .lutador.dir{right:52px}
-/* Respiração mora no .lutador (translateY), não no .corpo, que é onde rodam o
-   golpe e a queda. Assim os dois movimentos não brigam pelo mesmo transform. */
-.lutador{animation:respira 2.8s ease-in-out infinite}
-@keyframes respira{0%,100%{transform:translateY(0)}50%{transform:translateY(-7px)}}
+/* Sem respiração em CSS: o movimento vivo vem do ciclo de caminhada em
+   quadros. O translateY de antes levantava o lutador do chão, dava ar de
+   flutuando. */
 .corpo{position:absolute;inset:0;z-index:1;transform-origin:center bottom}
 .lutador.dir .corpo{transform:scaleX(-1)}
 /* Queda do nocaute: cambaleia pra trás e afunda, escurecido. Tombar na
@@ -265,7 +264,7 @@ html,body{height:100%;background:#000;overflow:hidden;
    precisar de live nem conector. */
 #painel-teste{position:absolute;left:0;right:0;bottom:0;z-index:20;display:none;
   justify-content:center;gap:20px;padding:12px 12px;flex-wrap:wrap;
-  background:rgba(4,4,10,.97);border-top:4px solid #ffd23f}
+  background:rgba(4,4,10,.97);border-top:3px solid rgba(255,255,255,.14)}
 #painel-teste.on{display:flex}
 #painel-teste .tcol{display:flex;flex-direction:column;gap:6px;align-items:stretch}
 #painel-teste .tlabel{font-size:18px;font-weight:900;text-align:center;letter-spacing:1px}
@@ -395,7 +394,7 @@ html,body{height:100%;background:#000;overflow:hidden;
     </div>
   </div>
 
-  <div id="versao">v22</div>
+  <div id="versao">v23</div>
   <div id="semConector">conector desligado: nada está chegando da live</div>
 </div>
 
@@ -466,7 +465,9 @@ const CLIPES = {
   // Parado é um quadro só. O ciclo de seis quadros rodando no lugar virava um
   // tremelique, porque é passada de andar, e eles não andam. O movimento vivo
   // vem da respiração em CSS, suave, no lugar do pisca-pisca.
-  parado:  { q: ['andar1'], ms: 1000, loop: true },
+  // Ciclo de caminhada no lugar: é o que dá vida sem flutuar, porque cada
+  // quadro tem o pé plantado no chão. Ritmo calmo pra não virar tremelique.
+  parado:  { q: ['andar1','andar2','andar3','andar4','andar5','andar6'], ms: 150, loop: true },
   // Cada golpe é um quadro só, limpo. O forte antes juntava um soco e um joelho
   // que não se encaixavam; agora é o soco forte pra frente, que é o que o
   // impulso do ataque (.ataca) e a faísca vendem como pancada.
