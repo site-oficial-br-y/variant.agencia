@@ -319,7 +319,7 @@ html,body{height:100%;background:#000;overflow:hidden;
     </div>
   </div>
 
-  <div id="versao">v12</div>
+  <div id="versao">v13</div>
   <div id="semConector">conector desligado: nada está chegando da live</div>
 </div>
 
@@ -359,10 +359,11 @@ const CLIPES = {
 }
 const QUADROS = [...new Set(Object.values(CLIPES).flatMap(c => c.q))]
 
-/* O especial (presente de 50 moedas pra cima) toca a cutscene em vídeo no
-   lugar da animação de sprite. O mesmo valor que dispara o especial, pra o
-   vídeo ser o especial. O dano continua sendo o valor em moedas. */
-const MOEDAS_CUTSCENE = 50
+/* Presente a partir deste valor toca a cutscene em vídeo. Acima do especial de
+   sprite (50) de propósito: o vídeo trava a luta por cinco segundos, então
+   presente pequeno continua no golpe rápido e só o grande para tudo pro vídeo.
+   O dano continua sendo o valor em moedas. */
+const MOEDAS_CUTSCENE = 200
 const CUTSCENES = { 0: 'cutscene-lula.mp4', 1: 'cutscene-flavio.mp4' }
 /* No arquivo único o gerador troca isto pelo vídeo em base64; aberto servido,
    fica vazio e o caminho do arquivo é usado direto. */
