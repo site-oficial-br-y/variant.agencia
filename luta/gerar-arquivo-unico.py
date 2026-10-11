@@ -22,8 +22,10 @@ s = open('index.html').read()
 mapa = []
 for arq in sorted(os.listdir('sprites')) if os.path.isdir('sprites') else []:
     nome = os.path.splitext(arq)[0]
-    if nome == 'palco':
-        s = s.replace("url('sprites/palco.jpg')", "url('%s')" % embutir('sprites/' + arq))
+    # Os .jpg de cenário (palco, fundo da live) entram por url() no CSS; os
+    # .png dos lutadores entram no mapa SPRITES que o script lê.
+    if arq.endswith('.jpg'):
+        s = s.replace("url('sprites/%s')" % arq, "url('%s')" % embutir('sprites/' + arq))
         continue
     mapa.append("'%s':'%s'" % (nome, embutir('sprites/' + arq)))
 s = s.replace('/*SPRITES_EMBUTIDOS*/', ','.join(mapa))

@@ -14,8 +14,12 @@
 *{margin:0;padding:0;box-sizing:border-box}
 html,body{height:100%;background:#000;overflow:hidden;
   font-family:'Archivo','Inter',system-ui,sans-serif;user-select:none}
+/* Fundo da interface da live: o abstrato vermelho/verde (as cores dos dois
+   lados) com um véu escuro por cima pra o texto do HUD e das regras continuar
+   legível. A arena cobre o meio, então isto aparece no topo e no rodapé. */
 #palco{position:absolute;top:50%;left:50%;width:1080px;height:1920px;transform-origin:center;
-  overflow:hidden;color:#fff;background:#05060c}
+  overflow:hidden;color:#fff;
+  background:linear-gradient(rgba(6,7,14,.74),rgba(6,7,14,.8)),url('sprites/fundo-live.jpg') center/cover}
 #palco.tremer{animation:tremer .42s cubic-bezier(.36,.07,.19,.97)}
 @keyframes tremer{
   10%,90%{transform:translate(calc(-50% - 8px),-50%) scale(var(--e))}
@@ -32,8 +36,6 @@ html,body{height:100%;background:#000;overflow:hidden;
    que acaba exatamente nessa cor: a emenda some. Tentar casar de olho deixava
    uma linha atravessada na tela. */
 #cena{position:absolute;left:0;right:0;top:779px;height:741px;overflow:hidden;
-  border-top:5px solid #ffd23f;border-bottom:5px solid #ffd23f;
-  box-shadow:0 0 0 4px #000,0 14px 44px rgba(0,0,0,.8);
   background:url('sprites/palco.jpg') bottom center/100% auto no-repeat}
 /* Faixa escura em cima do céu: o texto branco das regras sumia no azul claro. */
 /* Faixa de luz atrás do painel das regras, pra ele não ser só um retângulo
@@ -237,10 +239,13 @@ html,body{height:100%;background:#000;overflow:hidden;
    O vídeo toca SÓ dentro da arena (mesmo lugar e tamanho do #cena), por cima
    dos lutadores. A live não para: barras, mural e placar seguem ao vivo, e os
    presentes continuam contando. O vídeo preenche a arena inteira. */
+/* O vídeo ocupa EXATAMENTE a arena, sem borda nem moldura, pra o corte da luta
+   pro vídeo passar despercebido. Entra e sai com um fade curto, que esconde a
+   emenda entre o pixel art do jogo e o vídeo. */
 #cena-golpe{position:absolute;left:0;right:0;top:779px;height:741px;z-index:6;display:none;
-  overflow:hidden;background:#000;
-  border-top:5px solid #ffd23f;border-bottom:5px solid #ffd23f}
-#cena-golpe.on{display:block;animation:surge .25s ease}
+  overflow:hidden;background:#000;opacity:0;transition:opacity .25s ease}
+#cena-golpe.on{display:block}
+#cena-golpe.vis{opacity:1}
 #cena-golpe::after{content:'';position:absolute;inset:0;z-index:12;pointer-events:none;
   opacity:.22;background:repeating-linear-gradient(180deg,rgba(0,0,0,.6) 0 2px,transparent 2px 4px)}
 #video-golpe{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;display:block}
@@ -259,12 +264,12 @@ html,body{height:100%;background:#000;overflow:hidden;
    cima de tudo, com os botões que disparam cada golpe dos dois lados sem
    precisar de live nem conector. */
 #painel-teste{position:absolute;left:0;right:0;bottom:0;z-index:20;display:none;
-  justify-content:center;gap:24px;padding:16px 14px;flex-wrap:wrap;
-  background:rgba(4,4,10,.94);border-top:4px solid #ffd23f}
+  justify-content:center;gap:20px;padding:12px 12px;flex-wrap:wrap;
+  background:rgba(4,4,10,.97);border-top:4px solid #ffd23f}
 #painel-teste.on{display:flex}
-#painel-teste .tcol{display:flex;flex-direction:column;gap:8px;align-items:stretch}
-#painel-teste .tlabel{font-size:20px;font-weight:900;text-align:center;letter-spacing:1px}
-#painel-teste button{font-size:22px;font-weight:900;padding:10px 20px;border-radius:10px;
+#painel-teste .tcol{display:flex;flex-direction:column;gap:6px;align-items:stretch}
+#painel-teste .tlabel{font-size:18px;font-weight:900;text-align:center;letter-spacing:1px}
+#painel-teste button{font-size:18px;font-weight:900;padding:7px 16px;border-radius:9px;
   border:3px solid rgba(255,255,255,.3);background:rgba(255,255,255,.08);color:#fff;cursor:pointer}
 #painel-teste button:active{transform:scale(.95)}
 #painel-teste .tesp{border-color:#ffd23f;color:#ffd23f}
@@ -316,10 +321,10 @@ html,body{height:100%;background:#000;overflow:hidden;
   <div id="aviso-topo">
     <div id="tituloRegras">COMO JOGAR</div>
     <div id="regras">
-      <div class="regra"><i>1</i> <span>COMENTE <b class="vermelho">LULA</b> OU <b class="verde">FLÁVIO</b> PRA ESCOLHER SEU LADO</span></div>
-      <div class="regra"><i>2</i> <span>CURTIDA E COMENTÁRIO <b>EMPURRAM</b> SEU LUTADOR</span></div>
-      <div class="regra"><i>3</i> <span>PRESENTE <b>BATE FORTE</b> — QUANTO MAIS CARO, MAIOR O GOLPE</span></div>
-      <div class="regra"><i>4</i> <span>ZERE A VIDA DO OUTRO. <b>3 ROUNDS</b> VENCEM A LUTA</span></div>
+      <div class="regra"><i>1</i> <span>COMENTE <b class="vermelho">LULA</b> OU <b class="verde">FLÁVIO</b> PRA ESCOLHER O LADO</span></div>
+      <div class="regra"><i>2</i> <span>CURTIDA E COMENTÁRIO <b>EMPURRAM</b> SEU LADO</span></div>
+      <div class="regra"><i>3</i> <span>PRESENTE <b>BATE</b> — MAIS CARO, MAIOR O GOLPE</span></div>
+      <div class="regra"><i>4</i> <span>ZERE A VIDA. <b>3 ROUNDS</b> VENCEM A LUTA</span></div>
     </div>
     <div id="instrucao">quem zerar a barra do outro <b>vence o round</b></div>
     <div id="fila"></div>
@@ -345,6 +350,8 @@ html,body{height:100%;background:#000;overflow:hidden;
       <button data-lado="0" data-forca="20">chute</button>
       <button data-lado="0" data-forca="80">forte</button>
       <button data-lado="0" data-forca="250" class="tesp">CUTSCENE</button>
+      <button data-lado="0" data-forca="1000" class="tesp">GALÁXIA</button>
+      <button data-ko="0">K.O.</button>
     </div>
     <div class="tcol">
       <button data-geral="curtida">+curtida</button>
@@ -357,6 +364,8 @@ html,body{height:100%;background:#000;overflow:hidden;
       <button data-lado="1" data-forca="20">chute</button>
       <button data-lado="1" data-forca="80">forte</button>
       <button data-lado="1" data-forca="250" class="tesp">CUTSCENE</button>
+      <button data-lado="1" data-forca="1000" class="tesp">GALÁXIA</button>
+      <button data-ko="1">K.O.</button>
     </div>
   </div>
 
@@ -386,7 +395,7 @@ html,body{height:100%;background:#000;overflow:hidden;
     </div>
   </div>
 
-  <div id="versao">v21</div>
+  <div id="versao">v22</div>
   <div id="semConector">conector desligado: nada está chegando da live</div>
 </div>
 
@@ -489,7 +498,8 @@ const CUTSCENES_GALAXIA = { 0: 'cutscene-galaxia-lula.mp4', 1: 'cutscene-galaxia
    fica vazio e o caminho do arquivo é usado direto. */
 const VIDEOS = {/*VIDEOS_EMBUTIDOS*/}
 
-const VIDA = 100          // dano pra zerar a barra do outro
+const VIDA = 200          // barra maior: cada golpe tira proporcionalmente menos,
+                          // então o forte não zera quase sozinho e a luta dura
 const ROUNDS_PRA_GANHAR = 3
 const ESPERA_COMENTARIO = 8000
 const POR_CURTIDA = 25
@@ -680,28 +690,39 @@ function nocaute(vencedor) {
   estado[perdedor].hp = 0
   pintar()
 
+  // Primeiro a reação ao golpe: o perdedor cambaleia pra trás, como em qualquer
+  // acerto. Pular direto pro K.O. tirava o impacto. Só depois ele cai.
+  tocar(perdedor, 'dano')
+  caixas[perdedor].classList.remove('apanha'); void caixas[perdedor].offsetWidth
+  caixas[perdedor].classList.add('apanha')
+  tremer()
+  const clarao = document.getElementById('clarao')
+  clarao.classList.remove('on'); void clarao.offsetWidth; clarao.classList.add('on')
+  tocarSom('ko')
+
+  const venceuTudo = estado[vencedor].rounds >= ROUNDS_PRA_GANHAR
+  setTimeout(() => quedaDoKO(vencedor, perdedor, venceuTudo), 520)
+}
+
+/* A queda e a cartela de K.O., depois da reação ao golpe. */
+function quedaDoKO(vencedor, perdedor, venceuTudo) {
   // O perdedor some em pé e aparece deitado no chão, na arte de caído, do lado
-  // dele. O vencedor fica na pose de vitória.
+  // dele. O vencedor comemora pulando.
   caixas[perdedor].querySelector('.corpo').style.visibility = 'hidden'
   const tombado = document.getElementById('tombado')
   tombado.src = sprite(LADOS[perdedor].pasta + '-tombado')
   // Deita no canto de quem perdeu, com a cabeça pro próprio canto e os pés pro
-  // centro, que é como se cai ao levar o golpe. As duas artes vêm com a cabeça
-  // em lados opostos, então as duas espelham: a do Lula fica cabeça pra
-  // esquerda, a do Flávio cabeça pra direita.
+  // centro. As duas artes vêm com a cabeça em lados opostos, então as duas
+  // espelham: a do Lula cabeça pra esquerda, a do Flávio pra direita.
   if (perdedor === 0) { tombado.style.left = '2%'; tombado.style.right = 'auto' }
   else { tombado.style.right = '2%'; tombado.style.left = 'auto' }
   tombado.style.transform = 'scaleX(-1)'
   tombado.classList.remove('on'); void tombado.offsetWidth; tombado.classList.add('on')
   tocar(vencedor, 'vitoria')
   tremer()
-  const clarao = document.getElementById('clarao')
-  clarao.classList.remove('on'); void clarao.offsetWidth; clarao.classList.add('on')
-  tocarSom('ko')
 
   const ko = document.getElementById('ko')
   const nome = document.getElementById('koNome')
-  const venceuTudo = estado[vencedor].rounds >= ROUNDS_PRA_GANHAR
   nome.textContent = venceuTudo ? LADOS[vencedor].nome + ' VENCEU A LUTA' : LADOS[vencedor].nome
   nome.style.color = LADOS[vencedor].cor
   ko.classList.add('on')
@@ -824,7 +845,7 @@ function tocarCutscene(lado, quem, forca, arquivo) {
     fade.classList.add('on')
     setTimeout(() => {
       try { vid.pause() } catch {}
-      palco.classList.remove('on')
+      palco.classList.remove('on'); palco.classList.remove('vis')
       cenaRodando = false
       // Agora sim o golpe cai: o vídeo mostrou o ataque, aqui vem o resultado.
       golpear(lado, forca, quem, 'GOLPE FINAL', true)
@@ -843,7 +864,10 @@ function tocarCutscene(lado, quem, forca, arquivo) {
   vid.src = VIDEOS[arquivo] || arquivo
   vid.currentTime = 0
   vid.muted = false
-  palco.classList.add('on')
+  // Entra com fade por cima da arena: começa transparente e aparece, pra o
+  // corte do jogo pro vídeo não ser um salto.
+  palco.classList.add('on'); palco.classList.remove('vis')
+  requestAnimationFrame(() => palco.classList.add('vis'))
   const trava = setTimeout(encerrar, CENA_MAX)
   vid.play().catch(() => { vid.muted = true; vid.play().catch(encerrar) })
 }
@@ -1071,6 +1095,14 @@ function ligarPainelTeste() {
       golpear(lado, 1, 'teste', 'curtiu'); return
     }
     if (geral === 'comentario') { testeComenta(Math.random() < .5 ? 0 : 1); return }
+    // K.O. direto, sem vídeo: zera a vida do outro e aplica o golpe, pra ver a
+    // reação e a queda do nocaute.
+    if (b.dataset.ko !== undefined) {
+      const lado = +b.dataset.ko
+      estado[1 - lado].hp = Math.min(estado[1 - lado].hp, 1)
+      golpear(lado, 50, 'matheus', 'mandou presente')
+      return
+    }
     presentear(+b.dataset.lado, +b.dataset.forca, 'matheus')
   }))
 }
