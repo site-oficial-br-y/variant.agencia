@@ -368,7 +368,7 @@ html,body{height:100%;background:#000;overflow:hidden;
     </div>
   </div>
 
-  <div id="versao">v17</div>
+  <div id="versao">v18</div>
   <div id="semConector">conector desligado: nada está chegando da live</div>
 </div>
 
@@ -402,18 +402,33 @@ const SONS_SRC = {
 }
 const SONS = {/*SONS_EMBUTIDOS*/}
 const VOL_SOM = { soco: .7, chute: .7, impacto: .9, ko: 1, ready: .9, gameover: .9 }
-const efeitos = {}
-for (const [nome, caminho] of Object.entries(SONS_SRC)) {
-  const a = new Audio(SONS[caminho] || caminho)
-  a.preload = 'auto'
-  efeitos[nome] = a
+
+/* Web Audio em vez de clonar <audio>: no celular o clone sai mudo e atrasado.
+   Aqui cada efeito é decodificado uma vez num buffer e disparado na hora, de
+   graça, sobrepondo os outros. O navegador só deixa criar som depois de um
+   toque, então o áudio é destravado no primeiro toque em qualquer lugar da
+   tela (e também no botão de música). */
+let ctxSom = null
+const buffers = {}
+function destravarSom() {
+  if (ctxSom) { if (ctxSom.state === 'suspended') ctxSom.resume(); return }
+  try { ctxSom = new (window.AudioContext || window.webkitAudioContext)() } catch { return }
+  for (const [nome, caminho] of Object.entries(SONS_SRC)) {
+    fetch(SONS[caminho] || caminho).then(r => r.arrayBuffer())
+      .then(b => ctxSom.decodeAudioData(b)).then(buf => { buffers[nome] = buf }).catch(() => {})
+  }
 }
+addEventListener('pointerdown', destravarSom)
+addEventListener('keydown', destravarSom)
+
 function tocarSom(nome) {
-  const base = efeitos[nome]
-  if (!base) return
-  const s = base.cloneNode()
-  s.volume = VOL_SOM[nome] != null ? VOL_SOM[nome] : .8
-  s.play().catch(() => {})
+  if (!ctxSom || !buffers[nome]) return
+  const s = ctxSom.createBufferSource()
+  s.buffer = buffers[nome]
+  const g = ctxSom.createGain()
+  g.gain.value = VOL_SOM[nome] != null ? VOL_SOM[nome] : .8
+  s.connect(g); g.connect(ctxSom.destination)
+  s.start()
 }
 /* ---------- clipes ----------
    Cada clipe é uma lista de quadros e o tempo de cada um. `loop` roda sem
@@ -911,6 +926,7 @@ audio.addEventListener('play', marcarBotao)
 audio.addEventListener('pause', marcarBotao)
 
 function alternarMusica() {
+  destravarSom()
   if (!faixas.length) return abrirPainel()
   if (audio.paused) {
     if (!audio.src) proximaFaixa(false)
