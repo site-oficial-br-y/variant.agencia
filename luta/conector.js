@@ -86,7 +86,7 @@ const TIPOS = {
   '.html': 'text/html; charset=utf-8', '.js': 'text/javascript', '.css': 'text/css',
   '.png': 'image/png', '.webp': 'image/webp', '.jpg': 'image/jpeg', '.svg': 'image/svg+xml',
   '.json': 'application/json', '.mp3': 'audio/mpeg', '.m4a': 'audio/mp4',
-  '.ogg': 'audio/ogg', '.wav': 'audio/wav',
+  '.ogg': 'audio/ogg', '.wav': 'audio/wav', '.mp4': 'video/mp4',
 }
 
 http.createServer((req, res) => {

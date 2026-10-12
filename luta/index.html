@@ -3,14 +3,23 @@
 <head>
 <meta charset="utf-8">
 <title>Quem ganha a luta</title>
+<!-- Fonte de fliperama pros títulos e regras. Carrega online; sem internet
+     cai no Archivo, que já é bold. -->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Anton&display=swap" rel="stylesheet">
 <style>
 /* Tela vertical 1080x1920, do tamanho da live. Escala sozinha pra caber em
    qualquer janela, então dá pra conferir no navegador antes de abrir o OBS. */
 *{margin:0;padding:0;box-sizing:border-box}
 html,body{height:100%;background:#000;overflow:hidden;
   font-family:'Archivo','Inter',system-ui,sans-serif;user-select:none}
+/* Fundo da interface da live: o abstrato vermelho/verde (as cores dos dois
+   lados) com um véu escuro por cima pra o texto do HUD e das regras continuar
+   legível. A arena cobre o meio, então isto aparece no topo e no rodapé. */
 #palco{position:absolute;top:50%;left:50%;width:1080px;height:1920px;transform-origin:center;
-  overflow:hidden;color:#fff;background:#05060c}
+  overflow:hidden;color:#fff;
+  background:linear-gradient(rgba(6,7,14,.74),rgba(6,7,14,.8)),url('sprites/fundo-live.jpg') center/cover}
 #palco.tremer{animation:tremer .42s cubic-bezier(.36,.07,.19,.97)}
 @keyframes tremer{
   10%,90%{transform:translate(calc(-50% - 8px),-50%) scale(var(--e))}
@@ -27,8 +36,6 @@ html,body{height:100%;background:#000;overflow:hidden;
    que acaba exatamente nessa cor: a emenda some. Tentar casar de olho deixava
    uma linha atravessada na tela. */
 #cena{position:absolute;left:0;right:0;top:779px;height:741px;overflow:hidden;
-  border-top:5px solid #ffd23f;border-bottom:5px solid #ffd23f;
-  box-shadow:0 0 0 4px #000,0 14px 44px rgba(0,0,0,.8);
   background:url('sprites/palco.jpg') bottom center/100% auto no-repeat}
 /* Faixa escura em cima do céu: o texto branco das regras sumia no azul claro. */
 /* Faixa de luz atrás do painel das regras, pra ele não ser só um retângulo
@@ -84,17 +91,23 @@ html,body{height:100%;background:#000;overflow:hidden;
 .bolinha.dir.on{background:#4da3ff;border-color:#fff}
 
 /* ---------- regras e mural ---------- */
-#aviso-topo{position:absolute;left:30px;right:30px;top:316px;z-index:5;pointer-events:none}
-#regras{display:flex;flex-direction:column;gap:9px;margin-bottom:10px}
-.regra{display:flex;align-items:center;gap:15px;background:rgba(6,6,12,.88);
-  border:4px solid rgba(255,210,63,.5);border-radius:14px;padding:13px 19px;
-  font-size:30px;font-weight:800;color:#fff}
-.regra i{font-style:normal;width:40px;height:40px;flex:none;border-radius:50%;
-  background:#ffd23f;color:#111;font-weight:900;font-size:25px;display:grid;place-items:center}
+/* z-index alto pro mural ficar por cima do vídeo da cutscene: o aviso de quem
+   mandou o presente (ex.: GOLPE FINAL +250) sumia atrás do vídeo. */
+#aviso-topo{position:absolute;left:26px;right:26px;top:300px;z-index:9;pointer-events:none}
+#tituloRegras{font-family:'Anton',sans-serif;font-size:38px;letter-spacing:2px;color:#ffd23f;
+  text-align:center;margin-bottom:8px;text-shadow:4px 4px 0 #000,-2px -2px 0 #000,2px -2px 0 #000,-2px 2px 0 #000}
+#regras{display:flex;flex-direction:column;gap:7px}
+.regra{display:flex;align-items:center;gap:14px;background:rgba(6,6,12,.9);
+  border:3px solid rgba(255,210,63,.55);border-radius:13px;padding:9px 18px;
+  font-family:'Anton',sans-serif;font-size:31px;font-weight:400;letter-spacing:.5px;color:#fff;
+  line-height:1.02}
+.regra i{font-style:normal;width:44px;height:44px;flex:none;border-radius:50%;
+  background:#ffd23f;color:#111;font-family:'Anton',sans-serif;font-size:28px;
+  display:grid;place-items:center}
 .regra b{color:#ffd23f}
-#instrucao{text-align:center;font-size:28px;font-weight:900;color:#fff;
-  transition:opacity .3s;text-shadow:2px 2px 0 #000,0 2px 14px rgba(0,0,0,.9)}
-#instrucao b{color:#ffd23f}
+.regra .vermelho{color:#ff5a4d}
+.regra .verde{color:#4da3ff}
+#instrucao{display:none}
 #fila{display:flex;flex-direction:column;gap:7px;align-items:flex-start;margin-top:11px}
 .aviso{display:flex;align-items:center;gap:11px;max-width:100%;
   background:rgba(6,6,12,.9);border:3px solid rgba(255,255,255,.16);border-left-width:10px;
@@ -111,13 +124,33 @@ html,body{height:100%;background:#000;overflow:hidden;
 .lutador{position:absolute;bottom:44px;width:360px;height:470px;z-index:4}
 .lutador.esq{left:52px}
 .lutador.dir{right:52px}
-/* Nada de respiração em CSS: quem dá vida agora é o ciclo de quadros. */
+/* Idle: respiração suave por escala vertical com o pé fixo no chão. Marchar o
+   ciclo de caminhada no lugar lia como pisca; o translateY antigo levantava o
+   boneco (flutuava). Escalar a partir do pé (origin bottom) infla o peito sem
+   tirar o sapato do chão e sem trocar de quadro. Fica no .lutador pra não
+   brigar com o transform do golpe, que roda no .corpo. */
 .corpo{position:absolute;inset:0;z-index:1;transform-origin:center bottom}
 .lutador.dir .corpo{transform:scaleX(-1)}
+/* Queda do nocaute: cambaleia pra trás e afunda, escurecido. Tombar na
+   horizontal estourava a borda da arena e ainda saía rígido; esta inclinação
+   curta fica dentro do quadro e lê como derrubado. A arte de verdade (um
+   lutador caído no chão) deixa isso perfeito, e é o que peço pro dono gerar. */
+.lutador.derrubado .corpo{transform-origin:center bottom;transform:rotate(-18deg) translateY(16px);
+  filter:brightness(.4) saturate(.4);transition:transform .55s cubic-bezier(.3,1.2,.5,1),filter .55s}
+.lutador.dir.derrubado .corpo{transform:scaleX(-1) rotate(-18deg) translateY(16px)}
+/* Troca de quadro instantânea: o movimento vem do ciclo de caminhada. */
 .pose{position:absolute;left:50%;bottom:-6.4%;height:100%;width:auto;max-width:none;
   transform:translateX(-50%);opacity:0;pointer-events:none;
   filter:drop-shadow(0 4px 3px rgba(0,0,0,.45))}
 .pose.on{opacity:1}
+/* Lutador caído: camada própria no chão, porque a arte deitada é larga e baixa
+   e não cabe na caixa em pé. Entra pela lateral de quem perdeu, no nível do
+   piso, e some no reinício do round. */
+#tombado{position:absolute;bottom:40px;z-index:2;width:46%;height:auto;display:none;
+  filter:drop-shadow(0 6px 6px rgba(0,0,0,.5))}
+#tombado.on{display:block;animation:cai .5s cubic-bezier(.3,1.2,.5,1)}
+@keyframes cai{0%{opacity:0;transform:translateY(-40px) rotate(8deg)}
+  100%{opacity:1;transform:none}}
 .sombra{position:absolute;z-index:0;left:50%;bottom:2px;width:240px;height:20px;margin-left:-120px;
   border-radius:50%;background:radial-gradient(ellipse,rgba(0,0,0,.62),transparent 72%)}
 
@@ -135,8 +168,8 @@ html,body{height:100%;background:#000;overflow:hidden;
 @keyframes levaDir{0%{transform:scaleX(-1) translateX(0)}
   30%{transform:scaleX(-1) translateX(-44px) rotate(-4deg)}
   100%{transform:scaleX(-1) translateX(0)}}
-.lutador.apanha .pose.on{animation:clarao .28s steps(2) 2}
-@keyframes clarao{0%,100%{filter:none}50%{filter:brightness(3) saturate(0)}}
+.lutador.apanha .pose.on{animation:clarao .18s steps(2) 1}
+@keyframes clarao{0%,100%{filter:none}50%{filter:brightness(2.6) saturate(0)}}
 
 /* faísca do golpe e número do dano */
 .faisca{position:absolute;z-index:6;pointer-events:none;
@@ -158,9 +191,14 @@ html,body{height:100%;background:#000;overflow:hidden;
   30%{opacity:1;transform:scale(1.12) rotate(2deg)}100%{opacity:0;transform:scale(1)}}
 
 /* ---------- rodapé ---------- */
-#base{position:absolute;left:0;right:0;top:1540px;z-index:6;padding:16px 26px;
-  display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:16px;
-  background:linear-gradient(180deg,rgba(5,6,12,0),rgba(5,6,12,.95) 34%,rgba(5,6,12,.95))}
+/* O MAIOR APOIADOR saiu da tela: o rodapé é onde o TikTok empilha os
+   comentários na live, e precisa ficar limpo e preto pra eles. Os elementos
+   seguem no DOM (escondidos) pra lógica de apoiador não quebrar. */
+#base{display:none}
+/* Rodapé preto: cobre do fim da arena até a base da tela, por onde os
+   comentários da live passam. Começa logo abaixo do pé dos lutadores. */
+#rodape-preto{position:absolute;left:0;right:0;top:1520px;bottom:0;z-index:5;
+  background:linear-gradient(180deg,rgba(0,0,0,.4),#000 14%,#000)}
 .placar{border:4px solid rgba(255,255,255,.18);background:rgba(8,8,14,.9);padding:11px 15px}
 .placar .quem{font-size:18px;font-weight:900;letter-spacing:3px;color:rgba(255,255,255,.42)}
 .placar .nome{font-size:28px;font-weight:900;white-space:nowrap;overflow:hidden;
@@ -206,6 +244,44 @@ html,body{height:100%;background:#000;overflow:hidden;
   100%{transform:scale(1)}}
 #ko .quem{margin-top:4px;font-size:64px;font-weight:900;letter-spacing:-2px;
   text-shadow:5px 5px 0 #000,-3px -3px 0 #000,3px -3px 0 #000,-3px 3px 0 #000}
+/* ---------- cutscene do golpe final ----------
+   O vídeo toca SÓ dentro da arena (mesmo lugar e tamanho do #cena), por cima
+   dos lutadores. A live não para: barras, mural e placar seguem ao vivo, e os
+   presentes continuam contando. O vídeo preenche a arena inteira. */
+/* O vídeo ocupa EXATAMENTE a arena, sem borda nem moldura, pra o corte da luta
+   pro vídeo passar despercebido. Entra e sai com um fade curto, que esconde a
+   emenda entre o pixel art do jogo e o vídeo. */
+#cena-golpe{position:absolute;left:0;right:0;top:779px;height:741px;z-index:6;display:none;
+  overflow:hidden;background:#000;opacity:0;transition:opacity .25s ease}
+#cena-golpe.on{display:block}
+#cena-golpe.vis{opacity:1}
+#cena-golpe::after{content:'';position:absolute;inset:0;z-index:12;pointer-events:none;
+  opacity:.22;background:repeating-linear-gradient(180deg,rgba(0,0,0,.6) 0 2px,transparent 2px 4px)}
+#video-golpe{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;display:block}
+#cena-quem{position:absolute;left:0;right:0;bottom:24px;z-index:13;text-align:center;
+  font-size:48px;font-weight:900;letter-spacing:-1px;
+  text-shadow:4px 4px 0 #000,-2px -2px 0 #000,2px -2px 0 #000,-2px 2px 0 #000}
+#cena-quem::before{content:'GOLPE DE ';font-size:26px;color:rgba(255,255,255,.6);
+  letter-spacing:3px;display:block;margin-bottom:2px}
+/* Véu preto sobre a arena: aparece no fim da cutscene pra cobrir a emenda
+   entre o vídeo (que acaba no espaço) e o K.O. na arena, e depois some. */
+#cena-fade{position:absolute;left:0;right:0;top:779px;height:741px;z-index:7;background:#000;
+  opacity:0;pointer-events:none;transition:opacity .4s ease}
+#cena-fade.on{opacity:1}
+/* ---------- painel de teste ----------
+   Só aparece no arquivo de teste ou com #teste no fim do endereço. Fica por
+   cima de tudo, com os botões que disparam cada golpe dos dois lados sem
+   precisar de live nem conector. */
+#painel-teste{position:absolute;left:0;right:0;bottom:0;z-index:20;display:none;
+  justify-content:center;gap:20px;padding:12px 12px;flex-wrap:wrap;
+  background:rgba(4,4,10,.97);border-top:3px solid rgba(255,255,255,.14)}
+#painel-teste.on{display:flex}
+#painel-teste .tcol{display:flex;flex-direction:column;gap:6px;align-items:stretch}
+#painel-teste .tlabel{font-size:18px;font-weight:900;text-align:center;letter-spacing:1px}
+#painel-teste button{font-size:18px;font-weight:900;padding:7px 16px;border-radius:9px;
+  border:3px solid rgba(255,255,255,.3);background:rgba(255,255,255,.08);color:#fff;cursor:pointer}
+#painel-teste button:active{transform:scale(.95)}
+#painel-teste .tesp{border-color:#ffd23f;color:#ffd23f}
 #clarao{position:absolute;inset:0;z-index:8;background:#fff;opacity:0;pointer-events:none}
 #clarao.on{animation:bateClarao .5s steps(3) forwards}
 @keyframes bateClarao{0%{opacity:.95}100%{opacity:0}}
@@ -219,6 +295,8 @@ html,body{height:100%;background:#000;overflow:hidden;
 
     <div class="lutador esq" id="lutA"><div class="corpo"></div><div class="sombra"></div></div>
     <div class="lutador dir" id="lutB"><div class="corpo"></div><div class="sombra"></div></div>
+
+    <img id="tombado" alt="">
 
     <div id="combo"></div>
   </div>
@@ -250,9 +328,13 @@ html,body{height:100%;background:#000;overflow:hidden;
   </div>
 
   <div id="aviso-topo">
+    <div id="tituloRegras">COMO JOGAR</div>
     <div id="regras">
-      <div class="regra"><i>1</i> <span>comenta o nome de <b>quem você apoia</b></span></div>
-      <div class="regra"><i>2</i> <span>curtida, comentário e presente <b>dão o golpe</b></span></div>
+      <div class="regra"><i>1</i> <span>COMENTE <b class="vermelho">LULA</b> OU <b class="verde">FLÁVIO</b> PRA ENTRAR</span></div>
+      <div class="regra"><i>2</i> <span>CADA COMENTÁRIO = <b>1 DE DANO</b></span></div>
+      <div class="regra"><i>3</i> <span><b>25 CURTIDAS</b> = 1 DE DANO</span></div>
+      <div class="regra"><i>4</i> <span>PRESENTE: <b>MAIS CARO, MAIOR O GOLPE</b></span></div>
+      <div class="regra"><i>5</i> <span>ZERE A VIDA — <b>3 ROUNDS</b> VENCEM</span></div>
     </div>
     <div id="instrucao">quem zerar a barra do outro <b>vence o round</b></div>
     <div id="fila"></div>
@@ -270,9 +352,42 @@ html,body{height:100%;background:#000;overflow:hidden;
       <div class="forca" id="forcaB">0 de dano</div>
     </div>
   </div>
+  <div id="rodape-preto"></div>
+
+  <div id="painel-teste">
+    <div class="tcol">
+      <span class="tlabel" style="color:#ff5a4d">LULA</span>
+      <button data-lado="0" data-forca="5">soco</button>
+      <button data-lado="0" data-forca="20">chute</button>
+      <button data-lado="0" data-forca="80">forte</button>
+      <button data-lado="0" data-forca="250" class="tesp">CUTSCENE</button>
+      <button data-lado="0" data-forca="1000" class="tesp">GALÁXIA</button>
+      <button data-ko="0">K.O.</button>
+    </div>
+    <div class="tcol">
+      <button data-geral="curtida">+curtida</button>
+      <button data-geral="comentario">+comentário</button>
+      <button data-geral="limpa">zerar</button>
+    </div>
+    <div class="tcol">
+      <span class="tlabel" style="color:#4da3ff">FLÁVIO</span>
+      <button data-lado="1" data-forca="5">soco</button>
+      <button data-lado="1" data-forca="20">chute</button>
+      <button data-lado="1" data-forca="80">forte</button>
+      <button data-lado="1" data-forca="250" class="tesp">CUTSCENE</button>
+      <button data-lado="1" data-forca="1000" class="tesp">GALÁXIA</button>
+      <button data-ko="1">K.O.</button>
+    </div>
+  </div>
 
   <div id="ko"><img id="koArte" alt=""><div class="quem" id="koNome">—</div></div>
   <div id="clarao"></div>
+
+  <div id="cena-golpe">
+    <video id="video-golpe" playsinline preload="auto" muted></video>
+    <div id="cena-quem">—</div>
+  </div>
+  <div id="cena-fade"></div>
 
   <div id="scan"></div>
   <div id="vinheta"></div>
@@ -291,7 +406,7 @@ html,body{height:100%;background:#000;overflow:hidden;
     </div>
   </div>
 
-  <div id="versao">v9</div>
+  <div id="versao">v29</div>
   <div id="semConector">conector desligado: nada está chegando da live</div>
 </div>
 
@@ -311,27 +426,93 @@ const LADOS = [
   { nome:'FLÁVIO', cor:'#4da3ff', pasta:'flavio',
     palavras:['flavio','flavinho','bolsonaro','bolso','22','azul'] },
 ]
+
+/* ---------- efeitos sonoros ----------
+   Som de fliperama: soco, chute, impacto, K.O., o "ready fight" no começo do
+   round e o game over no fim da luta. Cada efeito é clonado na hora de tocar,
+   pra sobrepor a música e os outros sons sem cortar. O navegador só libera som
+   depois de um clique; o botão de música já serve de liberação, e antes disso
+   o efeito falha calado em vez de travar o jogo. No arquivo único o som vem
+   embutido em SONS; servido por HTTP, vem da pasta sons ao lado. */
+const SONS_SRC = {
+  soco: 'sons/soco.mp3', chute: 'sons/chute.mp3', impacto: 'sons/impacto.mp3',
+  ko: 'sons/ko.mp3', ready: 'sons/ready.mp3', gameover: 'sons/gameover.mp3',
+}
+const SONS = {/*SONS_EMBUTIDOS*/}
+const VOL_SOM = { soco: .7, chute: .7, impacto: .9, ko: 1, ready: .9, gameover: .9 }
+
+/* Web Audio em vez de clonar <audio>: no celular o clone sai mudo e atrasado.
+   Aqui cada efeito é decodificado uma vez num buffer e disparado na hora, de
+   graça, sobrepondo os outros. O navegador só deixa criar som depois de um
+   toque, então o áudio é destravado no primeiro toque em qualquer lugar da
+   tela (e também no botão de música). */
+let ctxSom = null
+const buffers = {}
+function destravarSom() {
+  if (ctxSom) { if (ctxSom.state === 'suspended') ctxSom.resume(); return }
+  try { ctxSom = new (window.AudioContext || window.webkitAudioContext)() } catch { return }
+  for (const [nome, caminho] of Object.entries(SONS_SRC)) {
+    fetch(SONS[caminho] || caminho).then(r => r.arrayBuffer())
+      .then(b => ctxSom.decodeAudioData(b)).then(buf => { buffers[nome] = buf }).catch(() => {})
+  }
+}
+addEventListener('pointerdown', destravarSom)
+addEventListener('keydown', destravarSom)
+
+function tocarSom(nome) {
+  if (!ctxSom || !buffers[nome]) return
+  const s = ctxSom.createBufferSource()
+  s.buffer = buffers[nome]
+  const g = ctxSom.createGain()
+  g.gain.value = VOL_SOM[nome] != null ? VOL_SOM[nome] : .8
+  s.connect(g); g.connect(ctxSom.destination)
+  s.start()
+}
 /* ---------- clipes ----------
    Cada clipe é uma lista de quadros e o tempo de cada um. `loop` roda sem
    parar, `segura` para no último quadro, e o resto volta pro parado quando
    acaba. Parado é o ciclo de passada: é ele que tira o ar de boneco colado
    na tela, porque o lutador nunca fica no mesmo desenho duas vezes seguidas. */
 const CLIPES = {
-  parado:  { q: ['andar1','andar2','andar3','andar4','andar5','andar6'], ms: 115, loop: true },
+  // Parado é um quadro só. O ciclo de seis quadros rodando no lugar virava um
+  // tremelique, porque é passada de andar, e eles não andam. O movimento vivo
+  // vem da respiração em CSS, suave, no lugar do pisca-pisca.
+  // Caminhada no lugar, com cross-fade entre os quadros (ver .pose): o
+  // movimento que o dono pediu, sem o corte seco que lia como pisca.
+  parado:  { q: ['andar1','andar2','andar3','andar4','andar5','andar6'], ms: 190, loop: true },
+  // Cada golpe é um quadro só, limpo. O forte antes juntava um soco e um joelho
+  // que não se encaixavam; agora é o soco forte pra frente, que é o que o
+  // impulso do ataque (.ataca) e a faísca vendem como pancada.
   soco:    { q: ['golpe1'], ms: 230 },
   chute:   { q: ['golpe2'], ms: 280 },
-  forte:   { q: ['golpe3','golpe5'], ms: 175 },
+  forte:   { q: ['golpe3'], ms: 300 },
   // O especial é o prêmio do presente caro: carrega a bola, dispara o raio
   // atravessando a tela e termina na explosão. Quase um segundo de tela, que
   // é o que faz valer a pena mandar o presente grande em vez de três baratos.
-  especial:{ q: ['esp1','esp2','esp3','esp4','esp5','esp6'], ms: 150 },
-  dano:    { q: ['defesa'], ms: 300 },
-  caido:   { q: ['caido'], ms: 1, segura: true },
+  especial:{ q: ['esp1','esp2','esp3','esp4','esp5','esp6','esp7'], ms: 150 },
+  // Quem apanha recua de verdade, na pose de reação. Antes era a de defesa,
+  // que parecia que estava bloqueando, não levando o golpe.
+  dano:    { q: ['reacao'], ms: 320 },
   vitoria: { q: ['vitoria'], ms: 1, segura: true },
 }
 const QUADROS = [...new Set(Object.values(CLIPES).flatMap(c => c.q))]
 
-const VIDA = 100          // dano pra zerar a barra do outro
+/* Presente a partir deste valor toca a cutscene em vídeo. Acima do especial de
+   sprite (50) de propósito: o vídeo trava a luta por cinco segundos, então
+   presente pequeno continua no golpe rápido e só o grande para tudo pro vídeo.
+   O dano continua sendo o valor em moedas. */
+const MOEDAS_CUTSCENE = 200
+const CUTSCENES = { 0: 'cutscene-lula.mp4', 1: 'cutscene-flavio.mp4' }
+/* A Galáxia é o presente mais caro: finalização absurda com câmera própria,
+   num gatilho acima da cutscene normal. */
+const MOEDAS_GALAXIA = 1000
+const CUTSCENES_GALAXIA = { 0: 'cutscene-galaxia-lula.mp4', 1: 'cutscene-galaxia-flavio.mp4' }
+/* No arquivo único o gerador troca isto pelo vídeo em base64; aberto servido,
+   fica vazio e o caminho do arquivo é usado direto. */
+const VIDEOS = {/*VIDEOS_EMBUTIDOS*/}
+
+const VIDA = 200          // barra maior: cada golpe tira proporcionalmente menos,
+                          // então o forte não zera quase sozinho e a luta dura
 const ROUNDS_PRA_GANHAR = 3
 const ESPERA_COMENTARIO = 8000
 const POR_CURTIDA = 25
@@ -418,40 +599,65 @@ function pintar() {
    adversário, que é o que faz as duas barras andarem com uma ação só. */
 let combos = [0, 0]
 let comboAte = [0, 0]
+/* Temporizadores pra tirar as classes de golpe/apanhar depois de um tempo. Sem
+   isso a classe ficava pra sempre, e como o clarão de apanhar reacende a cada
+   troca de quadro da caminhada, o lutador piscava sem parar depois de um hit. */
+const atacaTimer = [null, null]
+const apanhaTimer = [null, null]
 
-function golpear(lado, forca, quem, origem) {
+/* semAtacante: o golpe final que vem depois do vídeo não reanima o atacante
+   (o vídeo já mostrou o ataque) e não escreve no mural de novo, só resolve o
+   dano, a reação de quem apanha e o K.O. */
+function golpear(lado, forca, quem, origem, semAtacante) {
   if (travado || lado < 0 || lado > 1) return
   const alvo = 1 - lado
   estado[lado].forca += forca
   estado[alvo].hp -= forca
 
-  // Quanto mais pesado o golpe, maior a animação.
-  const clipe = forca >= 50 ? 'especial' : forca >= 20 ? 'forte'
-              : forca >= 5 ? 'chute' : 'soco'
-  tocar(lado, clipe)
+  if (!semAtacante) {
+    // Faixa de força -> golpe. Pequeno é soco, médio é chute, grande é o soco
+    // forte. Acima de MOEDAS_CUTSCENE já entra a cutscene em vídeo, antes daqui.
+    const clipe = forca >= 50 ? 'forte' : forca >= 10 ? 'chute' : 'soco'
+    tocarSom(clipe === 'forte' ? 'impacto' : clipe)
+    tocar(lado, clipe)
+    caixas[lado].classList.remove('ataca'); void caixas[lado].offsetWidth
+    caixas[lado].classList.add('ataca')
+    clearTimeout(atacaTimer[lado])
+    atacaTimer[lado] = setTimeout(() => caixas[lado].classList.remove('ataca'), 450)
+
+    const agora = Date.now()
+    combos[lado] = agora < comboAte[lado] ? combos[lado] + 1 : 1
+    comboAte[lado] = agora + 3000
+    if (combos[lado] >= 3) mostrarCombo(combos[lado], LADOS[lado].cor)
+
+    avisar('<span class="quem">' + escaparTexto(quem) + '</span> ' + origem
+      + ' <span class="mais">+' + forca + '</span>', lado)
+  }
+
+  // O golpe final que vem depois do vídeo também bate forte no ouvido.
+  if (semAtacante) tocarSom('impacto')
+
   tocar(alvo, 'dano')
-  caixas[lado].classList.remove('ataca'); void caixas[lado].offsetWidth
-  caixas[lado].classList.add('ataca')
   caixas[alvo].classList.remove('apanha'); void caixas[alvo].offsetWidth
   caixas[alvo].classList.add('apanha')
-
+  // Tira a classe depois do golpe: o clarão de apanhar dura só esse tempo, não
+  // pra sempre. Golpe novo reinicia a contagem (clearTimeout antes).
+  clearTimeout(apanhaTimer[alvo])
+  apanhaTimer[alvo] = setTimeout(() => caixas[alvo].classList.remove('apanha'), 420)
   faiscar(alvo, forca)
   if (forca >= 50) tremer()
-
-  const agora = Date.now()
-  combos[lado] = agora < comboAte[lado] ? combos[lado] + 1 : 1
-  comboAte[lado] = agora + 3000
-  if (combos[lado] >= 3) mostrarCombo(combos[lado], LADOS[lado].cor)
 
   const chave = quem || 'alguém'
   apoio[lado].set(chave, (apoio[lado].get(chave) || 0) + forca)
   pintarApoio(lado)
 
-  avisar('<span class="quem">' + escaparTexto(quem) + '</span> ' + origem
-    + ' <span class="mais">+' + forca + '</span>', lado)
-
   pintar()
-  if (estado[alvo].hp <= 0) nocaute(lado)
+  // Enquanto o vídeo roda, nenhum outro golpe pode derrubar: o nocaute espera
+  // o golpe final, pra o K.O. não aparecer no meio da cutscene.
+  if (estado[alvo].hp <= 0) {
+    if (cenaRodando) { estado[alvo].hp = 1; pintar() }
+    else nocaute(lado)
+  }
 }
 
 function faiscar(alvo, forca) {
@@ -508,23 +714,51 @@ function nocaute(vencedor) {
   estado[perdedor].hp = 0
   pintar()
 
-  tocar(perdedor, 'caido')
-  tocar(vencedor, 'vitoria')
-  caixas[perdedor].querySelector('.corpo').style.animation = 'none'
+  // Primeiro a reação ao golpe: o perdedor cambaleia pra trás, como em qualquer
+  // acerto. Pular direto pro K.O. tirava o impacto. Só depois ele cai.
+  tocar(perdedor, 'dano')
+  caixas[perdedor].classList.remove('apanha'); void caixas[perdedor].offsetWidth
+  caixas[perdedor].classList.add('apanha')
   tremer()
   const clarao = document.getElementById('clarao')
   clarao.classList.remove('on'); void clarao.offsetWidth; clarao.classList.add('on')
+  tocarSom('ko')
+
+  const venceuTudo = estado[vencedor].rounds >= ROUNDS_PRA_GANHAR
+  setTimeout(() => quedaDoKO(vencedor, perdedor, venceuTudo), 520)
+}
+
+/* A queda e a cartela de K.O., depois da reação ao golpe. */
+function quedaDoKO(vencedor, perdedor, venceuTudo) {
+  // O perdedor some em pé e aparece deitado no chão, na arte de caído, do lado
+  // dele. O vencedor comemora pulando.
+  caixas[perdedor].querySelector('.corpo').style.visibility = 'hidden'
+  const tombado = document.getElementById('tombado')
+  tombado.src = sprite(LADOS[perdedor].pasta + '-tombado')
+  // Deita no canto de quem perdeu, com a cabeça pro próprio canto e os pés pro
+  // centro. As duas artes vêm com a cabeça em lados opostos, então as duas
+  // espelham: a do Lula cabeça pra esquerda, a do Flávio pra direita.
+  if (perdedor === 0) { tombado.style.left = '2%'; tombado.style.right = 'auto' }
+  else { tombado.style.right = '2%'; tombado.style.left = 'auto' }
+  tombado.style.transform = 'scaleX(-1)'
+  tombado.classList.remove('on'); void tombado.offsetWidth; tombado.classList.add('on')
+  tocar(vencedor, 'vitoria')
+  tremer()
 
   const ko = document.getElementById('ko')
   const nome = document.getElementById('koNome')
-  const venceuTudo = estado[vencedor].rounds >= ROUNDS_PRA_GANHAR
   nome.textContent = venceuTudo ? LADOS[vencedor].nome + ' VENCEU A LUTA' : LADOS[vencedor].nome
   nome.style.color = LADOS[vencedor].cor
   ko.classList.add('on')
+  // Fechou a luta inteira: entra o game over, por cima do K.O.
+  if (venceuTudo) setTimeout(() => tocarSom('gameover'), 700)
 
   setTimeout(() => {
     ko.classList.remove('on')
-    caixas[perdedor].querySelector('.corpo').style.animation = ''
+    document.getElementById('tombado').classList.remove('on')
+    caixas[perdedor].querySelector('.corpo').style.visibility = ''
+    // Limpa os estados de golpe dos dois, pra começar o round sem clarão preso.
+    caixas.forEach(c => c.classList.remove('ataca', 'apanha', 'derrubado'))
     tocar(0, 'parado'); tocar(1, 'parado')
     estado.forEach(e => { e.hp = VIDA; e.forca = 0 })
     if (venceuTudo) estado.forEach(e => { e.rounds = 0 })
@@ -537,17 +771,22 @@ function nocaute(vencedor) {
     document.getElementById('round').textContent = 'ROUND ' + round
     travado = false
     pintar()
+    anunciarRound()   // "ready fight" do novo round
   }, 4600)
 }
+
+/* Grito de "ready fight" no começo de cada round, como no fliperama. */
+function anunciarRound() { tocarSom('ready') }
 
 /* ---------- frases que trocam sozinhas ----------
    Descrevem o jogo e nunca pedem presente: pedido repetido e pressão emocional
    são o que faz o TikTok suspender os presentes da live. */
 const FRASES = [
-  'quem zerar a barra do outro <b>vence o round</b>',
-  'a cada <b>25 curtidas</b> o seu lado dá 1 de dano',
-  'comentar o nome <b>dá 1</b> a cada 8 segundos',
-  'três rounds <b>fecham a luta</b>',
+  'presente <b>maior</b> faz um golpe <b>maior</b>',
+  'a cada <b>25 curtidas</b> o seu lado dá um golpe',
+  'comentar o nome <b>bate</b> a cada 8 segundos',
+  'presente de <b>200+</b> chama o golpe final em vídeo',
+  'mande <b>GALÁXIA</b> pro super ataque',
   'quem mais bateu <b>aparece aqui embaixo</b>',
 ]
 let fraseAtual = 0
@@ -604,6 +843,61 @@ function avisoConector(ligado) {
   document.getElementById('palco').classList.toggle('semcon', !ligado)
 }
 
+/* ---------- cutscene em vídeo ----------
+   O vídeo toca SÓ na arena, por cima dos lutadores. A live NÃO para: barras,
+   mural e placar seguem, e presente pequeno que cair durante o vídeo continua
+   contando. O golpe final só é resolvido no fim do vídeo: aí o dano cai e, se
+   zerar a barra, entra o K.O. Assim o vídeo é a ação e o nocaute vem depois,
+   na ordem certa. cenaRodando impede dois vídeos juntos e segura o nocaute de
+   qualquer outro golpe enquanto o vídeo roda. Se o arquivo não abrir ou passar
+   do tempo, resolve na hora, pra nunca ficar preso. */
+let cenaRodando = false
+const CENA_MAX = 7000   // trava de segurança: nenhum vídeo passa disso
+
+function tocarCutscene(lado, quem, forca, arquivo) {
+  const palco = document.getElementById('cena-golpe')
+  const vid = document.getElementById('video-golpe')
+  const fade = document.getElementById('cena-fade')
+  cenaRodando = true
+
+  let encerrado = false
+  const encerrar = () => {
+    if (encerrado) return
+    encerrado = true
+    clearTimeout(trava)
+    // Fade pro preto antes de voltar pro jogo: o vídeo da Galáxia termina no
+    // espaço, com a câmera fora do lugar, então cortar seco pro K.O. dava um
+    // tranco. O preto cobre a emenda e o K.O. aparece já na arena.
+    fade.classList.add('on')
+    setTimeout(() => {
+      try { vid.pause() } catch {}
+      palco.classList.remove('on'); palco.classList.remove('vis')
+      cenaRodando = false
+      // Agora sim o golpe cai: o vídeo mostrou o ataque, aqui vem o resultado.
+      golpear(lado, forca, quem, 'GOLPE FINAL', true)
+      // Tira o preto, revelando a arena (ou o K.O.) por baixo.
+      setTimeout(() => fade.classList.remove('on'), 60)
+    }, 420)
+  }
+
+  document.getElementById('cena-quem').textContent = quem || ''
+  document.getElementById('cena-quem').style.color = LADOS[lado].cor
+  fade.classList.remove('on')
+  vid.onended = encerrar
+  vid.onerror = encerrar
+  // No arquivo único o vídeo vem embutido em VIDEOS; servido por HTTP, vem do
+  // arquivo ao lado. O mesmo truque dos sprites.
+  vid.src = VIDEOS[arquivo] || arquivo
+  vid.currentTime = 0
+  vid.muted = false
+  // Entra com fade por cima da arena: começa transparente e aparece, pra o
+  // corte do jogo pro vídeo não ser um salto.
+  palco.classList.add('on'); palco.classList.remove('vis')
+  requestAnimationFrame(() => palco.classList.add('vis'))
+  const trava = setTimeout(encerrar, CENA_MAX)
+  vid.play().catch(() => { vid.muted = true; vid.play().catch(encerrar) })
+}
+
 function ligarConector(porta) {
   let ws
   try { ws = new WebSocket('ws://localhost:' + porta) } catch { avisoConector(false); return }
@@ -641,11 +935,30 @@ function ligarConector(porta) {
     if (msg.tipo === 'presente') {
       const lado = escolhido.has(chave) ? escolhido.get(chave) : -1
       if (lado < 0) return
-      golpear(lado, (msg.moedas || 1) * (msg.quantidade || 1), msg.apelido, 'mandou presente')
+      presentear(lado, (msg.moedas || 1) * (msg.quantidade || 1), msg.apelido)
     }
   }
   ws.onclose = () => { avisoConector(false); setTimeout(() => ligarConector(porta), 4000) }
   ws.onerror = () => { try { ws.close() } catch {} }
+}
+
+/* Presente a partir de MOEDAS_CUTSCENE ganha a cutscene em vídeo; abaixo disso
+   é o golpe de sprite. O dano é o mesmo nos dois, só a apresentação muda. Os
+   botões de teste chamam esta mesma função, pra testar o caminho real. */
+function presentear(lado, forca, quem) {
+  // Presente grande é o golpe final: o vídeo toca na arena e SÓ quando ele
+  // acaba o golpe cai e, se zerar a barra, entra o K.O. Aplicar o dano antes
+  // fazia o K.O. aparecer no meio do vídeo e o perdedor voltar de pé. A
+  // Galáxia (mais cara) tem o próprio vídeo; abaixo dela vai a cutscene comum.
+  const galaxia = forca >= MOEDAS_GALAXIA && CUTSCENES_GALAXIA[lado]
+  const comum = forca >= MOEDAS_CUTSCENE && CUTSCENES[lado]
+  if ((galaxia || comum) && !cenaRodando) {
+    avisar('<span class="quem">' + escaparTexto(quem) + '</span> '
+      + (galaxia ? 'GALÁXIA' : 'GOLPE FINAL') + ' <span class="mais">+' + forca + '</span>', lado)
+    tocarCutscene(lado, quem, forca, galaxia ? CUTSCENES_GALAXIA[lado] : CUTSCENES[lado])
+  } else {
+    golpear(lado, forca, quem, 'mandou presente')
+  }
 }
 ligarConector(21213)
 
@@ -700,6 +1013,7 @@ audio.addEventListener('play', marcarBotao)
 audio.addEventListener('pause', marcarBotao)
 
 function alternarMusica() {
+  destravarSom()
   if (!faixas.length) return abrirPainel()
   if (audio.paused) {
     if (!audio.src) proximaFaixa(false)
@@ -781,6 +1095,44 @@ encaixar()
 pintar()
 tocar(0, 'parado')
 tocar(1, 'parado')
+
+/* ---------- painel de teste ----------
+   Liga no arquivo de teste (window.TESTE) ou com #teste no endereço. Cada
+   botão chama o mesmo caminho da live: presentear decide entre golpe e
+   cutscene, e curtida e comentário passam pela regra normal. Nomes de teste
+   diferentes a cada clique, pra o jogo tratar como pessoas diferentes. */
+let contaTeste = 0
+function testeComenta(lado) {
+  const nome = 'teste' + (++contaTeste)
+  escolhido.set(nome, lado)
+  avisar('<span class="quem">' + nome + '</span> entrou com ' + LADOS[lado].nome, lado)
+  golpear(lado, 1, nome, 'comentou')
+}
+function ligarPainelTeste() {
+  const painel = document.getElementById('painel-teste')
+  painel.classList.add('on')
+  painel.querySelectorAll('button').forEach(b => b.addEventListener('click', () => {
+    const geral = b.dataset.geral
+    if (geral === 'limpa') {
+      estado.forEach(e => { e.hp = VIDA; e.forca = 0 }); pintar(); return
+    }
+    if (geral === 'curtida') {
+      const lado = estado[0].hp <= estado[1].hp ? 0 : 1
+      golpear(lado, 1, 'teste', 'curtiu'); return
+    }
+    if (geral === 'comentario') { testeComenta(Math.random() < .5 ? 0 : 1); return }
+    // K.O. direto, sem vídeo: zera a vida do outro e aplica o golpe, pra ver a
+    // reação e a queda do nocaute.
+    if (b.dataset.ko !== undefined) {
+      const lado = +b.dataset.ko
+      estado[1 - lado].hp = Math.min(estado[1 - lado].hp, 1)
+      golpear(lado, 50, 'matheus', 'mandou presente')
+      return
+    }
+    presentear(+b.dataset.lado, +b.dataset.forca, 'matheus')
+  }))
+}
+if (window.TESTE || location.hash === '#teste') ligarPainelTeste()
 </script>
 </body>
 </html>

@@ -67,3 +67,17 @@ palavras que o comentário precisa conter estão todos ali.
 Mostrar pessoa real apanhando é o tipo de coisa que o TikTok remove, e em ano
 de eleição a régua é mais apertada ainda. Por isso o jogo é cartunesco, sem
 sangue e sem nada explícito. O risco da conta é de quem transmite.
+
+
+## Cutscene de golpe final
+
+Presente de 500 moedas ou mais dispara um vídeo em tela cheia por cima do
+jogo, em vez da animação normal. É raro de propósito, pra virar evento. O
+dano continua sendo o valor em moedas.
+
+Os vídeos ficam em `cutscene-lula.mp4` e `cutscene-flavio.mp4`, um por lado.
+Pra trocar, basta substituir o arquivo (mesmo nome) e rodar o gerador. O
+limite de 500 moedas está em `MOEDAS_CUTSCENE`, no `index.html`.
+
+Se o vídeo não abrir ou travar, o jogo cai no golpe normal na hora, pra nunca
+ficar preso numa tela preta.
