@@ -332,7 +332,7 @@ html,body{height:100%;background:#000;overflow:hidden;
     <div id="regras">
       <div class="regra"><i>1</i> <span>COMENTE <b class="vermelho">LULA</b> OU <b class="verde">FLÁVIO</b> PRA ENTRAR</span></div>
       <div class="regra"><i>2</i> <span>CADA COMENTÁRIO = <b>1 DE DANO</b></span></div>
-      <div class="regra"><i>3</i> <span><b>25 CURTIDAS</b> = 1 DE DANO</span></div>
+      <div class="regra"><i>3</i> <span><b>10 CURTIDAS</b> = 1 DE DANO</span></div>
       <div class="regra"><i>4</i> <span>PRESENTE: <b>MAIS CARO, MAIOR O GOLPE</b></span></div>
       <div class="regra"><i>5</i> <span>ZERE A VIDA — <b>3 ROUNDS</b> VENCEM</span></div>
     </div>
@@ -406,7 +406,7 @@ html,body{height:100%;background:#000;overflow:hidden;
     </div>
   </div>
 
-  <div id="versao">v29</div>
+  <div id="versao">v30</div>
   <div id="semConector">conector desligado: nada está chegando da live</div>
 </div>
 
@@ -515,7 +515,7 @@ const VIDA = 200          // barra maior: cada golpe tira proporcionalmente meno
                           // então o forte não zera quase sozinho e a luta dura
 const ROUNDS_PRA_GANHAR = 3
 const ESPERA_COMENTARIO = 8000
-const POR_CURTIDA = 25
+const POR_CURTIDA = 10
 
 const estado = LADOS.map(() => ({ hp: VIDA, rounds: 0, forca: 0 }))
 const apoio = [new Map(), new Map()]
