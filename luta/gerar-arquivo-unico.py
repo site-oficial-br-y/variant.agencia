@@ -58,12 +58,15 @@ if os.path.isdir('musicas'):
     else:
         print('pasta musicas vazia: o painel deixa escolher do computador')
 
-# As cutscenes entram embutidas no arquivo único, pra ele abrir sozinho e já
-# tocar o vídeo. Pesa uns 5 MB a mais, mas é o que faz o .bat ser tudo-em-um.
-videos = ["'%s':'%s'" % (arq, embutir(arq))
+# As cutscenes entram embutidas no arquivo único, na versão leve de
+# cutscene-mini (o original é grande demais pra base64). A chave é o nome do
+# arquivo original, que é o que o CUTSCENES aponta. Servido pelo conector, a
+# live usa o .mp4 original em alta, da raiz da pasta.
+origem = 'cutscene-mini' if os.path.isdir('cutscene-mini') else '.'
+videos = ["'%s':'%s'" % (arq, embutir(os.path.join(origem, arq)))
           for arq in sorted(os.listdir('.')) if arq.startswith('cutscene-') and arq.endswith('.mp4')]
 s = s.replace('/*VIDEOS_EMBUTIDOS*/', ','.join(videos))
-print('cutscenes embutidas:', len(videos))
+print('cutscenes embutidas (%s):' % origem, len(videos))
 
 # Efeitos de fliperama: pequenos, entram embutidos pelo caminho 'sons/<arq>',
 # que é a chave que o SONS_SRC usa.
