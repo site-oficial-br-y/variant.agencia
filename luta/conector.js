@@ -127,12 +127,24 @@ const presenteDe = d => {
   }
 }
 
-live.connect()
-  .then(info => console.log('Conectado à live. Sala:', (info && info.roomId) || ''))
-  .catch(err => {
-    console.error('Não consegui conectar:', (err && err.message) || err)
-    console.error('Confira se o perfil está ao vivo agora e se o nome está certo.')
-  })
+/* Fica tentando conectar até a live abrir. Assim dá pra deixar o conector e o
+   jogo prontos antes, e quando você clica em transmitir no TikTok ele engata
+   sozinho, sem precisar reiniciar nada. */
+let conectado = false
+function tentarConectar() {
+  if (conectado) return
+  live.connect()
+    .then(info => {
+      conectado = true
+      console.log('Conectado à live. Sala:', (info && info.roomId) || '')
+    })
+    .catch(err => {
+      console.log('Live ainda não encontrada (' + ((err && err.message) || err) + ').')
+      console.log('Abra a transmissão no TikTok que eu conecto sozinho. Tentando de novo em 8s...')
+      setTimeout(tentarConectar, 8000)
+    })
+}
+tentarConectar()
 
 live.on('chat', d => {
   const quem = quemE(d)
