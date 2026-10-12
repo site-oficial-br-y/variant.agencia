@@ -138,15 +138,11 @@ html,body{height:100%;background:#000;overflow:hidden;
 .lutador.derrubado .corpo{transform-origin:center bottom;transform:rotate(-18deg) translateY(16px);
   filter:brightness(.4) saturate(.4);transition:transform .55s cubic-bezier(.3,1.2,.5,1),filter .55s}
 .lutador.dir.derrubado .corpo{transform:scaleX(-1) rotate(-18deg) translateY(16px)}
-/* opacity com transição: a troca de quadro vira um cross-fade curto em vez de
-   corte seco. É o corte seco em 6 quadros lentos que lia como pisca; o fade
-   deixa a caminhada parecer movimento, não piscada. */
+/* Troca de quadro instantânea: o movimento vem do ciclo de caminhada. */
 .pose{position:absolute;left:50%;bottom:-6.4%;height:100%;width:auto;max-width:none;
-  transform:translateX(-50%);opacity:0;pointer-events:none;transition:opacity .09s linear;
+  transform:translateX(-50%);opacity:0;pointer-events:none;
   filter:drop-shadow(0 4px 3px rgba(0,0,0,.45))}
 .pose.on{opacity:1}
-/* No golpe a troca é instantânea (sem fade), pra o soco bater seco. */
-.lutador.ataca .pose,.lutador.apanha .pose{transition:none}
 /* Lutador caído: camada própria no chão, porque a arte deitada é larga e baixa
    e não cabe na caixa em pé. Entra pela lateral de quem perdeu, no nível do
    piso, e some no reinício do round. */
@@ -172,8 +168,8 @@ html,body{height:100%;background:#000;overflow:hidden;
 @keyframes levaDir{0%{transform:scaleX(-1) translateX(0)}
   30%{transform:scaleX(-1) translateX(-44px) rotate(-4deg)}
   100%{transform:scaleX(-1) translateX(0)}}
-.lutador.apanha .pose.on{animation:clarao .28s steps(2) 2}
-@keyframes clarao{0%,100%{filter:none}50%{filter:brightness(3) saturate(0)}}
+.lutador.apanha .pose.on{animation:clarao .18s steps(2) 1}
+@keyframes clarao{0%,100%{filter:none}50%{filter:brightness(2.6) saturate(0)}}
 
 /* faísca do golpe e número do dano */
 .faisca{position:absolute;z-index:6;pointer-events:none;
@@ -411,7 +407,7 @@ html,body{height:100%;background:#000;overflow:hidden;
     </div>
   </div>
 
-  <div id="versao">v28</div>
+  <div id="versao">v29</div>
   <div id="semConector">conector desligado: nada está chegando da live</div>
 </div>
 
@@ -604,6 +600,11 @@ function pintar() {
    adversário, que é o que faz as duas barras andarem com uma ação só. */
 let combos = [0, 0]
 let comboAte = [0, 0]
+/* Temporizadores pra tirar as classes de golpe/apanhar depois de um tempo. Sem
+   isso a classe ficava pra sempre, e como o clarão de apanhar reacende a cada
+   troca de quadro da caminhada, o lutador piscava sem parar depois de um hit. */
+const atacaTimer = [null, null]
+const apanhaTimer = [null, null]
 
 /* semAtacante: o golpe final que vem depois do vídeo não reanima o atacante
    (o vídeo já mostrou o ataque) e não escreve no mural de novo, só resolve o
@@ -622,6 +623,8 @@ function golpear(lado, forca, quem, origem, semAtacante) {
     tocar(lado, clipe)
     caixas[lado].classList.remove('ataca'); void caixas[lado].offsetWidth
     caixas[lado].classList.add('ataca')
+    clearTimeout(atacaTimer[lado])
+    atacaTimer[lado] = setTimeout(() => caixas[lado].classList.remove('ataca'), 450)
 
     const agora = Date.now()
     combos[lado] = agora < comboAte[lado] ? combos[lado] + 1 : 1
@@ -638,6 +641,10 @@ function golpear(lado, forca, quem, origem, semAtacante) {
   tocar(alvo, 'dano')
   caixas[alvo].classList.remove('apanha'); void caixas[alvo].offsetWidth
   caixas[alvo].classList.add('apanha')
+  // Tira a classe depois do golpe: o clarão de apanhar dura só esse tempo, não
+  // pra sempre. Golpe novo reinicia a contagem (clearTimeout antes).
+  clearTimeout(apanhaTimer[alvo])
+  apanhaTimer[alvo] = setTimeout(() => caixas[alvo].classList.remove('apanha'), 420)
   faiscar(alvo, forca)
   if (forca >= 50) tremer()
 
@@ -751,6 +758,8 @@ function quedaDoKO(vencedor, perdedor, venceuTudo) {
     ko.classList.remove('on')
     document.getElementById('tombado').classList.remove('on')
     caixas[perdedor].querySelector('.corpo').style.visibility = ''
+    // Limpa os estados de golpe dos dois, pra começar o round sem clarão preso.
+    caixas.forEach(c => c.classList.remove('ataca', 'apanha', 'derrubado'))
     tocar(0, 'parado'); tocar(1, 'parado')
     estado.forEach(e => { e.hp = VIDA; e.forca = 0 })
     if (venceuTudo) estado.forEach(e => { e.rounds = 0 })
