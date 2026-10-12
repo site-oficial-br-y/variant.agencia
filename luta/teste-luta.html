@@ -192,9 +192,14 @@ html,body{height:100%;background:#000;overflow:hidden;
   30%{opacity:1;transform:scale(1.12) rotate(2deg)}100%{opacity:0;transform:scale(1)}}
 
 /* ---------- rodapé ---------- */
-#base{position:absolute;left:0;right:0;top:1540px;z-index:6;padding:16px 26px;
-  display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:16px;
-  background:linear-gradient(180deg,rgba(5,6,12,0),rgba(5,6,12,.95) 34%,rgba(5,6,12,.95))}
+/* O MAIOR APOIADOR saiu da tela: o rodapé é onde o TikTok empilha os
+   comentários na live, e precisa ficar limpo e preto pra eles. Os elementos
+   seguem no DOM (escondidos) pra lógica de apoiador não quebrar. */
+#base{display:none}
+/* Rodapé preto: cobre do fim da arena até a base da tela, por onde os
+   comentários da live passam. Começa logo abaixo do pé dos lutadores. */
+#rodape-preto{position:absolute;left:0;right:0;top:1520px;bottom:0;z-index:5;
+  background:linear-gradient(180deg,rgba(0,0,0,.4),#000 14%,#000)}
 .placar{border:4px solid rgba(255,255,255,.18);background:rgba(8,8,14,.9);padding:11px 15px}
 .placar .quem{font-size:18px;font-weight:900;letter-spacing:3px;color:rgba(255,255,255,.42)}
 .placar .nome{font-size:28px;font-weight:900;white-space:nowrap;overflow:hidden;
@@ -348,6 +353,7 @@ html,body{height:100%;background:#000;overflow:hidden;
       <div class="forca" id="forcaB">0 de dano</div>
     </div>
   </div>
+  <div id="rodape-preto"></div>
 
   <div id="painel-teste">
     <div class="tcol">
@@ -401,7 +407,7 @@ html,body{height:100%;background:#000;overflow:hidden;
     </div>
   </div>
 
-  <div id="versao">v24</div>
+  <div id="versao">v25</div>
   <div id="semConector">conector desligado: nada está chegando da live</div>
 </div>
 
