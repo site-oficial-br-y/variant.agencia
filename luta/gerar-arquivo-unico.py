@@ -10,7 +10,8 @@ import base64, json, os, re
 
 def embutir(caminho):
     tipo = {'.webp': 'image/webp', '.jpg': 'image/jpeg', '.jpeg': 'image/jpeg',
-            '.mp4': 'video/mp4'}.get(os.path.splitext(caminho)[1].lower(), 'image/png')
+            '.mp4': 'video/mp4', '.mp3': 'audio/mpeg'}.get(
+            os.path.splitext(caminho)[1].lower(), 'image/png')
     with open(caminho, 'rb') as f:
         return 'data:%s;base64,%s' % (tipo, base64.b64encode(f.read()).decode())
 
@@ -38,12 +39,22 @@ if os.path.isdir('musicas'):
     sons = sorted(a for a in os.listdir('musicas')
                   if a.lower().endswith(('.mp3', '.m4a', '.ogg', '.wav', '.aac')))
     if sons:
-        lista = ','.join("'musicas/%s'" % a.replace("'", "\\'") for a in sons)
-        s = s.replace('/*LISTA_DE_MUSICAS*/', lista)
-        # O index.html não leva a lista embutida: ele lê este arquivo. Assim
-        # subir uma música nova é só rodar o gerador, sem editar o HTML.
+        # O index.html servido (a live pelo conector) não leva música embutida:
+        # lê este lista.json e toca os arquivos de alta qualidade da pasta.
         json.dump(sons, open('musicas/lista.json', 'w'), ensure_ascii=False)
-        print('músicas na lista:', len(sons))
+        # O arquivo único, aberto sozinho, não tem a pasta do lado, então a
+        # música entra embutida — mas na versão leve de musicas/mini, pra o
+        # arquivo não virar um monstro. Sem a pasta mini, cai no caminho (que
+        # só funciona servido).
+        mini_dir = os.path.join('musicas', 'mini')
+        if os.path.isdir(mini_dir):
+            minis = sorted(a for a in os.listdir(mini_dir) if a.lower().endswith('.mp3'))
+            lista = ','.join("'%s'" % embutir(os.path.join(mini_dir, a)) for a in minis)
+            print('músicas embutidas (leves):', len(minis))
+        else:
+            lista = ','.join("'musicas/%s'" % a.replace("'", "\\'") for a in sons)
+            print('músicas na lista (caminho):', len(sons))
+        s = s.replace('/*LISTA_DE_MUSICAS*/', lista)
     else:
         print('pasta musicas vazia: o painel deixa escolher do computador')
 

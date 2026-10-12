@@ -94,15 +94,15 @@ html,body{height:100%;background:#000;overflow:hidden;
 /* z-index alto pro mural ficar por cima do vídeo da cutscene: o aviso de quem
    mandou o presente (ex.: GOLPE FINAL +250) sumia atrás do vídeo. */
 #aviso-topo{position:absolute;left:26px;right:26px;top:300px;z-index:9;pointer-events:none}
-#tituloRegras{font-family:'Anton',sans-serif;font-size:42px;letter-spacing:2px;color:#ffd23f;
-  text-align:center;margin-bottom:10px;text-shadow:4px 4px 0 #000,-2px -2px 0 #000,2px -2px 0 #000,-2px 2px 0 #000}
-#regras{display:flex;flex-direction:column;gap:9px}
-.regra{display:flex;align-items:center;gap:16px;background:rgba(6,6,12,.9);
-  border:4px solid rgba(255,210,63,.55);border-radius:15px;padding:12px 20px;
-  font-family:'Anton',sans-serif;font-size:35px;font-weight:400;letter-spacing:.5px;color:#fff;
-  line-height:1.04}
-.regra i{font-style:normal;width:50px;height:50px;flex:none;border-radius:50%;
-  background:#ffd23f;color:#111;font-family:'Anton',sans-serif;font-size:32px;
+#tituloRegras{font-family:'Anton',sans-serif;font-size:38px;letter-spacing:2px;color:#ffd23f;
+  text-align:center;margin-bottom:8px;text-shadow:4px 4px 0 #000,-2px -2px 0 #000,2px -2px 0 #000,-2px 2px 0 #000}
+#regras{display:flex;flex-direction:column;gap:7px}
+.regra{display:flex;align-items:center;gap:14px;background:rgba(6,6,12,.9);
+  border:3px solid rgba(255,210,63,.55);border-radius:13px;padding:9px 18px;
+  font-family:'Anton',sans-serif;font-size:31px;font-weight:400;letter-spacing:.5px;color:#fff;
+  line-height:1.02}
+.regra i{font-style:normal;width:44px;height:44px;flex:none;border-radius:50%;
+  background:#ffd23f;color:#111;font-family:'Anton',sans-serif;font-size:28px;
   display:grid;place-items:center}
 .regra b{color:#ffd23f}
 .regra .vermelho{color:#ff5a4d}
@@ -331,10 +331,11 @@ html,body{height:100%;background:#000;overflow:hidden;
   <div id="aviso-topo">
     <div id="tituloRegras">COMO JOGAR</div>
     <div id="regras">
-      <div class="regra"><i>1</i> <span>COMENTE <b class="vermelho">LULA</b> OU <b class="verde">FLÁVIO</b> PRA ESCOLHER O LADO</span></div>
-      <div class="regra"><i>2</i> <span>CURTIDA E COMENTÁRIO <b>EMPURRAM</b> SEU LADO</span></div>
-      <div class="regra"><i>3</i> <span>PRESENTE <b>BATE</b> — MAIS CARO, MAIOR O GOLPE</span></div>
-      <div class="regra"><i>4</i> <span>ZERE A VIDA. <b>3 ROUNDS</b> VENCEM A LUTA</span></div>
+      <div class="regra"><i>1</i> <span>COMENTE <b class="vermelho">LULA</b> OU <b class="verde">FLÁVIO</b> PRA ENTRAR</span></div>
+      <div class="regra"><i>2</i> <span>CADA COMENTÁRIO = <b>1 DE DANO</b></span></div>
+      <div class="regra"><i>3</i> <span><b>25 CURTIDAS</b> = 1 DE DANO</span></div>
+      <div class="regra"><i>4</i> <span>PRESENTE: <b>MAIS CARO, MAIOR O GOLPE</b></span></div>
+      <div class="regra"><i>5</i> <span>ZERE A VIDA — <b>3 ROUNDS</b> VENCEM</span></div>
     </div>
     <div id="instrucao">quem zerar a barra do outro <b>vence o round</b></div>
     <div id="fila"></div>
@@ -406,7 +407,7 @@ html,body{height:100%;background:#000;overflow:hidden;
     </div>
   </div>
 
-  <div id="versao">v25</div>
+  <div id="versao">v26</div>
   <div id="semConector">conector desligado: nada está chegando da live</div>
 </div>
 
