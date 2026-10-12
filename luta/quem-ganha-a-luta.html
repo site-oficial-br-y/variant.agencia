@@ -129,8 +129,6 @@ html,body{height:100%;background:#000;overflow:hidden;
    boneco (flutuava). Escalar a partir do pé (origin bottom) infla o peito sem
    tirar o sapato do chão e sem trocar de quadro. Fica no .lutador pra não
    brigar com o transform do golpe, que roda no .corpo. */
-.lutador{transform-origin:center bottom;animation:respira 3.2s ease-in-out infinite}
-@keyframes respira{0%,100%{transform:scaleY(1)}50%{transform:scaleY(1.018)}}
 .corpo{position:absolute;inset:0;z-index:1;transform-origin:center bottom}
 .lutador.dir .corpo{transform:scaleX(-1)}
 /* Queda do nocaute: cambaleia pra trás e afunda, escurecido. Tombar na
@@ -140,10 +138,15 @@ html,body{height:100%;background:#000;overflow:hidden;
 .lutador.derrubado .corpo{transform-origin:center bottom;transform:rotate(-18deg) translateY(16px);
   filter:brightness(.4) saturate(.4);transition:transform .55s cubic-bezier(.3,1.2,.5,1),filter .55s}
 .lutador.dir.derrubado .corpo{transform:scaleX(-1) rotate(-18deg) translateY(16px)}
+/* opacity com transição: a troca de quadro vira um cross-fade curto em vez de
+   corte seco. É o corte seco em 6 quadros lentos que lia como pisca; o fade
+   deixa a caminhada parecer movimento, não piscada. */
 .pose{position:absolute;left:50%;bottom:-6.4%;height:100%;width:auto;max-width:none;
-  transform:translateX(-50%);opacity:0;pointer-events:none;
+  transform:translateX(-50%);opacity:0;pointer-events:none;transition:opacity .09s linear;
   filter:drop-shadow(0 4px 3px rgba(0,0,0,.45))}
 .pose.on{opacity:1}
+/* No golpe a troca é instantânea (sem fade), pra o soco bater seco. */
+.lutador.ataca .pose,.lutador.apanha .pose{transition:none}
 /* Lutador caído: camada própria no chão, porque a arte deitada é larga e baixa
    e não cabe na caixa em pé. Entra pela lateral de quem perdeu, no nível do
    piso, e some no reinício do round. */
@@ -407,7 +410,7 @@ html,body{height:100%;background:#000;overflow:hidden;
     </div>
   </div>
 
-  <div id="versao">v27</div>
+  <div id="versao">v28</div>
   <div id="semConector">conector desligado: nada está chegando da live</div>
 </div>
 
@@ -478,9 +481,9 @@ const CLIPES = {
   // Parado é um quadro só. O ciclo de seis quadros rodando no lugar virava um
   // tremelique, porque é passada de andar, e eles não andam. O movimento vivo
   // vem da respiração em CSS, suave, no lugar do pisca-pisca.
-  // Parado é um quadro só; a vida vem da respiração em CSS. Ciclar a caminhada
-  // no lugar virava pisca.
-  parado:  { q: ['andar1'], ms: 1000, loop: true },
+  // Caminhada no lugar, com cross-fade entre os quadros (ver .pose): o
+  // movimento que o dono pediu, sem o corte seco que lia como pisca.
+  parado:  { q: ['andar1','andar2','andar3','andar4','andar5','andar6'], ms: 190, loop: true },
   // Cada golpe é um quadro só, limpo. O forte antes juntava um soco e um joelho
   // que não se encaixavam; agora é o soco forte pra frente, que é o que o
   // impulso do ataque (.ataca) e a faísca vendem como pancada.
