@@ -355,6 +355,16 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:-apple-
   background:linear-gradient(150deg,rgba(124,111,247,.28),rgba(167,139,250,.12));
   border-color:var(--purple);color:#c4b5fd;box-shadow:0 6px 20px var(--purple-glow);
 }
+.dias-row{display:flex;gap:7px;margin-bottom:18px;}
+.dia-btn{
+  flex:1;aspect-ratio:1;border-radius:50%;color:var(--text2);font-size:13px;font-weight:800;cursor:pointer;
+  background:rgba(255,255,255,.05);border:1px solid var(--stroke);transition:all .22s cubic-bezier(.22,1,.36,1);
+}
+.dia-btn:hover{background:var(--glass-hover);}
+.dia-btn.selected{
+  background:linear-gradient(150deg,rgba(124,111,247,.4),rgba(167,139,250,.2));
+  border-color:var(--purple);color:#e9e2ff;box-shadow:0 4px 14px var(--purple-glow);
+}
 .modal-save{
   width:100%;padding:16px;border-radius:18px;border:none;color:#fff;font-size:16px;font-weight:800;cursor:pointer;letter-spacing:-.2px;
   background:linear-gradient(135deg,#7c6ff7,#a78bfa);box-shadow:0 8px 28px var(--purple-glow);
@@ -475,7 +485,21 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:-apple-
     <label>Tipo</label>
     <div class="type-row">
       <button class="type-btn selected" data-type="diaria">Diária</button>
+      <button class="type-btn" data-type="semanal">Dias da semana</button>
       <button class="type-btn" data-type="prazo">Com prazo</button>
+    </div>
+
+    <div id="dias-field" style="display:none;">
+      <label>Em quais dias</label>
+      <div class="dias-row" id="dias-row">
+        <button class="dia-btn" data-dia="0">D</button>
+        <button class="dia-btn" data-dia="1">S</button>
+        <button class="dia-btn" data-dia="2">T</button>
+        <button class="dia-btn" data-dia="3">Q</button>
+        <button class="dia-btn" data-dia="4">Q</button>
+        <button class="dia-btn" data-dia="5">S</button>
+        <button class="dia-btn" data-dia="6">S</button>
+      </div>
     </div>
 
     <div id="prazo-field" style="display:none;">
@@ -640,15 +664,17 @@ function goTo(s){
 }
 
 // ── MODAL ──
-let selEmoji='🎯', selType='diaria';
+let selEmoji='🎯', selType='diaria', selDias=[];
 function openModal(){
   buzz(10);
-  selEmoji='🎯';selType='diaria';
+  selEmoji='🎯';selType='diaria';selDias=[];
   document.getElementById('meta-name').value='';
   document.getElementById('meta-prazo').value='';
   document.getElementById('prazo-field').style.display='none';
+  document.getElementById('dias-field').style.display='none';
   document.querySelectorAll('.emoji-btn').forEach(b=>b.classList.toggle('selected',b.dataset.emoji==='🎯'));
   document.querySelectorAll('.type-btn').forEach(b=>b.classList.toggle('selected',b.dataset.type==='diaria'));
+  document.querySelectorAll('.dia-btn').forEach(b=>b.classList.remove('selected'));
   document.getElementById('modal').classList.add('show');
 }
 function closeModal(){document.getElementById('modal').classList.remove('show');}
@@ -664,14 +690,23 @@ document.querySelectorAll('.type-btn').forEach(b=>b.addEventListener('click',()=
   document.querySelectorAll('.type-btn').forEach(x=>x.classList.remove('selected'));
   b.classList.add('selected');
   document.getElementById('prazo-field').style.display=selType==='prazo'?'block':'none';
+  document.getElementById('dias-field').style.display=selType==='semanal'?'block':'none';
 }));
+document.getElementById('dias-row').addEventListener('click',e=>{
+  const b=e.target.closest('.dia-btn');if(!b)return;
+  buzz(6);const d=+b.dataset.dia;
+  if(selDias.includes(d)){selDias=selDias.filter(x=>x!==d);b.classList.remove('selected');}
+  else{selDias.push(d);b.classList.add('selected');}
+});
 document.getElementById('meta-name').addEventListener('keydown',e=>{if(e.key==='Enter')saveMeta();});
 
 function saveMeta(){
   const name=document.getElementById('meta-name').value.trim();
   if(!name){document.getElementById('meta-name').focus();toast('Dê um nome para a meta');return;}
+  if(selType==='semanal'&&!selDias.length){toast('Escolha pelo menos um dia');return;}
   state.metas.push({id:Date.now(),name,emoji:selEmoji,type:selType,
-    prazo:selType==='prazo'?document.getElementById('meta-prazo').value:null,createdAt:todayStr()});
+    prazo:selType==='prazo'?document.getElementById('meta-prazo').value:null,
+    dias:selType==='semanal'?[...selDias].sort():null,createdAt:todayStr()});
   save();closeModal();buzz([10,40,10]);toast('Meta criada! 🎯');
   renderHoje();renderMetas();
 }
@@ -680,6 +715,19 @@ function deleteMeta(id){
   state.metas=state.metas.filter(m=>m.id!==id);
   save();buzz(20);toast('Meta removida');
   renderMetas();renderHoje();
+}
+
+// ── dias da semana ──
+const DIAS_CURTO=['Dom','Seg','Ter','Qua','Qui','Sex','Sáb'];
+// Uma meta semanal só vale nos dias escolhidos; as outras valem todo dia.
+function ativaNoDia(m,dateStr){
+  if(m.type!=='semanal'||!m.dias||!m.dias.length)return true;
+  return m.dias.includes(new Date(dateStr+'T12:00:00').getDay());
+}
+function rotuloDias(dias){
+  if(!dias||!dias.length)return 'Dias da semana';
+  if(dias.length===7)return 'Todo dia';
+  return [...dias].sort().map(d=>DIAS_CURTO[d]).join(', ');
 }
 
 // ── HOJE ──
@@ -699,8 +747,15 @@ function renderHoje(){
     return;
   }
 
+  // Só as metas que valem neste dia: as semanais aparecem só nos dias escolhidos.
+  const metasDia=state.metas.filter(m=>ativaNoDia(m,state.selectedDate));
+  if(!metasDia.length){
+    list.innerHTML=`<div class="empty"><div class="empty-emoji">🌙</div><div class="empty-title">Nada pra hoje</div><div class="empty-sub">Nenhuma meta marcada para este dia</div></div>`;
+    return;
+  }
+
   const log=state.logs[state.selectedDate]||{};
-  const done=state.metas.filter(m=>log[m.id]).length, total=state.metas.length;
+  const done=metasDia.filter(m=>log[m.id]).length, total=metasDia.length;
   const pct=Math.round(done/total*100);
 
   const prog=document.createElement('div');
@@ -715,12 +770,14 @@ function renderHoje(){
   list.appendChild(prog);
   requestAnimationFrame(()=>{prog.querySelector('.progress-bar-fill').style.width=pct+'%';});
 
-  state.metas.forEach((meta,i)=>{
+  metasDia.forEach((meta,i)=>{
     const isDone=!!log[meta.id];
     const el=document.createElement('div');
     el.className=`goal-item ${isDone?'done':''}`;
     el.style.animationDelay=(i*55+40)+'ms';
-    const sub=meta.type==='diaria'?'Meta diária':(meta.prazo?`Até ${meta.prazo.split('-').reverse().join('/')}`:'Com prazo');
+    const sub=meta.type==='semanal'?rotuloDias(meta.dias)
+      :meta.type==='diaria'?'Meta diária'
+      :(meta.prazo?`Até ${meta.prazo.split('-').reverse().join('/')}`:'Com prazo');
     el.innerHTML=`
       <div class="goal-icon">${meta.emoji}</div>
       <div class="goal-info"><div class="goal-name">${meta.name}</div><div class="goal-sub">${sub}</div></div>
@@ -777,8 +834,8 @@ function updateDateStrip(){
   const today=todayStr();
   strip.querySelectorAll('.date-day').forEach(el=>{
     const ds=el.dataset.date;
-    const log=state.logs[ds]||{}, total=state.metas.length;
-    const done=state.metas.filter(m=>log[m.id]).length;
+    const log=state.logs[ds]||{}, ativas=state.metas.filter(m=>ativaNoDia(m,ds));
+    const total=ativas.length, done=ativas.filter(m=>log[m.id]).length;
     let dot='';
     if(total>0&&ds<=today){const r=done/total;dot=r===1?'has-green':r>=.5?'has-yellow':r>0?'has-red':'';}
     el.classList.toggle('sel',ds===state.selectedDate);
@@ -800,9 +857,10 @@ function toggleGoal(id){
   state.logs[state.selectedDate][id]=now;
   save();buzz(now?[8,30,12]:8);
   const log=state.logs[state.selectedDate];
-  const done=state.metas.filter(m=>log[m.id]).length;
+  const ativas=state.metas.filter(m=>ativaNoDia(m,state.selectedDate));
+  const done=ativas.filter(m=>log[m.id]).length;
   renderHoje();
-  if(now&&done===state.metas.length&&state.metas.length>0){
+  if(now&&done===ativas.length&&ativas.length>0){
     setTimeout(()=>{confetti();toast('Todas as metas do dia! 🎉');buzz([20,60,20,60,30]);},180);
   }
 }
@@ -818,8 +876,10 @@ function renderMetas(){
   }
   const days=Object.keys(state.logs).filter(d=>d<=todayStr());
   state.metas.forEach((meta,i)=>{
-    const doneCount=days.filter(d=>state.logs[d][meta.id]).length;
-    const pct=days.length?Math.round(doneCount/days.length*100):0;
+    // Meta semanal só conta nos dias dela, senão 100% seria impossível.
+    const diasMeta=days.filter(d=>ativaNoDia(meta,d));
+    const doneCount=diasMeta.filter(d=>state.logs[d][meta.id]).length;
+    const pct=diasMeta.length?Math.round(doneCount/diasMeta.length*100):0;
     const streak=calcStreak(meta.id);
     const el=document.createElement('div');
     el.className='meta-card';
@@ -829,7 +889,7 @@ function renderMetas(){
         <div class="meta-card-icon">${meta.emoji}</div>
         <div class="meta-card-info">
           <div class="meta-card-name">${meta.name}</div>
-          <div class="meta-card-type">${meta.type==='diaria'?'Meta diária':(meta.prazo?`Até ${meta.prazo.split('-').reverse().join('/')}`:'Com prazo')}</div>
+          <div class="meta-card-type">${meta.type==='semanal'?rotuloDias(meta.dias):meta.type==='diaria'?'Meta diária':(meta.prazo?`Até ${meta.prazo.split('-').reverse().join('/')}`:'Com prazo')}</div>
         </div>
         <div class="meta-action-btn" onclick="event.stopPropagation();deleteMeta(${meta.id})">
           <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#f87171" stroke-width="2" stroke-linecap="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6M14 11v6"/></svg>
@@ -846,8 +906,15 @@ function renderMetas(){
 }
 
 function calcStreak(id){
-  let s=0;const d=new Date();
-  while(state.logs[fmt(d)]&&state.logs[fmt(d)][id]){s++;d.setDate(d.getDate()-1);}
+  const meta=state.metas.find(m=>m.id===id);
+  let s=0,guard=0;const d=new Date();
+  // Em dia que a meta semanal não vale, pula sem quebrar a sequência.
+  while(guard++<400){
+    const ds=fmt(d);
+    if(meta&&!ativaNoDia(meta,ds)){d.setDate(d.getDate()-1);continue;}
+    if(state.logs[ds]&&state.logs[ds][id]){s++;d.setDate(d.getDate()-1);}
+    else break;
+  }
   return s;
 }
 
@@ -868,8 +935,8 @@ function renderCal(){
   }
   for(let d=1;d<=last.getDate();d++){
     const ds=`${m.getFullYear()}-${String(m.getMonth()+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
-    const log=state.logs[ds]||{}, total=state.metas.length;
-    const done=state.metas.filter(mt=>log[mt.id]).length;
+    const log=state.logs[ds]||{}, ativas=state.metas.filter(mt=>ativaNoDia(mt,ds));
+    const total=ativas.length, done=ativas.filter(mt=>log[mt.id]).length;
     let cls='cal-cell';
     if(ds===today)cls+=' today';
     else if(total>0&&ds<today){const r=done/total;cls+=r===1?' green':r>=.5?' yellow':r>0?' red':'';}
@@ -908,14 +975,16 @@ function renderRelatorio(){
   const nDays=days.length||1;
   let checks=0;
   days.forEach(d=>state.metas.forEach(m=>{if(state.logs[d][m.id])checks++;}));
-  const possible=total*nDays;
+  // Só conta como "possível" o que valia no dia: meta semanal não entra nos dias de folga.
+  const possible=days.reduce((a,d)=>a+state.metas.filter(m=>ativaNoDia(m,d)).length,0);
   const pct=possible>0?Math.round(checks/possible*100):0;
   const streak=total?Math.max(0,...state.metas.map(m=>calcStreak(m.id))):0;
-  const perfect=days.filter(d=>total>0&&state.metas.every(m=>state.logs[d][m.id])).length;
+  const perfect=days.filter(d=>{const ativas=state.metas.filter(m=>ativaNoDia(m,d));return ativas.length>0&&ativas.every(m=>state.logs[d][m.id]);}).length;
 
   const metasHtml=state.metas.map((meta,i)=>{
-    const done=days.filter(d=>state.logs[d][meta.id]).length;
-    const p=days.length?Math.round(done/nDays*100):0;
+    const diasM=days.filter(d=>ativaNoDia(meta,d));
+    const done=diasM.filter(d=>state.logs[d][meta.id]).length;
+    const p=diasM.length?Math.round(done/diasM.length*100):0;
     return `<div class="report-item">
       <div class="report-icon">${meta.emoji}</div>
       <div class="report-info"><div class="report-name">${meta.name}</div>
