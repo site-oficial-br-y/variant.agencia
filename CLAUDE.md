@@ -81,7 +81,7 @@ SaaS B2B de prospecção de leads. O usuário escolhe um tipo de serviço + cida
 
 ### Armadilhas já pagas (não repetir)
 
-- **O navegador daqui tem largura mínima de ~500 px.** Pedir print em 390 px renderiza em 485 e recorta a foto. Eu já relatei "bug no celular" que era artefato do meu teste.
+- **Dá para testar em largura de celular de verdade**, ao contrário do que estava anotado aqui antes. O truque é definir o viewport na criação da página (`browser.newPage({viewport:{width:390,height:844}, isMobile:true})`), e não com `setViewportSize` depois — aí o `window.innerWidth` é 390 mesmo. Conferir isso no próprio teste antes de confiar no print.
 - **Print pega animação no meio.** Para fotografar é preciso desligar a revelação por rolagem. **Conferir o restauro com `git diff` antes de commitar** — eu já commitei a gambiarra por engano.
 - **`grid-template-columns: 1fr` estoura o container** quando o conteúdo é largo: usar `minmax(0,1fr)`.
 - **Elemento posicionado com `z-index:0` pinta acima de conteúdo não posicionado.** Faixa de degradê cobriu texto por isso.
@@ -89,7 +89,23 @@ SaaS B2B de prospecção de leads. O usuário escolhe um tipo de serviço + cida
 - **Máscara radial maior que a própria caixa não dissolve nada**, porque a parte transparente cai fora da área visível.
 - **Véu escuro sobre foto precisa de `z-index`** se a imagem já tiver um, senão fica atrás dela e o texto some.
 - **Supabase corta cada leitura em 1.000 linhas** e `.limit()` não passa por cima: tem que paginar com `range()`.
+- **Ranking montado a partir da tabela de perfis some com quem não tem perfil.** No ZEBRA a
+  conta do dono jogou sete partidas, todas gravadas, e nunca apareceu: faltava a linha dele em
+  `zebra_perfis`, e o `left join` do ranking parte dos perfis. Conta criada antes do gatilho que
+  cria o perfil junto fica órfã e desaparece calada. Antes de culpar a gravação, comparar
+  `select count(*) from <partidas>` com o que a view devolve.
+- **Filtro do PostgREST em coluna de agregação de view volta vazio.** `.gt('partidas', 0)` numa
+  view com `group by` não traz nada, enquanto `.eq('user_id', ...)` na mesma view funciona. Se a
+  lista inteira cabe numa leitura, filtrar no navegador.
+- **`.catch(() => {})` numa leitura de estatística esconde exatamente o que falta ver.** Duas
+  rodadas de diagnóstico se perderam porque o erro nunca chegava à tela.
+- **Pausar todas as animações da página para fotografar apaga a página.** As seções entram com
+  `animation: entra ... both`; congelar tudo trava elas no quadro zero, com opacidade zero. Pausar
+  só o elemento que se quer fotografar.
 - **Comentário JSX solto dentro de `.map()` quebra a sintaxe**, porque a função passa a retornar dois elementos.
+- **Caixa cujos filhos são todos `position:absolute` tem largura intrínseca zero.** Dentro de um flex com `align-items:start` ela encolhe até sumir. No ZEBRA o campo murchou de 358px para 48px assim que a única legenda estática saiu da tela. Declarar `width` na caixa ou `align-items:stretch` no pai.
+- **Dois handlers de clique no mesmo elemento: o segundo apaga o primeiro.** Botões de modo e de velocidade compartilhavam a classe `.sp`, e o `onclick` registrado depois anulou o anterior. Usar seletor com o atributo (`.sp[data-sp]`), não só a classe.
+- **Contador animado por `requestAnimationFrame` congela** se a aba perde o foco. Contar por tempo decorrido e garantir o valor final num `setTimeout`.
 
 ## Como este dono gosta de trabalhar
 
