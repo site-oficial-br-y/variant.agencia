@@ -29,6 +29,8 @@ body{font-family:'Segoe UI',system-ui,Arial,sans-serif;background:#f3f5f8;color:
 .nome{font-size:26px;font-weight:900;letter-spacing:-.6px;color:#0b2d52}
 .tag{display:inline-block;margin-top:6px;font-size:12px;font-weight:700;color:#1769d1;
   background:#e8f1fd;padding:4px 10px;border-radius:999px}
+.nota{margin-top:12px;font-size:13px;font-weight:700;color:#b26a00;background:#fff6e5;
+  border:1px solid #ffe0a3;border-radius:10px;padding:10px 12px}
 .linha-stats{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-top:20px}
 .stat{background:#f6f8fb;border-radius:10px;padding:14px}
 .stat .n{font-size:24px;font-weight:900;color:#0b2d52}
@@ -79,8 +81,9 @@ const PEGADINHAS = [
     gatilhos: ['perine', 'gordinha', 'gordinha perine', 'lucas perine'],
     nome: 'Lucas Perinê Gordinha da Silva Pinto',
     total: 1,
-    decada: 2004,
+    decada: 2026,
     estados: [['SP', 100]],
+    nota: 'Ainda não nascido — registrado pela mãe no cartório',
   },
 ]
 
@@ -113,6 +116,7 @@ function card(d){
     <div class="card">
       <div class="nome">${d.nome}</div>
       <span class="tag">Nome registrado</span>
+      ${d.nota?`<div class="nota">⚠️ ${d.nota}</div>`:''}
       <div class="linha-stats">
         <div class="stat"><div class="n">${d.total.toLocaleString('pt-BR')}</div><div class="l">pessoas no Brasil</div></div>
         <div class="stat"><div class="n">${d.decada}s</div><div class="l">década mais comum</div></div>
