@@ -77,16 +77,14 @@ async function fetchPlacesCity(query: string, lat: number, lng: number, maxResul
   return todos
 }
 
+// Reduzido de 10 pra 5 cidades: cada cidade é uma chamada paga ao Google, e o
+// raio de 30 km já pega a região metropolitana. Cinco grandes (uma por região)
+// dão variedade de sobra sem dobrar o custo do "Todo o Brasil".
 const BRAZIL_CITIES = [
   { lat: -23.55, lng: -46.63, name: 'São Paulo' },
   { lat: -22.91, lng: -43.17, name: 'Rio de Janeiro' },
-  { lat: -19.92, lng: -43.94, name: 'Belo Horizonte' },
-  { lat: -30.03, lng: -51.23, name: 'Porto Alegre' },
   { lat: -12.97, lng: -38.50, name: 'Salvador' },
-  { lat: -3.72,  lng: -38.54, name: 'Fortaleza' },
-  { lat: -8.05,  lng: -34.88, name: 'Recife' },
   { lat: -15.78, lng: -47.93, name: 'Brasília' },
-  { lat: -1.46,  lng: -48.50, name: 'Belém' },
   { lat: -3.10,  lng: -60.02, name: 'Manaus' },
 ]
 
