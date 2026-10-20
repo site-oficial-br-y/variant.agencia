@@ -11,6 +11,8 @@ var quadros: Array = []
 
 func _ready() -> void:
 	set_anchors_preset(Control.PRESET_FULL_RECT)
+	var vp := get_viewport().get_visible_rect().size
+	var cx := vp.x / 2.0                    # tela larga: tudo centralizado na largura real
 	atual = maxi(0, OPCOES.find(Game.personagem))
 	var fundo := TextureRect.new()
 	fundo.texture = load("res://assets/ui/fundo.png")
@@ -27,7 +29,7 @@ func _ready() -> void:
 	add_child(logo)
 
 	var lado := 100.0
-	var x0 := 640.0 - (SLOTS * (lado + 12) - 12) / 2.0 + 60
+	var x0 := cx - (SLOTS * (lado + 12) - 12) / 2.0 + 60
 	for i in SLOTS:
 		var q := Panel.new()
 		q.position = Vector2(x0 + i * (lado + 12), 24)
@@ -45,7 +47,7 @@ func _ready() -> void:
 
 	var pedra := TextureRect.new()
 	pedra.texture = load("res://assets/ui/pedra.png")
-	pedra.position = Vector2(640 - 300, 590)
+	pedra.position = Vector2(cx - 300, vp.y - 130)
 	add_child(pedra)
 
 	preview = TextureRect.new()
@@ -55,7 +57,7 @@ func _ready() -> void:
 	preview.size = Vector2(520, 440)
 	add_child(preview)
 
-	var ok := _botao("confirma", Vector2(1110, 560), 140)
+	var ok := _botao("confirma", Vector2(vp.x - 175, vp.y - 165), 140)
 	ok.pressed.connect(_jogar)
 	_atualizar()
 
@@ -96,7 +98,8 @@ func _atualizar() -> void:
 	preview.texture = tex
 	var h := minf(440.0, 560.0 * tex.get_height() / tex.get_width())     # cabe em 560x440
 	preview.size = Vector2(h * tex.get_width() / tex.get_height(), h)
-	preview.position = Vector2(640 - preview.size.x / 2.0, 612 - h)          # em pé na pedra
+	var vp := get_viewport().get_visible_rect().size
+	preview.position = Vector2(vp.x / 2.0 - preview.size.x / 2.0, vp.y - 108 - h)   # em pé na pedra
 
 func _selecionar(i: int) -> void:
 	atual = i
