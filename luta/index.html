@@ -272,16 +272,20 @@ html,body{height:100%;background:#000;overflow:hidden;
    Só aparece no arquivo de teste ou com #teste no fim do endereço. Fica por
    cima de tudo, com os botões que disparam cada golpe dos dois lados sem
    precisar de live nem conector. */
-#painel-teste{position:absolute;left:0;right:0;bottom:0;z-index:20;display:none;
-  justify-content:center;gap:20px;padding:12px 12px;flex-wrap:wrap;
-  background:rgba(4,4,10,.97);border-top:3px solid rgba(255,255,255,.14)}
+#painel-teste{position:fixed;left:0;right:0;bottom:0;z-index:20;display:none;
+  flex-direction:column;align-items:center;gap:7px;padding:9px 8px calc(9px + env(safe-area-inset-bottom));
+  background:rgba(4,4,10,.97);border-top:3px solid rgba(255,255,255,.14);
+  max-height:46vh;overflow-y:auto}
 #painel-teste.on{display:flex}
-#painel-teste .tcol{display:flex;flex-direction:column;gap:6px;align-items:stretch}
-#painel-teste .tlabel{font-size:18px;font-weight:900;text-align:center;letter-spacing:1px}
-#painel-teste button{font-size:18px;font-weight:900;padding:7px 16px;border-radius:9px;
-  border:3px solid rgba(255,255,255,.3);background:rgba(255,255,255,.08);color:#fff;cursor:pointer}
+#painel-teste .tcol{display:flex;flex-direction:column;gap:5px;align-items:center;width:100%}
+#painel-teste .tlabel{font-size:14px;font-weight:900;text-align:center;letter-spacing:1px}
+#painel-teste .trow{display:flex;flex-wrap:wrap;gap:6px;justify-content:center;width:100%}
+#painel-teste button{flex:1 1 auto;min-width:62px;min-height:44px;font-size:15px;font-weight:900;
+  padding:8px 10px;border-radius:10px;border:3px solid rgba(255,255,255,.3);
+  background:rgba(255,255,255,.08);color:#fff;cursor:pointer;touch-action:manipulation}
 #painel-teste button:active{transform:scale(.95)}
 #painel-teste .tesp{border-color:#ffd23f;color:#ffd23f}
+#painel-teste .tgeral{margin-top:2px;border-top:1px solid rgba(255,255,255,.12);padding-top:7px}
 #clarao{position:absolute;inset:0;z-index:8;background:#fff;opacity:0;pointer-events:none}
 #clarao.on{animation:bateClarao .5s steps(3) forwards}
 @keyframes bateClarao{0%{opacity:.95}100%{opacity:0}}
@@ -354,32 +358,6 @@ html,body{height:100%;background:#000;overflow:hidden;
   </div>
   <div id="rodape-preto"></div>
 
-  <div id="painel-teste">
-    <div class="tcol">
-      <span class="tlabel" style="color:#ff5a4d">LULA</span>
-      <button data-lado="0" data-forca="5">soco</button>
-      <button data-lado="0" data-forca="20">chute</button>
-      <button data-lado="0" data-forca="80">forte</button>
-      <button data-lado="0" data-forca="250" class="tesp">CUTSCENE</button>
-      <button data-lado="0" data-forca="1000" class="tesp">GALÁXIA</button>
-      <button data-ko="0">K.O.</button>
-    </div>
-    <div class="tcol">
-      <button data-geral="curtida">+curtida</button>
-      <button data-geral="comentario">+comentário</button>
-      <button data-geral="limpa">zerar</button>
-    </div>
-    <div class="tcol">
-      <span class="tlabel" style="color:#4da3ff">FLÁVIO</span>
-      <button data-lado="1" data-forca="5">soco</button>
-      <button data-lado="1" data-forca="20">chute</button>
-      <button data-lado="1" data-forca="80">forte</button>
-      <button data-lado="1" data-forca="250" class="tesp">CUTSCENE</button>
-      <button data-lado="1" data-forca="1000" class="tesp">GALÁXIA</button>
-      <button data-ko="1">K.O.</button>
-    </div>
-  </div>
-
   <div id="ko"><img id="koArte" alt=""><div class="quem" id="koNome">—</div></div>
   <div id="clarao"></div>
 
@@ -406,8 +384,40 @@ html,body{height:100%;background:#000;overflow:hidden;
     </div>
   </div>
 
-  <div id="versao">v30</div>
+  <div id="versao">v31</div>
   <div id="semConector">conector desligado: nada está chegando da live</div>
+</div>
+
+<!-- Painel de teste FORA do palco: fixo no rodapé da tela em tamanho real,
+     pra os botões não encolherem junto com o jogo no celular. -->
+<div id="painel-teste">
+  <div class="tcol">
+    <span class="tlabel" style="color:#ff5a4d">LULA</span>
+    <div class="trow">
+      <button data-lado="0" data-forca="5">soco</button>
+      <button data-lado="0" data-forca="20">chute</button>
+      <button data-lado="0" data-forca="80">forte</button>
+      <button data-lado="0" data-forca="250" class="tesp">cut</button>
+      <button data-lado="0" data-forca="1000" class="tesp">🌌</button>
+      <button data-ko="0">K.O.</button>
+    </div>
+  </div>
+  <div class="tcol">
+    <span class="tlabel" style="color:#4da3ff">FLÁVIO</span>
+    <div class="trow">
+      <button data-lado="1" data-forca="5">soco</button>
+      <button data-lado="1" data-forca="20">chute</button>
+      <button data-lado="1" data-forca="80">forte</button>
+      <button data-lado="1" data-forca="250" class="tesp">cut</button>
+      <button data-lado="1" data-forca="1000" class="tesp">🌌</button>
+      <button data-ko="1">K.O.</button>
+    </div>
+  </div>
+  <div class="trow tgeral">
+    <button data-geral="curtida">+curtida</button>
+    <button data-geral="comentario">+coment</button>
+    <button data-geral="limpa">zerar</button>
+  </div>
 </div>
 
 <script>
