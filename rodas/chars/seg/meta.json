@@ -1,0 +1,95 @@
+{
+ "src_w": 423,
+ "src_h": 1379,
+ "pecas": {
+  "roda": {
+   "file": "chars/seg/roda.png",
+   "x": 29,
+   "y": 1087,
+   "w": 247,
+   "h": 247,
+   "piv": {
+    "centro": [
+     123,
+     123
+    ]
+   },
+   "r": 120
+  },
+  "poste": {
+   "file": "chars/seg/poste.png",
+   "x": 197,
+   "y": 572,
+   "w": 226,
+   "h": 540
+  },
+  "perna": {
+   "file": "chars/seg/perna.png",
+   "x": 89,
+   "y": 427,
+   "w": 156,
+   "h": 675,
+   "piv": {
+    "quadril": [
+     89,
+     15
+    ],
+    "pe": [
+     61,
+     641
+    ]
+   }
+  },
+  "tronco": {
+   "file": "chars/seg/tronco.png",
+   "x": 75,
+   "y": 223,
+   "w": 162,
+   "h": 228,
+   "piv": {
+    "pescoco": [
+     133,
+     7
+    ],
+    "ombro": [
+     143,
+     29
+    ],
+    "quadril": [
+     101,
+     217
+    ]
+   }
+  },
+  "braco": {
+   "file": "chars/seg/braco.png",
+   "x": 171,
+   "y": 243,
+   "w": 245,
+   "h": 383,
+   "piv": {
+    "ombro": [
+     45,
+     9
+    ],
+    "mao": [
+     229,
+     357
+    ]
+   }
+  },
+  "cabeca": {
+   "file": "chars/seg/cabeca.png",
+   "x": 158,
+   "y": 17,
+   "w": 163,
+   "h": 229,
+   "piv": {
+    "pescoco": [
+     54,
+     209
+    ]
+   }
+  }
+ }
+}
