@@ -1,0 +1,268 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<title>Capota Brasil — protótipo</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{height:100%;overflow:hidden;background:#0d1016;font-family:'Segoe UI',system-ui,Arial,sans-serif;
+  color:#fff;user-select:none;touch-action:none}
+#cv{position:fixed;inset:0;width:100%;height:100%;display:block}
+.ctrl{position:absolute;pointer-events:auto;display:flex;align-items:center;justify-content:center;
+  font-weight:900;color:#fff;border-radius:50%;background:rgba(255,255,255,.12);
+  border:3px solid rgba(255,255,255,.22);backdrop-filter:blur(2px);z-index:8}
+.ctrl:active{background:rgba(255,210,63,.35)}
+.ctrl.gas{background:rgba(74,222,128,.22);border-color:rgba(74,222,128,.45)}
+.ctrl.gas:active{background:rgba(74,222,128,.5)}
+.ctrl.wide{border-radius:40px}
+#c-gas{right:18px;bottom:96px;width:104px;height:104px;font-size:17px}
+#c-re{right:132px;bottom:30px;width:74px;height:74px;font-size:15px}
+#c-back{left:18px;bottom:30px;width:88px;height:88px;font-size:30px}
+#c-fwd{left:118px;bottom:30px;width:88px;height:88px;font-size:30px}
+#c-eject{right:22px;bottom:214px;width:92px;height:56px;font-size:13px}
+#topbar{position:absolute;top:10px;left:12px;right:12px;display:flex;justify-content:space-between;z-index:8}
+#dist{font-weight:900;font-size:16px;background:rgba(0,0,0,.35);padding:6px 12px;border-radius:10px}
+#btn-reset{font-weight:800;font-size:13px;background:rgba(0,0,0,.4);border:0;color:#fff;padding:8px 14px;border-radius:10px;cursor:pointer;pointer-events:auto}
+#carregando{position:fixed;inset:0;display:flex;align-items:center;justify-content:center;font-weight:900;font-size:20px;z-index:20;background:#0d1016}
+</style>
+</head>
+<body>
+<canvas id="cv"></canvas>
+<div id="carregando">carregando…</div>
+<div id="topbar"><button id="btn-reset">↻ reiniciar</button><div id="dist">0 m</div></div>
+<div class="ctrl gas" id="c-gas">GÁS</div>
+<div class="ctrl" id="c-re">RÉ</div>
+<div class="ctrl" id="c-back">⟲</div>
+<div class="ctrl" id="c-fwd">⟳</div>
+<div class="ctrl wide" id="c-eject">PULA FORA</div>
+
+<script src="matter.min.js"></script>
+<script>
+const { Engine, Bodies, Body, Composite, Constraint, Events } = Matter
+
+/* ---- dados das peças recortadas da imagem ---- */
+const META = {"roda":{"file":"chars/seg/roda.png","x":29,"y":1087,"w":247,"h":247,"piv":{"centro":[123,123]},"r":120},"poste":{"file":"chars/seg/poste.png","x":197,"y":572,"w":226,"h":540},"perna":{"file":"chars/seg/perna.png","x":89,"y":427,"w":156,"h":675,"piv":{"quadril":[89,15],"pe":[61,641]}},"tronco":{"file":"chars/seg/tronco.png","x":75,"y":223,"w":162,"h":228,"piv":{"pescoco":[133,7],"ombro":[143,29],"quadril":[101,217]}},"braco":{"file":"chars/seg/braco.png","x":171,"y":243,"w":245,"h":383,"piv":{"ombro":[45,9],"mao":[229,357]}},"cabeca":{"file":"chars/seg/cabeca.png","x":158,"y":17,"w":163,"h":229,"piv":{"pescoco":[54,209]}}}
+const ESC = 0.26
+const QA = [165, 705]          // âncora da arte que coincide com o centro do chassi
+
+const IMGS = {}
+function preload(cb){
+  const keys = Object.keys(META); let n=0
+  keys.forEach(k=>{ const im=new Image()
+    im.onload = im.onerror = ()=>{ if(++n===keys.length) cb() }
+    im.src = META[k].file; IMGS[k]=im })
+}
+
+/* ---- helpers de geometria ---- */
+const centroArte = k => [META[k].x+META[k].w/2, META[k].y+META[k].h/2]
+function rot(x,y,a){ const c=Math.cos(a), s=Math.sin(a); return [x*c-y*s, x*s+y*c] }
+// ponto da arte -> mundo, dada a pose (âncora-quadril QM, ângulo A)
+function arteParaMundo(px,py, QM, A){
+  const [rx,ry] = rot((px-QA[0])*ESC, (py-QA[1])*ESC, A)
+  return [QM[0]+rx, QM[1]+ry]
+}
+// pivô (coords locais da peça, canto) -> offset do centro da peça, em metros físicos
+function pivoLocal(k, nome){
+  const p=META[k], [lx,ly]=p.piv[nome]
+  return [(lx - p.w/2)*ESC, (ly - p.h/2)*ESC]
+}
+
+/* ---- canvas ---- */
+const cv=document.getElementById('cv'), ctx=cv.getContext('2d')
+let W,H,DPR
+function resize(){ DPR=Math.min(devicePixelRatio||1,2); W=innerWidth; H=innerHeight
+  cv.width=W*DPR; cv.height=H*DPR; ctx.setTransform(DPR,0,0,DPR,0,0) }
+addEventListener('resize',resize); resize()
+
+/* ---- física / mundo ---- */
+let engine, mundo, cam={x:300,y:300,zoom:1}, sangue=[]
+let roda, chassi, poste, viva=true, ragdoll=null, montado=true
+const GRUPO = Body.nextGroup(true)
+const CHAO_TOP = 460
+
+const BLOCOS = [
+  { x:900,  y:580, w:1900, h:240, t:'chao' },
+  { x:1950, y:430, w:380,  h:80, a:-20, t:'rampa' },
+  { x:2600, y:620, w:1200, h:240, t:'chao' },
+]
+
+function novoMundo(){
+  engine = Engine.create(); engine.gravity.y=1.1; mundo=engine.world
+  for(const b of BLOCOS){
+    const body=Bodies.rectangle(b.x,b.y,b.w,b.h,{isStatic:true,friction:0.95,frictionStatic:1,angle:(b.a||0)*Math.PI/180})
+    body.bdata=b; Composite.add(mundo, body)
+  }
+  criarVeiculo()
+}
+
+function criarVeiculo(){
+  const R = META.roda.r*ESC
+  // chassi = corpo rígido alto (ombro -> centro da roda); a arte fica presa a ele.
+  // QA=(165,705) é o ponto da arte que coincide com o centro do chassi.
+  const altArte = 1210-200, CX=320
+  const CY = (CHAO_TOP-R) - (1210-QA[1])*ESC     // sobe do centro-roda até o centro do chassi
+  chassi = Bodies.rectangle(CX, CY, 50, altArte*ESC, {friction:0.4,density:0.004})
+  const rodaMX = CX + (152-QA[0])*ESC, rodaMY = CY + (1210-QA[1])*ESC
+  roda = Bodies.circle(rodaMX, rodaMY, R, {friction:1,frictionStatic:1,restitution:0,density:0.004})
+  chassi.collisionFilter.mask=0                   // esqueleto invisível: só a roda toca o chão
+  roda.collisionFilter.group=GRUPO
+  const rx=rodaMX-CX, ry=rodaMY-CY
+  const c1=Constraint.create({bodyA:roda,bodyB:chassi,pointB:{x:rx,y:ry},length:0,stiffness:1})
+  const c2=Constraint.create({bodyA:roda,bodyB:chassi,pointB:{x:rx,y:ry},pointA:{x:0,y:0},length:0,stiffness:0.5})
+  Composite.add(mundo,[roda,chassi,c1,c2])
+  viva=true; montado=true; ragdoll=null
+}
+
+/* ---- transição: monta o ragdoll a partir da pose atual ---- */
+function soltarRagdoll(herdaVel){
+  if(!montado) return
+  montado=false; viva=false
+  const QM=[chassi.position.x, chassi.position.y], A=chassi.angle
+  const partes={}
+  for(const k of ['perna','tronco','braco','cabeca']){
+    const p=META[k], [cx,cy]=centroArte(k)
+    const [mx,my]=arteParaMundo(cx,cy,QM,A)
+    const b=Bodies.rectangle(mx,my, p.w*ESC, p.h*ESC, {density:0.001,frictionAir:0.01})
+    Body.setAngle(b,A); b.collisionFilter.group=GRUPO
+    if(herdaVel) Body.setVelocity(b,{x:chassi.velocity.x, y:chassi.velocity.y})
+    b.sprite=k; partes[k]=b
+  }
+  Composite.add(mundo, Object.values(partes))
+  // junções (quebráveis)
+  const J=(ka,na,kb,nb,s=0.7)=>{ const [ax,ay]=pivoLocal(ka,na),[bx,by]=pivoLocal(kb,nb)
+    const c=Constraint.create({bodyA:partes[ka],bodyB:partes[kb],pointA:{x:ax,y:ay},pointB:{x:bx,y:by},length:0,stiffness:s})
+    Composite.add(mundo,c); return c }
+  const juntas=[ J('cabeca','pescoco','tronco','pescoco'), J('tronco','ombro','braco','ombro'), J('tronco','quadril','perna','quadril') ]
+  ragdoll={partes, juntas}
+  // empurrãozinho pra frente pra ele voar do veículo
+  if(herdaVel){ Body.applyForce(partes.tronco, partes.tronco.position, {x:0.02, y:-0.03})
+    Body.setAngularVelocity(partes.tronco, 0.2) }
+}
+
+/* ---- controles ---- */
+const key={gas:false,re:false,back:false,fwd:false}
+function bind(id,p){ const e=document.getElementById(id)
+  const on=ev=>{ev.preventDefault();key[p]=true}, off=ev=>{ev.preventDefault();key[p]=false}
+  e.addEventListener('touchstart',on,{passive:false});e.addEventListener('touchend',off);e.addEventListener('touchcancel',off)
+  e.addEventListener('mousedown',on);e.addEventListener('mouseup',off);e.addEventListener('mouseleave',off) }
+bind('c-gas','gas');bind('c-re','re');bind('c-back','back');bind('c-fwd','fwd')
+const ejetar=()=>{ if(montado) soltarRagdoll(true) }
+document.getElementById('c-eject').addEventListener('touchstart',e=>{e.preventDefault();ejetar()},{passive:false})
+document.getElementById('c-eject').addEventListener('mousedown',e=>{e.preventDefault();ejetar()})
+addEventListener('keydown',e=>{ if(e.repeat)return
+  if(e.key==='ArrowRight'||e.key==='d')key.gas=true
+  if(e.key==='ArrowLeft'||e.key==='a')key.re=true
+  if(e.key==='ArrowUp'||e.key==='w')key.back=true
+  if(e.key==='ArrowDown'||e.key==='s')key.fwd=true
+  if(e.key===' ')ejetar(); if(e.key==='r'||e.key==='R')reiniciar() })
+addEventListener('keyup',e=>{
+  if(e.key==='ArrowRight'||e.key==='d')key.gas=false
+  if(e.key==='ArrowLeft'||e.key==='a')key.re=false
+  if(e.key==='ArrowUp'||e.key==='w')key.back=false
+  if(e.key==='ArrowDown'||e.key==='s')key.fwd=false })
+document.getElementById('btn-reset').onclick=reiniciar
+
+function controlar(){
+  if(!montado) return
+  const vx=chassi.velocity.x, dir=key.gas?1:key.re?-1:0
+  chassi.gas=(chassi.gas||0)+(dir-(chassi.gas||0))*0.07
+  if(Math.abs(chassi.gas)>0.02 && (Math.abs(vx)<11 || Math.sign(vx)!==Math.sign(chassi.gas))){
+    const F=chassi.mass*0.0016*chassi.gas*(chassi.gas>0?1:0.7)
+    Body.applyForce(chassi,{x:chassi.position.x,y:chassi.position.y+30},{x:F,y:0})
+  }
+  Body.setAngularVelocity(roda, vx/(roda.circleRadius))
+  const leaning=key.back||key.fwd
+  if(key.back) Body.setAngularVelocity(chassi, chassi.angularVelocity-0.02)
+  if(key.fwd)  Body.setAngularVelocity(chassi, chassi.angularVelocity+0.02)
+  if(!leaning){ const corr=-chassi.angle*0.16 - chassi.angularVelocity*0.14
+    Body.setAngularVelocity(chassi, chassi.angularVelocity+corr) }
+}
+
+/* ---- colisões: sangue + desmembramento ---- */
+function iniColisoes(){
+  Events.on(engine,'collisionStart',ev=>{
+    for(const pr of ev.pairs){
+      const chao=[pr.bodyA,pr.bodyB].find(b=>b.bdata)
+      const parte=[pr.bodyA,pr.bodyB].find(b=>b.sprite)
+      if(montado && chao && [pr.bodyA,pr.bodyB].includes(chassi)){
+        const v=Math.hypot(chassi.velocity.x,chassi.velocity.y)
+        if(v>9){ soltarRagdoll(true) }   // bateu com o veículo -> capota
+      }
+      if(chao && parte){
+        const v=Math.hypot(parte.velocity.x,parte.velocity.y)
+        if(v>14){ jorrar(parte.position, parte.sprite==='cabeca'?14:7)
+          if(v>19) desmembrar(parte) }
+      }
+    }
+  })
+}
+function desmembrar(parte){
+  if(!ragdoll) return
+  for(const c of [...ragdoll.juntas]){
+    if((c.bodyA===parte||c.bodyB===parte) && !c.quebrou){ c.quebrou=true; Composite.remove(mundo,c)
+      ragdoll.juntas.splice(ragdoll.juntas.indexOf(c),1); break }
+  }
+}
+function jorrar(pos,n){ for(let i=0;i<n;i++){ const a=Math.random()*6.28,s=1+Math.random()*6
+  sangue.push({x:pos.x,y:pos.y,vx:Math.cos(a)*s,vy:Math.sin(a)*s-3,r:2+Math.random()*4,vida:1}) } }
+function passoSangue(){ for(const p of sangue){ p.vx*=0.98;p.vy+=0.35;p.x+=p.vx;p.y+=p.vy;p.vida-=0.012 }
+  sangue=sangue.filter(p=>p.vida>0); if(sangue.length>600)sangue.splice(0,sangue.length-600) }
+
+/* ---- loop ---- */
+function tick(){
+  controlar(); Engine.update(engine,1000/60); passoSangue()
+  const foco = montado?chassi : (ragdoll?ragdoll.partes.tronco:chassi)
+  cam.x+=(foco.position.x-cam.x)*0.12; cam.y+=((foco.position.y-20)-cam.y)*0.1
+  cam.zoom += (Math.min(W/780,H/780)*1.15 - cam.zoom)*0.1
+  document.getElementById('dist').textContent = Math.max(0,Math.round((chassi.position.x-320)/40))+' m'
+  if(montado && chassi.position.y>1300) soltarRagdoll(false)
+  desenhar(); requestAnimationFrame(tick)
+}
+
+/* ---- desenho ---- */
+function desenhar(){
+  ctx.clearRect(0,0,W,H)
+  const sky=ctx.createLinearGradient(0,0,0,H); sky.addColorStop(0,'#8ec5e8'); sky.addColorStop(1,'#d9ecf5')
+  ctx.fillStyle=sky; ctx.fillRect(0,0,W,H)
+  morros()
+  ctx.save(); ctx.translate(W/2,H*0.6); ctx.scale(cam.zoom,cam.zoom); ctx.translate(-cam.x,-cam.y)
+  fase()
+  // roda (sempre, gira)
+  pecaEm('roda', [roda.position.x,roda.position.y], roda.angle)
+  if(montado){
+    const QM=[chassi.position.x,chassi.position.y], A=chassi.angle
+    for(const k of ['poste','perna','tronco','braco','cabeca']) montada(k,QM,A)
+  } else {
+    // poste segue o chassi (faz parte do veículo)
+    pecaEm('poste', arteParaMundo(...centroArte('poste'), [chassi.position.x,chassi.position.y], chassi.angle), chassi.angle)
+    if(ragdoll) for(const k of ['perna','tronco','braco','cabeca']){ const b=ragdoll.partes[k]
+      pecaEm(k,[b.position.x,b.position.y], b.angle) }
+  }
+  sangueDesenho()
+  ctx.restore()
+}
+function montada(k,QM,A){ const [cx,cy]=centroArte(k); pecaEm(k, arteParaMundo(cx,cy,QM,A), A) }
+function pecaEm(k, pos, ang){ const p=META[k]
+  ctx.save(); ctx.translate(pos[0],pos[1]); ctx.rotate(ang); ctx.scale(ESC,ESC)
+  ctx.drawImage(IMGS[k], -p.w/2, -p.h/2); ctx.restore() }
+function morros(){ const base=H*0.72
+  for(let k=0;k<2;k++){ const f=k?0.5:0.25,col=k?'#9ac29f':'#bcd9c0'
+    ctx.fillStyle=col; ctx.beginPath(); ctx.moveTo(0,H)
+    for(let x=0;x<=W;x+=40){ const wx=cam.x*f+x; ctx.lineTo(x, base-k*50+Math.sin(wx*0.004+k)*40+Math.sin(wx*0.001)*30) }
+    ctx.lineTo(W,H); ctx.closePath(); ctx.fill() } }
+function fase(){ for(const b of Composite.allBodies(mundo)){ const bd=b.bdata; if(!bd)continue
+  ctx.save(); ctx.translate(b.position.x,b.position.y); ctx.rotate(b.angle)
+  ctx.fillStyle='#6b5a45'; ctx.fillRect(-bd.w/2,-bd.h/2,bd.w,bd.h)
+  ctx.fillStyle='#5a8f3a'; ctx.fillRect(-bd.w/2,-bd.h/2,bd.w,10)
+  ctx.restore() } }
+function sangueDesenho(){ for(const p of sangue){ ctx.globalAlpha=Math.max(0,Math.min(1,p.vida))
+  ctx.fillStyle='#b4121b'; ctx.beginPath(); ctx.arc(p.x,p.y,p.r,0,7); ctx.fill() } ctx.globalAlpha=1 }
+
+function reiniciar(){ if(engine)Engine.clear(engine); sangue=[]; novoMundo(); iniColisoes()
+  cam={x:chassi.position.x,y:chassi.position.y,zoom:Math.min(W/780,H/780)*1.15} }
+
+preload(()=>{ document.getElementById('carregando').style.display='none'; reiniciar(); tick() })
+</script>
+</body>
+</html>
