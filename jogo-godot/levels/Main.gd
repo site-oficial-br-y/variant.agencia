@@ -91,43 +91,64 @@ func _construir_chao() -> void:
 	_bloco(Vector2(5600, CHAO_Y + 230), Vector2(2000, 300), 0.0)      # depois da parede
 
 # ---------- HUD ----------
+func _estilo_botao() -> StyleBoxFlat:
+	var st := StyleBoxFlat.new()
+	st.bg_color = Color(0, 0, 0, 0.35)
+	st.set_corner_radius_all(14)
+	st.set_border_width_all(3)
+	st.border_color = Color(1, 1, 1, 0.5)
+	return st
+
 func _botao(texto: String, pos: Vector2, tam: Vector2, acao: String) -> void:
 	var b := Button.new()
 	b.text = texto
 	b.position = pos
 	b.custom_minimum_size = tam
 	b.focus_mode = Control.FOCUS_NONE
+	b.add_theme_font_size_override("font_size", 26)
+	for k in ["normal", "hover", "pressed"]:
+		b.add_theme_stylebox_override(k, _estilo_botao())
 	$HUD.add_child(b)
-	if acao == "eject":
-		b.pressed.connect(func(): if is_instance_valid(player): player.soltar_ragdoll(player.chassi.linear_velocity, true))
-	elif acao == "reset":
+	if acao == "reset":
 		b.pressed.connect(func(): get_tree().reload_current_scene())
 	elif acao == "menu":
 		b.pressed.connect(func(): get_tree().change_scene_to_file("res://levels/Menu.tscn"))
-	else:
-		b.button_down.connect(func(): Input.action_press(acao))
-		b.button_up.connect(func(): Input.action_release(acao))
+
+## botão de toque (multitoque de verdade) que dispara a ação direto no Input
+func _toque(icone: String, pos: Vector2, tam: float, acao: String) -> void:
+	var t := TouchScreenButton.new()
+	t.texture_normal = load("res://assets/ui/%s.png" % icone)
+	t.position = pos
+	t.scale = Vector2.ONE * tam / 200.0
+	t.action = acao
+	var sh := CircleShape2D.new()
+	sh.radius = 100.0
+	t.shape = sh
+	t.shape_centered = true
+	$HUD.add_child(t)
 
 func _construir_hud() -> void:
 	var cl := CanvasLayer.new()
 	cl.name = "HUD"
 	add_child(cl)
 	dist_label = Label.new()
-	dist_label.position = Vector2(20, 16)
-	dist_label.add_theme_font_size_override("font_size", 28)
+	dist_label.position = Vector2(24, 14)
+	dist_label.add_theme_font_size_override("font_size", 40)
+	dist_label.add_theme_color_override("font_outline_color", Color.BLACK)
+	dist_label.add_theme_constant_override("outline_size", 10)
 	cl.add_child(dist_label)
 	var vp := get_viewport().get_visible_rect().size
-	_botao("GÁS", Vector2(vp.x - 150, vp.y - 150), Vector2(120, 90), "accelerate")
-	_botao("RÉ", Vector2(vp.x - 150, vp.y - 250), Vector2(120, 70), "brake")
-	_botao("<", Vector2(30, vp.y - 120), Vector2(90, 90), "lean_back")
-	_botao(">", Vector2(140, vp.y - 120), Vector2(90, 90), "lean_fwd")
-	_botao("PULA", Vector2(vp.x - 150, vp.y - 340), Vector2(120, 70), "eject")
-	_botao("R", Vector2(vp.x - 90, 12), Vector2(70, 56), "reset")
-	_botao("TROCAR", Vector2(vp.x - 250, 12), Vector2(140, 56), "menu")
+	_toque("gira_tras", Vector2(36, vp.y - 210), 180, "lean_back")
+	_toque("gira_frente", Vector2(236, vp.y - 210), 180, "lean_fwd")
+	_toque("re", Vector2(vp.x - 400, vp.y - 185), 155, "brake")
+	_toque("gas", Vector2(vp.x - 225, vp.y - 225), 200, "accelerate")
+	_toque("pula", Vector2(vp.x - 185, vp.y - 390), 145, "eject")
+	_botao("R", Vector2(vp.x - 96, 14), Vector2(80, 64), "reset")
+	_botao("TROCAR", Vector2(vp.x - 290, 14), Vector2(180, 64), "menu")
 	aviso = Label.new()
-	aviso.text = "VOCÊ MORREU\naperta R"
+	aviso.text = "MORREU!\naperta R"
 	aviso.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	aviso.add_theme_font_size_override("font_size", 52)
+	aviso.add_theme_font_size_override("font_size", 72)
 	aviso.add_theme_color_override("font_color", Color(1, 0.3, 0.25))
 	aviso.add_theme_color_override("font_outline_color", Color.BLACK)
 	aviso.add_theme_constant_override("outline_size", 10)

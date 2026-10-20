@@ -12,9 +12,9 @@ signal morreu
 @export var spawn_x: float = 600.0
 @export var balance_stiffness: float = 55.0
 @export var balance_damping: float = 14.0
-@export var limiar_sangue: float = 420.0       # Δv (px/s) num passo que conta como pancada
-@export var limiar_arranca: float = 1750.0     # Δv que arranca o membro
-@export var limiar_queda_montado: float = 1500.0
+@export var limiar_sangue: float = 750.0       # Δv (px/s) num passo que conta como pancada
+@export var limiar_arranca: float = 2700.0     # Δv que arranca o membro
+@export var limiar_queda_montado: float = 2400.0
 
 var D: Dictionary = {}
 var origem := Vector2.ZERO         # ponto da arte que é a origem do corpo do chassi

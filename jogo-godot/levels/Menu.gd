@@ -1,62 +1,63 @@
 extends Control
-## Tela inicial: escolher o personagem e entrar no nível.
+## Seleção de personagem no estilo Happy Wheels: rostos em quadros no topo,
+## o escolhido grande em cima da pedra, ✓ pra confirmar.
 
-const OPCOES := [
-	["segway", "O DO SEGWAY"],
-	["cadeira", "O DA CADEIRA"],
-	["scooter", "O DA SCOOTER"],
-]
+const OPCOES := ["segway", "cadeira", "scooter"]
+const SLOTS := 7                    # quadros vazios = personagens que ainda vão vir
+
+var atual := 0
+var preview: TextureRect
+var quadros: Array = []
 
 func _ready() -> void:
 	set_anchors_preset(Control.PRESET_FULL_RECT)
-	var fundo := ColorRect.new()
-	fundo.color = Color(0.09, 0.08, 0.13)
+	atual = maxi(0, OPCOES.find(Game.personagem))
+	var fundo := TextureRect.new()
+	fundo.texture = load("res://assets/ui/fundo.png")
 	fundo.set_anchors_preset(Control.PRESET_FULL_RECT)
+	fundo.stretch_mode = TextureRect.STRETCH_SCALE
 	add_child(fundo)
 
-	var col := VBoxContainer.new()
-	col.set_anchors_preset(Control.PRESET_FULL_RECT)
-	col.alignment = BoxContainer.ALIGNMENT_CENTER
-	col.add_theme_constant_override("separation", 18)
-	add_child(col)
+	var logo := TextureRect.new()
+	logo.texture = load("res://assets/ui/logo.png")
+	logo.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+	logo.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+	logo.position = Vector2(20, 14)
+	logo.size = Vector2(250, 136)
+	add_child(logo)
 
-	var titulo := Label.new()
-	titulo.text = "CAPOTA BRASIL"
-	titulo.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	titulo.add_theme_font_size_override("font_size", 56)
-	titulo.add_theme_color_override("font_color", Color(1, 0.82, 0.25))
-	col.add_child(titulo)
+	var lado := 100.0
+	var x0 := 640.0 - (SLOTS * (lado + 12) - 12) / 2.0 + 60
+	for i in SLOTS:
+		var q := Panel.new()
+		q.position = Vector2(x0 + i * (lado + 12), 24)
+		q.size = Vector2(lado, lado)
+		add_child(q)
+		if i < OPCOES.size():
+			var b := TextureButton.new()
+			b.ignore_texture_size = true
+			b.stretch_mode = TextureButton.STRETCH_KEEP_ASPECT_CENTERED
+			b.set_anchors_preset(Control.PRESET_FULL_RECT)
+			b.offset_left = 6; b.offset_top = 6; b.offset_right = -6; b.offset_bottom = -6
+			b.pressed.connect(_selecionar.bind(i))
+			q.add_child(b)
+		quadros.append(q)
 
-	var sub := Label.new()
-	sub.text = "escolhe o vacilão"
-	sub.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	sub.add_theme_font_size_override("font_size", 22)
-	sub.modulate = Color(1, 1, 1, 0.6)
-	col.add_child(sub)
+	var pedra := TextureRect.new()
+	pedra.texture = load("res://assets/ui/pedra.png")
+	pedra.position = Vector2(640 - 300, 590)
+	add_child(pedra)
 
-	var linha := HBoxContainer.new()
-	linha.alignment = BoxContainer.ALIGNMENT_CENTER
-	linha.add_theme_constant_override("separation", 22)
-	col.add_child(linha)
+	preview = TextureRect.new()
+	preview.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+	preview.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+	preview.position = Vector2(640 - 260, 168)
+	preview.size = Vector2(520, 440)
+	add_child(preview)
 
-	var alt := get_viewport().get_visible_rect().size.y * 0.55
-	for op in OPCOES:
-		var caixa := VBoxContainer.new()
-		caixa.add_theme_constant_override("separation", 6)
-		var b := TextureButton.new()
-		b.texture_normal = load("res://assets/menu/%s.png" % op[0])
-		b.ignore_texture_size = true
-		b.stretch_mode = TextureButton.STRETCH_KEEP_ASPECT_CENTERED
-		var tex: Texture2D = b.texture_normal
-		b.custom_minimum_size = Vector2(alt * tex.get_width() / tex.get_height(), alt)
-		b.pressed.connect(_escolher.bind(op[0]))
-		caixa.add_child(b)
-		var nome := Button.new()
-		nome.text = op[1]
-		nome.add_theme_font_size_override("font_size", 22)
-		nome.pressed.connect(_escolher.bind(op[0]))
-		caixa.add_child(nome)
-		linha.add_child(caixa)
+	var ok := _botao("confirma", Vector2(1110, 560), 140)
+	ok.pressed.connect(_jogar)
+	_atualizar()
 
 	if "screenshot" in OS.get_cmdline_user_args():
 		for i in 3:
@@ -64,6 +65,43 @@ func _ready() -> void:
 		get_viewport().get_texture().get_image().save_png("user://menu.png")
 		get_tree().quit()
 
-func _escolher(p: String) -> void:
-	Game.personagem = p
+func _botao(icone: String, pos: Vector2, tam: float) -> TextureButton:
+	var b := TextureButton.new()
+	b.texture_normal = load("res://assets/ui/%s.png" % icone)
+	b.ignore_texture_size = true
+	b.stretch_mode = TextureButton.STRETCH_SCALE
+	b.position = pos
+	b.size = Vector2(tam, tam)
+	add_child(b)
+	return b
+
+func _estilo(destaque: bool) -> StyleBoxFlat:
+	var s := StyleBoxFlat.new()
+	s.bg_color = Color(1, 1, 1, 0.16 if destaque else 0.06)
+	s.set_border_width_all(5 if destaque else 3)
+	s.border_color = Color(1, 1, 1, 0.95 if destaque else 0.35)
+	s.shadow_color = Color(1, 1, 1, 0.45 if destaque else 0.0)
+	s.shadow_size = 10 if destaque else 0
+	return s
+
+func _atualizar() -> void:
+	for i in quadros.size():
+		var q: Panel = quadros[i]
+		q.add_theme_stylebox_override("panel", _estilo(i == atual))
+		if i < OPCOES.size():
+			var b: TextureButton = q.get_child(0)
+			var nome: String = OPCOES[i] if i == atual else OPCOES[i] + "_cinza"
+			b.texture_normal = load("res://assets/ui/rosto_%s.png" % nome)
+	var tex: Texture2D = load("res://assets/menu/%s.png" % OPCOES[atual])
+	preview.texture = tex
+	var h := minf(440.0, 560.0 * tex.get_height() / tex.get_width())     # cabe em 560x440
+	preview.size = Vector2(h * tex.get_width() / tex.get_height(), h)
+	preview.position = Vector2(640 - preview.size.x / 2.0, 612 - h)          # em pé na pedra
+
+func _selecionar(i: int) -> void:
+	atual = i
+	_atualizar()
+
+func _jogar() -> void:
+	Game.personagem = OPCOES[atual]
 	get_tree().change_scene_to_file("res://levels/Main.tscn")
