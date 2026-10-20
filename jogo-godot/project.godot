@@ -1,0 +1,17 @@
+; Projeto Godot 4.3 — Capota Brasil (protótipo segway com ragdoll da própria arte)
+config_version=5
+
+[application]
+config/name="Capota Brasil"
+run/main_scene="res://levels/Main.tscn"
+config/features=PackedStringArray("4.3")
+
+[autoload]
+Game="*res://autoload/Game.gd"
+
+[physics]
+2d/default_gravity=980.0
+common/physics_ticks_per_second=60
+
+[rendering]
+textures/canvas_textures/default_texture_filter=1
