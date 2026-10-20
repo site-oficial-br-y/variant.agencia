@@ -20,7 +20,11 @@ func _ready() -> void:
 	_mat.bounce = 0.0
 	_construir_chao()
 
+	for a in OS.get_cmdline_user_args():
+		if a.begins_with("p="):
+			Game.personagem = a.substr(2)
 	player = Player.new()
+	player.personagem = Game.personagem
 	player.chao_y = CHAO_Y
 	player.spawn_x = SPAWN_X
 	add_child(player)
@@ -30,7 +34,8 @@ func _ready() -> void:
 	player.morreu.connect(_on_morreu)
 
 	camera = FollowCamera.new()
-	camera.zoom = Vector2(0.48, 0.48)
+	camera.zoom = Vector2(0.44, 0.44)
+	camera.offset = Vector2(260, -170)        # olha pra frente e mostra a cabeça
 	add_child(camera)
 	camera.alvo = player.foco()
 
@@ -97,6 +102,8 @@ func _botao(texto: String, pos: Vector2, tam: Vector2, acao: String) -> void:
 		b.pressed.connect(func(): if is_instance_valid(player): player.soltar_ragdoll(player.chassi.linear_velocity, true))
 	elif acao == "reset":
 		b.pressed.connect(func(): get_tree().reload_current_scene())
+	elif acao == "menu":
+		b.pressed.connect(func(): get_tree().change_scene_to_file("res://levels/Menu.tscn"))
 	else:
 		b.button_down.connect(func(): Input.action_press(acao))
 		b.button_up.connect(func(): Input.action_release(acao))
@@ -116,6 +123,7 @@ func _construir_hud() -> void:
 	_botao(">", Vector2(140, vp.y - 120), Vector2(90, 90), "lean_fwd")
 	_botao("PULA", Vector2(vp.x - 150, vp.y - 340), Vector2(120, 70), "eject")
 	_botao("R", Vector2(vp.x - 90, 12), Vector2(70, 56), "reset")
+	_botao("TROCAR", Vector2(vp.x - 250, 12), Vector2(140, 56), "menu")
 	aviso = Label.new()
 	aviso.text = "VOCÊ MORREU\naperta R"
 	aviso.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
@@ -160,7 +168,7 @@ func _rodar_teste() -> void:
 	await _esperar(2.5)
 	print("[SANGUE] manchas=%d  gotas_no_ar=%d  juntas_restantes=%d" % [sangue.manchas.size(), sangue.gotas.size(), player.juntas.size()])
 
-	var ok := rot_spawn < 0.35 and dx > 150.0 and player.corpos.size() == 4 and vmax < 8000.0 \
+	var ok: bool = rot_spawn < 0.35 and dx > 150.0 and player.corpos.size() == player.D["piloto"].size() and vmax < 8000.0 \
 		and sangue.manchas.size() > 10 and not player.juntas.has("braco")
 	print("[RESULTADO] ", "PASS" if ok else "FALHA")
 	get_tree().quit()

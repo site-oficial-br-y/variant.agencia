@@ -2,16 +2,16 @@
 
 importer="texture"
 type="CompressedTexture2D"
-uid="uid://cbn6r32bt3fmp"
-path="res://.godot/imported/poste.png-1d87df5be2abe4aade100985a8e25643.ctex"
+uid="uid://g1amd2vfmht0"
+path="res://.godot/imported/canela.png-01f6398b939ebf14cd85f68658bf4135.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://assets/seg/poste.png"
-dest_files=["res://.godot/imported/poste.png-1d87df5be2abe4aade100985a8e25643.ctex"]
+source_file="res://assets/cadeira/canela.png"
+dest_files=["res://.godot/imported/canela.png-01f6398b939ebf14cd85f68658bf4135.ctex"]
 
 [params]
 

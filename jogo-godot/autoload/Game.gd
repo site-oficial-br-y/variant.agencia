@@ -6,6 +6,7 @@ signal estado_mudou(novo)
 
 enum Estado { JOGANDO, MORTO, VITORIA }
 var estado: int = Estado.JOGANDO
+var personagem: String = "segway"
 
 const ACOES := {
 	"accelerate": [KEY_RIGHT, KEY_D],

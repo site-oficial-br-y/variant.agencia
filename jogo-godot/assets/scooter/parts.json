@@ -1,0 +1,241 @@
+{
+ "nome": "scooter",
+ "src_w": 866,
+ "src_h": 1053,
+ "ordem": [
+  "tras",
+  "roda0",
+  "roda1",
+  "cabeca",
+  "tronco",
+  "perna",
+  "braco",
+  "frente"
+ ],
+ "pecas": {
+  "tras": {
+   "x": 16,
+   "y": 206,
+   "w": 485,
+   "h": 565
+  },
+  "roda0": {
+   "x": 29,
+   "y": 833,
+   "w": 219,
+   "h": 219
+  },
+  "roda1": {
+   "x": 657,
+   "y": 850,
+   "w": 201,
+   "h": 201
+  },
+  "cabeca": {
+   "x": 198,
+   "y": 0,
+   "w": 357,
+   "h": 353
+  },
+  "tronco": {
+   "x": 183,
+   "y": 295,
+   "w": 337,
+   "h": 408
+  },
+  "perna": {
+   "x": 309,
+   "y": 620,
+   "w": 211,
+   "h": 191
+  },
+  "braco": {
+   "x": 284,
+   "y": 322,
+   "w": 299,
+   "h": 161
+  },
+  "frente": {
+   "x": 0,
+   "y": 353,
+   "w": 866,
+   "h": 700
+  }
+ },
+ "corpo_de": {
+  "tras": "chassi",
+  "frente": "chassi",
+  "roda0": "roda0",
+  "roda1": "roda1",
+  "cabeca": "cabeca",
+  "tronco": "tronco",
+  "braco": "braco",
+  "perna": "perna"
+ },
+ "piloto": [
+  "tronco",
+  "cabeca",
+  "braco",
+  "perna"
+ ],
+ "rodas": [
+  {
+   "corpo": "roda0",
+   "c": [
+    138.0,
+    942.0
+   ],
+   "r": 109,
+   "massa": 2.0,
+   "motriz": true
+  },
+  {
+   "corpo": "roda1",
+   "c": [
+    757.0,
+    950.0
+   ],
+   "r": 100,
+   "massa": 1.6,
+   "motriz": false
+  }
+ ],
+ "chassi": {
+  "massa": 9.0,
+  "auto_equilibrio": false,
+  "vmax": 840.0,
+  "forca": 140000.0,
+  "poly": [
+   [
+    30,
+    360
+   ],
+   [
+    205,
+    360
+   ],
+   [
+    205,
+    640
+   ],
+   [
+    560,
+    640
+   ],
+   [
+    610,
+    470
+   ],
+   [
+    845,
+    470
+   ],
+   [
+    866,
+    1000
+   ],
+   [
+    0,
+    1000
+   ],
+   [
+    0,
+    760
+   ],
+   [
+    30,
+    760
+   ]
+  ]
+ },
+ "corpos": {
+  "cabeca": {
+   "massa": 1.2,
+   "forma": [
+    "circ",
+    [
+     378,
+     152
+    ],
+    158
+   ]
+  },
+  "tronco": {
+   "massa": 2.4,
+   "forma": [
+    "caps",
+    [
+     330,
+     360
+    ],
+    [
+     330,
+     620
+    ],
+    128
+   ]
+  },
+  "braco": {
+   "massa": 0.5,
+   "forma": [
+    "caps",
+    [
+     345,
+     360
+    ],
+    [
+     570,
+     420
+    ],
+    40
+   ]
+  },
+  "perna": {
+   "massa": 1.2,
+   "forma": [
+    "caps",
+    [
+     340,
+     660
+    ],
+    [
+     355,
+     770
+    ],
+    88
+   ]
+  }
+ },
+ "juntas": [
+  {
+   "a": "tronco",
+   "b": "cabeca",
+   "p": [
+    372,
+    312
+   ],
+   "lim": 35,
+   "teste": -25
+  },
+  {
+   "a": "tronco",
+   "b": "braco",
+   "p": [
+    345,
+    352
+   ],
+   "lim": 80,
+   "teste": -45
+  },
+  {
+   "a": "tronco",
+   "b": "perna",
+   "p": [
+    335,
+    640
+   ],
+   "lim": 60,
+   "teste": 30
+  }
+ ]
+}

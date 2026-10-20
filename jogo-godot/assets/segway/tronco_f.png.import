@@ -2,16 +2,16 @@
 
 importer="texture"
 type="CompressedTexture2D"
-uid="uid://br2e5q0o58bqe"
-path="res://.godot/imported/tronco_f.png-df6acbf997c809e8900b504d6a5f6411.ctex"
+uid="uid://bomibxsdw3fh5"
+path="res://.godot/imported/tronco_f.png-45bb7d56f184a82c87574996072f4fae.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://assets/seg/tronco_f.png"
-dest_files=["res://.godot/imported/tronco_f.png-df6acbf997c809e8900b504d6a5f6411.ctex"]
+source_file="res://assets/segway/tronco_f.png"
+dest_files=["res://.godot/imported/tronco_f.png-45bb7d56f184a82c87574996072f4fae.ctex"]
 
 [params]
 

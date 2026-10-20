@@ -2,16 +2,16 @@
 
 importer="texture"
 type="CompressedTexture2D"
-uid="uid://cj5sx13y7jots"
-path="res://.godot/imported/cabeca.png-8cd9fed5d42731a38b670b0cde8a9d80.ctex"
+uid="uid://chwxlduxe6dj7"
+path="res://.godot/imported/braco.png-39badd01cdaf1bd91668a5301c6860ea.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://assets/seg/cabeca.png"
-dest_files=["res://.godot/imported/cabeca.png-8cd9fed5d42731a38b670b0cde8a9d80.ctex"]
+source_file="res://assets/scooter/braco.png"
+dest_files=["res://.godot/imported/braco.png-39badd01cdaf1bd91668a5301c6860ea.ctex"]
 
 [params]
 

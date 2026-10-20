@@ -2,16 +2,16 @@
 
 importer="texture"
 type="CompressedTexture2D"
-uid="uid://c78k2e6btyan5"
-path="res://.godot/imported/roda.png-3b9571102977282648f20192d08c8aad.ctex"
+uid="uid://d3teuskfpl16f"
+path="res://.godot/imported/cadeira.png-0fba60f2c42eb898c7da74c1dbf18229.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://assets/seg/roda.png"
-dest_files=["res://.godot/imported/roda.png-3b9571102977282648f20192d08c8aad.ctex"]
+source_file="res://assets/menu/cadeira.png"
+dest_files=["res://.godot/imported/cadeira.png-0fba60f2c42eb898c7da74c1dbf18229.ctex"]
 
 [params]
 

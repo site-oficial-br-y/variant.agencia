@@ -2,16 +2,16 @@
 
 importer="texture"
 type="CompressedTexture2D"
-uid="uid://bpwej2qfvrhrd"
-path="res://.godot/imported/perna.png-9dbdedfce587b474a6ce9d81ec32c416.ctex"
+uid="uid://bb5i3kbourhx8"
+path="res://.godot/imported/roda1.png-404cce5e39988c9ac2a8e0943eeb59cd.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://assets/seg/perna.png"
-dest_files=["res://.godot/imported/perna.png-9dbdedfce587b474a6ce9d81ec32c416.ctex"]
+source_file="res://assets/scooter/roda1.png"
+dest_files=["res://.godot/imported/roda1.png-404cce5e39988c9ac2a8e0943eeb59cd.ctex"]
 
 [params]
 

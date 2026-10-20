@@ -1,161 +1,202 @@
 extends Node2D
 class_name Player
-## Segway com o boneco montado (a arte inteira dirigindo) que, ao capotar / pular
-## fora / pousar forte, vira um ragdoll feito das PRÓPRIAS peças recortadas da
-## imagem. Impacto -> sangue; impacto muito forte -> membro arrancado esguichando.
+## Veículo + piloto montados a partir de res://assets/<personagem>/parts.json.
+## Montado: a arte inteira presa ao chassi. Bateu / capotou / pulou fora: o piloto
+## vira ragdoll feito das PRÓPRIAS peças recortadas. Pancada -> sangue; pancada
+## muito forte -> membro arrancado esguichando.
 
-# --- tuning ---
-@export var drive_power: float = 90000.0
-@export var max_speed: float = 900.0
-@export var balance_stiffness: float = 55.0
-@export var balance_damping: float = 14.0
+signal morreu
+
+@export var personagem: String = "segway"
 @export var chao_y: float = 1000.0
 @export var spawn_x: float = 600.0
+@export var balance_stiffness: float = 55.0
+@export var balance_damping: float = 14.0
 @export var limiar_sangue: float = 420.0       # Δv (px/s) num passo que conta como pancada
 @export var limiar_arranca: float = 1750.0     # Δv que arranca o membro
 @export var limiar_queda_montado: float = 1500.0
 
-const TOPO_CHASSI := 200.0                     # y da arte onde o "mastro" começa (ombro)
-const CORPOS := ["perna", "cabeca", "tronco", "braco"]
-# junta: membro -> [pivô (nome no tronco), limite em graus, direção do esguicho no membro]
-const JUNTAS := {
-	"cabeca": ["pescoco", 40.0],
-	"braco": ["ombro", 75.0],
-	"perna": ["quadril", 55.0],
-}
-const MASSA := {"chassi": 5.0, "roda": 2.0, "perna": 1.4, "tronco": 2.0, "braco": 0.5, "cabeca": 0.8}
-# forma de colisão por peça, em coords da arte: [tipo, a, b, raio]
-const FORMAS := {
-	"cabeca": ["circ", Vector2(238, 112), Vector2.ZERO, 92.0],
-	"tronco": ["caps", Vector2(190, 250), Vector2(140, 585), 82.0],
-	"braco": ["caps", Vector2(178, 384), Vector2(345, 590), 30.0],
-	"perna": ["caps", Vector2(140, 630), Vector2(120, 1075), 52.0],
-}
-
-var META: Dictionary = {}
-var ORDEM: Array = []
-var ANCORA := Vector2.ZERO
-var RODA_C := Vector2.ZERO
-var RODA_R := 150.0
-
+var D: Dictionary = {}
+var origem := Vector2.ZERO         # ponto da arte que é a origem do corpo do chassi
+var desloc := Vector2.ZERO         # arte -> mundo no spawn
 var chassi: RigidBody2D
 var inercia_chassi := 1.0
-var roda: RigidBody2D
+var rodas: Array = []
+var roda_motriz: RigidBody2D
 var boneco: Node2D
-var sprites: Dictionary = {}
-var corpos: Dictionary = {}
-var juntas: Dictionary = {}       # membro -> PinJoint2D
-var v_ant: Dictionary = {}        # corpo -> velocidade do passo anterior
+var sprites: Dictionary = {}       # peça -> Sprite2D
+var corpos: Dictionary = {}        # corpo do piloto -> RigidBody2D
+var juntas: Dictionary = {}        # corpo filho -> PinJoint2D
+var v_ant: Dictionary = {}
 var v_roda_ant := Vector2.ZERO
 var montado := true
 var morto := false
 var sangue: Sangue
 var _mat: PhysicsMaterial
 
-signal morreu
-
 func _ready() -> void:
-	var f := FileAccess.open("res://assets/seg/parts.json", FileAccess.READ)
-	var dados: Dictionary = JSON.parse_string(f.get_as_text())
-	META = dados["pecas"]
-	ORDEM = dados["ordem"]
-	var r: Dictionary = META["roda"]
-	RODA_C = Vector2(r["x"] + r["piv"]["centro"][0], r["y"] + r["piv"]["centro"][1])
-	RODA_R = r["r"]
-	ANCORA = Vector2(165.0, (TOPO_CHASSI + RODA_C.y) / 2.0)
+	var f := FileAccess.open("res://assets/%s/parts.json" % personagem, FileAccess.READ)
+	D = JSON.parse_string(f.get_as_text())
 	_mat = PhysicsMaterial.new()
 	_mat.friction = 1.0
 	_mat.bounce = 0.05
 	_montar()
 
-# ---------- geometria da arte ----------
-func centro_arte(k: String) -> Vector2:
-	var p: Dictionary = META[k]
-	return Vector2(p["x"] + p["w"] / 2.0, p["y"] + p["h"] / 2.0)
+# ---------- helpers ----------
+func v2(a: Array) -> Vector2:
+	return Vector2(a[0], a[1])
 
-func piv_arte(k: String, nome: String) -> Vector2:
-	var p: Dictionary = META[k]
-	var pv: Array = p["piv"][nome]
-	return Vector2(p["x"] + pv[0], p["y"] + pv[1])
+func centro_peca(k: String) -> Vector2:
+	var p: Dictionary = D["pecas"][k]
+	return Vector2(p["x"] + p["w"] / 2.0, p["y"] + p["h"] / 2.0)
 
 func _sprite(k: String) -> Sprite2D:
 	var s := Sprite2D.new()
-	s.texture = load("res://assets/seg/%s.png" % k)
-	s.z_index = ORDEM.find(k)
+	s.texture = load("res://assets/%s/%s.png" % [personagem, k])
+	s.z_index = D["ordem"].find(k)
 	return s
+
+func _pecas_do(corpo: String) -> Array:
+	var r: Array = []
+	for k in D["ordem"]:
+		if D["corpo_de"].get(k, "") == corpo:
+			r.append(k)
+	return r
+
+func arte_para_mundo(p: Vector2) -> Vector2:
+	return chassi.global_transform * (p - origem)
+
+## forma de colisão de um corpo, posicionada relativa ao ponto `c` da arte
+func _forma_cs(corpo: String, c: Vector2) -> CollisionShape2D:
+	var fm: Array = D["corpos"][corpo]["forma"]
+	var cs := CollisionShape2D.new()
+	if fm[0] == "circ":
+		var sh := CircleShape2D.new()
+		sh.radius = fm[2]
+		cs.shape = sh
+		cs.position = v2(fm[1]) - c
+	else:
+		var a := v2(fm[1])
+		var b := v2(fm[2])
+		var sh := CapsuleShape2D.new()
+		sh.radius = fm[3]
+		sh.height = a.distance_to(b) + 2.0 * fm[3]
+		cs.shape = sh
+		cs.position = (a + b) / 2.0 - c
+		cs.rotation = (b - a).angle() - PI / 2.0
+	return cs
 
 # ---------- montagem ----------
 func _montar() -> void:
-	var altura := RODA_C.y - TOPO_CHASSI
-	var chassi_pos := Vector2(spawn_x, chao_y - RODA_R - (RODA_C.y - ANCORA.y))
-	var roda_pos := Vector2(spawn_x + (RODA_C.x - ANCORA.x), chao_y - RODA_R)
+	var ch: Dictionary = D["chassi"]
+	var fundo := 0.0
+	for r in D["rodas"]:
+		fundo = maxf(fundo, r["c"][1] + r["r"])
 
 	chassi = RigidBody2D.new()
-	chassi.position = chassi_pos
-	chassi.mass = MASSA["chassi"]
-	chassi.collision_layer = 0
-	chassi.collision_mask = 0
-	var cs := CollisionShape2D.new()
-	var rect := RectangleShape2D.new()
-	rect.size = Vector2(100, altura)
-	cs.shape = rect
-	chassi.add_child(cs)
+	chassi.mass = ch["massa"]
+	if ch.has("mastro"):
+		# segway: mastro rígido do ombro ao eixo, sem colisão (só a roda toca o chão)
+		var m: Dictionary = ch["mastro"]
+		origem = Vector2(m["x"], (m["y0"] + m["y1"]) / 2.0)
+		var cs := CollisionShape2D.new()
+		var rect := RectangleShape2D.new()
+		rect.size = Vector2(m["w"], m["y1"] - m["y0"])
+		cs.shape = rect
+		chassi.add_child(cs)
+		chassi.collision_layer = 0
+		chassi.collision_mask = 0
+		inercia_chassi = chassi.mass * (rect.size.x * rect.size.x + rect.size.y * rect.size.y) / 12.0
+	else:
+		var pts := PackedVector2Array()
+		for p in ch["poly"]:
+			pts.append(v2(p))
+		origem = _centroide(pts)
+		var poly := CollisionPolygon2D.new()
+		var rel := PackedVector2Array()
+		for p in pts:
+			rel.append(p - origem)
+		poly.polygon = rel
+		chassi.add_child(poly)
+		chassi.collision_layer = 0b010
+		chassi.collision_mask = 0b001
+		chassi.physics_material_override = _mat
+		var bb := Rect2(pts[0], Vector2.ZERO)
+		for p in pts:
+			bb = bb.expand(p)
+		inercia_chassi = chassi.mass * (bb.size.x * bb.size.x + bb.size.y * bb.size.y) / 12.0
+	desloc = Vector2(spawn_x - origem.x, chao_y - fundo)
+	chassi.position = origem + desloc
+	chassi.continuous_cd = RigidBody2D.CCD_MODE_CAST_RAY
 	add_child(chassi)
-	inercia_chassi = chassi.mass * (100.0 * 100.0 + altura * altura) / 12.0
 
-	roda = RigidBody2D.new()
-	roda.position = roda_pos
-	roda.mass = MASSA["roda"]
-	roda.physics_material_override = _mat
-	roda.collision_layer = 0b010
-	roda.collision_mask = 0b001
-	roda.continuous_cd = RigidBody2D.CCD_MODE_CAST_RAY
-	var cr := CollisionShape2D.new()
-	var circ := CircleShape2D.new()
-	circ.radius = RODA_R
-	cr.shape = circ
-	roda.add_child(cr)
-	var sr := _sprite("roda")
-	sr.position = centro_arte("roda") - RODA_C
-	roda.add_child(sr)
-	add_child(roda)
+	for r in D["rodas"]:
+		var c := v2(r["c"])
+		var rb := RigidBody2D.new()
+		rb.position = c + desloc
+		rb.mass = r["massa"]
+		rb.physics_material_override = _mat
+		rb.collision_layer = 0b010
+		rb.collision_mask = 0b001
+		rb.continuous_cd = RigidBody2D.CCD_MODE_CAST_RAY
+		var cs := CollisionShape2D.new()
+		var circ := CircleShape2D.new()
+		circ.radius = r["r"]
+		cs.shape = circ
+		rb.add_child(cs)
+		for k in _pecas_do(r["corpo"]):
+			var s := _sprite(k)
+			s.position = centro_peca(k) - c
+			rb.add_child(s)
+		add_child(rb)
+		var eixo := PinJoint2D.new()
+		add_child(eixo)
+		eixo.global_position = c + desloc
+		eixo.node_a = rb.get_path()
+		eixo.node_b = chassi.get_path()
+		eixo.disable_collision = true
+		rodas.append(rb)
+		if r["motriz"]:
+			roda_motriz = rb
 
-	var eixo := PinJoint2D.new()
-	add_child(eixo)
-	eixo.global_position = roda_pos
-	eixo.node_a = roda.get_path()
-	eixo.node_b = chassi.get_path()
-	eixo.disable_collision = true
-
-	var sp := _sprite("poste")
-	sp.position = centro_arte("poste") - ANCORA
-	chassi.add_child(sp)
+	for k in _pecas_do("chassi"):
+		var s := _sprite(k)
+		s.position = centro_peca(k) - origem
+		chassi.add_child(s)
 
 	boneco = Node2D.new()
 	chassi.add_child(boneco)
-	for k in ORDEM:
-		if k == "roda" or k == "poste":
-			continue
-		var s := _sprite(k)
-		s.position = centro_arte(k) - ANCORA
-		boneco.add_child(s)
-		sprites[k] = s
-	# sensor no formato do corpo: encostou no mundo montado -> voa do veículo
 	var sensor := Area2D.new()
 	sensor.collision_layer = 0
 	sensor.collision_mask = 0b001
-	for k in CORPOS:
-		sensor.add_child(_forma_cs(k, ANCORA))
+	for corpo in D["piloto"]:
+		for k in _pecas_do(corpo):
+			var s := _sprite(k)
+			s.position = centro_peca(k) - origem
+			boneco.add_child(s)
+			sprites[k] = s
+		sensor.add_child(_forma_cs(corpo, origem))
 	chassi.add_child(sensor)
 	sensor.body_entered.connect(_on_corpo_bateu)
 	montado = true
 
+func _centroide(pts: PackedVector2Array) -> Vector2:
+	var area := 0.0
+	var c := Vector2.ZERO
+	for i in pts.size():
+		var a := pts[i]
+		var b := pts[(i + 1) % pts.size()]
+		var cr := a.cross(b)
+		area += cr
+		c += (a + b) * cr
+	return c / (3.0 * area)
+
 func _on_corpo_bateu(_body: Node) -> void:
-	if montado:
-		soltar_ragdoll(_vel(), false)
+	if montado:   # dentro do callback de física não pode criar corpos: adia pro fim do passo
+		soltar_ragdoll.call_deferred(_vel(), false)
 
 # ---------- controle ----------
-func _physics_process(delta: float) -> void:
+func _physics_process(_delta: float) -> void:
 	if Input.is_action_just_pressed("eject"):
 		soltar_ragdoll(_vel(), true)
 	if Input.is_action_just_pressed("reset"):
@@ -169,21 +210,27 @@ func _vel() -> Vector2:
 	return chassi.linear_velocity if is_instance_valid(chassi) else Vector2.ZERO
 
 func _dirigir() -> void:
+	var ch: Dictionary = D["chassi"]
+	var equilibra: bool = ch["auto_equilibrio"]
 	var dir := Input.get_axis("brake", "accelerate")
-	if dir != 0.0 and chassi.linear_velocity.length() < max_speed:
-		chassi.apply_force(Vector2(dir * drive_power, 0.0), Vector2(0, 400).rotated(chassi.rotation))
+	if dir != 0.0 and chassi.linear_velocity.length() < ch["vmax"]:
+		if equilibra:   # segway: empurra embaixo, o equilíbrio segura
+			var baixo: float = (roda_motriz.global_position - chassi.global_position).length() * 0.8
+			chassi.apply_force(Vector2(dir * ch["forca"], 0.0), Vector2(0, baixo).rotated(chassi.rotation))
+		else:           # 2 rodas: pelo centro de massa, sem empinar sozinho (empinar é no botão)
+			chassi.apply_central_force(Vector2(dir * ch["forca"], 0.0))
 	var lean := Input.get_axis("lean_back", "lean_fwd")
 	if lean != 0.0:
-		chassi.apply_torque(lean * inercia_chassi * 8.0)
-	else:
+		chassi.apply_torque(lean * inercia_chassi * (8.0 if equilibra else 5.0))
+	elif equilibra:
 		chassi.apply_torque(inercia_chassi * (-chassi.rotation * balance_stiffness
 			- chassi.angular_velocity * balance_damping))
-	# pouso forte arremessa o piloto; capotou ou caiu no buraco também
-	var dv_roda := (v_roda_ant - roda.linear_velocity).length()
-	v_roda_ant = roda.linear_velocity
-	if dv_roda > limiar_queda_montado:
-		soltar_ragdoll(_vel(), false)
-	elif absf(chassi.rotation) > deg_to_rad(78.0) or chassi.global_position.y > chao_y + 900.0:
+	# pouso/batida forte arremessa o piloto; capotou ou caiu no buraco também
+	var dv := (v_roda_ant - roda_motriz.linear_velocity).length()
+	v_roda_ant = roda_motriz.linear_velocity
+	var tomba := deg_to_rad(78.0 if equilibra else 115.0)
+	if dv > limiar_queda_montado or absf(chassi.rotation) > tomba \
+			or chassi.global_position.y > chao_y + 900.0:
 		soltar_ragdoll(_vel(), false)
 
 # ---------- montado -> ragdoll ----------
@@ -191,65 +238,37 @@ func soltar_ragdoll(herda_vel: Vector2, pulo: bool = false) -> void:
 	if not montado:
 		return
 	montado = false
-	for k in CORPOS:
-		var s: Sprite2D = sprites[k]
-		var gt := s.global_transform
+	var rot := chassi.global_rotation
+	for corpo in D["piloto"]:
+		var base := centro_peca(corpo)          # origem do corpo = centro da peça de mesmo nome
 		var rb := RigidBody2D.new()
-		rb.mass = MASSA[k]
+		rb.mass = D["corpos"][corpo]["massa"]
 		rb.physics_material_override = _mat
 		rb.collision_layer = 0b100
 		rb.collision_mask = 0b001
 		rb.continuous_cd = RigidBody2D.CCD_MODE_CAST_RAY
 		rb.angular_damp = 0.4
-		_forma(rb, k)
+		rb.add_child(_forma_cs(corpo, base))
 		add_child(rb)
-		rb.global_transform = gt
-		s.reparent(rb)
-		s.position = Vector2.ZERO
+		rb.global_transform = Transform2D(rot, arte_para_mundo(base))
+		for k in _pecas_do(corpo):
+			sprites[k].reparent(rb)            # mantém a transform global: zero salto
 		rb.linear_velocity = herda_vel + (Vector2(160, -380) if pulo else Vector2.ZERO)
-		corpos[k] = rb
+		corpos[corpo] = rb
 		v_ant[rb] = rb.linear_velocity
-	# manga (2ª camada do tronco) acompanha o corpo do tronco
-	sprites["tronco_f"].reparent(corpos["tronco"])
+	for j in D["juntas"]:
+		var pj := PinJoint2D.new()
+		add_child(pj)
+		pj.global_position = arte_para_mundo(v2(j["p"]))
+		pj.node_a = corpos[j["a"]].get_path()
+		pj.node_b = corpos[j["b"]].get_path()
+		pj.disable_collision = true
+		pj.softness = 0.0
+		pj.angular_limit_enabled = true
+		pj.angular_limit_lower = -deg_to_rad(j["lim"])
+		pj.angular_limit_upper = deg_to_rad(j["lim"])
+		juntas[j["b"]] = pj
 	boneco.queue_free()
-
-	for membro in JUNTAS:
-		var nome: String = JUNTAS[membro][0]
-		var lim: float = JUNTAS[membro][1]
-		var j := PinJoint2D.new()
-		add_child(j)
-		j.global_position = corpos["tronco"].to_global(piv_arte("tronco", nome) - centro_arte("tronco"))
-		j.node_a = corpos["tronco"].get_path()
-		j.node_b = corpos[membro].get_path()
-		j.disable_collision = true
-		j.softness = 0.0
-		j.angular_limit_enabled = true
-		j.angular_limit_lower = -deg_to_rad(lim)
-		j.angular_limit_upper = deg_to_rad(lim)
-		juntas[membro] = j
-
-func _forma(rb: RigidBody2D, k: String) -> void:
-	rb.add_child(_forma_cs(k, centro_arte(k)))
-
-## forma de colisão da peça `k`, posicionada relativa ao ponto `c` da arte
-func _forma_cs(k: String, c: Vector2) -> CollisionShape2D:
-	var f: Array = FORMAS[k]
-	var cs := CollisionShape2D.new()
-	if f[0] == "circ":
-		var sh := CircleShape2D.new()
-		sh.radius = f[3]
-		cs.shape = sh
-		cs.position = f[1] - c
-	else:
-		var a: Vector2 = f[1]
-		var b: Vector2 = f[2]
-		var sh := CapsuleShape2D.new()
-		sh.radius = f[3]
-		sh.height = a.distance_to(b) + 2.0 * f[3]
-		cs.shape = sh
-		cs.position = (a + b) / 2.0 - c
-		cs.rotation = (b - a).angle() - PI / 2.0
-	return cs
 
 # ---------- pancadas: sangue e desmembramento ----------
 func _checar_pancadas() -> void:
@@ -270,17 +289,19 @@ func _checar_pancadas() -> void:
 			arrancar(k)
 
 func arrancar(membro: String) -> void:
+	if not juntas.has(membro):
+		return
 	var j: PinJoint2D = juntas[membro]
 	var p_global := j.global_position
+	var pai: RigidBody2D = j.get_node(j.node_a)
 	juntas.erase(membro)
 	j.queue_free()
-	var tronco: RigidBody2D = corpos["tronco"]
 	var lado: RigidBody2D = corpos[membro]
 	lado.apply_central_impulse((lado.global_position - p_global).normalized() * 220.0 * lado.mass)
 	if sangue:
 		sangue.jorrar(p_global, 40, 700.0)
-		var no_tronco := tronco.to_local(p_global)
-		sangue.esguichar(tronco, no_tronco, no_tronco.normalized(), 3.5)
+		var no_pai := pai.to_local(p_global)
+		sangue.esguichar(pai, no_pai, no_pai.normalized(), 3.5)
 		var no_membro := lado.to_local(p_global)
 		sangue.esguichar(lado, no_membro, no_membro.normalized(), 2.0)
 

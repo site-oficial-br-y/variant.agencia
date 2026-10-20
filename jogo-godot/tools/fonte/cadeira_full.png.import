@@ -2,16 +2,16 @@
 
 importer="texture"
 type="CompressedTexture2D"
-uid="uid://du12d5wyytfpt"
-path="res://.godot/imported/braco.png-0c2f378fb06b1d2e929ff672c3c22527.ctex"
+uid="uid://bvrfu0dr74xca"
+path="res://.godot/imported/cadeira_full.png-6c23e78c8b08f3f641fec357fc464eae.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://assets/seg/braco.png"
-dest_files=["res://.godot/imported/braco.png-0c2f378fb06b1d2e929ff672c3c22527.ctex"]
+source_file="res://tools/fonte/cadeira_full.png"
+dest_files=["res://.godot/imported/cadeira_full.png-6c23e78c8b08f3f641fec357fc464eae.ctex"]
 
 [params]
 
