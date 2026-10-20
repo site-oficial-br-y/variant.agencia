@@ -1,0 +1,563 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<title>Capota Brasil</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{height:100%;overflow:hidden;background:#0d1016;font-family:'Segoe UI',system-ui,Arial,sans-serif;
+  color:#fff;user-select:none;touch-action:none}
+#cv{position:fixed;inset:0;width:100%;height:100%;display:block}
+
+/* ---------- telas ---------- */
+.tela{position:fixed;inset:0;z-index:10;display:none;flex-direction:column;align-items:center;
+  justify-content:center;text-align:center;padding:24px}
+.tela.on{display:flex}
+#tela-menu{background:radial-gradient(120% 90% at 50% 10%,#2a3350,#10131d 70%)}
+#tela-select{background:radial-gradient(120% 90% at 50% 10%,#241f33,#0f0d16 70%)}
+#tela-menu h1{font-size:clamp(40px,13vw,92px);font-weight:900;letter-spacing:-3px;line-height:.9;
+  text-shadow:0 6px 0 rgba(0,0,0,.35)}
+#tela-menu h1 b{color:#ffd23f}
+#tela-menu .sub{margin-top:14px;font-size:clamp(14px,4vw,19px);opacity:.75;max-width:420px}
+.btn{margin-top:26px;border:0;cursor:pointer;font-weight:900;font-size:22px;color:#10131d;
+  background:#ffd23f;padding:16px 42px;border-radius:16px;box-shadow:0 6px 0 #c79a12;
+  transition:transform .05s}
+.btn:active{transform:translateY(4px);box-shadow:0 2px 0 #c79a12}
+.btn.ghost{background:rgba(255,255,255,.1);color:#fff;box-shadow:0 6px 0 rgba(0,0,0,.3);font-size:17px;padding:12px 28px}
+
+#tela-select h2{font-size:clamp(22px,6vw,34px);font-weight:900;letter-spacing:-1px;margin-bottom:6px}
+#tela-select .dica{opacity:.6;font-size:14px;margin-bottom:18px}
+.chars{display:flex;gap:14px;flex-wrap:wrap;justify-content:center;max-width:860px}
+.char{width:min(27vw,220px);background:rgba(255,255,255,.05);border:3px solid rgba(255,255,255,.12);
+  border-radius:18px;padding:12px 10px 14px;cursor:pointer;transition:transform .12s,border-color .12s,background .12s}
+.char:active{transform:scale(.96)}
+.char.sel{border-color:#ffd23f;background:rgba(255,210,63,.12)}
+.char .pic{height:min(34vh,230px);display:flex;align-items:flex-end;justify-content:center}
+.char .pic img{max-height:100%;max-width:100%;object-fit:contain;filter:drop-shadow(0 6px 8px rgba(0,0,0,.4))}
+.char .nm{margin-top:8px;font-weight:900;font-size:clamp(13px,3.4vw,17px)}
+.char .vc{opacity:.55;font-size:12px;margin-top:1px}
+
+/* ---------- HUD jogo ---------- */
+#hud{position:fixed;inset:0;z-index:8;display:none;pointer-events:none}
+#hud.on{display:block}
+.ctrl{position:absolute;pointer-events:auto;display:flex;align-items:center;justify-content:center;
+  font-weight:900;color:#fff;border-radius:50%;background:rgba(255,255,255,.12);
+  border:3px solid rgba(255,255,255,.22);backdrop-filter:blur(2px);user-select:none}
+.ctrl:active{background:rgba(255,210,63,.35)}
+.ctrl.gas{background:rgba(74,222,128,.22);border-color:rgba(74,222,128,.45)}
+.ctrl.gas:active{background:rgba(74,222,128,.5)}
+.ctrl.wide{border-radius:40px}
+#c-gas{right:18px;bottom:96px;width:104px;height:104px;font-size:17px}
+#c-re{right:132px;bottom:30px;width:74px;height:74px;font-size:15px}
+#c-back{left:18px;bottom:30px;width:88px;height:88px;font-size:30px}
+#c-fwd{left:118px;bottom:30px;width:88px;height:88px;font-size:30px}
+#c-eject{right:22px;bottom:214px;width:92px;height:56px;font-size:13px}
+#topbar{position:absolute;top:10px;left:12px;right:12px;display:flex;justify-content:space-between;
+  align-items:flex-start;pointer-events:none}
+#dist{font-weight:900;font-size:16px;background:rgba(0,0,0,.35);padding:6px 12px;border-radius:10px}
+#btn-sair{pointer-events:auto;font-weight:800;font-size:13px;background:rgba(0,0,0,.4);
+  border:0;color:#fff;padding:8px 14px;border-radius:10px;cursor:pointer}
+#fim{position:absolute;inset:0;z-index:9;display:none;flex-direction:column;align-items:center;
+  justify-content:center;background:rgba(8,6,10,.72);pointer-events:auto;text-align:center;padding:20px}
+#fim.on{display:flex}
+#fim .big{font-size:clamp(34px,11vw,72px);font-weight:900;letter-spacing:-2px}
+#fim .big.morte{color:#ff5a4d}
+#fim .big.vit{color:#4ade80}
+#fim .row{display:flex;gap:12px;margin-top:22px;flex-wrap:wrap;justify-content:center}
+.hide{display:none!important}
+</style>
+</head>
+<body>
+<canvas id="cv"></canvas>
+
+<!-- MENU -->
+<div class="tela on" id="tela-menu">
+  <h1>CAPOTA<br><b>BRASIL</b></h1>
+  <div class="sub">Desce a ladeira, pula a rampa e tenta chegar inteiro. (Spoiler: não vai.)</div>
+  <button class="btn" id="btn-jogar">JOGAR</button>
+</div>
+
+<!-- SELEÇÃO -->
+<div class="tela" id="tela-select">
+  <h2>ESCOLHE O VACILÃO</h2>
+  <div class="dica">cada um controla diferente</div>
+  <div class="chars" id="chars"></div>
+  <button class="btn" id="btn-go">BORA</button>
+</div>
+
+<!-- HUD -->
+<div id="hud">
+  <div id="topbar">
+    <button id="btn-sair">‹ sair</button>
+    <div id="dist">0 m</div>
+  </div>
+  <div class="ctrl gas" id="c-gas">GÁS</div>
+  <div class="ctrl" id="c-re">RÉ</div>
+  <div class="ctrl" id="c-back">⟲</div>
+  <div class="ctrl" id="c-fwd">⟳</div>
+  <div class="ctrl wide" id="c-eject">PULA FORA</div>
+  <div id="fim">
+    <div class="big" id="fim-txt">VOCÊ MORREU</div>
+    <div class="row">
+      <button class="btn" id="btn-retry">DE NOVO</button>
+      <button class="btn ghost" id="btn-troca">trocar personagem</button>
+    </div>
+  </div>
+</div>
+
+<script src="matter.min.js"></script>
+<script>
+const { Engine, Bodies, Body, Composite, Constraint, Events } = Matter
+
+/* ====================== personagens ====================== */
+const PERSONAGENS = [
+  { id:'segway', nome:'O do Segway', veic:'segway', img:'chars/segway.png',
+    pele:'#e7b088', cabelo:'#241c17', camisa:'#9a9ca3', calca:'#2b2d38' },
+  { id:'cadeira', nome:'O da Cadeira', veic:'cadeira', img:'chars/cadeira.png',
+    pele:'#e3ab82', cabelo:'#2a211b', camisa:'#2b2e34', calca:'#22242b', oculos:true },
+  { id:'scooter', nome:'O da Scooter', veic:'scooter', img:'chars/scooter.png',
+    pele:'#d99b73', cabelo:'#2e241c', camisa:'#d99b73', calca:'#ece9e2' },
+]
+let escolhido = PERSONAGENS[0]
+
+/* ====================== canvas ====================== */
+const cv = document.getElementById('cv'), ctx = cv.getContext('2d')
+let W=0, H=0, DPR=1
+function resize(){
+  DPR = Math.min(window.devicePixelRatio||1, 2)
+  W = window.innerWidth; H = window.innerHeight
+  cv.width = W*DPR; cv.height = H*DPR
+  ctx.setTransform(DPR,0,0,DPR,0,0)
+}
+window.addEventListener('resize', resize); resize()
+
+/* ====================== fase ====================== */
+const GCHAO = '#4a3c2e', GTOPO = '#6b5a45', GRAMA = '#5a8f3a'
+const BLOCOS = [
+  { x:700,  y:580, w:1400, h:240, t:'chao' },                 // pista inicial  (topo 460)
+  { x:1560, y:430, w:360,  h:80,  a:-22, t:'rampa' },         // rampa de salto
+  { x:1850, y:760, w:640,  h:60,  t:'espinho' },              // espinho no fundo do fosso
+  { x:2500, y:580, w:900,  h:240, t:'chao' },                 // pouso
+  { x:3080, y:420, w:280,  h:80,  a:-20, t:'rampa' },         // lombada sobe
+  { x:3320, y:420, w:280,  h:80,  a:20,  t:'rampa' },         // lombada desce
+  { x:3800, y:580, w:1200, h:240, t:'chao' },                 // reta final
+  { x:4000, y:400, w:30,   h:120, t:'fim' },                  // meta
+]
+const META_X = 4000
+
+/* ====================== engine ====================== */
+let engine, mundo, estado='menu'
+let player=null, cam={x:0,y:300,zoom:1}, sangue=[], morto=false, venceu=false
+const GRUPO = Body.nextGroup(true) // player inteiro não colide consigo mesmo
+
+function novoEngine(){
+  engine = Engine.create()
+  engine.gravity.y = 1.1
+  mundo = engine.world
+  construirFase()
+}
+
+function construirFase(){
+  for(const b of BLOCOS){
+    const ang = (b.a||0)*Math.PI/180
+    const op = { isStatic:true, friction:0.95, frictionStatic:1, angle:ang, label:b.t }
+    if(b.t==='fim') op.isSensor = true
+    const body = Bodies.rectangle(b.x, b.y, b.w, b.h, op)
+    body.bdata = b
+    Composite.add(mundo, body)
+  }
+}
+
+/* ---- monta veículo + boneco ---- */
+function criarPlayer(p){
+  const parts=[], cons=[]
+  const sx=200, sy=250               // ponto de partida (assento) — acima do chão (topo ~460)
+  const mk=(bd,rd)=>{ bd.rdata=rd; bd.collisionFilter.group=GRUPO; parts.push(bd); return bd }
+
+  // ----- veículo -----
+  let seat, handle, wheels=[], frame
+  if(p.veic==='segway'){
+    const wheel = mk(Bodies.circle(sx, sy+120, 40, {friction:1,frictionStatic:1,restitution:0}), {kind:'roda',r:40,fill:'#c8ccd2',hub:'#2b2d33'})
+    frame = mk(Bodies.rectangle(sx, sy+40, 18, 150, {density:0.007,friction:0.5}), {kind:'poste',w:18,h:150,fill:'#aeb4bd'})
+    cons.push(Constraint.create({bodyA:wheel,bodyB:frame,pointB:{x:0,y:75},length:0,stiffness:0.9}))
+    cons.push(Constraint.create({bodyA:wheel,bodyB:frame,pointB:{x:0,y:75},pointA:{x:0,y:0},length:0,stiffness:0.3}))
+    wheels=[wheel]; seat={x:sx,y:sy+15}; handle={bodyRef:frame,x:0,y:-75}
+  } else if(p.veic==='cadeira'){
+    const big = mk(Bodies.circle(sx-20, sy+110, 46, {friction:1,frictionStatic:1,restitution:0}), {kind:'roda',r:46,fill:'#20242b',hub:'#c9ccd2',raios:true})
+    const front = mk(Bodies.circle(sx+78, sy+152, 20, {friction:1,restitution:0}), {kind:'roda',r:20,fill:'#2b2f36',hub:'#555'})
+    frame = mk(Bodies.rectangle(sx+10, sy+70, 150, 20, {density:0.008,friction:0.6}), {kind:'cadeira',fill:'#1c1e24'})
+    cons.push(Constraint.create({bodyA:big,bodyB:frame,pointB:{x:-30,y:40},length:0,stiffness:0.95}))
+    cons.push(Constraint.create({bodyA:big,bodyB:frame,pointB:{x:-30,y:40},pointA:{x:0,y:0},length:0,stiffness:0.4}))
+    cons.push(Constraint.create({bodyA:front,bodyB:frame,pointB:{x:68,y:82},length:0,stiffness:0.95}))
+    cons.push(Constraint.create({bodyA:front,bodyB:frame,pointB:{x:68,y:82},pointA:{x:0,y:0},length:0,stiffness:0.4}))
+    wheels=[big]; seat={x:sx+10,y:sy+55}; handle={bodyRef:frame,x:-55,y:-10}
+  } else { // scooter
+    const rear = mk(Bodies.circle(sx-45, sy+150, 22, {friction:1,frictionStatic:1,restitution:0}), {kind:'roda',r:22,fill:'#20242b',hub:'#c9ccd2'})
+    const front = mk(Bodies.circle(sx+70, sy+150, 22, {friction:1,restitution:0}), {kind:'roda',r:22,fill:'#20242b',hub:'#c9ccd2'})
+    frame = mk(Bodies.rectangle(sx+10, sy+95, 170, 70, {density:0.007,friction:0.6}), {kind:'scooter',fill:'#e9ecef'})
+    cons.push(Constraint.create({bodyA:rear,bodyB:frame,pointB:{x:-55,y:55},length:0,stiffness:0.95}))
+    cons.push(Constraint.create({bodyA:rear,bodyB:frame,pointB:{x:-55,y:55},pointA:{x:0,y:0},length:0,stiffness:0.4}))
+    cons.push(Constraint.create({bodyA:front,bodyB:frame,pointB:{x:60,y:55},length:0,stiffness:0.95}))
+    cons.push(Constraint.create({bodyA:front,bodyB:frame,pointB:{x:60,y:55},pointA:{x:0,y:0},length:0,stiffness:0.4}))
+    wheels=[rear,front]; seat={x:sx+5,y:sy+55}; handle={bodyRef:frame,x:-65,y:-30}
+  }
+
+  // ----- boneco (ragdoll) -----
+  const d={density:0.0007,frictionAir:0.01}
+  const pelvis = mk(Bodies.rectangle(seat.x, seat.y, 30, 20, d), {kind:'parte',w:30,h:20,fill:p.calca})
+  const torso  = mk(Bodies.rectangle(seat.x, seat.y-34, 28, 50, d), {kind:'parte',w:28,h:50,fill:p.camisa,r:6})
+  const head   = mk(Bodies.circle(seat.x, seat.y-74, 17, d), {kind:'cabeca',r:17,p:p})
+  const coxaE  = mk(Bodies.rectangle(seat.x+22, seat.y+6, 40, 15, d), {kind:'parte',w:40,h:15,fill:p.calca})
+  const coxaD  = mk(Bodies.rectangle(seat.x+22, seat.y+10, 40, 15, d), {kind:'parte',w:40,h:15,fill:p.calca})
+  const perE   = mk(Bodies.rectangle(seat.x+50, seat.y+30, 15, 40, d), {kind:'parte',w:15,h:40,fill:p.calca,pe:true,peFill:'#e8e4da'})
+  const perD   = mk(Bodies.rectangle(seat.x+50, seat.y+34, 15, 40, d), {kind:'parte',w:15,h:40,fill:p.calca,pe:true,peFill:'#e8e4da'})
+  const bracoE = mk(Bodies.rectangle(seat.x+20, seat.y-30, 38, 12, d), {kind:'parte',w:38,h:12,fill:p.camisa})
+  const bracoD = mk(Bodies.rectangle(seat.x+20, seat.y-30, 38, 12, d), {kind:'parte',w:38,h:12,fill:p.camisa})
+
+  const J=(a,b,pa,pb,s=0.8)=>cons.push(Constraint.create({bodyA:a,bodyB:b,pointA:pa,pointB:pb,length:0,stiffness:s,render:{visible:false}}))
+  J(pelvis,torso,{x:0,y:-10},{x:0,y:25})
+  J(torso,head,{x:0,y:-25},{x:0,y:15})
+  J(pelvis,coxaE,{x:14,y:0},{x:-20,y:0}); J(pelvis,coxaD,{x:14,y:0},{x:-20,y:0})
+  J(coxaE,perE,{x:20,y:0},{x:0,y:-20});   J(coxaD,perD,{x:20,y:0},{x:0,y:-20})
+  J(torso,bracoE,{x:10,y:-15},{x:-19,y:0}); J(torso,bracoD,{x:10,y:-15},{x:-19,y:0})
+
+  // vínculos de "vivo" (quebram no eject/morte) — mantêm sentado e segurando
+  const pose=[]
+  const seatC = Constraint.create({bodyA:frame,bodyB:pelvis,pointA:{x:seat.x-frame.position.x,y:seat.y-frame.position.y},length:0,stiffness:1})
+  const upC   = Constraint.create({bodyA:frame,bodyB:torso,pointA:{x:seat.x-frame.position.x,y:seat.y-70-frame.position.y},pointB:{x:0,y:-20},length:0,stiffness:0.18})
+  const hE = Constraint.create({bodyA:handle.bodyRef,bodyB:bracoE,pointA:{x:handle.x,y:handle.y},pointB:{x:19,y:0},length:0,stiffness:0.9})
+  const hD = Constraint.create({bodyA:handle.bodyRef,bodyB:bracoD,pointA:{x:handle.x,y:handle.y},pointB:{x:19,y:0},length:0,stiffness:0.9})
+  pose.push(seatC,upC,hE,hD); cons.push(...pose)
+
+  Composite.add(mundo, [...parts, ...cons])
+  // ordem de desenho: veículo primeiro, boneco depois
+  return { cfg:p, parts, cons, pose, poseAtiva:true, wheels, frame, head, torso, pelvis,
+           bracos:[bracoE,bracoD], membros:[perE,perD,coxaE,coxaD,bracoE,bracoD] }
+}
+
+function soltarPose(){
+  if(player && player.poseAtiva){
+    for(const c of player.pose) Composite.remove(mundo, c)
+    player.poseAtiva=false
+  }
+}
+
+/* ====================== controles ====================== */
+const key = { gas:false, re:false, back:false, fwd:false }
+function bindBtn(id, prop){
+  const el=document.getElementById(id)
+  const on=e=>{e.preventDefault(); key[prop]=true}
+  const off=e=>{e.preventDefault(); key[prop]=false}
+  el.addEventListener('touchstart',on,{passive:false}); el.addEventListener('touchend',off); el.addEventListener('touchcancel',off)
+  el.addEventListener('mousedown',on); el.addEventListener('mouseup',off); el.addEventListener('mouseleave',off)
+}
+bindBtn('c-gas','gas'); bindBtn('c-re','re'); bindBtn('c-back','back'); bindBtn('c-fwd','fwd')
+function ejetar(){ if(player && !morto && !venceu) soltarPose() }
+document.getElementById('c-eject').addEventListener('touchstart',e=>{e.preventDefault();ejetar()},{passive:false})
+document.getElementById('c-eject').addEventListener('mousedown',e=>{e.preventDefault();ejetar()})
+addEventListener('keydown',e=>{
+  if(e.repeat)return
+  if(e.key==='ArrowRight'||e.key==='d')key.gas=true
+  if(e.key==='ArrowLeft'||e.key==='a')key.re=true
+  if(e.key==='ArrowUp'||e.key==='w')key.back=true
+  if(e.key==='ArrowDown'||e.key==='s')key.fwd=true
+  if(e.key===' ')ejetar()
+  if(e.key==='r'||e.key==='R')if(estado==='play')reiniciar()
+})
+addEventListener('keyup',e=>{
+  if(e.key==='ArrowRight'||e.key==='d')key.gas=false
+  if(e.key==='ArrowLeft'||e.key==='a')key.re=false
+  if(e.key==='ArrowUp'||e.key==='w')key.back=false
+  if(e.key==='ArrowDown'||e.key==='s')key.fwd=false
+})
+
+/* ====================== loop ====================== */
+function aplicarControles(){
+  if(!player || morto || venceu) return
+  const f=player.frame, vx=f.velocity.x
+  const dir = key.gas?1 : key.re?-1 : 0
+  const VMAX = 11
+  // acelerador sobe suave (evita empinar/capotar na largada)
+  player.gas = (player.gas||0) + (dir - (player.gas||0))*0.07
+  // tração: empurra o chassi num ponto baixo (não dá cavalo de pau nem backflip)
+  if(Math.abs(player.gas)>0.02 && (Math.abs(vx)<VMAX || Math.sign(vx)!==Math.sign(player.gas))){
+    const F = f.mass * 0.0013 * player.gas * (player.gas>0?1:0.7)
+    Body.applyForce(f, {x:f.position.x, y:f.position.y+40}, {x:F, y:0})
+  }
+  // rodas giram conforme a velocidade real (visual, sem patinar)
+  for(const wh of player.wheels) Body.setAngularVelocity(wh, vx/(wh.circleRadius||22))
+  // inclinar (pra fazer manobra / endireitar)
+  const leaning = key.back||key.fwd
+  if(key.back) Body.setAngularVelocity(f, f.angularVelocity-0.02)
+  if(key.fwd)  Body.setAngularVelocity(f, f.angularVelocity+0.02)
+  // auto-equilíbrio do segway (ele se vira sozinho, como o de verdade)
+  if(escolhido.veic==='segway' && player.poseAtiva && !leaning){
+    const corr = -f.angle*0.16 - f.angularVelocity*0.14
+    Body.setAngularVelocity(f, f.angularVelocity + corr)
+  }
+}
+
+function tick(){
+  if(estado==='play'){
+    aplicarControles()
+    Engine.update(engine, 1000/60)
+    atualizarCam()
+    checarDist()
+  }
+  atualizarSangue()
+  desenhar()
+  requestAnimationFrame(tick)
+}
+
+function atualizarCam(){
+  if(!player)return
+  const alvo = player.frame.position
+  const zAlvo = Math.min(W/720, H/720) * 1.15
+  cam.zoom += (zAlvo-cam.zoom)*0.1
+  cam.x += (alvo.x - cam.x)*0.12
+  cam.y += ((alvo.y-40) - cam.y)*0.1
+}
+
+function checarDist(){
+  const m = Math.max(0, Math.round((player.frame.position.x-200)/40))
+  document.getElementById('dist').textContent = m+' m'
+  if(player.frame.position.y > 1300 && !morto && !venceu){ jorrar(player.torso.position,8); matar() }
+}
+
+/* ---- colisões: morte e sangue ---- */
+function ehParte(b){ return b.rdata && (b.rdata.kind==='parte'||b.rdata.kind==='cabeca') }
+function iniColisoes(){
+  Events.on(engine,'collisionStart',ev=>{
+    for(const pr of ev.pairs){
+      const {bodyA,bodyB}=pr
+      const chao = [bodyA,bodyB].find(b=>b.bdata)
+      const parte= [bodyA,bodyB].find(b=>ehParte(b))
+      if(chao && chao.bdata.t==='fim'){ if(!morto)ganhar(); continue }
+      if(!chao || !parte) continue
+      const v = Math.hypot(parte.velocity.x, parte.velocity.y)
+      if(chao.bdata.t==='espinho'){ jorrar(parte.position,18); matar(); continue }
+      if(parte.rdata.kind==='cabeca' && v>21){ jorrar(parte.position,14); matar() }
+      else if(v>26){ jorrar(parte.position,6); desmembrar(parte) }
+    }
+  })
+}
+function matar(){ if(morto||venceu)return; morto=true; soltarPose(); mostrarFim(false) }
+function ganhar(){ if(morto||venceu)return; venceu=true; mostrarFim(true) }
+function desmembrar(parte){
+  if(!player || parte.solto) return
+  const idx = player.membros.indexOf(parte)
+  if(idx<0) return
+  parte.solto=true
+  for(const c of [...player.cons]){
+    if(c.bodyA===parte||c.bodyB===parte){ Composite.remove(mundo,c); player.cons.splice(player.cons.indexOf(c),1) }
+  }
+}
+
+/* ---- sangue ---- */
+function jorrar(pos,n){
+  for(let i=0;i<n;i++){
+    const a=Math.random()*Math.PI*2, s=1+Math.random()*6
+    sangue.push({x:pos.x,y:pos.y,vx:Math.cos(a)*s,vy:Math.sin(a)*s-3,r:2+Math.random()*4,vida:1})
+  }
+}
+function atualizarSangue(){
+  for(const p of sangue){ p.vx*=0.98; p.vy+=0.35; p.x+=p.vx; p.y+=p.vy; p.vida-=0.012 }
+  sangue = sangue.filter(p=>p.vida>0)
+  if(sangue.length>500) sangue.splice(0, sangue.length-500)
+}
+
+/* ====================== desenho ====================== */
+function desenhar(){
+  ctx.clearRect(0,0,W,H)
+  // céu
+  const sky=ctx.createLinearGradient(0,0,0,H)
+  sky.addColorStop(0,'#8ec5e8'); sky.addColorStop(1,'#d9ecf5')
+  ctx.fillStyle=sky; ctx.fillRect(0,0,W,H)
+  desenharMorros()
+  if(!engine || !player){ return }
+  ctx.save()
+  ctx.translate(W/2, H*0.58)
+  ctx.scale(cam.zoom,cam.zoom)
+  ctx.translate(-cam.x,-cam.y)
+  desenharFase()
+  desenharMeta()
+  desenharVeiculo(); desenharBoneco()
+  desenharSangue()
+  ctx.restore()
+}
+
+function desenharMorros(){
+  const base=H*0.72
+  for(let k=0;k<2;k++){
+    const f = k===0?0.25:0.5, col = k===0?'#bcd9c0':'#9ac29f'
+    ctx.fillStyle=col; ctx.beginPath(); ctx.moveTo(0,H)
+    for(let x=0;x<=W;x+=40){
+      const wx=(cam.x*f + x)
+      const y=base - k*50 + Math.sin(wx*0.004 + k)*40 + Math.sin(wx*0.001)*30
+      ctx.lineTo(x,y)
+    }
+    ctx.lineTo(W,H); ctx.closePath(); ctx.fill()
+  }
+}
+
+function retBody(b){
+  const r=b.rdata
+  ctx.save(); ctx.translate(b.position.x,b.position.y); ctx.rotate(b.angle)
+  ctx.fillStyle=r.fill
+  const rad=r.r2||r.r||0
+  roundRect(-r.w/2,-r.h/2,r.w,r.h,r.rad||4); ctx.fill()
+  ctx.restore()
+}
+function roundRect(x,y,w,h,rr){
+  ctx.beginPath()
+  ctx.moveTo(x+rr,y); ctx.arcTo(x+w,y,x+w,y+h,rr); ctx.arcTo(x+w,y+h,x,y+h,rr)
+  ctx.arcTo(x,y+h,x,y,rr); ctx.arcTo(x,y,x+w,y,rr); ctx.closePath()
+}
+
+function desenharFase(){
+  for(const b of Composite.allBodies(mundo)){
+    const bd=b.bdata; if(!bd) continue
+    if(bd.t==='fim') continue
+    ctx.save(); ctx.translate(b.position.x,b.position.y); ctx.rotate(b.angle)
+    if(bd.t==='espinho'){
+      ctx.fillStyle='#3a3f47'; ctx.fillRect(-bd.w/2,-bd.h/2,bd.w,bd.h)
+      ctx.fillStyle='#c4ccd4'
+      for(let x=-bd.w/2;x<bd.w/2;x+=22){
+        ctx.beginPath(); ctx.moveTo(x,-bd.h/2); ctx.lineTo(x+11,-bd.h/2-20); ctx.lineTo(x+22,-bd.h/2); ctx.fill()
+      }
+    } else {
+      ctx.fillStyle=GTOPO; ctx.fillRect(-bd.w/2,-bd.h/2,bd.w,bd.h)
+      ctx.fillStyle=GRAMA; ctx.fillRect(-bd.w/2,-bd.h/2,bd.w,10)
+      ctx.fillStyle=GCHAO; ctx.fillRect(-bd.w/2,-bd.h/2+10,bd.w,bd.h-10)
+      ctx.fillStyle=GRAMA; ctx.fillRect(-bd.w/2,-bd.h/2,bd.w,6)
+    }
+    ctx.restore()
+  }
+}
+function desenharMeta(){
+  const b=BLOCOS.find(b=>b.t==='fim')
+  ctx.save(); ctx.translate(b.x,b.y)
+  ctx.strokeStyle='#fff'; ctx.lineWidth=5; ctx.beginPath(); ctx.moveTo(0,60); ctx.lineTo(0,-60); ctx.stroke()
+  ctx.fillStyle='#ffd23f'; ctx.beginPath(); ctx.moveTo(0,-60); ctx.lineTo(54,-44); ctx.lineTo(0,-28); ctx.fill()
+  ctx.fillStyle='#10131d'; ctx.font='900 16px sans-serif'; ctx.fillText('META',8,-40)
+  ctx.restore()
+}
+
+function desenharVeiculo(){
+  for(const b of player.parts){
+    const r=b.rdata; if(!r) continue
+    if(r.kind==='roda') desenharRoda(b,r)
+    else if(r.kind==='poste') retBody(b)
+    else if(r.kind==='cadeira') desenharCadeira(b)
+    else if(r.kind==='scooter') desenharScooter(b)
+  }
+}
+function desenharRoda(b,r){
+  ctx.save(); ctx.translate(b.position.x,b.position.y); ctx.rotate(b.angle)
+  ctx.fillStyle='#17191e'; ctx.beginPath(); ctx.arc(0,0,r.r,0,7); ctx.fill()
+  ctx.fillStyle=r.fill; ctx.beginPath(); ctx.arc(0,0,r.r*0.62,0,7); ctx.fill()
+  if(r.raios){ ctx.strokeStyle='#8a8f98'; ctx.lineWidth=3
+    for(let i=0;i<8;i++){ ctx.beginPath(); ctx.moveTo(0,0); ctx.lineTo(Math.cos(i/8*7)*r.r*0.6,Math.sin(i/8*7)*r.r*0.6); ctx.stroke() } }
+  ctx.fillStyle=r.hub; ctx.beginPath(); ctx.arc(0,0,r.r*0.2,0,7); ctx.fill()
+  ctx.restore()
+}
+function desenharCadeira(b){
+  ctx.save(); ctx.translate(b.position.x,b.position.y); ctx.rotate(b.angle)
+  ctx.fillStyle='#1c1e24'; roundRect(-75,-10,150,20,6); ctx.fill()
+  ctx.fillStyle='#2a2d34'; roundRect(-78,-70,16,70,5); ctx.fill()   // encosto
+  ctx.restore()
+}
+function desenharScooter(b){
+  ctx.save(); ctx.translate(b.position.x,b.position.y); ctx.rotate(b.angle)
+  ctx.fillStyle='#e9ecef'; roundRect(-85,-35,170,70,12); ctx.fill()
+  ctx.fillStyle='#1c3a63'; roundRect(40,-35,45,55,8); ctx.fill()    // frente azul
+  ctx.fillStyle='#ffd23f'; ctx.beginPath(); ctx.arc(60,-6,7,0,7); ctx.fill()  // brasão
+  ctx.fillStyle='#2b2f36'; roundRect(-80,8,150,16,4); ctx.fill()
+  // giroflex
+  ctx.fillStyle='#222'; ctx.fillRect(-78,-55,8,22)
+  ctx.fillStyle='#ff8c1a'; ctx.beginPath(); ctx.arc(-74,-58,9,0,7); ctx.fill()
+  ctx.restore()
+}
+
+function desenharBoneco(){
+  // membros/tronco
+  for(const b of player.parts){
+    const r=b.rdata; if(!r||r.solto&&false) continue
+    if(r.kind==='parte'){
+      retBody(b)
+      if(r.pe){ // sapato na ponta
+        ctx.save(); ctx.translate(b.position.x,b.position.y); ctx.rotate(b.angle)
+        ctx.fillStyle=r.peFill; roundRect(-r.w/2-2,r.h/2-6,r.w+12,12,4); ctx.fill(); ctx.restore()
+      }
+    }
+  }
+  desenharCabeca(player.head)
+}
+function desenharCabeca(b){
+  const p=b.rdata.p, r=b.rdata.r
+  ctx.save(); ctx.translate(b.position.x,b.position.y); ctx.rotate(b.angle)
+  ctx.fillStyle=p.pele; ctx.beginPath(); ctx.arc(0,0,r,0,7); ctx.fill()        // cabeça
+  ctx.fillStyle=p.pele; roundRect(-6,r-3,12,10,4); ctx.fill()                   // pescoço
+  ctx.fillStyle=p.cabelo; ctx.beginPath(); ctx.arc(0,-2,r,Math.PI*1.05,Math.PI*2.1); ctx.fill() // cabelo
+  ctx.fillStyle=p.cabelo; roundRect(-r,-r+2,r*0.8,r*0.7,4); ctx.fill()
+  ctx.fillStyle='#1b1b1b'; ctx.beginPath(); ctx.arc(r*0.45,-2,2.4,0,7); ctx.fill() // olho
+  if(p.oculos){ ctx.strokeStyle='#111'; ctx.lineWidth=1.5; ctx.beginPath(); ctx.arc(r*0.45,-2,4.5,0,7); ctx.stroke() }
+  ctx.strokeStyle='#b06a52'; ctx.lineWidth=2; ctx.beginPath(); ctx.moveTo(r*0.7,5); ctx.lineTo(r*0.4,8); ctx.stroke() // boca
+  ctx.restore()
+}
+function desenharSangue(){
+  for(const p of sangue){
+    ctx.globalAlpha=Math.max(0,Math.min(1,p.vida))
+    ctx.fillStyle='#b4121b'; ctx.beginPath(); ctx.arc(p.x,p.y,p.r,0,7); ctx.fill()
+  }
+  ctx.globalAlpha=1
+}
+
+/* ====================== fluxo de telas ====================== */
+function montarSelect(){
+  const wrap=document.getElementById('chars'); wrap.innerHTML=''
+  PERSONAGENS.forEach((p,i)=>{
+    const el=document.createElement('div')
+    el.className='char'+(p===escolhido?' sel':'')
+    el.innerHTML=`<div class="pic"><img src="${p.img}" alt=""></div><div class="nm">${p.nome}</div>`
+    el.onclick=()=>{ escolhido=p; montarSelect() }
+    wrap.appendChild(el)
+  })
+}
+function mostrarTela(id){
+  for(const t of document.querySelectorAll('.tela')) t.classList.remove('on')
+  document.getElementById('hud').classList.remove('on')
+  if(id==='menu'){ estado='menu'; document.getElementById('tela-menu').classList.add('on') }
+  if(id==='select'){ estado='select'; montarSelect(); document.getElementById('tela-select').classList.add('on') }
+  if(id==='play'){ estado='play'; document.getElementById('hud').classList.add('on') }
+}
+function iniciarJogo(){
+  if(engine) { Engine.clear(engine) }
+  morto=false; venceu=false; sangue=[]
+  document.getElementById('fim').classList.remove('on')
+  novoEngine(); iniColisoes()
+  player = criarPlayer(escolhido)
+  cam={x:player.frame.position.x,y:player.frame.position.y,zoom:Math.min(W/720,H/720)*1.15}
+  mostrarTela('play')
+}
+function reiniciar(){ iniciarJogo() }
+function mostrarFim(vit){
+  const el=document.getElementById('fim'), tx=document.getElementById('fim-txt')
+  tx.className='big '+(vit?'vit':'morte')
+  tx.textContent = vit ? 'CHEGOU INTEIRO!' : FRASES_MORTE[Math.floor(Math.random()*FRASES_MORTE.length)]
+  setTimeout(()=>el.classList.add('on'), vit?300:700)
+}
+const FRASES_MORTE=['VOCÊ MORREU','ESSA DOEU','FIM DA LINHA','SPLAT','NÃO DEU']
+
+document.getElementById('btn-jogar').onclick=()=>mostrarTela('select')
+document.getElementById('btn-go').onclick=iniciarJogo
+document.getElementById('btn-sair').onclick=()=>mostrarTela('select')
+document.getElementById('btn-retry').onclick=reiniciar
+document.getElementById('btn-troca').onclick=()=>{ document.getElementById('fim').classList.remove('on'); mostrarTela('select') }
+
+mostrarTela('menu')
+tick()
+</script>
+</body>
+</html>
