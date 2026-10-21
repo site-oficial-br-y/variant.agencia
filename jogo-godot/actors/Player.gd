@@ -14,7 +14,9 @@ var fundo_y := INF                 # abaixo disso o veículo caiu num buraco (a 
 @export var spawn_x: float = 600.0
 @export var balance_stiffness: float = 55.0
 @export var balance_damping: float = 14.0
-@export var velocidade: float = 2.4           # multiplica vmax e força de todos os veículos
+@export var velocidade: float = 1.6           # multiplica a velocidade máxima no plano
+@export var aceleracao: float = 900.0         # px/s² de jogo: ~0,5 s real até a máxima, e ainda sobe rampa de 27°
+@export var arrasto: float = 0.15             # resistência do ar: descida chega num limite em vez de disparar
 @export var limiar_sangue: float = 420.0       # Δv (px/s) num passo que já espirra sangue
 @export var limiar_arranca: float = 2700.0     # Δv que arranca o membro
 @export var limiar_queda_montado: float = 2400.0
@@ -34,6 +36,7 @@ var juntas: Dictionary = {}        # corpo filho -> PinJoint2D
 var v_ant: Dictionary = {}
 var v_roda_ant := Vector2.ZERO
 var montado := true
+var massa_total := 1.0
 var morto := false
 var sangue: Sangue
 var _mat: PhysicsMaterial
@@ -99,6 +102,7 @@ func _montar() -> void:
 
 	chassi = RigidBody2D.new()
 	chassi.mass = ch["massa"]
+	massa_total = chassi.mass
 	if ch.has("mastro"):
 		# segway: mastro rígido do ombro ao eixo, sem colisão (só a roda toca o chão)
 		var m: Dictionary = ch["mastro"]
@@ -133,7 +137,7 @@ func _montar() -> void:
 	chassi.position = origem + desloc
 	chassi.continuous_cd = RigidBody2D.CCD_MODE_CAST_RAY
 	chassi.linear_damp_mode = RigidBody2D.DAMP_MODE_REPLACE
-	chassi.linear_damp = 0.0
+	chassi.linear_damp = arrasto
 	add_child(chassi)
 	chassi.add_to_group("veiculo")
 
@@ -146,7 +150,7 @@ func _montar() -> void:
 		rb.angular_damp_mode = RigidBody2D.DAMP_MODE_REPLACE   # amortecimento padrão (1,0) freava a roda o tempo todo
 		rb.angular_damp = 0.0
 		rb.linear_damp_mode = RigidBody2D.DAMP_MODE_REPLACE
-		rb.linear_damp = 0.0
+		rb.linear_damp = arrasto
 		rb.collision_layer = 0b010
 		rb.collision_mask = 0b1001              # mundo + objetos
 		rb.continuous_cd = RigidBody2D.CCD_MODE_CAST_RAY
@@ -168,6 +172,7 @@ func _montar() -> void:
 		eixo.node_b = chassi.get_path()
 		eixo.disable_collision = true
 		rodas.append(rb)
+		massa_total += rb.mass
 		if r["motriz"]:
 			roda_motriz = rb
 
@@ -231,12 +236,12 @@ func _dirigir() -> void:
 	var equilibra: bool = ch["auto_equilibrio"]
 	var dir := Input.get_axis("brake", "accelerate")
 	if dir != 0.0 and chassi.linear_velocity.length() < ch["vmax"] * velocidade:
+		var forca := massa_total * aceleracao       # arranque gradual, igual para os três
 		if equilibra:   # segway: empurra embaixo, o equilíbrio segura
 			var baixo: float = (roda_motriz.global_position - chassi.global_position).length() * 0.8
-			# força de arranque limitada: empurrão maior que isso vence o equilíbrio e ele tomba de costas
-			chassi.apply_force(Vector2(dir * ch["forca"] * minf(velocidade, 1.4), 0.0), Vector2(0, baixo).rotated(chassi.rotation))
+			chassi.apply_force(Vector2(dir * forca, 0.0), Vector2(0, baixo).rotated(chassi.rotation))
 		else:           # 2 rodas: pelo centro de massa, sem empinar sozinho (empinar é no botão)
-			chassi.apply_central_force(Vector2(dir * ch["forca"] * velocidade, 0.0))
+			chassi.apply_central_force(Vector2(dir * forca, 0.0))
 	var lean := Input.get_axis("lean_back", "lean_fwd")
 	if equilibra:   # girar muda o ângulo-alvo; o equilíbrio nunca desliga (desligar fazia tombar)
 		var alvo := lean * 0.45
