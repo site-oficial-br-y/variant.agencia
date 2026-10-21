@@ -14,6 +14,8 @@ var resultado := ""
 var log_path := "user://playtest/log.jsonl"
 var falhas: Array = []
 var _vx_ant: Dictionary = {}
+var _mono_olha := 0.0
+var _mono_botao := ""
 var _liberado: Dictionary = {}             # pêndulo -> já saiu atrás dele
 var _prensas_liberadas: Dictionary = {}
 
@@ -83,6 +85,8 @@ func _jogar(fase: Node, estrategia: String) -> void:
 	var espera := 0.0 if estrategia == "reativo" else rng.randf_range(0.0, 5.0)
 	var proxima_foto := 0.0
 	_liberado.clear()
+	_mono_olha = 0.0
+	_mono_botao = ""
 	_vx_ant.clear()
 	_prensas_liberadas.clear()
 	while resultado == "":
@@ -110,10 +114,14 @@ func _jogar(fase: Node, estrategia: String) -> void:
 		_soltar()
 		if not fase.player.montado:
 			continue
-		if fase.player.D["chassi"].get("monociclo", false) and estrategia != "busca":   # equilibra até esperando
-			var u0: float = fase.player.chassi.rotation + 0.35 * fase.player.chassi.angular_velocity
-			if u0 < -0.03: Input.action_press("lean_fwd")
-			elif u0 > 0.03: Input.action_press("lean_back")
+		if fase.player.D["chassi"].get("monociclo", false) and estrategia != "busca":
+			# equilibra como gente: olha a cada 0,25 s reais e segura o botão até a próxima olhada
+			if fase.tempo >= _mono_olha:
+				_mono_olha = fase.tempo + 0.25
+				var u0: float = fase.player.chassi.rotation + 0.3 * fase.player.chassi.angular_velocity
+				_mono_botao = "lean_fwd" if u0 < -0.08 else ("lean_back" if u0 > 0.08 else "")
+			if _mono_botao != "":
+				Input.action_press(_mono_botao)
 		if estrategia == "reativo_espera" and (_esperar_pendulo(foco) or _esperar_prensa(foco) or _esperar_onda(foco)):
 			parado = 0.0
 			Input.action_press("brake") if fase.player.chassi.linear_velocity.x > 30.0 else null
@@ -134,10 +142,8 @@ func _jogar(fase: Node, estrategia: String) -> void:
 					re_ate = -1.0
 					parado = 0.0
 				Input.action_press("accelerate")
-			if fase.player.D["chassi"].get("monociclo", false):   # monociclo: equilibra o tempo todo
-				var u: float = fase.player.chassi.rotation + 0.35 * fase.player.chassi.angular_velocity
-				if u < -0.03: Input.action_press("lean_fwd")
-				elif u > 0.03: Input.action_press("lean_back")
+			if fase.player.D["chassi"].get("monociclo", false):
+				pass                                             # já equilibrou lá em cima (ritmo de gente)
 			elif rot < -0.3: Input.action_press("lean_fwd")
 			elif rot > 0.3: Input.action_press("lean_back")
 		else:

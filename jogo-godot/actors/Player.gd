@@ -16,7 +16,13 @@ var fundo_y := INF                 # abaixo disso o veículo caiu num buraco (a 
 @export var balance_damping: float = 14.0
 @export var velocidade: float = 1.6           # multiplica a velocidade máxima no plano
 @export var aceleracao: float = 900.0         # px/s² de jogo: ~0,5 s real até a máxima, e ainda sobe rampa de 27°
-@export var equilibrio_mono: float = 14.0      # força dos botões de girar no monociclo
+@export var equilibrio_mono: float = 6.0      # força dos botões de girar no monociclo
+@export var mono_rigidez: float = 30.0           # quanto ele volta sozinho pro prumo (menos que a gravidade: ainda cai)
+@export var mono_amortece: float = 9.0
+@export var mono_balanco: float = 4.0
+@export var mono_pende: float = 0.5             # 1 = força no eixo (tomba bastante), 0 = no centro (não tomba)
+var _balanco_mono := 0.0
+var delta_fisica := 1.0 / 60.0
 @export var arrasto: float = 0.15             # resistência do ar: descida chega num limite em vez de disparar
 @export var limiar_sangue: float = 420.0       # Δv (px/s) num passo que já espirra sangue
 @export var limiar_arranca: float = 2700.0     # Δv que arranca o membro
@@ -634,6 +640,7 @@ func explosao(pos: Vector2, raio: float) -> void:
 
 # ---------- controle ----------
 func _physics_process(delta: float) -> void:
+	delta_fisica = delta
 	if Input.is_action_just_pressed("eject"):
 		soltar_ragdoll(_vel(), true)
 	if Input.is_action_just_pressed("reset"):
@@ -655,17 +662,19 @@ func _dirigir() -> void:
 	var dir := Input.get_axis("brake", "accelerate")
 	if dir != 0.0 and chassi.linear_velocity.length() < ch["vmax"] * velocidade:
 		var forca := massa_total * aceleracao * (0.8 if _sem_perna() else 1.0)   # sem perna, pedala/empurra pior
-		if mono:        # monociclo: pedala no eixo; o corpo fica pra trás e você tem que se jogar pra frente
-			chassi.apply_force(Vector2(dir * forca, 0.0), roda_motriz.global_position - chassi.global_position)
+		if mono:        # monociclo: pedala perto do eixo; o corpo pende um pouco pra trás ao acelerar
+			chassi.apply_force(Vector2(dir * forca, 0.0), (roda_motriz.global_position - chassi.global_position) * mono_pende)
 		elif equilibra:   # segway: empurra embaixo, o equilíbrio segura
 			var baixo: float = (roda_motriz.global_position - chassi.global_position).length() * 0.8
 			chassi.apply_force(Vector2(dir * forca, 0.0), Vector2(0, baixo).rotated(chassi.rotation))
 		else:           # 2 rodas: pelo centro de massa, sem empinar sozinho (empinar é no botão)
 			chassi.apply_central_force(Vector2(dir * forca, 0.0))
 	var lean := Input.get_axis("lean_back", "lean_fwd")
-	if mono:        # sem ajuda nenhuma: só amortece o giro um pouco pra dar tempo de corrigir
+	if mono:        # meio estável: tomba devagar e balança sozinho; o jogador corrige com os botões
+		_balanco_mono += delta_fisica * (0.9 + 0.4 * sin(_balanco_mono * 0.37))
+		var empurrao := sin(_balanco_mono * 1.3) * mono_balanco                # desequilíbrio que pede correção
 		chassi.apply_torque(inercia_chassi * (lean * equilibrio_mono * (0.6 if _sem_perna() else 1.0) * (0.6 if _sem_braco() else 1.0)
-			- chassi.angular_velocity * 1.6))
+			- chassi.rotation * mono_rigidez - chassi.angular_velocity * mono_amortece + empurrao))
 	elif equilibra:   # girar muda o ângulo-alvo; o equilíbrio nunca desliga (desligar fazia tombar)
 		var alvo := lean * 0.45
 		chassi.apply_torque(inercia_chassi * (-(chassi.rotation - alvo) * balance_stiffness
