@@ -424,7 +424,7 @@ func _dirigir() -> void:
 	elif lean != 0.0:
 		chassi.apply_torque(lean * inercia_chassi * 5.0)
 	else:           # sem botão, se alinha sozinho com o chão embaixo: pousa certo na descida
-		var alvo := _angulo_chao_embaixo()
+		var alvo := _angulo_chao_embaixo() if ch.get("nivela_chao", true) else 0.0   # pé comprido na frente: fica reto
 		chassi.apply_torque(inercia_chassi * (-wrapf(chassi.rotation - alvo, -PI, PI) * 6.0 - chassi.angular_velocity * 2.5))
 	# pouso/batida forte arremessa o piloto; capotou ou caiu no buraco também
 	var dv := (v_roda_ant - roda_motriz.linear_velocity).length()

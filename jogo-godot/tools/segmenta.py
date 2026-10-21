@@ -511,7 +511,7 @@ GAMER = {
         'piloto': ['tronco', 'cabeca', 'braco', 'coxa', 'canela', 'perna2'],
         'rodas': [{'corpo': 'roda0', 'c': [71.0, 1327.0], 'r': 88, 'massa': 1.0, 'motriz': True},
                   {'corpo': 'roda1', 'c': [600.0, 1328.0], 'r': 88, 'massa': 1.0, 'motriz': False}],   # na ponta da base: entre-eixos largo, não empina na subida
-        'chassi': {'massa': 8.0, 'auto_equilibrio': False, 'vmax': 800.0, 'forca': 0.0,
+        'chassi': {'massa': 8.0, 'auto_equilibrio': False, 'nivela_chao': False, 'vmax': 800.0, 'forca': 0.0,
                    'poly': [[60, 180], [330, 180], [330, 880], [620, 990], [620, 1080], [420, 1100],
                             [420, 1250], [620, 1250], [600, 1300], [40, 1300], [130, 1060], [60, 900]]},
         'corpos': {
