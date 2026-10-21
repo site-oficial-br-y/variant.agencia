@@ -158,11 +158,16 @@ func _esperar_pendulo(foco: Node2D) -> bool:
 	return false
 
 func _passagem_livre(b: Node, x0: float) -> bool:
-	var ch: Dictionary = _fase().player.D["chassi"]
-	var vmax: float = float(ch["vmax"]) * _fase().player.velocidade
-	return _passa_bola(b, x0, vmax * 0.5) and _passa_bola(b, x0, vmax * 0.95)
+	return _passa_bola(b, x0, 0.8) and _passa_bola(b, x0, 1.0)
 
-func _passa_bola(b: Node, x0: float, v: float) -> bool:
+## velocidade prevista: arranca da atual com a aceleração do veículo até a máxima
+func _vel_prevista(v: float, fator: float) -> float:
+	var pl: Player = _fase().player
+	var vmax: float = float(pl.D["chassi"]["vmax"]) * pl.velocidade * fator
+	return minf(vmax, v + pl.aceleracao * fator * 0.02)
+
+func _passa_bola(b: Node, x0: float, fator: float) -> bool:
+	var v: float = maxf(0.0, _fase().player.chassi.linear_velocity.x)
 	var ancora: Vector2 = b.get_meta("ancora")
 	var L: float = b.get_meta("L")
 	var th0: float = b.get_meta("th0")
@@ -178,6 +183,7 @@ func _passa_bola(b: Node, x0: float, v: float) -> bool:
 		var fundo_bola := ancora.y + L * cos(th) + raio
 		if fundo_bola > chao - 1480.0 and absf(bx - x) < raio + 600.0:
 			return false
+		v = _vel_prevista(v, fator)
 		x += v * 0.02
 		t += 0.02
 	return true
@@ -189,15 +195,14 @@ func _esperar_prensa(foco: Node2D) -> bool:
 		var dist: float = float(p.get_meta("x")) - foco.global_position.x
 		if dist < 300.0 or dist > 2800.0 or _prensas_liberadas.has(p):
 			continue
-		var ch: Dictionary = _fase().player.D["chassi"]
-		var vmax: float = float(ch["vmax"]) * _fase().player.velocidade
-		if _passa_prensa(p, foco.global_position.x, vmax * 0.5) and _passa_prensa(p, foco.global_position.x, vmax * 0.95):
+		if _passa_prensa(p, foco.global_position.x, 0.8) and _passa_prensa(p, foco.global_position.x, 1.0):
 			_prensas_liberadas[p] = true
 			return false
 		return true
 	return false
 
-func _passa_prensa(p: Node, x0: float, v: float) -> bool:
+func _passa_prensa(p: Node, x0: float, fator: float) -> bool:
+	var v: float = maxf(0.0, _fase().player.chassi.linear_velocity.x)
 	var px: float = p.get_meta("x")
 	var T: float = p.get_meta("T")
 	var atraso: float = p.get_meta("atraso")
@@ -212,6 +217,7 @@ func _passa_prensa(p: Node, x0: float, v: float) -> bool:
 		var baixo := lerpf(topo, fundo, Pecas.descida_prensa(f)) + 150.0
 		if baixo > chao - 1480.0 and absf(px - x) < 310.0 + 800.0:
 			return false
+		v = _vel_prevista(v, fator)
 		x += v * 0.02
 		t += 0.02
 	return true
