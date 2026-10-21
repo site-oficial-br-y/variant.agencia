@@ -271,6 +271,7 @@ func soltar_ragdoll(herda_vel: Vector2, pulo: bool = false) -> void:
 		rb.global_transform = Transform2D(rot, arte_para_mundo(base))
 		for k in _pecas_do(corpo):
 			sprites[k].reparent(rb)            # mantém a transform global: zero salto
+			sprites[k].z_index += 20          # caído fica na frente do veículo (perna não some atrás dele)
 		rb.linear_velocity = herda_vel + (Vector2(160, -380) if pulo else Vector2.ZERO)
 		corpos[corpo] = rb
 		rb.add_to_group("piloto")
