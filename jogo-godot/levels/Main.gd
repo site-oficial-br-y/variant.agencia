@@ -6,7 +6,7 @@ signal venceu(tempo: float)
 signal perdeu(motivo: String)
 
 const CHAO_Y := 1000.0
-const SPAWN_X := 600.0
+const SPAWN_X := -100.0                   # largada recuada: longe do alcance da bola
 const TOPO_POUSO := CHAO_Y + 80.0          # topo dos blocos depois da rampa (fase 1)
 
 var do_inicio := true                       # recorde só vale para a fase inteira (sem checkpoint)
@@ -16,7 +16,8 @@ var cp_chao := CHAO_Y
 var ativo := true
 var tempo := 0.0
 var _caiu_em := -1.0
-var _correntes: Array = []
+var _pendulos: Array = []                 # bolas de demolição cinemáticas
+var _t_fisica := 0.0
 var _serras: Array = []
 var _hud: Array = []
 var painel: HBoxContainer                      # [controle, Callable(tamanho_tela) -> posição]                # [Line2D, âncora, bola] da bola de demolição
@@ -57,8 +58,8 @@ func _ready() -> void:
 	player.morreu.connect(_on_morreu)
 
 	camera = FollowCamera.new()
-	camera.zoom = Vector2(0.44, 0.44)
-	camera.offset = Vector2(260, -170)        # olha pra frente e mostra a cabeça
+	camera.zoom = Vector2(0.24, 0.24)         # boneco ~1/3 da tela, como no gênero
+	camera.offset = Vector2(700, -420)        # olha pra frente e mostra a cabeça
 	add_child(camera)
 	camera.alvo = player.foco()
 
@@ -74,8 +75,8 @@ func _ready() -> void:
 func _process(delta: float) -> void:
 	for sr in _serras:
 		(sr as Node2D).rotation += delta * 9.0
-	for c in _correntes:
-		(c[0] as Line2D).points = PackedVector2Array([c[1], (c[2] as Node2D).global_position])
+	for p in _pendulos:
+		(p["corrente"] as Line2D).points = PackedVector2Array([p["ancora"], (p["bola"] as Node2D).global_position])
 	if ativo:
 		tempo += delta
 		# caiu do veículo: a tentativa acaba 2,5 s depois (dá tempo de rolar até a chegada)
@@ -156,62 +157,82 @@ func _espetos(x0: float, x1: float, chao: float) -> void:
 	var pts := PackedVector2Array([Vector2(x0, chao)])
 	var x := x0
 	while x < x1:
-		pts.append(Vector2(x + 14, chao - 110))
-		pts.append(Vector2(x + 28, chao))
-		x += 28
+		pts.append(Vector2(x + 24, chao - 190))
+		pts.append(Vector2(x + 48, chao))
+		x += 48
 	vis.polygon = pts
 	vis.color = Color(0.78, 0.8, 0.86)
 	add_child(vis)
-	var a := _area(Vector2((x0 + x1) / 2.0, chao - 55), Vector2(x1 - x0, 110))
+	var a := _area(Vector2((x0 + x1) / 2.0, chao - 95), Vector2(x1 - x0, 190))
 	a.body_entered.connect(func(b: Node2D) -> void:
 		if b.is_in_group("veiculo") or b.is_in_group("piloto"):
 			Audio.tocar("splat")
 			_fim(false, "espetos"))
 
-## bola de demolição: pêndulo físico (PinJoint2D) que derruba quem passar na hora errada
-func _bola_demolicao(ancora: Vector2, comprimento: float, angulo_ini: float) -> void:
-	var pino := StaticBody2D.new()
-	pino.position = ancora
-	pino.collision_layer = 0
-	add_child(pino)
-	var bola := RigidBody2D.new()
-	bola.mass = 40.0                          # pesada: o golpe empurra/capota de verdade
-	bola.collision_layer = 0b1000            # objeto: bate fisicamente (não é "encostou, morreu")
-	bola.collision_mask = 0b1110
-	bola.linear_damp = 0.0
-	bola.angular_damp = 0.0
-	bola.contact_monitor = true
-	bola.max_contacts_reported = 2
+## bola de demolição: pêndulo CINEMÁTICO (AnimatableBody2D) — segue θ(t)=θ0·cos(ωt),
+## nunca estica nem perde energia, e empurra corpos com massa "infinita"
+func _bola_demolicao(ancora: Vector2, comprimento: float, angulo_ini: float, raio := 560.0) -> void:
+	var bola := AnimatableBody2D.new()
+	bola.sync_to_physics = false
+	bola.collision_layer = 0b11000           # objeto + perigo: empurra e o sensor do piloto sente
+	bola.collision_mask = 0
 	var cs := CollisionShape2D.new()
 	var c := CircleShape2D.new()
-	c.radius = 95.0
+	c.radius = raio
 	cs.shape = c
 	bola.add_child(cs)
-	var vis := Polygon2D.new()
 	var circ := PackedVector2Array()
-	for k in 32:
-		circ.append(Vector2(95, 0).rotated(TAU * k / 32.0))
+	for k in 48:
+		circ.append(Vector2(raio, 0).rotated(TAU * k / 48.0))
+	var vis := Polygon2D.new()
 	vis.polygon = circ
-	vis.color = Color(0.3, 0.26, 0.33)
+	vis.color = Color(0.29, 0.25, 0.32)
 	bola.add_child(vis)
-	bola.position = ancora + Vector2(0, comprimento).rotated(-angulo_ini)
+	var brilho := Polygon2D.new()               # reflexo para dar volume
+	var b2 := PackedVector2Array()
+	for k in 24:
+		b2.append(Vector2(-raio * 0.35, -raio * 0.35) + Vector2(raio * 0.32, 0).rotated(TAU * k / 24.0))
+	brilho.polygon = b2
+	brilho.color = Color(0.42, 0.37, 0.46)
+	bola.add_child(brilho)
+	var argola := Polygon2D.new()
+	argola.polygon = PackedVector2Array([Vector2(-40, -raio - 70), Vector2(40, -raio - 70), Vector2(40, -raio + 10), Vector2(-40, -raio + 10)])
+	argola.color = Color(0.2, 0.2, 0.22)
+	bola.add_child(argola)
 	add_child(bola)
 	bola.add_to_group("pendulo")
 	bola.set_meta("ancora", ancora)
 	bola.set_meta("alcance", comprimento * sin(angulo_ini))
-	var j := PinJoint2D.new()
-	add_child(j)
-	j.global_position = ancora
-	j.node_a = pino.get_path()
-	j.node_b = bola.get_path()
+	bola.set_meta("raio", raio)
+	bola.set_meta("vel", Vector2.ZERO)
 	var corrente := Line2D.new()
-	corrente.width = 8.0
+	corrente.width = 26.0
 	corrente.default_color = Color(0.12, 0.12, 0.12)
 	corrente.points = PackedVector2Array([Vector2.ZERO, Vector2.ZERO])
 	add_child(corrente)
-	bola.body_entered.connect(func(_b: Node) -> void:
-		if bola.linear_velocity.length() > 200.0: Audio.tocar("metal", 0.8))
-	_correntes.append([corrente, ancora, bola])
+	var som := _area(Vector2.ZERO, Vector2(raio * 2.1, raio * 2.1))
+	remove_child(som)
+	som.position = Vector2.ZERO
+	bola.add_child(som)
+	som.body_entered.connect(func(b: Node2D) -> void:
+		if (b.is_in_group("veiculo") or b.is_in_group("piloto")) and (bola.get_meta("vel") as Vector2).length() > 150.0:
+			Audio.tocar("metal", 0.9))
+	_pendulos.append({"bola": bola, "ancora": ancora, "L": comprimento, "th0": angulo_ini,
+		"w": sqrt(980.0 / comprimento), "corrente": corrente})
+	_mover_pendulos(0.0)
+
+func _physics_process(delta: float) -> void:
+	_t_fisica += delta
+	_mover_pendulos(_t_fisica)
+
+func _mover_pendulos(t: float) -> void:
+	for p in _pendulos:
+		var th: float = p["th0"] * cos(p["w"] * t)
+		var dth: float = -p["th0"] * p["w"] * sin(p["w"] * t)
+		var L: float = p["L"]
+		var bola: AnimatableBody2D = p["bola"]
+		bola.global_position = (p["ancora"] as Vector2) + Vector2(L * sin(th), L * cos(th))
+		bola.set_meta("vel", Vector2(L * cos(th), -L * sin(th)) * dth)
 
 func _bola_futebol(pos: Vector2) -> void:
 	var b := RigidBody2D.new()
@@ -224,22 +245,22 @@ func _bola_futebol(pos: Vector2) -> void:
 	b.physics_material_override = m
 	var cs := CollisionShape2D.new()
 	var c := CircleShape2D.new()
-	c.radius = 42.0
+	c.radius = 80.0
 	cs.shape = c
 	b.add_child(cs)
 	var vis := Polygon2D.new()
 	var circ := PackedVector2Array()
 	for k in 24:
-		circ.append(Vector2(42, 0).rotated(TAU * k / 24.0))
+		circ.append(Vector2(80, 0).rotated(TAU * k / 24.0))
 	vis.polygon = circ
 	vis.color = Color.WHITE
 	b.add_child(vis)
 	for k in 5:
 		var gomo := Polygon2D.new()
-		var cen := Vector2(24, 0).rotated(TAU * k / 5.0)
+		var cen := Vector2(46, 0).rotated(TAU * k / 5.0)
 		var pent := PackedVector2Array()
 		for q in 5:
-			pent.append(cen + Vector2(10, 0).rotated(TAU * q / 5.0))
+			pent.append(cen + Vector2(19, 0).rotated(TAU * q / 5.0))
 		gomo.polygon = pent
 		gomo.color = Color.BLACK
 		b.add_child(gomo)
@@ -280,9 +301,9 @@ func _fase_1() -> void:
 	_espetos(5400, 5900, CHAO_Y + 620)                                # fundo do 2º fosso
 	_bloco(Vector2(5650, CHAO_Y + 770), Vector2(560, 300), 0.0)       # chão do 2º fosso
 	_bloco(Vector2(6400, CHAO_Y + 230), Vector2(1000, 300), 0.0)      # reta final (5900..6900)
-	_bola_demolicao(Vector2(1900, CHAO_Y - 1400), 1100.0, deg_to_rad(25.0))  # janela de ~3,3 s: passável até pela cadeira
-	_bola_futebol(Vector2(1500, CHAO_Y - 45))
-	_pilha_de_caixas(Vector2(4440, TOPO_POUSO), 4, 3)                 # no lugar da parede: derruba no embalo
+	_bola_demolicao(Vector2(1800, CHAO_Y - 3000), 2400.0, deg_to_rad(16.0))  # fundo da bola a 40 px do chão; balanço de ~9,8 s
+	_bola_futebol(Vector2(1400, CHAO_Y - 85))
+	_pilha_de_caixas(Vector2(4440, TOPO_POUSO), 3, 2)                 # no lugar da parede: derruba no embalo
 	_marcos(Vector2(3600, TOPO_POUSO), Vector2(6300, TOPO_POUSO), CHAO_Y + 1100)
 
 # ---------- FASE 2: Obra (gangorra, vigas, tábuas que caem) ----------
@@ -291,7 +312,7 @@ func _fase_2() -> void:
 	_bloco(Vector2(2350, CHAO_Y + 150), Vector2(1300, 300), 0.0)      # chão sob a gangorra (1700..3000)
 	_gangorra(Vector2(2350, CHAO_Y - 95), 1100.0)
 	_viga(Vector2(3400, CHAO_Y + 30), Vector2(800, 60), CHAO_Y + 700)       # viga 1 (3000..3800)
-	_pilha_de_caixas(Vector2(3500, CHAO_Y), 2, 2)
+	_pilha_de_caixas(Vector2(3450, CHAO_Y), 2, 1)
 	_espetos(3800, 4000, CHAO_Y + 650)
 	_bloco(Vector2(3900, CHAO_Y + 800), Vector2(200, 300), 0.0)
 	_viga(Vector2(4400, CHAO_Y + 30), Vector2(800, 60), CHAO_Y + 700)       # viga 2 (4000..4800)
@@ -309,8 +330,8 @@ func _fase_3() -> void:
 	_cerca(Vector2(1200, CHAO_Y), Vector2(4000, CHAO_Y + 900))
 	_espetos(4900, 6000, CHAO_Y + 1500)
 	_bloco(Vector2(5450, CHAO_Y + 1650), Vector2(1100, 300), 0.0)
-	_serra(Vector2(5250, CHAO_Y + 1380), 110.0)
-	_serra(Vector2(5700, CHAO_Y + 1380), 110.0)
+	_serra(Vector2(5230, CHAO_Y + 1260), 240.0)
+	_serra(Vector2(5720, CHAO_Y + 1260), 240.0)
 	_terreno(PackedVector2Array([Vector2(6000, CHAO_Y + 800), Vector2(6800, CHAO_Y + 1000),
 		Vector2(8200, CHAO_Y + 1000)]), CHAO_Y + 1500)
 	_marcos(Vector2(-1.0, 0.0), Vector2(7500, CHAO_Y + 1000), CHAO_Y + 2100)
@@ -352,11 +373,11 @@ func _terreno(bruto: PackedVector2Array, fundo_y: float) -> void:
 
 ## cerca de espetos decorativa ao longo de uma ladeira (atrás de tudo)
 func _cerca(a: Vector2, b: Vector2) -> void:
-	var n := int(a.distance_to(b) / 46.0)
+	var n := int(a.distance_to(b) / 70.0)
 	for i in n:
 		var p := a.lerp(b, float(i) / n)
 		var haste := Polygon2D.new()
-		haste.polygon = PackedVector2Array([Vector2(-4, 0), Vector2(4, 0), Vector2(4, -150), Vector2(0, -175), Vector2(-4, -150)])
+		haste.polygon = PackedVector2Array([Vector2(-7, 0), Vector2(7, 0), Vector2(7, -300), Vector2(0, -345), Vector2(-7, -300)])
 		haste.color = Color(0.82, 0.84, 0.9)
 		haste.position = p
 		haste.z_index = -2
@@ -456,11 +477,11 @@ func _serra(centro: Vector2, raio: float) -> void:
 
 ## céu, nuvens e morros em paralaxe (arte gerada, original)
 func _construir_fundo() -> void:
+	var fundo_ceu := CanvasLayer.new()
+	fundo_ceu.layer = -101
+	add_child(fundo_ceu)
 	var pb := ParallaxBackground.new()
 	add_child(pb)
-	var ceu := ParallaxLayer.new()
-	ceu.motion_scale = Vector2.ZERO
-	pb.add_child(ceu)
 	var grad := Gradient.new()
 	grad.set_color(0, Color(0.27, 0.47, 0.92))
 	grad.set_color(1, Color(0.62, 0.78, 0.98))
@@ -470,23 +491,23 @@ func _construir_fundo() -> void:
 	gt.fill_to = Vector2(0, 1)
 	gt.width = 8
 	gt.height = 256
-	var ceu_s := Sprite2D.new()
+	var ceu_s := TextureRect.new()
 	ceu_s.texture = gt
-	ceu_s.centered = false
-	ceu_s.scale = Vector2(1200, 22)
-	ceu_s.position = Vector2(-4000, -3200)
-	ceu.add_child(ceu_s)
-	for camada in [["nuvem", 0.12, -350.0, 2.6], ["morros_longe", 0.25, 720.0, 2.2], ["morros_perto", 0.45, 980.0, 2.4]]:
+	ceu_s.set_anchors_preset(Control.PRESET_FULL_RECT)
+	ceu_s.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+	ceu_s.stretch_mode = TextureRect.STRETCH_SCALE
+	fundo_ceu.add_child(ceu_s)
+	for camada in [["nuvem", 0.12, -1300.0, 4.8], ["morros_longe", 0.25, 720.0, 4.1], ["morros_perto", 0.45, 980.0, 4.4]]:
 		var pl := ParallaxLayer.new()
 		pl.motion_scale = Vector2(camada[1], camada[1] * 0.35)
 		pb.add_child(pl)
 		if camada[0] == "nuvem":
-			pl.motion_mirroring = Vector2(5200, 0)
+			pl.motion_mirroring = Vector2(9600, 0)
 			for k in 4:
 				var n := Sprite2D.new()
 				n.texture = load("res://assets/ui/nuvem%d.png" % (k % 3))
 				n.scale = Vector2.ONE * camada[3]
-				n.position = Vector2(k * 1300 + 300 * (k % 2), camada[2] + 260 * (k % 3))
+				n.position = Vector2(k * 2400 + 550 * (k % 2), camada[2] + 480 * (k % 3))
 				pl.add_child(n)
 		else:
 			var tex: Texture2D = load("res://assets/ui/%s.png" % camada[0])
@@ -532,11 +553,11 @@ func _bandeira(x: float, chao: float, cor: Color, xadrez := false) -> void:
 			mastro.add_child(q)
 
 func _pilha_de_caixas(base: Vector2, colunas: int, linhas: int) -> void:
-	var lado := 110.0
+	var lado := 240.0
 	for i in colunas:
 		for j in linhas:
 			var c := RigidBody2D.new()
-			c.mass = 0.6
+			c.mass = 2.0
 			c.collision_layer = 0b1000            # objetos
 			c.collision_mask = 0b1111
 			c.physics_material_override = _mat
@@ -551,7 +572,7 @@ func _pilha_de_caixas(base: Vector2, colunas: int, linhas: int) -> void:
 			vis.color = Color(0.72, 0.5, 0.26)
 			c.add_child(vis)
 			var tabua := Polygon2D.new()
-			tabua.polygon = PackedVector2Array([Vector2(-h, -10), Vector2(h, -10), Vector2(h, 10), Vector2(-h, 10)])
+			tabua.polygon = PackedVector2Array([Vector2(-h, -20), Vector2(h, -20), Vector2(h, 20), Vector2(-h, 20)])
 			tabua.color = Color(0.55, 0.36, 0.17)
 			c.add_child(tabua)
 			c.position = base + Vector2(i * lado + lado / 2.0, -j * lado - lado / 2.0)

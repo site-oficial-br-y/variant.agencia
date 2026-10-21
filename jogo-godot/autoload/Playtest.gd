@@ -138,14 +138,17 @@ func _esperar_pendulo(foco: Node2D) -> bool:
 	for b in get_tree().get_nodes_in_group("pendulo"):
 		var ancora: Vector2 = b.get_meta("ancora")
 		var alcance: float = b.get_meta("alcance")
+		var raio: float = b.get_meta("raio", 100.0)
 		var dist := ancora.x - foco.global_position.x
-		if dist < 300.0 or dist > 1150.0:          # para logo antes do alcance da bola
+		# para logo antes do alcance (frente do veículo ~550 px à frente do centro)
+		if dist < 300.0 or dist > alcance + raio + 700.0:
 			continue
-		var bola := b as RigidBody2D
+		var bola := b as Node2D
+		var vx: float = (b.get_meta("vel", Vector2.ZERO) as Vector2).x
 		# sai no instante em que a bola VIRA no canto de cá (velocidade troca de sinal)
 		var vx_ant: float = _vx_ant.get(bola, 0.0)
-		_vx_ant[bola] = bola.linear_velocity.x
-		var virou := vx_ant <= 0.0 and bola.linear_velocity.x > 0.0 and bola.global_position.x < ancora.x - alcance * 0.5
+		_vx_ant[bola] = vx
+		var virou := vx_ant <= 0.0 and vx > 0.0 and bola.global_position.x < ancora.x - alcance * 0.5
 		if virou:
 			_liberado = true
 		return not _liberado

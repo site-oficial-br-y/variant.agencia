@@ -170,7 +170,7 @@ func _montar() -> void:
 	chassi.add_child(boneco)
 	var sensor := Area2D.new()
 	sensor.collision_layer = 0
-	sensor.collision_mask = 0b001
+	sensor.collision_mask = 0b10001           # mundo + perigo pesado (bola de demolição)
 	for corpo in D["piloto"]:
 		for k in _pecas_do(corpo):
 			var s := _sprite(k)
@@ -193,7 +193,12 @@ func _centroide(pts: PackedVector2Array) -> Vector2:
 		c += (a + b) * cr
 	return c / (3.0 * area)
 
-func _on_corpo_bateu(_body: Node) -> void:
+func _on_corpo_bateu(body: Node) -> void:
+	# bola de demolição: esbarrão lento só empurra; pancada rápida derruba
+	if body.is_in_group("pendulo"):
+		var rel := ((body.get_meta("vel", Vector2.ZERO) as Vector2) - chassi.linear_velocity).length()
+		if rel < 300.0:
+			return
 	if montado:   # dentro do callback de física não pode criar corpos: adia pro fim do passo
 		soltar_ragdoll.call_deferred(_vel(), false)
 
