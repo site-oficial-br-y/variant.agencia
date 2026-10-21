@@ -362,8 +362,10 @@ func atualizar(dt: float) -> void:
 				m["espera"] = maxf(0.0, m["espera"] - dt)
 			"tunel":
 				for b in (m["area"] as Area2D).get_overlapping_bodies():
-					if b is RigidBody2D:
-						(b as RigidBody2D).apply_central_force(m["dir"] * float(m["acel"]) * (b as RigidBody2D).mass)
+					if b is RigidBody2D:                    # empurra e sustenta contra a gravidade (carrega por cima do vão)
+						var rb := b as RigidBody2D
+						var subir := 980.0 * 1.15 if rb.linear_velocity.y > -250.0 else 980.0 * 0.9
+						rb.apply_central_force((m["dir"] * float(m["acel"]) + Vector2(0, -subir)) * rb.mass)
 
 func _drone(m: Dictionary, dt: float, alvo: Vector2) -> void:
 	var n: Node2D = m["no"]

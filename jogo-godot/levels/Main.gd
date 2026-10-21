@@ -485,9 +485,9 @@ func _t_turbo_salto(p: Vector2) -> Vector2:
 ## túnel de vento por cima do abismo: empurra pra frente e um pouco pra cima
 func _t_tunel(p: Vector2) -> Vector2:
 	_t_plano(p, 700, false)
-	_fosso(p.x + 700, p.x + 3900, p.y)
-	mec.tunel_vento(p + Vector2(300, -380), p + Vector2(4100, -700), 1000.0, 3000.0)
-	return _t_plano(p + Vector2(3900, 0), 900, false)
+	_fosso(p.x + 700, p.x + 3300, p.y)
+	mec.tunel_vento(p + Vector2(300, -450), p + Vector2(3700, -500), 1100.0, 2400.0)
+	return _t_plano(p + Vector2(3300, 0), 900, false)
 
 ## bloco de mecânicas novas: cada volta da fase usa uma combinação diferente
 func _bloco_novo(p: Vector2, c: Array, combinacao: Array) -> Vector2:
