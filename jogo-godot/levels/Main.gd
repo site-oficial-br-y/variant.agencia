@@ -762,6 +762,8 @@ func _construir_hud() -> void:
 		[_toque("gira_frente", Vector2.ZERO, 180, "lean_fwd"), func(v: Vector2) -> Vector2: return Vector2(236, v.y - 210)],
 		[_toque("re", Vector2.ZERO, 155, "brake"), func(v: Vector2) -> Vector2: return Vector2(v.x - 400, v.y - 185)],
 		[_toque("gas", Vector2.ZERO, 200, "accelerate"), func(v: Vector2) -> Vector2: return Vector2(v.x - 225, v.y - 225)],
+		[_toque("pula" if Game.personagem == "segway" else "turbo", Vector2.ZERO, 165, "especial"),
+			func(v: Vector2) -> Vector2: return Vector2(v.x - 195, v.y - 410)],
 		[_botao("R", Vector2.ZERO, Vector2(80, 64), "reset"), func(v: Vector2) -> Vector2: return Vector2(v.x - 96, 14)],
 		[_botao("TROCAR", Vector2.ZERO, Vector2(180, 64), "menu"), func(v: Vector2) -> Vector2: return Vector2(v.x - 290, 14)],
 	]
@@ -855,6 +857,7 @@ func _rodar_teste() -> void:
 	var rot_drive := absf(player.chassi.rotation)
 	print("[DRIVE] avancou dx=%.1f  rotacao=%.3f" % [dx, rot_drive])
 
+	await _testar_especial()
 	player.soltar_ragdoll(player.chassi.linear_velocity, true)
 	await _esperar(1.3)
 	var vmax := 0.0
@@ -878,6 +881,39 @@ func _rodar_teste() -> void:
 		and sangue.manchas.size() > 10 and not player.juntas.has("braco") and not player.corpos.has("cabeca") and player.morto
 	print("[RESULTADO] ", "PASS" if ok else "FALHA")
 	get_tree().quit()
+
+## botão especial: pulo do segway sobe de verdade; turbo passa da velocidade máxima
+func _testar_especial() -> void:
+	var ch: Dictionary = player.D["chassi"]
+	if ch["auto_equilibrio"]:
+		await _esperar(1.0)
+		var y0 := player.chassi.global_position.y
+		Input.action_press("especial")
+		await get_tree().physics_frame
+		await get_tree().physics_frame
+		Input.action_release("especial")
+		var topo := y0
+		for k in 60:
+			await get_tree().physics_frame
+			topo = minf(topo, player.chassi.global_position.y)
+			if k == 22 and "fotos" in OS.get_cmdline_user_args():
+				await _captura("pulo_" + Game.personagem)
+		print("[ESPECIAL] pulo subiu %.0f px (montado=%s)" % [y0 - topo, player.montado])
+	else:
+		Input.action_press("accelerate")
+		await _esperar(1.0)
+		var v0 := player.chassi.linear_velocity.length()
+		Input.action_press("especial")
+		var vmax_t := 0.0
+		for k in 50:
+			await get_tree().physics_frame
+			vmax_t = maxf(vmax_t, player.chassi.linear_velocity.length())
+			if k == 25 and "fotos" in OS.get_cmdline_user_args():
+				await _captura("turbo_" + Game.personagem)
+		print("[ESPECIAL] turbo: %.0f -> %.0f px/s, fogo=%s" % [v0, vmax_t, player.fogo.emitting])
+		Input.action_release("especial")
+		Input.action_release("accelerate")
+		await _esperar(1.0)
 
 func _esperar(s: float) -> void:
 	await get_tree().create_timer(s).timeout

@@ -21,6 +21,7 @@ const ACOES := {
 	"lean_fwd":   [KEY_DOWN, KEY_S],
 	"lean_back":  [KEY_UP, KEY_W],
 	"eject":      [KEY_SPACE],
+	"especial":   [KEY_SHIFT, KEY_X],          # Périne pula; Gabriel e Gian ligam o turbo
 	"reset":      [KEY_R],
 }
 

@@ -37,6 +37,11 @@ var v_ant: Dictionary = {}
 var v_roda_ant := Vector2.ZERO
 var montado := true
 var massa_total := 1.0
+var fogo: CPUParticles2D                 # jato do turbo (cadeira e scooter)
+var _espera_pulo := 0.0
+var _som_turbo := 0.0
+const PULO := 1500.0                     # Δv pra cima do pulo do segway (px/s de jogo)
+const TURBO := 2600.0                    # aceleração extra do turbo (px/s² de jogo)
 var morto := false
 var sangue: Sangue
 var _mat: PhysicsMaterial
@@ -181,6 +186,8 @@ func _montar() -> void:
 		s.position = centro_peca(k) - origem
 		chassi.add_child(s)
 
+	if not ch["auto_equilibrio"]:
+		_montar_turbo(ch)
 	boneco = Node2D.new()
 	chassi.add_child(boneco)
 	var sensor := Area2D.new()
@@ -196,6 +203,96 @@ func _montar() -> void:
 	chassi.add_child(sensor)
 	sensor.body_entered.connect(_on_corpo_bateu)
 	montado = true
+
+## bocal de jato na traseira + partículas de fogo que só saem com o turbo ligado
+func _montar_turbo(ch: Dictionary) -> void:
+	var xs: Array = []
+	var ys: Array = []
+	for p in ch["poly"]:
+		xs.append(float(p[0]))
+		ys.append(float(p[1]))
+	var traseira := Vector2(xs.min() - 30.0, lerpf(ys.min(), ys.max(), 0.62)) - origem
+	var bocal := Node2D.new()
+	bocal.position = traseira
+	bocal.scale = Vector2.ONE * 1.35
+	bocal.z_index = 12
+	chassi.add_child(bocal)
+	var corpo := Polygon2D.new()
+	corpo.polygon = PackedVector2Array([Vector2(110, -46), Vector2(-40, -62), Vector2(-40, 62), Vector2(110, 46)])
+	corpo.color = Color(0.42, 0.44, 0.48)
+	bocal.add_child(corpo)
+	var aro := Polygon2D.new()
+	aro.polygon = PackedVector2Array([Vector2(-40, -62), Vector2(-62, -70), Vector2(-62, 70), Vector2(-40, 62)])
+	aro.color = Color(0.2, 0.2, 0.23)
+	bocal.add_child(aro)
+	var faixa := Polygon2D.new()
+	faixa.polygon = PackedVector2Array([Vector2(30, -52), Vector2(55, -50), Vector2(55, 50), Vector2(30, 52)])
+	faixa.color = Color(0.85, 0.2, 0.15)
+	bocal.add_child(faixa)
+	var g := Gradient.new()
+	g.set_color(0, Color(1, 1, 1, 1))
+	g.set_color(1, Color(1, 1, 1, 0))
+	var bolha := GradientTexture2D.new()
+	bolha.gradient = g
+	bolha.fill = GradientTexture2D.FILL_RADIAL
+	bolha.fill_from = Vector2(0.5, 0.5)
+	bolha.fill_to = Vector2(1.0, 0.5)
+	bolha.width = 64
+	bolha.height = 64
+	fogo = CPUParticles2D.new()
+	fogo.texture = bolha
+	fogo.position = Vector2(-66, 0)
+	fogo.amount = 220
+	fogo.lifetime = 0.4
+	fogo.local_coords = false
+	fogo.direction = Vector2.LEFT
+	fogo.spread = 9.0
+	fogo.gravity = Vector2(0, -300)
+	fogo.initial_velocity_min = 1500.0
+	fogo.initial_velocity_max = 2300.0
+	fogo.scale_amount_min = 2.4
+	fogo.scale_amount_max = 4.4
+	var rampa := Gradient.new()
+	rampa.offsets = PackedFloat32Array([0.0, 0.18, 0.45, 0.75, 1.0])
+	rampa.colors = PackedColorArray([Color(1, 1, 0.85, 1), Color(1, 0.85, 0.2, 1), Color(1, 0.4, 0.05, 0.95),
+		Color(0.55, 0.12, 0.05, 0.6), Color(0.25, 0.25, 0.25, 0.0)])
+	fogo.color_ramp = rampa
+	var tam := Curve.new()
+	tam.add_point(Vector2(0, 0.6))
+	tam.add_point(Vector2(0.3, 1.0))
+	tam.add_point(Vector2(1, 1.6))
+	fogo.scale_amount_curve = tam
+	fogo.emitting = false
+	fogo.z_index = 11
+	bocal.add_child(fogo)
+
+func _no_chao() -> bool:
+	var r: float = (roda_motriz.get_child(0).shape as CircleShape2D).radius
+	var q := PhysicsRayQueryParameters2D.create(roda_motriz.global_position, roda_motriz.global_position + Vector2(0, r + 70.0), 0b0001)
+	return not get_world_2d().direct_space_state.intersect_ray(q).is_empty()
+
+## botão especial: Périne pula com o segway; Gabriel e Gian ligam o turbo
+func _especial(ch: Dictionary, delta: float) -> void:
+	_espera_pulo -= delta
+	if ch["auto_equilibrio"]:
+		if Input.is_action_just_pressed("especial") and _espera_pulo <= 0.0 and _no_chao():
+			_espera_pulo = 0.5
+			for rb in [chassi] + rodas:
+				(rb as RigidBody2D).apply_central_impulse(Vector2(0, -PULO) * (rb as RigidBody2D).mass)
+			Audio.tocar("pulo")
+		return
+	var ligado := Input.is_action_pressed("especial")
+	if fogo:
+		fogo.emitting = ligado
+	if not ligado:
+		_som_turbo = 0.0
+		return
+	if chassi.linear_velocity.length() < float(ch["vmax"]) * velocidade * 1.9:
+		chassi.apply_central_force(Vector2.RIGHT.rotated(chassi.rotation) * massa_total * TURBO)
+	_som_turbo -= delta
+	if _som_turbo <= 0.0:
+		_som_turbo = 0.9
+		Audio.tocar("turbo", 0.9, 0.04)
 
 func _centroide(pts: PackedVector2Array) -> Vector2:
 	var area := 0.0
@@ -218,13 +315,14 @@ func _on_corpo_bateu(body: Node) -> void:
 		soltar_ragdoll.call_deferred(_vel(), false)
 
 # ---------- controle ----------
-func _physics_process(_delta: float) -> void:
+func _physics_process(delta: float) -> void:
 	if Input.is_action_just_pressed("eject"):
 		soltar_ragdoll(_vel(), true)
 	if Input.is_action_just_pressed("reset"):
 		get_tree().reload_current_scene()
 	if montado:
 		_dirigir()
+		_especial(D["chassi"], delta)
 	else:
 		_checar_pancadas()
 
@@ -282,6 +380,8 @@ func soltar_ragdoll(herda_vel: Vector2, pulo: bool = false) -> void:
 		return
 	montado = false
 	Audio.motor(false)
+	if fogo:
+		fogo.emitting = false
 	var rot := chassi.global_rotation
 	for corpo in D["piloto"]:
 		var base := centro_peca(corpo)          # origem do corpo = centro da peça de mesmo nome
