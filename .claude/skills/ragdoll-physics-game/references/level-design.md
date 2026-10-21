@@ -146,7 +146,10 @@ func _ready() -> void:
 5. **Dificuldade progressiva**: fase 1 ensina acelerar/frear/inclinar; fase 2 salto
    e pouso; fase 3 armadilhas móveis; fase 4 combinações e rota secreta.
 6. **Nada de morte injusta**: sem armadilha invisível, sem quina que prende a roda,
-   sem salto que só funciona com timing de quadro.
+   sem salto que só funciona com timing de quadro. Terreno por polilinha:
+   **arredonde as quinas** (3 iterações de Chaikin) — num caso real a rodinha da
+   frente (raio 76) de uma cadeira agarrava na quina seca entre chão e rampa de
+   salto e capotava para a frente; com a quina arredondada o mesmo salto passou.
 7. **Duração**: 30–90 s para um jogador médio.
 
 Não copie layouts, nomes ou trechos de fases de Happy Wheels; descreva a ideia

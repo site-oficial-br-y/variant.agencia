@@ -125,4 +125,4 @@ func _jogar() -> void:
 	Audio.tocar("confirma")
 	Game.personagem = OPCOES[atual]
 	Game.checkpoint_x = -1.0
-	get_tree().change_scene_to_file("res://levels/Main.tscn")
+	get_tree().change_scene_to_file("res://levels/Fases.tscn")

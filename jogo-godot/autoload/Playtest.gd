@@ -108,7 +108,8 @@ func _jogar(fase: Node, estrategia: String) -> void:
 		if estrategia == "busca" and fase.tempo < espera:
 			parado = 0.0
 			continue
-		var rot: float = fase.player.chassi.global_rotation
+		# inclinação RELATIVA ao chão embaixo (no ar: manter nivelado)
+		var rot: float = fase.player.chassi.global_rotation - _angulo_chao(fase.player.chassi.global_position)
 		if estrategia.begins_with("reativo"):
 			# trava na frente de algo: dá ré pra ganhar embalo e vai de novo
 			if parado > 2.5 and re_ate < 0.0:
@@ -149,6 +150,18 @@ func _esperar_pendulo(foco: Node2D) -> bool:
 			_liberado = true
 		return not _liberado
 	return false
+
+## ângulo do terreno sob a posição (dois raios: 200 px atrás e na frente); 0 se no ar
+func _angulo_chao(pos: Vector2) -> float:
+	var espaco := get_viewport().world_2d.direct_space_state
+	var pts: Array = []
+	for dx in [-200.0, 200.0]:
+		var q := PhysicsRayQueryParameters2D.create(pos + Vector2(dx, -50), pos + Vector2(dx, 900), 0b0001)
+		var hit := espaco.intersect_ray(q)
+		if hit.is_empty():
+			return 0.0
+		pts.append(hit["position"])
+	return ((pts[1] as Vector2) - (pts[0] as Vector2)).angle()
 
 func _soltar() -> void:
 	for a in ["accelerate", "brake", "lean_fwd", "lean_back"]:

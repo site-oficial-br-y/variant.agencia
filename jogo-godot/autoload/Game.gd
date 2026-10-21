@@ -7,6 +7,9 @@ signal estado_mudou(novo)
 enum Estado { JOGANDO, MORTO, VITORIA }
 var estado: int = Estado.JOGANDO
 var personagem: String = "segway"
+var fase: int = 1
+const FASES := ["PRIMEIRO ROLÊ", "OBRA", "DESCIDÃO"]
+const ARQ_PROGRESSO := "user://progresso.cfg"
 var checkpoint_x: float = -1.0       # -1 = começa do início; sobrevive ao reinício (R)
 var checkpoint_chao: float = 1000.0
 
@@ -48,6 +51,22 @@ func _ready() -> void:
 func _process(_d: float) -> void:
 	var t := DisplayServer.window_get_size()
 	_gira.visible = t.y > t.x          # celular em pé
+
+## recorde (s) de uma fase; INF se nunca concluiu
+func recorde(f: int) -> float:
+	var cfg := ConfigFile.new()
+	cfg.load(ARQ_PROGRESSO)
+	return float(cfg.get_value("recorde", str(f), INF))
+
+func registrar_vitoria(f: int, tempo: float) -> bool:
+	var cfg := ConfigFile.new()
+	cfg.load(ARQ_PROGRESSO)
+	var melhor := float(cfg.get_value("recorde", str(f), INF))
+	if tempo < melhor:
+		cfg.set_value("recorde", str(f), tempo)
+		cfg.save(ARQ_PROGRESSO)
+		return true
+	return false
 
 func set_estado(e: int) -> void:
 	estado = e

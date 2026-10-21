@@ -338,6 +338,20 @@ Toda tentativa morrendo no **mesmo x e no mesmo tempo** indica obstáculo
 determinístico + estratégia que não se adapta — ou geometria impossível: faça a
 conta antes de culpar o bot.
 
+Mais lições reais (3 fases × 3 personagens):
+
+- **Corrija a inclinação relativa ao chão**, não absoluta: meça o ângulo do
+  terreno com dois raios (200 px atrás/à frente) e no ar mire nivelado. Corrigir
+  pela rotação absoluta fez o bot inclinar a cadeira para a frente **contra a
+  rampa** e cair antes do fosso.
+- **Meça trajetória por marcos** (velocidade e rotação ao cruzar x = A, B, C…)
+  antes de culpar fase ou bot: a previsão teórica de 1300 px/s na saída da rampa
+  era 750–990 px/s na prática (atrito/amortecimento padrão).
+- **Leia os argumentos (`f=`, `p=`) no início do `_ready`, antes de montar a
+  cena.** Lidos depois, todo teste de "fase 2/3" rodou a fase 1 e passou — falso
+  positivo detectado só olhando as capturas. Sempre confirme visualmente qual fase
+  foi testada.
+
 Desempenho: headless com `--fixed-fps 60` roda muito mais rápido que o tempo real
 (física idêntica). **Renderizado por software (Xvfb) com `--fixed-fps` fica lento
 demais** (estourou 300 s por personagem) — para fotos, rode em tempo real.
