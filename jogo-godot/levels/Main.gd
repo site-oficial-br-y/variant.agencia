@@ -494,6 +494,63 @@ func _t_tunel(p: Vector2) -> Vector2:
 	mec.tunel_vento(p + Vector2(300, -450), p + Vector2(3700, -500), 1100.0, 2400.0)
 	return _t_plano(p + Vector2(3300, 0), 900, false)
 
+## prédio por dentro, de cima pra baixo (estilo Happy Wheels): cada andar é uma laje;
+## no fim dela tem um buraco e você cai pro andar de baixo, que continua pra frente.
+## Obstáculos dentro: serra no teto, TNT, mina, prensa. Devolve o ponto no térreo.
+const ANDAR := 1700.0
+func _t_andares(p: Vector2, n := 4) -> Vector2:
+	var larg := 4200.0
+	var x0 := p.x
+	var topo := p.y
+	var fundo := p.y + n * ANDAR
+	var parede_x1 := x0 + n * (larg - 500.0) + 1400.0
+	# fachada de fundo: concreto escuro com janelas, do teto ao térreo
+	pecas.poligono(Pecas.retangulo(Vector2((x0 + parede_x1) / 2.0, (topo - 900.0 + fundo) / 2.0),
+		Vector2(parede_x1 - x0, fundo - topo + 900.0)), Color(0.36, 0.34, 0.36), -4)
+	for k in n + 1:
+		var y := topo + k * ANDAR - 700.0
+		var xj := x0 + 300.0
+		while xj < parede_x1 - 300.0:
+			pecas.poligono(Pecas.retangulo(Vector2(xj, y), Vector2(260, 360)), Color(0.55, 0.72, 0.85, 0.85), -3)
+			pecas.poligono(Pecas.retangulo(Vector2(xj - 40, y - 40), Vector2(70, 220)), Color(0.8, 0.9, 0.97, 0.6), -3)
+			xj += 700.0
+	var obst := ["serra", "tnt", "mina", "prensa", "serra", "tnt"]
+	for k in n:
+		var a := Vector2(x0 + k * (larg - 500.0), topo + k * ANDAR)
+		# laje do andar (o buraco é o espaço até a próxima laje, que começa embaixo do fim desta)
+		pecas.terreno(PackedVector2Array([a, a + Vector2(larg, 0)]), a.y + 160.0)
+		pecas.poligono(Pecas.retangulo(a + Vector2(larg / 2.0, 220), Vector2(larg, 120)), Color(0.28, 0.27, 0.3), 1)
+		# pilares entre os andares (atrás)
+		for px in [a.x + 250.0, a.x + larg * 0.5, a.x + larg - 250.0]:
+			pecas.poligono(Pecas.retangulo(Vector2(px, a.y + ANDAR / 2.0 + 150.0), Vector2(110, ANDAR - 300.0)), Color(0.45, 0.43, 0.45), -2)
+		# placa com o número do andar
+		var num := Label.new()
+		num.text = "%dº" % (n - k)
+		num.add_theme_font_size_override("font_size", 200)
+		num.add_theme_color_override("font_color", Color(1, 0.85, 0.2))
+		num.add_theme_color_override("font_outline_color", Color.BLACK)
+		num.add_theme_constant_override("outline_size", 30)
+		num.position = a + Vector2(500, -900)
+		num.z_index = -1
+		add_child(num)
+		# borda do buraco: faixa de perigo
+		pecas.poligono(Pecas.retangulo(a + Vector2(larg - 120, 12), Vector2(240, 30)), Color.WHITE, 3, pecas.tex("perigo"), 0.6)
+		if k == 0:
+			continue
+		var meio := a + Vector2(larg * 0.55, 0)
+		match obst[(k - 1) % obst.size()]:
+			"serra":                                    # serra presa no teto: passa por baixo
+				pecas.serra(meio + Vector2(0, -ANDAR + 160.0), 240.0)   # sobra ~250 px acima da cabeça
+			"tnt":
+				pecas.tnt(meio)
+			"mina":
+				pecas.rampa(meio.x - 900, meio.x - 300, meio.y, 170)
+				mec.mina(meio + Vector2(150, 0))
+			"prensa":
+				pecas.prensa(meio.x, meio.y, 6.0, _sorteio.randf_range(0.0, 6.0))
+	var saida := Vector2(x0 + (n - 1) * (larg - 500.0) + larg, fundo - ANDAR)
+	return _t_plano(saida, 1200, false)
+
 ## bloco de mecânicas novas: cada volta da fase usa uma combinação diferente
 func _bloco_novo(p: Vector2, c: Array, combinacao: Array) -> Vector2:
 	for nome in combinacao:
@@ -518,6 +575,9 @@ func _fase_1() -> void:
 	p = _t_ponte(p, 2300, 350)
 	p = _t_plano(p, 800)
 	for volta in 3:
+		if volta == 1:
+			p = _t_andares(p, 4)
+			p = _t_mega(p, 16000.0, -4 * ANDAR)
 		p = _bloco_novo(p, c, [["minas", "temporarias"], ["drone", "quebraveis", "trampolim"], ["tunel", "moveis", "turbo_salto"]][volta])
 		_cp(c, p)
 		p = _t_bola(p)
@@ -557,6 +617,9 @@ func _fase_2() -> void:
 	p = _t_vigas(p)
 	p = _t_tabuas(p)
 	for volta in 3:
+		if volta == 1:
+			p = _t_andares(p, 4)
+			p = _t_mega(p, 16000.0, -4 * ANDAR)
 		p = _bloco_novo(p, c, [["drone", "quebraveis"], ["trampolim", "temporarias", "minas"], ["retrateis", "tunel"]][volta])
 		_cp(c, p)
 		p = _t_prensa(p)
@@ -596,6 +659,8 @@ func _fase_3() -> void:
 		p = _t_voo(p, "serras")
 		p = _t_mega(p, qv * 3.0, -qv)
 		_cp(c, p)
+		p = _t_andares(p, 4 + volta)
+		p = _t_mega(p, 16000.0, -(4 + volta) * ANDAR)  # sobe de volta o que desceu no prédio
 		p = _t_ponte(p, 1900, -150)
 		p = _t_tnt(p)
 		p = _t_plano(p, 1000)
@@ -860,6 +925,7 @@ func _construir_hud() -> void:
 		[_toque("gas", Vector2.ZERO, 200, "accelerate"), func(v: Vector2) -> Vector2: return Vector2(v.x - 225, v.y - 225)],
 		[_toque_especial(), func(v: Vector2) -> Vector2: return Vector2(v.x - 195, v.y - 410)],
 		[_rotulo_carga(), func(v: Vector2) -> Vector2: return Vector2(v.x - 213, v.y - 452)],
+		[_toque_bomba(), func(v: Vector2) -> Vector2: return Vector2(v.x - 370, v.y - 360) if Game.personagem in Game.BOMBA_EXTRA else Vector2(-9999, 0)],
 		[_botao("R", Vector2.ZERO, Vector2(80, 64), "reset"), func(v: Vector2) -> Vector2: return Vector2(v.x - 96, 14)],
 		[_botao("TROCAR", Vector2.ZERO, Vector2(180, 64), "menu"), func(v: Vector2) -> Vector2: return Vector2(v.x - 290, 14)],
 	]
@@ -923,6 +989,9 @@ func _toque_especial() -> TouchScreenButton:
 	_botao_especial = _toque(ICONES.get(Game.HABILIDADES.get(Game.personagem, "salto"), "pula"), Vector2.ZERO, 165, "especial")
 	return _botao_especial
 
+func _toque_bomba() -> TouchScreenButton:
+	return _toque("bomba", Vector2.ZERO, 130, "bomba")
+
 ## carga da habilidade embaixo do botão: PRONTO, segundos ou % do turbo
 func _rotulo_carga() -> Label:
 	_carga = Label.new()
@@ -939,7 +1008,7 @@ func _atualizar_carga() -> void:
 		return
 	var f := player.pronto()
 	if player.habilidade == "turbo":
-		_carga.text = "%d%%" % int(f * 100.0)
+		_carga.text = "INFINITO" if Game.personagem in Game.TURBO_INFINITO else "%d%%" % int(f * 100.0)
 	elif f >= 1.0:
 		_carga.text = "PRONTO"
 	else:

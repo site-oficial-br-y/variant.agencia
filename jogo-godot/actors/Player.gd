@@ -58,6 +58,7 @@ var habilidade := ""
 var recarga := 0.0
 var recarga_total := 1.0
 var combustivel := 1.0
+var recarga_bomba := 0.0
 var _equilibrio_t := 0.0
 var _arpao: Dictionary = {}              # preso: {corpo, local, comp}
 var _corda: Line2D
@@ -389,7 +390,8 @@ func _especial(ch: Dictionary, delta: float) -> void:
 			if fogo:
 				fogo.emitting = ligado
 			if ligado:
-				combustivel = maxf(0.0, combustivel - 0.4 * delta)
+				if not (personagem in Game.TURBO_INFINITO):
+					combustivel = maxf(0.0, combustivel - 0.4 * delta)
 				if chassi.linear_velocity.length() < float(ch["vmax"]) * velocidade * 1.9:
 					chassi.apply_central_force(Vector2.RIGHT.rotated(chassi.rotation) * massa_total * TURBO)
 				_som_turbo -= delta
@@ -407,11 +409,16 @@ func _especial(ch: Dictionary, delta: float) -> void:
 			if apertou and recarga <= 0.0:
 				_usar(8.0)
 				_equilibrio_t = 3.0
-				Audio.tocar("checkpoint", 0.8)
+				Audio.tocar("pulo", 0.5)
 			if _equilibrio_t > 0.0:              # segura em pé sozinho e amortece o giro
 				chassi.apply_torque(inercia_chassi * (-chassi.rotation * 45.0 - chassi.angular_velocity * 10.0))
 		"arpao":
 			_arpoar(apertou, segura, delta)
+	if personagem in Game.BOMBA_EXTRA:               # segundo botão: bomba com recarga própria
+		recarga_bomba = maxf(0.0, recarga_bomba - delta)
+		if Input.is_action_just_pressed("bomba") and recarga_bomba <= 0.0:
+			recarga_bomba = 2.5
+			_lancar_bomba()
 
 func _usar(tempo: float) -> void:
 	recarga = tempo
@@ -420,7 +427,7 @@ func _usar(tempo: float) -> void:
 ## 0..1 do quanto a habilidade está pronta (HUD)
 func pronto() -> float:
 	if habilidade == "turbo":
-		return combustivel
+		return 1.0 if personagem in Game.TURBO_INFINITO else combustivel
 	if habilidade == "equilibrio" and _equilibrio_t > 0.0:
 		return 1.0
 	return 1.0 - recarga / maxf(recarga_total, 0.001)
@@ -709,7 +716,7 @@ func _dirigir() -> void:
 	v_roda_ant = roda_motriz.linear_velocity
 	Audio.motor(true, chassi.linear_velocity.length() / (float(ch["vmax"]) * velocidade))
 	if dv > 700.0:                       # pouso / batida do veículo
-		Audio.tocar("impacto_leve" if dv < 1600.0 else "metal", dv / 2500.0)
+		Audio.tocar("impacto_leve" if dv < 1600.0 else "impacto_forte", dv / 2500.0)
 		bateu_chao.emit(roda_motriz.global_position + Vector2(0, (roda_motriz.get_child(0).shape as CircleShape2D).radius), dv / 2000.0)
 	var tomba := deg_to_rad(65.0 if mono else (78.0 if equilibra else 115.0))
 	if dv > limiar_queda_montado or absf(chassi.rotation) > tomba \

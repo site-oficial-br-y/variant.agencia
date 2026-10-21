@@ -12,7 +12,9 @@ const FASES := ["FASE 1", "FASE 2", "FASE 3"]
 const NOMES := {"segway": "PÉRINE", "cadeira": "GABRIEL", "scooter": "GIAN", "monociclo": "ERICK", "gamer": "GORISCH"}
 ## habilidade de cada um (botão especial), sempre com limite de uso
 const CHECKPOINTS := false              # sem checkpoint: morreu, volta pro começo da fase
-const HABILIDADES := {"segway": "salto", "cadeira": "turbo", "scooter": "bomba", "monociclo": "equilibrio", "gamer": "arpao"}
+const HABILIDADES := {"segway": "salto", "cadeira": "turbo", "scooter": "turbo", "monociclo": "equilibrio", "gamer": "arpao"}
+const TURBO_INFINITO := ["cadeira"]       # Gabriel: turbo sem combustível
+const BOMBA_EXTRA := ["scooter"]          # Gian: turbo + bomba num segundo botão
 const RITMO := 3.0                   # mundo 3x mais rápido: queda pesada e ritmo de Happy Wheels
 const ARQ_PROGRESSO := "user://progresso.cfg"
 var checkpoint_x: float = -1.0       # -1 = começa do início; sobrevive ao reinício (R)
@@ -24,7 +26,8 @@ const ACOES := {
 	"lean_fwd":   [KEY_DOWN, KEY_S],
 	"lean_back":  [KEY_UP, KEY_W],
 	"eject":      [KEY_SPACE],
-	"especial":   [KEY_SHIFT, KEY_X],          # Périne pula; Gabriel e Gian ligam o turbo
+	"especial":   [KEY_SHIFT, KEY_X],          # habilidade de cada personagem
+	"bomba":      [KEY_C, KEY_B],              # bomba do Gian
 	"reset":      [KEY_R],
 }
 

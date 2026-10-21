@@ -365,7 +365,6 @@ func atualizar(dt: float) -> void:
 					_solida(m, true)
 					m["solida"] = true
 					sb.create_tween().tween_property(sb, "modulate:a", 1.0, 0.25)
-					Audio.tocar("clique", 0.8)
 				elif m["t"] > 0.0:
 					m["t"] -= dt
 					if m["t"] <= 0.0 and m["solida"]:
@@ -402,16 +401,11 @@ func _drone(m: Dictionary, dt: float, alvo: Vector2) -> void:
 		n.position = (m["base"] as Vector2) + Vector2(0, sin(_t * 2.0) * 60.0)
 		if alvo.distance_to(n.global_position) < float(m["alcance"]):
 			m["ativa"] = true
-			Audio.tocar("checkpoint", 0.7)
 		return
 	m["pavio"] -= dt
 	var desejo := (alvo + Vector2(0, -300) - n.global_position).normalized() * 1050.0
 	m["vel"] = (m["vel"] as Vector2).lerp(desejo, 2.2 * dt)
 	n.global_position += (m["vel"] as Vector2) * dt
-	m["bip"] -= dt
-	if m["bip"] <= 0.0:
-		m["bip"] = maxf(0.08, float(m["pavio"]) * 0.12)
-		Audio.tocar("clique", 0.6, 0.0)
 	if n.global_position.distance_to(alvo) < 420.0 or m["pavio"] <= 0.0:
 		_vivos.erase(m)
 		var pos := n.global_position
