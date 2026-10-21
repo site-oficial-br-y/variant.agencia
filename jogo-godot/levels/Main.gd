@@ -321,14 +321,14 @@ func _t_degrau(p: Vector2, queda: float) -> Vector2:
 	return _t_plano(p + Vector2(700, queda), 900)
 
 ## chão ondulado (lombadas)
-func _t_ondas(p: Vector2, n := 4, amp := 160.0) -> Vector2:
+func _t_ondas(p: Vector2, n := 4, amp := 110.0) -> Vector2:   # lombada baixa e longa: rodinha não trava
 	var pts := PackedVector2Array([p])
 	for i in n:
-		pts.append(p + Vector2(i * 700 + 350, -amp))
-		pts.append(p + Vector2(i * 700 + 700, 0))
-	pts.append(p + Vector2(n * 700 + 300, 0))
+		pts.append(p + Vector2(i * 1000 + 500, -amp))
+		pts.append(p + Vector2(i * 1000 + 1000, 0))
+	pts.append(p + Vector2(n * 1000 + 300, 0))
 	pecas.terreno(pts, p.y + 2600.0)
-	return p + Vector2(n * 700 + 300, 0)
+	return p + Vector2(n * 1000 + 300, 0)
 
 ## rampinha de madeira e salto por cima de um fosso de espinhos
 func _t_salto(p: Vector2) -> Vector2:
