@@ -8,6 +8,8 @@ const SLOTS := 7                    # quadros vazios = personagens que ainda vã
 var atual := 0
 var preview: TextureRect
 var quadros: Array = []
+var pedra: TextureRect
+var ok: TextureButton
 
 func _ready() -> void:
 	set_anchors_preset(Control.PRESET_FULL_RECT)
@@ -18,7 +20,8 @@ func _ready() -> void:
 	var fundo := TextureRect.new()
 	fundo.texture = load("res://assets/ui/fundo.png")
 	fundo.set_anchors_preset(Control.PRESET_FULL_RECT)
-	fundo.stretch_mode = TextureRect.STRETCH_SCALE
+	fundo.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+	fundo.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_COVERED   # cobre sem distorcer
 	add_child(fundo)
 
 	var logo := TextureRect.new()
@@ -46,9 +49,8 @@ func _ready() -> void:
 			q.add_child(b)
 		quadros.append(q)
 
-	var pedra := TextureRect.new()
+	pedra = TextureRect.new()
 	pedra.texture = load("res://assets/ui/pedra.png")
-	pedra.position = Vector2(cx - 300, vp.y - 130)
 	add_child(pedra)
 
 	preview = TextureRect.new()
@@ -58,14 +60,20 @@ func _ready() -> void:
 	preview.size = Vector2(520, 440)
 	add_child(preview)
 
-	var ok := _botao("confirma", Vector2(vp.x - 175, vp.y - 165), 140)
+	ok = _botao("confirma", Vector2.ZERO, 140)
 	ok.pressed.connect(_jogar)
+	get_viewport().size_changed.connect(_atualizar)   # tela cheia/girar muda o tamanho
 	_atualizar()
 
 	if "screenshot" in OS.get_cmdline_user_args():
 		for i in 3:
 			await RenderingServer.frame_post_draw
 		get_viewport().get_texture().get_image().save_png("user://menu.png")
+		if "redimensiona" in OS.get_cmdline_user_args():   # simula entrar em tela cheia
+			get_window().size = Vector2i(1600, 720)
+			for i in 6:
+				await RenderingServer.frame_post_draw
+			get_viewport().get_texture().get_image().save_png("user://menu2.png")
 		get_tree().quit()
 
 func _botao(icone: String, pos: Vector2, tam: float) -> TextureButton:
@@ -101,6 +109,12 @@ func _atualizar() -> void:
 	preview.size = Vector2(h * tex.get_width() / tex.get_height(), h)
 	var vp := get_viewport().get_visible_rect().size
 	preview.position = Vector2(vp.x / 2.0 - preview.size.x / 2.0, vp.y - 108 - h)   # em pé na pedra
+	pedra.position = Vector2(vp.x / 2.0 - 300, vp.y - 130)
+	ok.position = Vector2(vp.x - 175, vp.y - 165)
+	var lado := 100.0
+	var x0 := vp.x / 2.0 - (SLOTS * (lado + 12) - 12) / 2.0 + 60
+	for i in quadros.size():
+		(quadros[i] as Panel).position = Vector2(x0 + i * (lado + 12), 24)
 
 func _selecionar(i: int) -> void:
 	Audio.tocar("clique")

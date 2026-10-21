@@ -14,7 +14,8 @@ const TOPO_POUSO := CHAO_Y + 80.0          # topo dos blocos depois da rampa
 var ativo := true
 var tempo := 0.0
 var _caiu_em := -1.0
-var _correntes: Array = []                # [Line2D, âncora, bola] da bola de demolição
+var _correntes: Array = []
+var _hud: Array = []                      # [controle, Callable(tamanho_tela) -> posição]                # [Line2D, âncora, bola] da bola de demolição
 
 var player: Player
 var sangue: Sangue
@@ -401,7 +402,7 @@ func _estilo_botao() -> StyleBoxFlat:
 	st.border_color = Color(1, 1, 1, 0.5)
 	return st
 
-func _botao(texto: String, pos: Vector2, tam: Vector2, acao: String) -> void:
+func _botao(texto: String, pos: Vector2, tam: Vector2, acao: String) -> Button:
 	var b := Button.new()
 	b.text = texto
 	b.position = pos
@@ -416,9 +417,10 @@ func _botao(texto: String, pos: Vector2, tam: Vector2, acao: String) -> void:
 		b.pressed.connect(func(): get_tree().reload_current_scene())
 	elif acao == "menu":
 		b.pressed.connect(func(): get_tree().change_scene_to_file("res://levels/Menu.tscn"))
+	return b
 
 ## botão de toque (multitoque de verdade) que dispara a ação direto no Input
-func _toque(icone: String, pos: Vector2, tam: float, acao: String) -> void:
+func _toque(icone: String, pos: Vector2, tam: float, acao: String) -> TouchScreenButton:
 	var t := TouchScreenButton.new()
 	t.texture_normal = load("res://assets/ui/%s.png" % icone)
 	t.position = pos
@@ -429,6 +431,7 @@ func _toque(icone: String, pos: Vector2, tam: float, acao: String) -> void:
 	t.shape = sh
 	t.shape_centered = true
 	$HUD.add_child(t)
+	return t
 
 func _construir_hud() -> void:
 	var cl := CanvasLayer.new()
@@ -440,14 +443,17 @@ func _construir_hud() -> void:
 	dist_label.add_theme_color_override("font_outline_color", Color.BLACK)
 	dist_label.add_theme_constant_override("outline_size", 10)
 	cl.add_child(dist_label)
+	# posição de cada controle relativa às bordas: recalculada quando a tela muda
+	_hud = [
+		[_toque("gira_tras", Vector2.ZERO, 180, "lean_back"), func(v: Vector2) -> Vector2: return Vector2(36, v.y - 210)],
+		[_toque("gira_frente", Vector2.ZERO, 180, "lean_fwd"), func(v: Vector2) -> Vector2: return Vector2(236, v.y - 210)],
+		[_toque("re", Vector2.ZERO, 155, "brake"), func(v: Vector2) -> Vector2: return Vector2(v.x - 400, v.y - 185)],
+		[_toque("gas", Vector2.ZERO, 200, "accelerate"), func(v: Vector2) -> Vector2: return Vector2(v.x - 225, v.y - 225)],
+		[_toque("pula", Vector2.ZERO, 145, "eject"), func(v: Vector2) -> Vector2: return Vector2(v.x - 185, v.y - 390)],
+		[_botao("R", Vector2.ZERO, Vector2(80, 64), "reset"), func(v: Vector2) -> Vector2: return Vector2(v.x - 96, 14)],
+		[_botao("TROCAR", Vector2.ZERO, Vector2(180, 64), "menu"), func(v: Vector2) -> Vector2: return Vector2(v.x - 290, 14)],
+	]
 	var vp := get_viewport().get_visible_rect().size
-	_toque("gira_tras", Vector2(36, vp.y - 210), 180, "lean_back")
-	_toque("gira_frente", Vector2(236, vp.y - 210), 180, "lean_fwd")
-	_toque("re", Vector2(vp.x - 400, vp.y - 185), 155, "brake")
-	_toque("gas", Vector2(vp.x - 225, vp.y - 225), 200, "accelerate")
-	_toque("pula", Vector2(vp.x - 185, vp.y - 390), 145, "eject")
-	_botao("R", Vector2(vp.x - 96, 14), Vector2(80, 64), "reset")
-	_botao("TROCAR", Vector2(vp.x - 290, 14), Vector2(180, 64), "menu")
 	aviso = Label.new()
 	aviso.text = "MORREU!\naperta R"
 	aviso.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
@@ -459,6 +465,16 @@ func _construir_hud() -> void:
 	aviso.position = Vector2(0, vp.y * 0.06)
 	aviso.visible = false
 	cl.add_child(aviso)
+	get_viewport().size_changed.connect(_posicionar_hud)
+	_posicionar_hud()
+
+func _posicionar_hud() -> void:
+	var v := get_viewport().get_visible_rect().size
+	for item in _hud:
+		(item[0] as Node).set("position", (item[1] as Callable).call(v))
+	if aviso:
+		aviso.size = Vector2(v.x, 160)
+		aviso.position = Vector2(0, v.y * 0.06)
 
 func _on_morreu() -> void:
 	_fim(false, "cabeca")
