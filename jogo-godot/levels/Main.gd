@@ -1024,8 +1024,11 @@ func _ao_explodir(pos: Vector2, raio: float) -> void:
 	mec.quebrar_perto(pos, raio)
 
 func _on_perigo(b: Node2D, motivo: String) -> void:
+	if motivo == "espetos":
+		_espetar(b)
+		return
 	if b is RigidBody2D:
-		sangue.jorrar(b.global_position, 90, 1400.0, Vector2.ZERO, (b as RigidBody2D).linear_velocity * 0.2)
+		sangue.jorrar(b.global_position, 40, 1400.0, Vector2.ZERO, (b as RigidBody2D).linear_velocity * 0.2)
 	if motivo != "agua":
 		Audio.tocar("splat")
 		Audio.tocar("metal" if motivo == "serra" else "impacto_forte")
@@ -1038,6 +1041,42 @@ func _on_perigo(b: Node2D, motivo: String) -> void:
 	elif is_instance_valid(player) and player.montado:
 		player.soltar_ragdoll.call_deferred(player.chassi.linear_velocity * 0.5, false)
 	_fim(false, motivo)
+
+## espinho (estilo Happy Wheels): o corpo que cai neles fica espetado e preso; quem
+## estava montado é arrancado do veículo e os pedaços que tocarem também espetam
+func _espetar(b: Node2D) -> void:
+	if not is_instance_valid(player):
+		return
+	if player.montado:
+		player.soltar_ragdoll.call_deferred(player.chassi.linear_velocity * 0.6, false)
+		_fim(false, "espetos")
+		return
+	if not (b.is_in_group("piloto") and b is RigidBody2D) or b.has_meta("espetado"):
+		return
+	b.set_meta("espetado", true)
+	_prender_no_espinho.call_deferred(b)
+	_fim(false, "espetos")
+
+func _prender_no_espinho(b: RigidBody2D) -> void:
+	if not is_instance_valid(b):
+		return
+	var ancora := StaticBody2D.new()
+	ancora.collision_layer = 0
+	ancora.collision_mask = 0
+	add_child(ancora)
+	ancora.global_position = b.global_position
+	var pj := PinJoint2D.new()
+	add_child(pj)
+	pj.global_position = b.global_position
+	pj.node_a = ancora.get_path()
+	pj.node_b = b.get_path()
+	pj.softness = 0.0
+	b.linear_velocity *= 0.1
+	b.angular_damp = 6.0
+	Audio.tocar("splat", 1.0)
+	Audio.tocar("osso", 0.7)
+	sangue.jorrar(b.global_position, 30, 700.0, Vector2.UP)
+	sangue.esguichar(b, Vector2.ZERO, Vector2.UP, 2.5)
 
 func _on_morreu() -> void:
 	_fim(false, "cabeca")

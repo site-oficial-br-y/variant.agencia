@@ -568,10 +568,9 @@ func explodir(pos: Vector2, raio: float, dv_max: float) -> void:
 	var tw := flash.create_tween()
 	tw.tween_property(flash, "modulate:a", 0.0, 0.45)
 	tw.tween_callback(flash.queue_free)
-	particulas(pos, 80, Color(1, 0.75, 0.2), Color(0.95, 0.2, 0.05, 0.0), 900.0, 2000.0, 0.8, 260.0, 520.0)
-	particulas(pos, 50, Color(0.3, 0.28, 0.27, 0.95), Color(0.55, 0.55, 0.55, 0.0), 250.0, 800.0, 2.6, 420.0, 900.0, -300.0)
-	for i in 6:                                   # lascas do barril
-		particulas(pos, 8, Color(0.75, 0.15, 0.1), Color(0.3, 0.05, 0.05, 0.0), 700.0, 1400.0, 1.4, 30.0, 50.0, 1200.0)
+	particulas(pos, 45, Color(1, 0.75, 0.2), Color(0.95, 0.2, 0.05, 0.0), 900.0, 2000.0, 0.8, 260.0, 520.0)
+	particulas(pos, 26, Color(0.3, 0.28, 0.27, 0.95), Color(0.55, 0.55, 0.55, 0.0), 250.0, 800.0, 2.6, 420.0, 900.0, -300.0)
+	particulas(pos, 14, Color(0.75, 0.15, 0.1), Color(0.3, 0.05, 0.05, 0.0), 700.0, 1400.0, 1.4, 30.0, 50.0, 1200.0)
 
 func _empurrar(n: Node, pos: Vector2, raio: float, dv_max: float) -> void:
 	if not (n is RigidBody2D):

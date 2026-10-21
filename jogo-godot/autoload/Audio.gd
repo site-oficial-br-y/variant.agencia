@@ -45,6 +45,7 @@ func tocar(nome: String, forca: float = 1.0, variacao: float = 0.08) -> void:
 
 ## motor: liga/desliga e ajusta o tom pela fração da velocidade máxima
 func motor(ligado: bool, fracao: float = 0.0) -> void:
+	ligado = false                       # ronco contínuo desligado: era o som chato que tocava o tempo todo
 	if not ligado:
 		if _motor.playing:
 			_motor.stop()

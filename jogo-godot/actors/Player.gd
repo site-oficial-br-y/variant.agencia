@@ -588,10 +588,14 @@ func _ferir_membro(corpo: String, forca: float) -> void:
 	vida[corpo] = float(vida.get(corpo, 100.0)) - forca / 14.0
 	var onde: Vector2 = (membros[corpo] as Node2D).global_position
 	if sangue:
-		sangue.jorrar(onde, 30, 900.0, Vector2.ZERO, chassi.linear_velocity * 0.3)
+		sangue.jorrar(onde, 14, 900.0, Vector2.ZERO, chassi.linear_velocity * 0.3)
 	Audio.tocar("splat", 0.6)
 	if vida[corpo] <= 0.0:
-		_amputar_montado(corpo)
+		if corpo == "braco":
+			_amputar_montado(corpo)            # braço pode sair e ele segue montado
+		else:
+			soltar_ragdoll.call_deferred(_vel(), false)   # perna destruída: cai do veículo
+			arrancar.call_deferred(corpo)
 
 func _amputar_montado(corpo: String) -> void:
 	var lista: Array = [corpo]
@@ -625,7 +629,7 @@ func _amputar_montado(corpo: String) -> void:
 	rb.angular_velocity = randf_range(-8, 8)
 	Audio.tocar("osso", 1.0)
 	if sangue:
-		sangue.jorrar(pivo, 90, 1300.0)
+		sangue.jorrar(pivo, 40, 1300.0)
 		sangue.esguichar(rb, rb.to_local(pivo), Vector2.ZERO - rb.to_local(pivo).normalized(), 3.0)
 		sangue.esguichar(chassi, chassi.to_local(pivo), Vector2(-1, 0.3), 4.0)
 
@@ -715,8 +719,8 @@ func _dirigir() -> void:
 	var dv := (v_roda_ant - roda_motriz.linear_velocity).length()
 	v_roda_ant = roda_motriz.linear_velocity
 	Audio.motor(true, chassi.linear_velocity.length() / (float(ch["vmax"]) * velocidade))
-	if dv > 700.0:                       # pouso / batida do veículo
-		Audio.tocar("impacto_leve" if dv < 1600.0 else "impacto_forte", dv / 2500.0)
+	if dv > 1300.0:                      # pouso / batida do veículo (quique pequeno não faz barulho)
+		Audio.tocar("impacto_leve" if dv < 2000.0 else "impacto_forte", dv / 3000.0)
 		bateu_chao.emit(roda_motriz.global_position + Vector2(0, (roda_motriz.get_child(0).shape as CircleShape2D).radius), dv / 2000.0)
 	var tomba := deg_to_rad(65.0 if mono else (78.0 if equilibra else 115.0))
 	if dv > limiar_queda_montado or absf(chassi.rotation) > tomba \
@@ -756,7 +760,7 @@ func soltar_ragdoll(herda_vel: Vector2, pulo: bool = false) -> void:
 		rb.collision_layer = 0b100
 		rb.collision_mask = 0b1001              # mundo + objetos
 		rb.continuous_cd = RigidBody2D.CCD_MODE_CAST_RAY
-		rb.angular_damp = 0.4
+		rb.angular_damp = 2.5                    # membro não gira solto feito pano
 		rb.add_child(_forma_cs(corpo, base))
 		add_child(rb)
 		rb.global_transform = Transform2D(rot, arte_para_mundo(base))
@@ -778,8 +782,8 @@ func soltar_ragdoll(herda_vel: Vector2, pulo: bool = false) -> void:
 		pj.disable_collision = true
 		pj.softness = 0.0
 		pj.angular_limit_enabled = true
-		pj.angular_limit_lower = -deg_to_rad(j["lim"])
-		pj.angular_limit_upper = deg_to_rad(j["lim"])
+		pj.angular_limit_lower = -deg_to_rad(float(j["lim"]) * 0.7)
+		pj.angular_limit_upper = deg_to_rad(float(j["lim"]) * 0.7)
 		juntas[j["b"]] = pj
 	boneco.queue_free()
 
@@ -791,7 +795,7 @@ func _checar_pancadas() -> void:
 		v_ant[rb] = rb.linear_velocity
 		if dv < limiar_sangue:
 			continue
-		var n := int(clampf(dv / 25.0, 14.0, 130.0))
+		var n := int(clampf(dv / 45.0, 6.0, 45.0))
 		Audio.tocar("impacto_forte" if dv > 1600.0 else "impacto_leve", dv / 2500.0)
 		if sangue:
 			Audio.tocar("splat", dv / 3000.0)
@@ -821,7 +825,7 @@ func arrancar(membro: String) -> void:
 	lado.apply_central_impulse((lado.global_position - p_global).normalized() * 220.0 * lado.mass)
 	Audio.tocar("osso")
 	if sangue:
-		sangue.jorrar(p_global, 160, 1500.0)
+		sangue.jorrar(p_global, 70, 1500.0)
 		var no_pai := pai.to_local(p_global)
 		sangue.esguichar(pai, no_pai, no_pai.normalized(), 7.0)
 		var no_membro := lado.to_local(p_global)
@@ -855,7 +859,7 @@ func explodir(membro: String) -> void:
 	Audio.tocar("osso", 1.0)
 	Audio.tocar("impacto_forte", 0.9)
 	if sangue:
-		sangue.jorrar(pos, 320, 2600.0, Vector2.ZERO, vel * 0.3)
+		sangue.jorrar(pos, 110, 2600.0, Vector2.ZERO, vel * 0.3)
 	var cabeca := membro == "cabeca"
 	var pedacos: Array = [["carne", 7], ["osso", 2]]
 	if cabeca:

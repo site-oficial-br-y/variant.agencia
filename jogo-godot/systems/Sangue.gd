@@ -6,8 +6,8 @@ class_name Sangue
 
 @export var gravidade: float = 1300.0
 @export var arrasto: float = 0.35          # perda de velocidade por segundo (fração)
-@export var max_gotas: int = 1600
-@export var max_manchas: int = 2600
+@export var max_gotas: int = 380
+@export var max_manchas: int = 700
 @export var escala: float = 1.0          # tamanho do mundo: gota e mancha crescem junto com o boneco
 @export var mascara_mundo: int = 0b001
 
@@ -18,8 +18,15 @@ var gotas: Array = []      # {p, v, r, vida}
 var manchas: Array = []    # {p, ang, rx, ry}
 var emissores: Array = []  # {corpo, local, dir_local, t, dur, base_vel}
 
+var _camada_manchas: Node2D
+var _manchas_sujas := false
+var _tinha_gotas := false
+
 func _ready() -> void:
 	z_index = 20
+	_camada_manchas = Node2D.new()          # manchas paradas: só redesenha quando chega mancha nova
+	_camada_manchas.draw.connect(_desenhar_manchas)
+	add_child(_camada_manchas)
 
 ## Espirra n gotas em `pos`, em leque na direção `dir` (ou em volta se ZERO).
 func jorrar(pos: Vector2, n: int, forca: float = 500.0, dir: Vector2 = Vector2.ZERO, vel_base: Vector2 = Vector2.ZERO) -> void:
@@ -74,10 +81,12 @@ func _process(delta: float) -> void:                 # por quadro: física a 180
 		var n := int(round(randf_range(1.0, 3.5) * pulso * (0.3 + resto)))
 		var vel_corpo: Vector2 = corpo.linear_velocity if corpo is RigidBody2D else Vector2.ZERO
 		if n > 0:
-			jorrar(origem, n * 3, 700.0 + 1100.0 * pulso * resto, dir, vel_corpo)
+			jorrar(origem, n, 700.0 + 1100.0 * pulso * resto, dir, vel_corpo)
 		ativos.append(e)
 	emissores = ativos
-	queue_redraw()
+	if gotas.size() > 0 or _manchas_sujas or _tinha_gotas:
+		queue_redraw()
+	_tinha_gotas = gotas.size() > 0
 
 func _manchar(pos: Vector2, normal: Vector2, r: float, vel: float) -> void:
 	var achata := clampf(vel / 900.0, 1.0, 3.2)                    # mais rápida = mais espalhada
@@ -85,18 +94,24 @@ func _manchar(pos: Vector2, normal: Vector2, r: float, vel: float) -> void:
 		"rx": r * achata * randf_range(0.9, 1.4), "ry": r * randf_range(0.35, 0.6)})
 	if manchas.size() > max_manchas:
 		manchas.pop_front()
+	_manchas_sujas = true
 
 func _draw() -> void:
-	for m in manchas:
-		draw_set_transform(m["p"], m["ang"], Vector2(m["rx"], m["ry"]))
-		draw_circle(Vector2.ZERO, 1.0, COR_MANCHA)
-	draw_set_transform(Vector2.ZERO, 0.0, Vector2.ONE)
+	if _manchas_sujas:
+		_manchas_sujas = false
+		_camada_manchas.queue_redraw()
 	for g in gotas:
 		var v: Vector2 = g["v"]
 		var esticada := clampf(v.length() / 700.0, 1.0, 2.6)       # gota alonga na direção do voo
 		draw_set_transform(g["p"], v.angle(), Vector2(g["r"] * esticada, g["r"]))
 		draw_circle(Vector2.ZERO, 1.0, COR_GOTA)
 	draw_set_transform(Vector2.ZERO, 0.0, Vector2.ONE)
+
+func _desenhar_manchas() -> void:
+	for m in manchas:
+		_camada_manchas.draw_set_transform(m["p"], m["ang"], Vector2(m["rx"], m["ry"]))
+		_camada_manchas.draw_circle(Vector2.ZERO, 1.0, COR_MANCHA)
+	_camada_manchas.draw_set_transform(Vector2.ZERO, 0.0, Vector2.ONE)
 
 func limpar() -> void:
 	gotas.clear(); manchas.clear(); emissores.clear(); queue_redraw()
