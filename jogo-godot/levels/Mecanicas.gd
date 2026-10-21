@@ -117,6 +117,29 @@ func bomba_perseguidora(pos: Vector2, alcance := 3200.0) -> void:
 	_vivos.append({"tipo": "drone", "no": n, "helice": helice, "olho": olho, "base": pos, "alcance": alcance,
 		"ativa": false, "pavio": 6.0, "vel": Vector2.ZERO, "bip": 0.0})
 
+# ---------- gancho do arpão ----------
+## poste vermelho com braço por cima do vão e argola pendurada: é onde o arpão
+## do Gorisch prende (camada própria: ninguém bate nele, só o arpão acha)
+func gancho(argola: Vector2, base_x: float, chao: float) -> void:
+	var topo := argola.y - 420.0
+	pecas.barra_metal(Vector2(base_x, chao), Vector2(base_x, topo), 60.0, Pecas.VERMELHO, -2)
+	pecas.barra_metal(Vector2(base_x, topo), Vector2(argola.x + 120.0, topo), 44.0, Pecas.VERMELHO, -2)
+	pecas.barra_metal(Vector2(base_x, topo + 300), Vector2(base_x + signf(argola.x - base_x) * 300.0, topo), 26.0, Pecas.VERMELHO, -2)
+	pecas.linha(PackedVector2Array([Vector2(argola.x, topo), argola + Vector2(0, -70)]), 14.0, Color(0.3, 0.3, 0.32), -1)
+	var sb := StaticBody2D.new()
+	sb.collision_layer = 0b10000000
+	sb.collision_mask = 0
+	sb.position = argola
+	var cs := CollisionShape2D.new()
+	var c := CircleShape2D.new()
+	c.radius = 80.0
+	cs.shape = c
+	sb.add_child(cs)
+	raiz.add_child(sb)
+	sb.add_to_group("gancho")
+	pecas.linha(_circulo(70, 20) + PackedVector2Array([Vector2(70, 0)]), 24.0, Pecas.AMARELO, 4, sb)
+	pecas.linha(_circulo(70, 20) + PackedVector2Array([Vector2(70, 0)]), 8.0, Color(1, 0.95, 0.6), 4, sb)
+
 # ---------- plataformas ----------
 func _laje(centro: Vector2, larg: float, cor := Pecas.CINZA, corpo: PhysicsBody2D = null) -> PhysicsBody2D:
 	var sb: PhysicsBody2D = corpo if corpo else StaticBody2D.new()

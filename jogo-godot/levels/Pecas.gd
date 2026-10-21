@@ -747,6 +747,16 @@ func sprite(nome: String, base: Vector2, escala := 1.0, z := -3, espelhar := fal
 	raiz.add_child(s)
 	return s
 
+## placa triangular de aviso (mina à frente)
+func placa_perigo(base: Vector2) -> void:
+	tabua(base, base + Vector2(0, -620), 34.0, -1, null, Color(0.3, 0.3, 0.32))
+	var c := base + Vector2(0, -760)
+	var tri := PackedVector2Array([c + Vector2(0, -170), c + Vector2(190, 130), c + Vector2(-190, 130)])
+	poligono(tri, AMARELO, -1)
+	linha(_fechar(tri), 22.0, Color(0.12, 0.12, 0.12), -1)
+	poligono(Pecas.retangulo(c + Vector2(0, -15), Vector2(30, 140)), Color(0.12, 0.12, 0.12), -1)
+	poligono(Pecas.retangulo(c + Vector2(0, 85), Vector2(30, 30)), Color(0.12, 0.12, 0.12), -1)
+
 func cone(base: Vector2, escala := 1.6) -> void:
 	sprite("cone", base, escala, -1)
 

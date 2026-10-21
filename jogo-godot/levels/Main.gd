@@ -423,13 +423,17 @@ func _cp(lista: Array, p: Vector2, dx := 200.0) -> void:
 func _fosso(x0: float, x1: float, y: float) -> void:
 	pecas.terreno(PackedVector2Array([Vector2(x0, y + 1400), Vector2(x1, y + 1400)]), y + 2100.0, false)
 	pecas.espinhos(x0 + 40, x1 - 40, y + 1400)
+	mec.gancho(Vector2((x0 + x1) / 2.0, y - 1500.0), x0 - 150.0, y)   # rota do arpão por cima do vão
 
-## campo minado: três minas no caminho (pula, desvia ou leva o tranco)
+## minas com saída: cada uma tem uma lombadinha de pulo antes. Embalado você salta
+## por cima; devagar, encosta e leva o tranco (pode perder perna, não morre na hora)
 func _t_minas(p: Vector2) -> Vector2:
-	_t_plano(p, 3200, false)
-	for dx in [900.0, 1800.0, 2600.0]:
-		mec.mina(p + Vector2(dx, 0))
-	return p + Vector2(3200, 0)
+	_t_plano(p, 4600, false)
+	for dx in [1200.0, 3200.0]:
+		pecas.rampa(p.x + dx - 900, p.x + dx - 300, p.y, 170)
+		mec.mina(p + Vector2(dx + 150, 0))
+		pecas.placa_perigo(p + Vector2(dx - 1100, 0))
+	return p + Vector2(4600, 0)
 
 ## drone-bomba pairando: acorda quando você chega e te persegue; corra
 func _t_drone(p: Vector2) -> Vector2:

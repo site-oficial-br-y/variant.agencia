@@ -476,7 +476,30 @@ func _lancar_bomba() -> void:
 	b.body_entered.connect(func(_o: Node) -> void: estoura.call_deferred())
 	get_tree().create_timer(2.2).timeout.connect(estoura)
 
-## arpão: no toque, procura parede/chão à frente e acima (até 5 mil px); preso, a
+## mira automática: a argola de gancho mais perto à frente (até 5,5 mil px); sem
+## argola, varre de 30° a 80° pra cima e prende na primeira estrutura que achar
+func _mirar_arpao(de: Vector2) -> Dictionary:
+	var melhor: Node2D = null
+	var dist := 5500.0
+	for g in get_tree().get_nodes_in_group("gancho"):
+		var gp := (g as Node2D).global_position
+		var d := de.distance_to(gp)
+		if gp.x > de.x - 300.0 and gp.y < de.y + 200.0 and d < dist:
+			melhor = g
+			dist = d
+	if melhor:
+		return {"corpo": melhor, "ponto": melhor.global_position}
+	var espaco := get_world_2d().direct_space_state
+	for graus in [30.0, 40.0, 50.0, 60.0, 70.0, 80.0]:
+		var direcao := Vector2.RIGHT.rotated(chassi.rotation - deg_to_rad(graus))
+		var q := PhysicsRayQueryParameters2D.create(de, de + direcao * 5000.0, 0b1001)
+		q.exclude = [chassi.get_rid()]
+		var hit := espaco.intersect_ray(q)
+		if not hit.is_empty():
+			return {"corpo": hit["collider"], "ponto": hit["position"]}
+	return {}
+
+## arpão: no toque, procura gancho/estrutura à frente e acima; preso, a
 ## corda puxa o veículo e vai encurtando enquanto segura; soltar o botão libera
 func _arpoar(apertou: bool, segura: bool, delta: float) -> void:
 	if _corda == null:
@@ -489,17 +512,14 @@ func _arpoar(apertou: bool, segura: bool, delta: float) -> void:
 		_corda.visible = false
 		if apertou and recarga <= 0.0:
 			var de := chassi.global_position + Vector2(0, -300)
-			var direcao := Vector2.RIGHT.rotated(chassi.rotation - deg_to_rad(52.0))
-			var q := PhysicsRayQueryParameters2D.create(de, de + direcao * 5000.0, 0b1001)
-			q.exclude = [chassi.get_rid()]
-			var hit := get_world_2d().direct_space_state.intersect_ray(q)
 			_usar(0.6)
 			Audio.tocar("metal", 0.6)
-			if hit.is_empty():
+			var alvo := _mirar_arpao(de)
+			if alvo.is_empty():
 				return
-			var alvo: Node2D = hit["collider"]
-			_arpao = {"corpo": alvo, "local": alvo.to_local(hit["position"]),
-				"comp": de.distance_to(hit["position"]) * 0.92}
+			var no: Node2D = alvo["corpo"]
+			_arpao = {"corpo": no, "local": no.to_local(alvo["ponto"]),
+				"comp": de.distance_to(alvo["ponto"]) * 0.92}
 		return
 	var corpo: Node2D = _arpao["corpo"]
 	if not segura or not is_instance_valid(corpo):
