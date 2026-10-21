@@ -29,6 +29,7 @@ Referências (consulte a que for relevante antes de implementar):
 | [references/level-design.md](references/level-design.md) | fases, peças de cenário, checkpoints, validação de mapa |
 | [references/architecture.md](references/architecture.md) | pastas, componentes, sinais, como adicionar personagem/veículo/fase |
 | [references/testing.md](references/testing.md) | testes de física, regressão, **playtest automatizado**, relatório |
+| [references/visual-quality.md](references/visual-quality.md) | **padrão visual obrigatório**: direção de arte, escala, estilo, estruturas, obstáculos, fundos, portão de qualidade |
 | [assets/README.md](assets/README.md) | organização de sprites/sons, pipeline de recorte, licenças |
 
 ## Quando ativar
@@ -74,40 +75,24 @@ nem para engines diferentes sem justificativa técnica concreta.
 Verifique o que existe antes de prometer: `command -v godot xvfb-run xdotool`,
 `python3 -c "import Xlib"`.
 
-## Fluxo de trabalho
+## Fluxo de trabalho (pipeline de qualidade — em toda tarefa)
 
-### 1. Inspecionar
-- Liste o repositório; ache projetos Godot (`project.godot`), personagens
-  (imagens, `parts.json`, `.tres`), fases e testes existentes. Leia o `CLAUDE.md`.
-- Identifique ferramentas disponíveis (acima) e registre o que **não** existe.
+1. **Inspecionar** projeto e assets (cenas, scripts, personagens, fases, testes);
+   ler o `CLAUDE.md`; listar ferramentas disponíveis e ausentes.
+2. **Definir a direção** visual e mecânica da tarefa: tema, paleta, momentos,
+   silhueta do terreno, escala ([visual-quality.md §1–2](references/visual-quality.md#1-direção-de-arte-antes-de-código)).
+   Se houver imagem de referência, liste o que dela será aproveitado.
+3. **Implementar funcional** em etapas pequenas, usando a biblioteca de obstáculos
+   reutilizáveis (nunca desenho solto dentro da fase).
+4. **Avaliar visualmente o resultado executado**: render + folha de contato,
+   checklist do [portão visual](references/visual-quality.md#8-portão-de-qualidade-visual-obrigatório-antes-de-pronto).
+5. **Testar colisões e interações físicas** (testes N1 + colisão alinhada ao desenho).
+6. **Comparar com os critérios** (visual + [critérios por fase](references/testing.md#criterios-por-fase)).
+7. **Corrigir** a causa real de cada falha (não facilitar artificialmente).
+8. **Repetir** testes e playtest (regressão em todas as fases afetadas).
+9. **Documentar** resultado e limitações com APROVADO / FALHOU / NÃO TESTADO.
 
-### 2. Planejar
-- Defina: personagens e veículos, mecânicas, fases (objetivo, obstáculos, rota
-  viável), critérios de aprovação de cada fase (ver
-  [testing.md](references/testing.md#criterios-por-fase)).
-- Escolha a estrutura de pastas de [architecture.md](references/architecture.md).
-
-### 3. Implementar em etapas pequenas, testando entre elas
-1. Projeto + Input Map + camadas de física nomeadas.
-2. Fase mínima (chão + 1 rampa + meta) e o veículo estável (spawn sem afundar).
-3. Personagem montado → ragdoll (transição sem teleporte).
-4. Dano por impacto, sangue/partículas, morte, reinício rápido.
-5. Armadilhas, checkpoints, mais fases.
-6. Seleção de personagem, HUD, toque.
-
-### 4. Executar e JOGAR
-- Rode o teste de física headless e o **playtest** de cada fase
-  ([testing.md](references/testing.md#playtest-automatizado)).
-- Capture screenshots/folha de contato e **olhe**. Registre tentativas em JSONL.
-
-### 5. Corrigir e repetir
-- Classifique cada falha: execução, estratégia do bot, bug, ou design.
-- Corrija a causa real; **não** facilite a fase só para o teste passar.
-- Rode de novo tudo que a mudança pode ter afetado (regressão).
-
-### 6. Entregar
-- Como rodar, o que foi testado, relatório com APROVADO / FALHOU / NÃO TESTADO e
-  limitações do ambiente ([modelo do relatório](references/testing.md#relatorio-de-playtest)).
+Antes de mexer em produção/publicar: mostrar capturas e pedir autorização.
 
 ## Regras de código (GDScript 2.0 / Godot 4)
 
@@ -140,6 +125,8 @@ Verifique o que existe antes de prometer: `command -v godot xvfb-run xdotool`,
 
 ## Critério de "pronto"
 
-Só declare uma fase concluída com evidência de vitória registrada pelo playtest
-(sinal de vitória + log + screenshot). Sem interface/automação disponível, diga
+Só declare uma fase concluída com **dois portões aprovados**: (1) jogabilidade —
+evidência de vitória registrada pelo playtest (sinal de vitória + log +
+screenshot); (2) visual — checklist do portão de qualidade marcado olhando a folha
+de contato renderizada. "O bot zerou" sozinho **não** é pronto. Sem interface/automação disponível, diga
 explicitamente que o playtest real está **NÃO TESTADO** e entregue o resto.

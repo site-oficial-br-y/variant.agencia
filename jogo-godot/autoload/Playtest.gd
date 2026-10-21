@@ -7,6 +7,7 @@ var ativo := false
 var tentativas_max := 12
 var semente := 1234
 var fotos := false
+var percurso := 0.0                  # fotos_cada=<s>: captura a tela a cada s segundos de jogo
 var rng := RandomNumberGenerator.new()
 var tentativa := 0
 var resultado := ""
@@ -14,6 +15,7 @@ var log_path := "user://playtest/log.jsonl"
 var falhas: Array = []
 var _vx_ant: Dictionary = {}
 var _liberado := false
+var _prensas_liberadas: Dictionary = {}
 
 func _ready() -> void:
 	var args := OS.get_cmdline_user_args()
@@ -24,6 +26,8 @@ func _ready() -> void:
 		if a.begins_with("tentativas="): tentativas_max = int(a.substr(11))
 		if a.begins_with("semente="): semente = int(a.substr(8))
 	fotos = "fotos" in args
+	for a in args:
+		if a.begins_with("fotos_cada="): percurso = float(a.substr(11))
 	rng.seed = semente
 	DirAccess.make_dir_recursive_absolute(ProjectSettings.globalize_path("user://playtest"))
 	_rodar.call_deferred()
@@ -77,8 +81,10 @@ func _jogar(fase: Node, estrategia: String) -> void:
 	var macro_ate := 0.0
 	# estratégia de gente: em obstáculo de tempo (pêndulo), esperar antes de ir
 	var espera := 0.0 if estrategia == "reativo" else rng.randf_range(0.0, 5.0)
+	var proxima_foto := 0.0
 	_liberado = false
 	_vx_ant.clear()
+	_prensas_liberadas.clear()
 	while resultado == "":
 		await get_tree().physics_frame
 		var dt := get_physics_process_delta_time()
@@ -86,6 +92,9 @@ func _jogar(fase: Node, estrategia: String) -> void:
 			resultado = "tempo"
 			break
 		var foco: Node2D = fase.player.foco()
+		if percurso > 0.0 and fase.tempo >= proxima_foto:      # folha de contato do percurso
+			proxima_foto += percurso
+			await _foto("%s_p%03d" % [Game.personagem, int(fase.tempo * 10.0)])
 		var rb := foco as RigidBody2D
 		if rb and (rb.linear_velocity.length() > 20000.0 or is_nan(rb.global_position.x)):
 			resultado = "explosao"
@@ -101,7 +110,7 @@ func _jogar(fase: Node, estrategia: String) -> void:
 		_soltar()
 		if not fase.player.montado:
 			continue
-		if estrategia == "reativo_espera" and _esperar_pendulo(foco):
+		if estrategia == "reativo_espera" and (_esperar_pendulo(foco) or _esperar_prensa(foco)):
 			parado = 0.0
 			Input.action_press("brake") if fase.player.chassi.linear_velocity.x > 30.0 else null
 			continue
@@ -141,17 +150,31 @@ func _esperar_pendulo(foco: Node2D) -> bool:
 		var raio: float = b.get_meta("raio", 100.0)
 		var dist := ancora.x - foco.global_position.x
 		# para logo antes do alcance (frente do veículo ~550 px à frente do centro)
-		if dist < 300.0 or dist > alcance + raio + 700.0:
+		if dist < 300.0 or dist > alcance + raio + 1100.0:
 			continue
 		var bola := b as Node2D
 		var vx: float = (b.get_meta("vel", Vector2.ZERO) as Vector2).x
 		# sai no instante em que a bola VIRA no canto de cá (velocidade troca de sinal)
 		var vx_ant: float = _vx_ant.get(bola, 0.0)
 		_vx_ant[bola] = vx
-		var virou := vx_ant <= 0.0 and vx > 0.0 and bola.global_position.x < ancora.x - alcance * 0.5
+		# sai quando a bola vem subindo do lado de cá: passa por baixo dela no alto
+		var virou := vx_ant < 0.0 and vx < 0.0 and bola.global_position.x < ancora.x - alcance * 0.8
 		if virou:
 			_liberado = true
 		return not _liberado
+	return false
+
+## prensa à frente: para fora do alcance e sai quando a cabeça já está subindo
+func _esperar_prensa(foco: Node2D) -> bool:
+	for p in get_tree().get_nodes_in_group("pistao"):
+		var dist: float = float(p.get_meta("x")) - foco.global_position.x
+		if dist < 300.0 or dist > 2000.0 or _prensas_liberadas.has(p):
+			continue
+		var f: float = p.get_meta("fase")
+		if f > 0.28 and f < 0.36:
+			_prensas_liberadas[p] = true
+			return false
+		return true
 	return false
 
 ## ângulo do terreno sob a posição (dois raios: 200 px atrás e na frente); 0 se no ar

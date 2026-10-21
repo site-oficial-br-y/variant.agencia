@@ -6,13 +6,15 @@ class_name Player
 ## muito forte -> membro arrancado esguichando.
 
 signal morreu
+signal bateu_chao(pos: Vector2, forca: float)
 
 @export var personagem: String = "segway"
 @export var chao_y: float = 1000.0
 @export var spawn_x: float = 600.0
 @export var balance_stiffness: float = 55.0
 @export var balance_damping: float = 14.0
-@export var limiar_sangue: float = 750.0       # Δv (px/s) num passo que conta como pancada
+@export var velocidade: float = 1.4           # multiplica vmax e força de todos os veículos
+@export var limiar_sangue: float = 420.0       # Δv (px/s) num passo que já espirra sangue
 @export var limiar_arranca: float = 2700.0     # Δv que arranca o membro
 @export var limiar_queda_montado: float = 2400.0
 
@@ -220,12 +222,12 @@ func _dirigir() -> void:
 	var ch: Dictionary = D["chassi"]
 	var equilibra: bool = ch["auto_equilibrio"]
 	var dir := Input.get_axis("brake", "accelerate")
-	if dir != 0.0 and chassi.linear_velocity.length() < ch["vmax"]:
+	if dir != 0.0 and chassi.linear_velocity.length() < ch["vmax"] * velocidade:
 		if equilibra:   # segway: empurra embaixo, o equilíbrio segura
 			var baixo: float = (roda_motriz.global_position - chassi.global_position).length() * 0.8
-			chassi.apply_force(Vector2(dir * ch["forca"], 0.0), Vector2(0, baixo).rotated(chassi.rotation))
+			chassi.apply_force(Vector2(dir * ch["forca"] * velocidade, 0.0), Vector2(0, baixo).rotated(chassi.rotation))
 		else:           # 2 rodas: pelo centro de massa, sem empinar sozinho (empinar é no botão)
-			chassi.apply_central_force(Vector2(dir * ch["forca"], 0.0))
+			chassi.apply_central_force(Vector2(dir * ch["forca"] * velocidade, 0.0))
 	var lean := Input.get_axis("lean_back", "lean_fwd")
 	if lean != 0.0:
 		chassi.apply_torque(lean * inercia_chassi * (8.0 if equilibra else 5.0))
@@ -235,9 +237,10 @@ func _dirigir() -> void:
 	# pouso/batida forte arremessa o piloto; capotou ou caiu no buraco também
 	var dv := (v_roda_ant - roda_motriz.linear_velocity).length()
 	v_roda_ant = roda_motriz.linear_velocity
-	Audio.motor(true, chassi.linear_velocity.length() / float(ch["vmax"]))
+	Audio.motor(true, chassi.linear_velocity.length() / (float(ch["vmax"]) * velocidade))
 	if dv > 700.0:                       # pouso / batida do veículo
 		Audio.tocar("impacto_leve" if dv < 1600.0 else "metal", dv / 2500.0)
+		bateu_chao.emit(roda_motriz.global_position + Vector2(0, (roda_motriz.get_child(0).shape as CircleShape2D).radius), dv / 2000.0)
 	var tomba := deg_to_rad(78.0 if equilibra else 115.0)
 	if dv > limiar_queda_montado or absf(chassi.rotation) > tomba \
 			or chassi.global_position.y > chao_y + 900.0:
@@ -290,12 +293,14 @@ func _checar_pancadas() -> void:
 		v_ant[rb] = rb.linear_velocity
 		if dv < limiar_sangue:
 			continue
-		var n := int(clampf(dv / 70.0, 4.0, 40.0))
+		var n := int(clampf(dv / 25.0, 14.0, 130.0))
 		Audio.tocar("impacto_forte" if dv > 1600.0 else "impacto_leve", dv / 2500.0)
 		if sangue:
 			Audio.tocar("splat", dv / 3000.0)
 		if sangue:
-			sangue.jorrar(rb.global_position, n, clampf(dv * 0.55, 250.0, 900.0), Vector2.ZERO, rb.linear_velocity * 0.3)
+			sangue.jorrar(rb.global_position, n, clampf(dv * 0.9, 500.0, 1700.0), Vector2.ZERO, rb.linear_velocity * 0.3)
+		if dv < 750.0:                   # pancada leve só suja: não machuca
+			continue
 		if k == "cabeca" and dv > limiar_arranca * 0.8 and not morto:
 			morto = true
 			morreu.emit()
@@ -315,11 +320,11 @@ func arrancar(membro: String) -> void:
 	lado.apply_central_impulse((lado.global_position - p_global).normalized() * 220.0 * lado.mass)
 	Audio.tocar("osso")
 	if sangue:
-		sangue.jorrar(p_global, 40, 700.0)
+		sangue.jorrar(p_global, 160, 1500.0)
 		var no_pai := pai.to_local(p_global)
-		sangue.esguichar(pai, no_pai, no_pai.normalized(), 3.5)
+		sangue.esguichar(pai, no_pai, no_pai.normalized(), 7.0)
 		var no_membro := lado.to_local(p_global)
-		sangue.esguichar(lado, no_membro, no_membro.normalized(), 2.0)
+		sangue.esguichar(lado, no_membro, no_membro.normalized(), 4.0)
 
 func foco() -> Node2D:
 	return chassi if montado else corpos.get("tronco", chassi)

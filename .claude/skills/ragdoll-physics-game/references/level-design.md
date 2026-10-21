@@ -283,3 +283,35 @@ veículo mais fraco na rampa padrão), não no chute.
   ações com tempo) — ponto de partida da busca, não trapaça.
 - Adicionar fase = criar cena seguindo a convenção + entrada na lista + rodar
   validador e playtest. Nenhum sistema central precisa mudar.
+
+## 7. Composição visual da fase
+
+A fase é desenhada como uma sequência de **momentos** (ver
+[visual-quality.md §1](visual-quality.md#1-direção-de-arte-antes-de-código)):
+
+- Abertura legível (placa de largada, chão plano para pegar o controle).
+- Alternância ritmo/respiro: obstáculo forte → trecho curto de alívio → próximo.
+- Cada momento com uma estrutura coerente e reconhecível de longe (guindaste,
+  ponte, andaime, loop), não peças soltas no chão.
+- Silhueta variada: subida, descida, penhasco, buraco com água/espinhos, plataforma.
+- Pelo menos um caminho alternativo ou atalho arriscado nas fases 2+.
+- Encerramento claro (placa de chegada num ponto alto/plano).
+- Valide com folha de contato: cada quadro deve ter algo interessante na tela.
+
+## 8. Obstáculo de tempo precisa de janela calculada
+
+Antes de posicionar um pêndulo ou prensa, **simule a passagem** (script de 20 linhas:
+veículo em velocidade constante × posição do obstáculo no tempo, testando cada
+instante de saída) e anote a janela em segundos para cada personagem.
+
+- Pêndulo baixo e de pouca amplitude **varre a pista inteira e nunca abre
+  brecha**: um boneco de 1,1–1,4 mil px não passa por baixo. Solução usada: a bola
+  passa na altura do peito (700 px acima do chão) e sobe alto nas pontas (85°).
+  Com L = 1300 e ω = 0,6 a janela fica em 1,2–1,9 s para os 3 veículos.
+- O movimento é cinemático (θ0·cos ωt), então ω pode ser escolhido para dar a
+  janela. Não precisa ser √(g/L).
+- **Corpo cinemático nasce onde vai ficar**: definir `position` antes de
+  `add_child`. Criado na origem e movido depois, ele varre o mundo no 1º passo e
+  arremessa quem estiver perto de (0,0). Foi o bug da "bola acertando na largada".
+- O bot só prova a fase se esperar como gente: dê a ele a regra do obstáculo
+  (metas `fase`/`alcance` no nó) e registre quantas tentativas levou.

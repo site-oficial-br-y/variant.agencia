@@ -6,8 +6,9 @@ class_name Sangue
 
 @export var gravidade: float = 1300.0
 @export var arrasto: float = 0.35          # perda de velocidade por segundo (fração)
-@export var max_gotas: int = 450
-@export var max_manchas: int = 700
+@export var max_gotas: int = 1600
+@export var max_manchas: int = 2600
+@export var escala: float = 1.0          # tamanho do mundo: gota e mancha crescem junto com o boneco
 @export var mascara_mundo: int = 0b001
 
 const COR_GOTA := Color(0.72, 0.03, 0.07)
@@ -29,7 +30,7 @@ func jorrar(pos: Vector2, n: int, forca: float = 500.0, dir: Vector2 = Vector2.Z
 		else:
 			d = dir.normalized().rotated(randf_range(-0.45, 0.45))
 		var v := d * forca * randf_range(0.35, 1.15) + vel_base * 0.6
-		gotas.append({"p": pos + d * randf_range(0, 10), "v": v, "r": randf_range(3.0, 8.0), "vida": 6.0})
+		gotas.append({"p": pos + d * randf_range(0, 10) * escala, "v": v, "r": randf_range(3.0, 8.0) * escala, "vida": 6.0})
 	if gotas.size() > max_gotas:
 		gotas = gotas.slice(gotas.size() - max_gotas)
 
@@ -73,7 +74,7 @@ func _physics_process(delta: float) -> void:
 		var n := int(round(randf_range(1.0, 3.5) * pulso * (0.3 + resto)))
 		var vel_corpo: Vector2 = corpo.linear_velocity if corpo is RigidBody2D else Vector2.ZERO
 		if n > 0:
-			jorrar(origem, n, 380.0 + 520.0 * pulso * resto, dir, vel_corpo)
+			jorrar(origem, n * 3, 700.0 + 1100.0 * pulso * resto, dir, vel_corpo)
 		ativos.append(e)
 	emissores = ativos
 	queue_redraw()
