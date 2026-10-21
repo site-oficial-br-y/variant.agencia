@@ -617,10 +617,7 @@ func _sem_braco() -> bool:
 func explosao(pos: Vector2, raio: float) -> void:
 	if not is_instance_valid(chassi):
 		return
-	if montado:
-		if chassi.global_position.distance_to(pos) < raio * 0.25:
-			soltar_ragdoll.call_deferred(_vel(), false)
-			return
+	if montado:                    # o empurrão é físico (Pecas._empurrar); aqui só machuca os membros
 		for c in MEMBROS:
 			if membros.has(c) and not perdeu.has(c):
 				var dm := (membros[c] as Node2D).global_position.distance_to(pos)
@@ -657,7 +654,7 @@ func _dirigir() -> void:
 	var mono: bool = ch.get("monociclo", false)
 	var dir := Input.get_axis("brake", "accelerate")
 	if dir != 0.0 and chassi.linear_velocity.length() < ch["vmax"] * velocidade:
-		var forca := massa_total * aceleracao * (0.55 if _sem_perna() else 1.0)   # sem perna, pedala/empurra mal
+		var forca := massa_total * aceleracao * (0.8 if _sem_perna() else 1.0)   # sem perna, pedala/empurra pior
 		if mono:        # monociclo: pedala no eixo; o corpo fica pra trás e você tem que se jogar pra frente
 			chassi.apply_force(Vector2(dir * forca, 0.0), roda_motriz.global_position - chassi.global_position)
 		elif equilibra:   # segway: empurra embaixo, o equilíbrio segura
