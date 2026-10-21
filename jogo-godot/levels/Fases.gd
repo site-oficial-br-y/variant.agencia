@@ -61,7 +61,7 @@ func _cartao(n: int) -> Button:
 	mini.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	b.add_child(mini)
 	var nome := Label.new()
-	nome.text = "%d. %s" % [n, Game.FASES[n - 1]]
+	nome.text = Game.FASES[n - 1]
 	nome.position = Vector2(18, 200)
 	nome.add_theme_font_size_override("font_size", 32)
 	nome.mouse_filter = Control.MOUSE_FILTER_IGNORE

@@ -8,7 +8,7 @@ enum Estado { JOGANDO, MORTO, VITORIA }
 var estado: int = Estado.JOGANDO
 var personagem: String = "segway"
 var fase: int = 1
-const FASES := ["PRIMEIRO ROLÊ", "OBRA", "DESCIDÃO"]
+const FASES := ["FASE 1", "FASE 2", "FASE 3"]
 const NOMES := {"segway": "PÉRINE", "cadeira": "GABRIEL", "scooter": "GIAN"}
 const RITMO := 3.0                   # mundo 3x mais rápido: queda pesada e ritmo de Happy Wheels
 const ARQ_PROGRESSO := "user://progresso.cfg"

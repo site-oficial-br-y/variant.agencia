@@ -287,10 +287,9 @@ func _t_tabuas(p: Vector2, comp := 1000.0) -> Vector2:
 	return p + Vector2(comp, 0)
 
 func _t_prensa(p: Vector2) -> Vector2:
-	_t_plano(p, 2800, false)
-	pecas.prensa(p.x + 2100, p.y, 6.0, _sorteio.randf_range(0.0, 6.0))
-	pecas.cone(p + Vector2(2750, 0))
-	return p + Vector2(2800, 0)
+	_t_plano(p, 3400, false)
+	pecas.prensa(p.x + 2700, p.y, 6.0, _sorteio.randf_range(0.0, 6.0))
+	return p + Vector2(3400, 0)
 
 ## rampinha e salto sobre o fosso das serras (vem embalado de uma descida)
 func _t_serras(p: Vector2) -> Vector2:
@@ -367,12 +366,14 @@ func _t_mega_salto(p: Vector2) -> Vector2:
 		p + Vector2(7400, 2400), fim + Vector2(60, 0)]), p.y + 4800.0)
 	return fim
 
-## voo: rampinha de 20°, vão com perigo (espinhos, água ou serras) e pouso numa
-## descida longa de 26° — aterrissa de 900 a 2100 px/s sempre ~25° de ângulo
+## voo: rampinha de 15°, vão com perigo (espinhos, água ou serras) e pouso numa
+## descida longa de 26° — aterrissa de 900 a 3300 px/s sempre ~25° de ângulo
 ## (calculado; ver level-design §8). Depois do pouso, curva e reta.
+const POUSO := 15000.0                              # pista de pouso: pega de 900 a 3300 px/s
+
 func _t_voo(p: Vector2, perigo := "espinhos") -> Vector2:
-	pecas.pista_elevada(PackedVector2Array([p - Vector2(60, 0), p + Vector2(200, 0), p + Vector2(500, -40),
-		p + Vector2(800, -150)]), p.y + 2600.0)
+	pecas.pista_elevada(PackedVector2Array([p - Vector2(60, 0), p + Vector2(200, 0), p + Vector2(500, -30),
+		p + Vector2(800, -110)]), p.y + 2600.0)
 	var fosso := p.y + 1500.0
 	if perigo == "agua":
 		pecas.terreno(PackedVector2Array([p + Vector2(820, 2300), p + Vector2(1480, 2300)]), p.y + 2900.0, false)
@@ -383,12 +384,12 @@ func _t_voo(p: Vector2, perigo := "espinhos") -> Vector2:
 		if perigo == "serras":
 			pecas.serra(Vector2(p.x + 1150, fosso - 500), 330.0)
 	var inc := tan(deg_to_rad(26.0))
-	var desce := 8500.0 * inc
+	var desce := POUSO * inc
 	var saida := 2600.0                             # saída longa: a inclinação vai a zero aos poucos
-	var pts := PackedVector2Array([p + Vector2(1500, 100), p + Vector2(1500 + 8500, 100 + desce)])
+	var pts := PackedVector2Array([p + Vector2(1500, 100), p + Vector2(1500 + POUSO, 100 + desce)])
 	for i in range(1, 9):
 		var u := i / 8.0
-		pts.append(p + Vector2(10000 + saida * u, 100 + desce + inc * saida * (u - u * u / 2.0)))
+		pts.append(p + Vector2(1500 + POUSO + saida * u, 100 + desce + inc * saida * (u - u * u / 2.0)))
 	var fim: Vector2 = pts[pts.size() - 1]
 	pts.append(fim + Vector2(60, 0))
 	pecas.pista_elevada(pts, fim.y + 2600.0)
@@ -411,9 +412,9 @@ func _cp(lista: Array, p: Vector2, dx := 200.0) -> void:
 ## quanto o voo desce (rampa + descida de 26° + saída); a subida seguinte devolve isso
 func _queda_voo() -> float:
 	var inc := tan(deg_to_rad(26.0))
-	return 100.0 + 8500.0 * inc + inc * 2600.0 * 0.5
+	return 100.0 + POUSO * inc + inc * 2600.0 * 0.5
 
-# ---------- FASE 1: Primeiro Rolê ----------
+# ---------- FASE 1 ----------
 ## ritmo do gênero: voa, pousa descendo, sobe no embalo, obstáculo no alto, voa de novo.
 ## Cada bloco desce e sobe a mesma altura: a fase cresce sem afundar.
 func _fase_1() -> void:
@@ -427,7 +428,7 @@ func _fase_1() -> void:
 		_cp(c, p)
 		p = _t_bola(p)
 		p = _t_voo(p, "agua")
-		p = _t_mega(p, 15000, -qv)
+		p = _t_mega(p, qv * 3.0, -qv)
 		_cp(c, p)
 		p = _t_passarela(p)
 		p = _t_gangorra(p)
@@ -435,14 +436,14 @@ func _fase_1() -> void:
 		p = _t_tnt(p)
 		p = _t_plano(p, 1000)
 		p = _t_voo(p, "espinhos")
-		p = _t_mega(p, 15000, -qv)
+		p = _t_mega(p, qv * 3.0, -qv)
 		_cp(c, p)
 		p = _t_prensa(p)
 		p = _t_ondas(p)
 		p = _t_ponte(p, 2300, 250)
 		p = _t_plano(p, 1000)
 		p = _t_voo(p, "serras")
-		p = _t_mega(p, 15000, -qv - 250.0)
+		p = _t_mega(p, qv * 3.0, -qv - 250.0)
 	_cp(c, p)
 	p = _t_passarela(p)
 	p = _t_plano(p, 1000)
@@ -450,7 +451,7 @@ func _fase_1() -> void:
 	p = _t_plano(p, 1500)
 	_chegada(p, c)
 
-# ---------- FASE 2: Obra ----------
+# ---------- FASE 2 ----------
 func _fase_2() -> void:
 	_sorteio.seed = 202
 	var c: Array = []
@@ -467,47 +468,48 @@ func _fase_2() -> void:
 		p = _t_predio(p, 520.0 + volta * 90.0)
 		p = _t_plano(p, 1500)
 		p = _t_voo(p, "espinhos")
-		p = _t_mega(p, 15000, -qv)
+		p = _t_mega(p, qv * 3.0, -qv)
 		_cp(c, p)
 		p = _t_bola(p)
 		p = _t_passarela(p)
 		p = _t_tabuas(p, 1400)
 		p = _t_plano(p, 1000)
 		p = _t_voo(p, "serras")
-		p = _t_mega(p, 15000, -qv)
+		p = _t_mega(p, qv * 3.0, -qv)
 		_cp(c, p)
 		p = _t_vigas(p)
 		p = _t_tnt(p)
 		p = _t_gangorra(p)
 		p = _t_plano(p, 1000)
 		p = _t_voo(p, "agua")
-		p = _t_mega(p, 15000, -qv)
+		p = _t_mega(p, qv * 3.0, -qv)
 	_cp(c, p)
 	p = _t_prensa(p)
 	p = _t_plano(p, 1500)
 	_chegada(p, c)
 
-# ---------- FASE 3: Descidão ----------
+# ---------- FASE 3 ----------
 func _fase_3() -> void:
 	_sorteio.seed = 303
 	var c: Array = []
 	var qv := _queda_voo()
 	var p := _largada()
 	p = _t_ladeira(p, 2800, 900)
+	p = _t_plano(p, 1200)                           # reta antes do 1º salto: vindo da descida batia na rampa
 	for volta in 3:
 		p = _t_voo(p, "serras")
-		p = _t_mega(p, 15000, -qv)
+		p = _t_mega(p, qv * 3.0, -qv)
 		_cp(c, p)
 		p = _t_ponte(p, 1900, -150)
 		p = _t_tnt(p)
 		p = _t_plano(p, 1000)
 		p = _t_voo(p, "espinhos")
-		p = _t_mega(p, 15000, -qv + 150.0)
+		p = _t_mega(p, qv * 3.0, -qv + 150.0)
 		_cp(c, p)
 		p = _t_bola(p)
 		p = _t_plano(p, 800)
 		p = _t_voo(p, "agua")
-		p = _t_mega(p, 15000, -qv)
+		p = _t_mega(p, qv * 3.0, -qv)
 		_cp(c, p)
 		p = _t_ondas(p)
 		p = _t_plano(p, 800)

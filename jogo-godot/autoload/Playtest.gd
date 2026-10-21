@@ -210,7 +210,7 @@ func _passa_prensa(p: Node, x0: float, v: float) -> bool:
 	while x < px + 310.0 + 700.0:
 		var f := fposmod(t0 + t + atraso, T) / T
 		var baixo := lerpf(topo, fundo, Pecas.descida_prensa(f)) + 150.0
-		if baixo > chao - 1480.0 and absf(px - x) < 310.0 + 650.0:
+		if baixo > chao - 1480.0 and absf(px - x) < 310.0 + 800.0:
 			return false
 		x += v * 0.02
 		t += 0.02
@@ -221,7 +221,7 @@ func _angulo_chao(pos: Vector2) -> float:
 	var espaco := get_viewport().world_2d.direct_space_state
 	var pts: Array = []
 	for dx in [-200.0, 200.0]:
-		var q := PhysicsRayQueryParameters2D.create(pos + Vector2(dx, -50), pos + Vector2(dx, 900), 0b0001)
+		var q := PhysicsRayQueryParameters2D.create(pos + Vector2(dx, -50), pos + Vector2(dx, 5000), 0b0001)
 		var hit := espaco.intersect_ray(q)
 		if hit.is_empty():
 			return 0.0

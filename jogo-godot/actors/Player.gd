@@ -14,7 +14,7 @@ var fundo_y := INF                 # abaixo disso o veículo caiu num buraco (a 
 @export var spawn_x: float = 600.0
 @export var balance_stiffness: float = 55.0
 @export var balance_damping: float = 14.0
-@export var velocidade: float = 2.0           # multiplica vmax e força de todos os veículos
+@export var velocidade: float = 2.4           # multiplica vmax e força de todos os veículos
 @export var limiar_sangue: float = 420.0       # Δv (px/s) num passo que já espirra sangue
 @export var limiar_arranca: float = 2700.0     # Δv que arranca o membro
 @export var limiar_queda_montado: float = 2400.0
@@ -132,6 +132,8 @@ func _montar() -> void:
 	desloc = Vector2(spawn_x - origem.x, chao_y - fundo)
 	chassi.position = origem + desloc
 	chassi.continuous_cd = RigidBody2D.CCD_MODE_CAST_RAY
+	chassi.linear_damp_mode = RigidBody2D.DAMP_MODE_REPLACE
+	chassi.linear_damp = 0.0
 	add_child(chassi)
 	chassi.add_to_group("veiculo")
 
@@ -141,6 +143,10 @@ func _montar() -> void:
 		rb.position = c + desloc
 		rb.mass = r["massa"]
 		rb.physics_material_override = _mat
+		rb.angular_damp_mode = RigidBody2D.DAMP_MODE_REPLACE   # amortecimento padrão (1,0) freava a roda o tempo todo
+		rb.angular_damp = 0.0
+		rb.linear_damp_mode = RigidBody2D.DAMP_MODE_REPLACE
+		rb.linear_damp = 0.0
 		rb.collision_layer = 0b010
 		rb.collision_mask = 0b1001              # mundo + objetos
 		rb.continuous_cd = RigidBody2D.CCD_MODE_CAST_RAY
@@ -238,6 +244,9 @@ func _dirigir() -> void:
 			- chassi.angular_velocity * balance_damping))
 	elif lean != 0.0:
 		chassi.apply_torque(lean * inercia_chassi * 5.0)
+	else:           # sem botão, se alinha sozinho com o chão embaixo: pousa certo na descida
+		var alvo := _angulo_chao_embaixo()
+		chassi.apply_torque(inercia_chassi * (-wrapf(chassi.rotation - alvo, -PI, PI) * 6.0 - chassi.angular_velocity * 2.5))
 	# pouso/batida forte arremessa o piloto; capotou ou caiu no buraco também
 	var dv := (v_roda_ant - roda_motriz.linear_velocity).length()
 	v_roda_ant = roda_motriz.linear_velocity
@@ -249,6 +258,18 @@ func _dirigir() -> void:
 	if dv > limiar_queda_montado or absf(chassi.rotation) > tomba \
 			or chassi.global_position.y > (fundo_y if fundo_y < INF else chao_y + 900.0):
 		soltar_ragdoll(_vel(), false)
+
+func _angulo_chao_embaixo() -> float:
+	var espaco := get_world_2d().direct_space_state
+	var pts: Array = []
+	for dx in [-300.0, 300.0]:
+		var de := chassi.global_position + Vector2(dx, 0)
+		var q := PhysicsRayQueryParameters2D.create(de, de + Vector2(0, 5000), 0b0001)
+		var hit := espaco.intersect_ray(q)
+		if hit.is_empty():
+			return 0.0
+		pts.append(hit["position"])
+	return ((pts[1] as Vector2) - (pts[0] as Vector2)).angle()
 
 # ---------- montado -> ragdoll ----------
 func soltar_ragdoll(herda_vel: Vector2, pulo: bool = false) -> void:
