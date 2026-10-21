@@ -46,6 +46,16 @@ func _init(no: Node2D, material: PhysicsMaterial, ao_perigo: Callable) -> void:
 	gt.height = 64
 	_brilho = gt
 
+## som de objeto do cenário: só toca se estiver perto do jogador (a fase tem várias
+## prensas batendo ao mesmo tempo, longe da tela, e isso virava barulho constante)
+func som(nome: String, onde: Vector2, forca := 1.0) -> void:
+	var pl = raiz.get("player")
+	if pl == null or not is_instance_valid(pl) or not is_instance_valid(pl.chassi):
+		return
+	var d: float = (pl.foco() as Node2D).global_position.distance_to(onde)
+	if d < 5000.0:
+		Audio.tocar(nome, forca * clampf(1.0 - d / 5000.0, 0.25, 1.0))
+
 func tex(nome: String) -> Texture2D:
 	if not _cache.has(nome):
 		_cache[nome] = load(ARTE + nome + ".png")
@@ -499,7 +509,7 @@ func caixa(pos: Vector2, lado: float) -> RigidBody2D:
 	c.contact_monitor = true
 	c.max_contacts_reported = 2
 	c.body_entered.connect(func(_b: Node) -> void:
-		if c.linear_velocity.length() > 250.0: Audio.tocar("caixa", c.linear_velocity.length() / 900.0))
+		if c.linear_velocity.length() > 250.0: som("caixa", c.global_position, c.linear_velocity.length() / 900.0))
 	raiz.add_child(c)
 	return c
 
@@ -551,8 +561,8 @@ func tnt(pos: Vector2, altura := 560.0) -> RigidBody2D:
 func explodir(pos: Vector2, raio: float, dv_max: float) -> void:
 	if ao_explodir.is_valid():
 		ao_explodir.call(pos, raio)
-	Audio.tocar("impacto_forte", 1.0)
-	Audio.tocar("metal", 0.8)
+	som("impacto_forte", pos, 1.0)
+	som("metal", pos, 0.8)
 	for n in raiz.get_tree().get_nodes_in_group("veiculo") + raiz.get_tree().get_nodes_in_group("piloto"):
 		_empurrar(n, pos, raio, dv_max)
 	for n in raiz.get_children():
@@ -650,7 +660,7 @@ func mover_pistoes(t: float) -> void:
 		(c.get_meta("zona") as Area2D).monitoring = desce          # só esmaga quando está descendo
 		var bateu := k >= 0.999
 		if bateu and not p["embaixo"]:
-			Audio.tocar("metal", 1.0)
+			som("metal", c.position, 1.0)
 			poeira(Vector2(c.position.x - 250, p["fundo"] + 170), 1.2)
 			poeira(Vector2(c.position.x + 250, p["fundo"] + 170), 1.2)
 		p["embaixo"] = bateu

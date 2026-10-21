@@ -156,7 +156,7 @@ func _bola_demolicao(ancora: Vector2, comprimento: float, angulo_ini: float, rai
 	bola.add_child(som)
 	som.body_entered.connect(func(b: Node2D) -> void:
 		if (b.is_in_group("veiculo") or b.is_in_group("piloto")) and (bola.get_meta("vel") as Vector2).length() > 150.0:
-			Audio.tocar("metal", 0.9))
+			pecas.som("metal", bola.global_position, 0.9))
 	_pendulos.append({"bola": bola, "ancora": ancora, "L": comprimento, "th0": angulo_ini,
 		"w": w if w > 0.0 else sqrt(980.0 / comprimento), "corrente": corrente, "raio": raio})
 	_mover_pendulos(0.0)
@@ -423,7 +423,6 @@ func _cp(lista: Array, p: Vector2, dx := 200.0) -> void:
 func _fosso(x0: float, x1: float, y: float) -> void:
 	pecas.terreno(PackedVector2Array([Vector2(x0, y + 1400), Vector2(x1, y + 1400)]), y + 2100.0, false)
 	pecas.espinhos(x0 + 40, x1 - 40, y + 1400)
-	mec.gancho(Vector2((x0 + x1) / 2.0, y - 1500.0), x0 - 150.0, y)   # rota do arpão por cima do vão
 
 ## minas com saída: cada uma tem uma lombadinha de pulo antes. Embalado você salta
 ## por cima; devagar, encosta e leva o tranco (pode perder perna, não morre na hora)

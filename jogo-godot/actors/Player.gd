@@ -68,6 +68,7 @@ var vida: Dictionary = {}                # corpo -> 0..100
 var perdeu: Dictionary = {}              # corpo -> true (membro arrancado montado)
 var _forma_corpo: Array = []             # formas do sensor (meta "corpo")
 var sensor_piloto: Area2D
+var _ang0: Dictionary = {}               # ângulo de repouso de cada junta (pose da arte)
 const MEMBROS := ["braco", "perna", "perna2", "coxa", "canela"]
 var morto := false
 var sangue: Sangue
@@ -782,13 +783,35 @@ func soltar_ragdoll(herda_vel: Vector2, pulo: bool = false) -> void:
 		pj.disable_collision = true
 		pj.softness = 0.0
 		pj.angular_limit_enabled = true
-		pj.angular_limit_lower = -deg_to_rad(float(j["lim"]) * 0.7)
-		pj.angular_limit_upper = deg_to_rad(float(j["lim"]) * 0.7)
+		pj.angular_limit_lower = -deg_to_rad(float(j["lim"]) * 0.55)
+		pj.angular_limit_upper = deg_to_rad(float(j["lim"]) * 0.55)
 		juntas[j["b"]] = pj
+		_ang0[j["b"]] = corpos[j["b"]].rotation - corpos[j["a"]].rotation
 	boneco.queue_free()
 
 # ---------- pancadas: sangue e desmembramento ----------
+## tônus muscular: a junta tende a voltar ao ângulo da arte (mola + amortecimento),
+## então o corpo cai como gente e não dobra feito origami. Fraco: pancada vence.
+func _musculos() -> void:
+	for j in D["juntas"]:
+		var a: String = j["a"]
+		var b: String = j["b"]
+		if not juntas.has(b) or not corpos.has(a) or not corpos.has(b):
+			continue
+		var ra: RigidBody2D = corpos[a]
+		var rb: RigidBody2D = corpos[b]
+		var rel := wrapf(rb.rotation - ra.rotation - float(_ang0.get(b, 0.0)), -PI, PI)
+		var wrel := rb.angular_velocity - ra.angular_velocity
+		var forca := 0.35 if morto else 1.0
+		var t := (-rel * 4.0 - wrel * 1.0) * forca
+		rb.apply_torque(t * _inercia(rb))
+		ra.apply_torque(-t * _inercia(rb) * 0.5)
+
+func _inercia(rb: RigidBody2D) -> float:
+	return rb.mass * 9000.0
+
 func _checar_pancadas() -> void:
+	_musculos()
 	for k in corpos:
 		var rb: RigidBody2D = corpos[k]
 		var dv: float = (v_ant[rb] - rb.linear_velocity).length()
