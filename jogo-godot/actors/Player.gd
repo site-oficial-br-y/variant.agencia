@@ -14,10 +14,11 @@ var fundo_y := INF                 # abaixo disso o veículo caiu num buraco (a 
 @export var spawn_x: float = 600.0
 @export var balance_stiffness: float = 55.0
 @export var balance_damping: float = 14.0
-@export var velocidade: float = 1.4           # multiplica vmax e força de todos os veículos
+@export var velocidade: float = 2.0           # multiplica vmax e força de todos os veículos
 @export var limiar_sangue: float = 420.0       # Δv (px/s) num passo que já espirra sangue
 @export var limiar_arranca: float = 2700.0     # Δv que arranca o membro
 @export var limiar_queda_montado: float = 2400.0
+@export var limiar_explode: float = 3300.0      # Δv que estoura a parte do corpo (cabeça estoura antes)
 
 var D: Dictionary = {}
 var origem := Vector2.ZERO         # ponto da arte que é a origem do corpo do chassi
@@ -226,15 +227,17 @@ func _dirigir() -> void:
 	if dir != 0.0 and chassi.linear_velocity.length() < ch["vmax"] * velocidade:
 		if equilibra:   # segway: empurra embaixo, o equilíbrio segura
 			var baixo: float = (roda_motriz.global_position - chassi.global_position).length() * 0.8
-			chassi.apply_force(Vector2(dir * ch["forca"] * velocidade, 0.0), Vector2(0, baixo).rotated(chassi.rotation))
+			# força de arranque limitada: empurrão maior que isso vence o equilíbrio e ele tomba de costas
+			chassi.apply_force(Vector2(dir * ch["forca"] * minf(velocidade, 1.4), 0.0), Vector2(0, baixo).rotated(chassi.rotation))
 		else:           # 2 rodas: pelo centro de massa, sem empinar sozinho (empinar é no botão)
 			chassi.apply_central_force(Vector2(dir * ch["forca"] * velocidade, 0.0))
 	var lean := Input.get_axis("lean_back", "lean_fwd")
-	if lean != 0.0:
-		chassi.apply_torque(lean * inercia_chassi * (8.0 if equilibra else 5.0))
-	elif equilibra:
-		chassi.apply_torque(inercia_chassi * (-chassi.rotation * balance_stiffness
+	if equilibra:   # girar muda o ângulo-alvo; o equilíbrio nunca desliga (desligar fazia tombar)
+		var alvo := lean * 0.45
+		chassi.apply_torque(inercia_chassi * (-(chassi.rotation - alvo) * balance_stiffness
 			- chassi.angular_velocity * balance_damping))
+	elif lean != 0.0:
+		chassi.apply_torque(lean * inercia_chassi * 5.0)
 	# pouso/batida forte arremessa o piloto; capotou ou caiu no buraco também
 	var dv := (v_roda_ant - roda_motriz.linear_velocity).length()
 	v_roda_ant = roda_motriz.linear_velocity
@@ -305,6 +308,9 @@ func _checar_pancadas() -> void:
 		if k == "cabeca" and dv > limiar_arranca * 0.8 and not morto:
 			morto = true
 			morreu.emit()
+		if dv > limiar_explode * (0.85 if k == "cabeca" else 1.25):
+			explodir.call_deferred(k)               # não mexe em `corpos` no meio do laço
+			continue
 		var lim := limiar_arranca * (1.4 if k == "cabeca" else 1.0)   # pescoço aguenta mais
 		if dv > lim and juntas.has(k):
 			arrancar(k)
@@ -326,6 +332,100 @@ func arrancar(membro: String) -> void:
 		sangue.esguichar(pai, no_pai, no_pai.normalized(), 7.0)
 		var no_membro := lado.to_local(p_global)
 		sangue.esguichar(lado, no_membro, no_membro.normalized(), 4.0)
+
+## estoura uma parte do corpo: some a peça, voam pedaços (carne, osso, olho) e
+## o toco esguicha. Montado, primeiro vira ragdoll.
+func explodir(membro: String) -> void:
+	if not is_inside_tree():                        # chamada adiada que chegou depois do reinício
+		return
+	if montado:
+		soltar_ragdoll(_vel(), false)
+	if not corpos.has(membro):
+		return
+	var rb: RigidBody2D = corpos[membro]
+	var pos := rb.global_position
+	var vel := rb.linear_velocity
+	for filho in juntas.keys():                     # solta o que estava preso nele
+		var j: PinJoint2D = juntas[filho]
+		if filho == membro or j.get_node_or_null(j.node_a) == rb:
+			var ponta: Node = corpos.get(filho) if filho != membro else j.get_node_or_null(j.node_a)
+			if sangue and is_instance_valid(ponta):
+				var local := (ponta as Node2D).to_local(j.global_position)
+				sangue.esguichar(ponta, local, local.normalized(), 4.0 if filho != membro else 8.0)
+			juntas.erase(filho)
+			j.queue_free()
+	corpos.erase(membro)
+	v_ant.erase(rb)
+	rb.queue_free()
+	Audio.tocar("splat", 1.0)
+	Audio.tocar("osso", 1.0)
+	Audio.tocar("impacto_forte", 0.9)
+	if sangue:
+		sangue.jorrar(pos, 320, 2600.0, Vector2.ZERO, vel * 0.3)
+	var cabeca := membro == "cabeca"
+	var pedacos: Array = [["carne", 7], ["osso", 2]]
+	if cabeca:
+		pedacos = [["carne", 6], ["osso", 3], ["olho", 2], ["dente", 3]]
+	for tipo in pedacos:
+		for i in tipo[1]:
+			_pedaco(tipo[0], pos, vel)
+	if cabeca and not morto:
+		morto = true
+		morreu.emit()
+
+func _pedaco(tipo: String, pos: Vector2, vel: Vector2) -> void:
+	var r: float = {"carne": randf_range(85, 170), "osso": randf_range(65, 110), "olho": 75.0, "dente": 34.0}[tipo]
+	var g := RigidBody2D.new()
+	g.mass = 0.3
+	g.collision_layer = 0b100
+	g.collision_mask = 0b1001
+	g.physics_material_override = _mat
+	var cs := CollisionShape2D.new()
+	var c := CircleShape2D.new()
+	c.radius = r * 0.8
+	cs.shape = c
+	g.add_child(cs)
+	var pts := PackedVector2Array()
+	var lados := 9
+	for k in lados:
+		var esc := 1.0 if tipo in ["olho", "dente"] else randf_range(0.65, 1.15)
+		var raio := r * esc * (1.6 if tipo == "osso" and k % 4 < 2 else 1.0)
+		pts.append(Vector2(raio, 0).rotated(TAU * k / lados))
+	var cor: Color = {"carne": Color(0.62, 0.05, 0.08).lerp(Color(0.86, 0.38, 0.42), randf() * 0.6),
+		"osso": Color(0.93, 0.89, 0.78), "olho": Color(0.97, 0.97, 0.95), "dente": Color(0.98, 0.96, 0.9)}[tipo]
+	var corpo := Polygon2D.new()
+	corpo.polygon = pts
+	corpo.color = cor
+	g.add_child(corpo)
+	var borda := Line2D.new()
+	var fechado := pts.duplicate()
+	fechado.append(pts[0])
+	borda.points = fechado
+	borda.width = 14.0
+	borda.default_color = Color(0.3, 0.02, 0.03)
+	g.add_child(borda)
+	if tipo == "olho":
+		var iris := Polygon2D.new()
+		var ip := PackedVector2Array()
+		for k in 10:
+			ip.append(Vector2(r * 0.45, 0).rotated(TAU * k / 10.0) + Vector2(r * 0.3, 0))
+		iris.polygon = ip
+		iris.color = Color(0.12, 0.08, 0.05)
+		g.add_child(iris)
+	if tipo == "carne":
+		var veia := Line2D.new()
+		veia.points = PackedVector2Array([Vector2(-r * 0.5, 0), Vector2(0, r * 0.3), Vector2(r * 0.4, -r * 0.2)])
+		veia.width = 18.0
+		veia.default_color = Color(0.4, 0.0, 0.03)
+		g.add_child(veia)
+	g.position = pos + Vector2(randf_range(-40, 40), randf_range(-40, 40))
+	g.rotation = randf() * TAU
+	add_child(g)
+	g.linear_velocity = vel * 0.5 + Vector2.UP.rotated(randf_range(-1.4, 1.4)) * randf_range(900, 2400)
+	g.angular_velocity = randf_range(-14, 14)
+	if sangue and tipo == "carne":
+		sangue.esguichar(g, Vector2.ZERO, Vector2.UP, 1.5)
+	get_tree().create_timer(25.0).timeout.connect(g.queue_free)
 
 func foco() -> Node2D:
 	return chassi if montado else corpos.get("tronco", chassi)

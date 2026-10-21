@@ -38,7 +38,7 @@ func jorrar(pos: Vector2, n: int, forca: float = 500.0, dir: Vector2 = Vector2.Z
 func esguichar(corpo: Node2D, local: Vector2, dir_local: Vector2, dur: float = 3.0) -> void:
 	emissores.append({"corpo": corpo, "local": local, "dir_local": dir_local, "t": dur, "dur": dur})
 
-func _physics_process(delta: float) -> void:
+func _process(delta: float) -> void:                 # por quadro: física a 180 Hz não precisa de 180 raios/gota
 	var espaco := get_world_2d().direct_space_state
 	var vivas: Array = []
 	for g in gotas:

@@ -471,3 +471,21 @@ Limitações: sem toque real (N4 NÃO TESTADO); WebGL por software no navegador 
 Regras: **APROVADO** = executado e critério atendido; **FALHOU** = executado e não
 atendido; **NÃO TESTADO** = não foi possível executar. Toda célula com número tem
 que vir de log. Sem evidência de vitória, a fase não está "zerada".
+
+## Lições do Bicho Ehn (rodada das fases gigantes)
+
+- **Sensação de "gravidade da lua"** vem da escala: com boneco de ~1300 px (≈ 720 px/m),
+  gravidade de 980 px/s² é 1/7 da real. Em vez de reajustar gravidade, velocidade, ω de
+  pêndulo e limiares um por um, use `Engine.time_scale` (RITMO) e suba
+  `physics_ticks_per_second` na mesma proporção (60 × RITMO): o passo de jogo continua
+  1/60 s, então tudo que o bot já validou continua valendo. Custo: mais passos de
+  física por segundo real — medir em celular.
+- **Obstáculo de tempo fica mais difícil em tempo real** quando o ritmo sobe: recalcule a
+  janela em segundos reais e desacelere (ω menor) se cair abaixo de ~1 s.
+- **Chamadas adiadas depois do reinício** (`call_deferred`, timers) chegam com o nó fora
+  da árvore: cheque `is_inside_tree()` antes de `get_tree()`.
+- **Exportação web às vezes falha na 1ª vez** com `Parameter "fd" is null`: confira a
+  data do `.pck` e repita; use caminhos absolutos.
+- **Caixa solta antes de subida trava o veículo fraco** (rola de volta na frente).
+- **Antes de qualquer teste**, carregue os scripts com `load(...).can_instantiate()` num
+  `-s` script: erro de parse em cena que o teste não abre não aparece em outro lugar.

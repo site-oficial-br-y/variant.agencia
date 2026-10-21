@@ -94,7 +94,7 @@ func _jogar(fase: Node, estrategia: String) -> void:
 		var foco: Node2D = fase.player.foco()
 		if percurso > 0.0 and fase.tempo >= proxima_foto:      # folha de contato do percurso
 			proxima_foto += percurso
-			await _foto("%s_p%03d" % [Game.personagem, int(fase.tempo * 10.0)])
+			await _foto("%s_t%02d_p%04d" % [Game.personagem, tentativa, int(fase.tempo * 10.0)])
 		var rb := foco as RigidBody2D
 		if rb and (rb.linear_velocity.length() > 20000.0 or is_nan(rb.global_position.x)):
 			resultado = "explosao"
@@ -149,32 +149,72 @@ func _esperar_pendulo(foco: Node2D) -> bool:
 		var alcance: float = b.get_meta("alcance")
 		var raio: float = b.get_meta("raio", 100.0)
 		var dist := ancora.x - foco.global_position.x
-		# para logo antes do alcance (frente do veículo ~550 px à frente do centro)
 		if dist < 300.0 or dist > alcance + raio + 1100.0 or _liberado.has(b):
 			continue
-		var bola := b as Node2D
-		var vx: float = (b.get_meta("vel", Vector2.ZERO) as Vector2).x
-		var vx_ant: float = _vx_ant.get(bola, 0.0)
-		_vx_ant[bola] = vx
-		# sai quando a bola vem subindo do lado de cá: passa por baixo dela no alto
-		var virou := vx_ant < 0.0 and vx < 0.0 and bola.global_position.x < ancora.x - alcance * 0.8
-		if virou:
-			_liberado[bola] = true
-		return not _liberado.has(bola)
+		# lê o tempo como gente: simula a bola e o próprio trajeto; só sai se passar limpo
+		if _passagem_livre(b, foco.global_position.x):
+			_liberado[b] = true
+		return not _liberado.has(b)
 	return false
 
-## prensa à frente: para fora do alcance e sai quando a cabeça já está subindo
+func _passagem_livre(b: Node, x0: float) -> bool:
+	var ch: Dictionary = _fase().player.D["chassi"]
+	var vmax: float = float(ch["vmax"]) * _fase().player.velocidade
+	return _passa_bola(b, x0, vmax * 0.5) and _passa_bola(b, x0, vmax * 0.95)
+
+func _passa_bola(b: Node, x0: float, v: float) -> bool:
+	var ancora: Vector2 = b.get_meta("ancora")
+	var L: float = b.get_meta("L")
+	var th0: float = b.get_meta("th0")
+	var w: float = b.get_meta("w")
+	var raio: float = b.get_meta("raio")
+	var chao := ancora.y + L + raio + 700.0           # a bola passa 700 px acima do chão
+	var t0: float = _fase()._t_fisica
+	var t := 0.0
+	var x := x0
+	while x < ancora.x + L + raio + 900.0:
+		var th := th0 * cos(w * (t0 + t))
+		var bx := ancora.x + L * sin(th)
+		var fundo_bola := ancora.y + L * cos(th) + raio
+		if fundo_bola > chao - 1480.0 and absf(bx - x) < raio + 600.0:
+			return false
+		x += v * 0.02
+		t += 0.02
+	return true
+
+## prensa à frente: espera fora do alcance e só vai se a simulação da passagem
+## (devagar e rápido) não cruzar com a cabeça da prensa embaixo
 func _esperar_prensa(foco: Node2D) -> bool:
 	for p in get_tree().get_nodes_in_group("pistao"):
 		var dist: float = float(p.get_meta("x")) - foco.global_position.x
 		if dist < 300.0 or dist > 2000.0 or _prensas_liberadas.has(p):
 			continue
-		var f: float = p.get_meta("fase")
-		if f > 0.28 and f < 0.36:
+		var ch: Dictionary = _fase().player.D["chassi"]
+		var vmax: float = float(ch["vmax"]) * _fase().player.velocidade
+		if _passa_prensa(p, foco.global_position.x, vmax * 0.5) and _passa_prensa(p, foco.global_position.x, vmax * 0.95):
 			_prensas_liberadas[p] = true
 			return false
 		return true
 	return false
+
+func _passa_prensa(p: Node, x0: float, v: float) -> bool:
+	var px: float = p.get_meta("x")
+	var T: float = p.get_meta("T")
+	var atraso: float = p.get_meta("atraso")
+	var topo: float = p.get_meta("topo")
+	var fundo: float = p.get_meta("fundo")
+	var chao: float = p.get_meta("chao")
+	var t0: float = _fase()._t_fisica
+	var t := 0.0
+	var x := x0
+	while x < px + 310.0 + 700.0:
+		var f := fposmod(t0 + t + atraso, T) / T
+		var baixo := lerpf(topo, fundo, Pecas.descida_prensa(f)) + 150.0
+		if baixo > chao - 1480.0 and absf(px - x) < 310.0 + 650.0:
+			return false
+		x += v * 0.02
+		t += 0.02
+	return true
 
 ## ângulo do terreno sob a posição (dois raios: 200 px atrás e na frente); 0 se no ar
 func _angulo_chao(pos: Vector2) -> float:

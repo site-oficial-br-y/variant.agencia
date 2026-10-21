@@ -11,6 +11,12 @@ const CONTORNO_MADEIRA := Color(0.23, 0.14, 0.06)
 const CONTORNO_METAL := Color(0.11, 0.13, 0.16)
 const AMARELO := Color(0.96, 0.71, 0.13)
 const LARG_CONTORNO := 14.0
+# paleta chapada do gênero: bloco vinho, topo cinza, treliça vermelha, tufo de grama
+const VINHO := Color(0.53, 0.06, 0.15)
+const CINZA := Color(0.5, 0.5, 0.52)
+const CINZA_CLARO := Color(0.62, 0.62, 0.64)
+const VERMELHO := Color(0.66, 0.1, 0.17)
+const GRAMA := Color(0.22, 0.6, 0.18)
 
 var raiz: Node2D
 var mat: PhysicsMaterial
@@ -21,6 +27,7 @@ var chao_tex := "terra"          # material do terreno da fase (terra, concreto,
 var topo_tex := "grama"          # faixa do topo (grama, asfalto, grama_alpina)
 var contorno_chao := CONTORNO_TERRA
 var pistoes: Array = []
+var y_max := 0.0                 # fundo mais baixo construído (para a zona de morte)
 
 func _init(no: Node2D, material: PhysicsMaterial, ao_perigo: Callable) -> void:
 	raiz = no
@@ -102,6 +109,7 @@ func _fechar(pts: PackedVector2Array) -> PackedVector2Array:
 ## terra com textura + faixa de grama seguindo a superfície + contorno nas laterais
 func terreno(bruto: PackedVector2Array, fundo_y: float, grama := true) -> PackedVector2Array:
 	var sup := suavizar(bruto)
+	y_max = maxf(y_max, fundo_y)
 	var sb := StaticBody2D.new()
 	sb.collision_layer = 0b01
 	sb.physics_material_override = mat
@@ -112,45 +120,36 @@ func terreno(bruto: PackedVector2Array, fundo_y: float, grama := true) -> Packed
 	col.polygon = pts
 	sb.add_child(col)
 	raiz.add_child(sb)
-	poligono(pts, Color.WHITE, 0, tex(chao_tex), 2.6, sb)
-	var sombra := PackedVector2Array()            # escurece a terra com a profundidade
-	for p in sup:
-		sombra.append(p + Vector2(0, 520))
-	sombra.append(Vector2(sup[sup.size() - 1].x, fundo_y))
-	sombra.append(Vector2(sup[0].x, fundo_y))
-	poligono(sombra, Color(0.12, 0.06, 0.02, 0.35), 0, null, 1.0, sb)
-	var lados := PackedVector2Array([Vector2(sup[0].x, fundo_y), sup[0]])
-	linha(lados, LARG_CONTORNO * 1.6, contorno_chao, 1, sb)
-	linha(PackedVector2Array([sup[sup.size() - 1], Vector2(sup[sup.size() - 1].x, fundo_y)]), LARG_CONTORNO * 1.6, contorno_chao, 1, sb)
+	poligono(pts, VINHO, 0, null, 1.0, sb)
 	if grama:
-		var g := Line2D.new()
-		var desl := PackedVector2Array()
-		for p in sup:
-			desl.append(p + Vector2(0, 34))
-		g.points = desl
-		g.width = 150.0
-		g.texture = tex(topo_tex)
-		g.texture_mode = Line2D.LINE_TEXTURE_TILE
-		g.texture_repeat = CanvasItem.TEXTURE_REPEAT_ENABLED
-		g.joint_mode = Line2D.LINE_JOINT_ROUND
-		g.z_index = 2
-		sb.add_child(g)
+		var topo := PackedVector2Array()
+		for q in sup:
+			topo.append(q + Vector2(0, 32))
+		linha(topo, 64.0, CINZA, 2, sb)
+		var claro := PackedVector2Array()
+		for q in sup:
+			claro.append(q + Vector2(0, 8))
+		linha(claro, 16.0, CINZA_CLARO, 2, sb)
+		var x := sup[0].x + randf_range(200, 900)
+		while x < sup[sup.size() - 1].x - 200:            # tufos de grama soltos
+			tufo(Vector2(x, Pecas._y_em(sup, x)))
+			x += randf_range(900, 2200)
 	return sup
 
 # ---------- madeira ----------
-func tabua(a: Vector2, b: Vector2, espessura: float, z := 0, pai: Node = null) -> void:
+func tufo(base: Vector2) -> void:
+	var pts := PackedVector2Array([base + Vector2(-110, 6)])
+	for k in 7:
+		pts.append(base + Vector2(-90 + k * 30, -randf_range(40, 90)))
+		pts.append(base + Vector2(-75 + k * 30, -10))
+	pts.append(base + Vector2(110, 6))
+	poligono(pts, GRAMA, 3)
+
+## barra reta chapada (cinza por padrão; vermelho nas estruturas)
+func tabua(a: Vector2, b: Vector2, espessura: float, z := 0, pai: Node = null, cor := CINZA) -> void:
 	var d := b - a
 	var pts := retangulo((a + b) / 2.0, Vector2(d.length(), espessura), d.angle())
-	var p := poligono(pts, Color.WHITE, z, null, 1.0, pai)
-	var t := tex("madeira")
-	p.texture = t
-	p.texture_repeat = CanvasItem.TEXTURE_REPEAT_ENABLED
-	var esc := espessura / t.get_height()
-	var uv := PackedVector2Array()
-	for v in [Vector2(0, 0), Vector2(d.length(), 0), Vector2(d.length(), espessura), Vector2(0, espessura)]:
-		uv.append((v as Vector2) / esc)
-	p.uv = uv
-	linha(_fechar(pts), LARG_CONTORNO * 0.8, CONTORNO_MADEIRA, z, pai)
+	poligono(pts, cor, z, null, 1.0, pai)
 
 ## ponte de madeira em linha reta de `a` até `b`, com postes até `base_y` e corrimão
 func ponte_madeira(a: Vector2, b: Vector2, base_y: float) -> void:
@@ -175,14 +174,14 @@ func ponte_madeira(a: Vector2, b: Vector2, base_y: float) -> void:
 	var topos := PackedVector2Array()
 	for i in postes + 1:
 		var p := a.lerp(b, float(i) / postes)
-		tabua(p + Vector2(0, 60), Vector2(p.x, base_y), 70.0, -1)               # pilar até o fundo
+		tabua(p + Vector2(0, 60), Vector2(p.x, base_y), 60.0, -1, null, VERMELHO)  # pilar até o fundo
 		tabua(p + Vector2(0, 30), p + Vector2(0, -260), 40.0, -1)               # balaústre
 		topos.append(p + Vector2(0, -250))
 		if i < postes:                                                          # mão-francesa em X
 			var q := a.lerp(b, float(i + 1) / postes)
 			var meio := (base_y + maxf(p.y, q.y)) / 2.0
-			tabua(Vector2(p.x, p.y + 120), Vector2(q.x, meio), 34.0, -2)
-			tabua(Vector2(q.x, q.y + 120), Vector2(p.x, meio), 34.0, -2)
+			tabua(Vector2(p.x, p.y + 120), Vector2(q.x, meio), 34.0, -2, null, VERMELHO)
+			tabua(Vector2(q.x, q.y + 120), Vector2(p.x, meio), 34.0, -2, null, VERMELHO)
 	for i in topos.size() - 1:
 		tabua(topos[i], topos[i + 1], 34.0, -1)
 
@@ -214,20 +213,96 @@ func rampa(x0: float, x1: float, chao: float, altura: float) -> void:
 	var pista := Line2D.new()                     # pranchão da pista
 	pista.points = sup
 	pista.width = 70.0
-	pista.texture = tex("madeira")
-	pista.texture_mode = Line2D.LINE_TEXTURE_TILE
-	pista.texture_repeat = CanvasItem.TEXTURE_REPEAT_ENABLED
+	pista.default_color = CINZA
 	pista.z_index = 1
 	sb.add_child(pista)
 	var cont := PackedVector2Array()
 	for p in sup:
 		cont.append(p + Vector2(0, 36))
-	linha(cont, LARG_CONTORNO * 0.8, CONTORNO_MADEIRA, 1, sb)
-	linha(PackedVector2Array([sup[sup.size() - 1] + Vector2(0, -34), sup[sup.size() - 1] + Vector2(0, 36)]), LARG_CONTORNO * 0.8, CONTORNO_MADEIRA, 1, sb)
+
+
+## pista elevada de concreto sobre treliça vermelha (estilo das rampas gigantes do
+## gênero). `bruto` é a linha do topo; os apoios descem até `apoio_y`.
+func pista_elevada(bruto: PackedVector2Array, apoio_y: float, espessura := 120.0) -> PackedVector2Array:
+	var sup := suavizar(bruto)
+	y_max = maxf(y_max, apoio_y)
+	var pts := sup.duplicate()
+	for i in range(sup.size() - 1, -1, -1):
+		pts.append(sup[i] + Vector2(0, espessura))
+	var sb := StaticBody2D.new()
+	sb.collision_layer = 0b01
+	sb.physics_material_override = mat
+	var col := CollisionPolygon2D.new()
+	col.polygon = pts
+	sb.add_child(col)
+	raiz.add_child(sb)
+	poligono(pts, CINZA, 1, null, 1.0, sb)
+	var topo := PackedVector2Array()
+	var base := PackedVector2Array()
+	for q in sup:
+		topo.append(q + Vector2(0, 10))
+		base.append(q + Vector2(0, espessura))
+	linha(topo, 18.0, CINZA_CLARO, 2, sb)
+	var vermelho := VERMELHO
+	var x0 := sup[0].x + 150.0
+	var x1 := sup[sup.size() - 1].x - 150.0
+	var n := maxi(1, int((x1 - x0) / 650.0))
+	var postes: Array = []
+	for i in n + 1:
+		var x := lerpf(x0, x1, float(i) / n)
+		var y := _y_em(sup, x) + espessura
+		postes.append(Vector2(x, y))
+		linha(PackedVector2Array([Vector2(x, y), Vector2(x, apoio_y)]), 54.0, vermelho, -1)
+	for i in n:
+		var a: Vector2 = postes[i]
+		var b: Vector2 = postes[i + 1]
+		var y := maxf(a.y, b.y)
+		var desce := true
+		while y < apoio_y - 200.0:                     # zigue-zague da treliça
+			var ya := y if desce else y + 650.0
+			var yb := y + 650.0 if desce else y
+			linha(PackedVector2Array([Vector2(a.x, minf(ya, apoio_y)), Vector2(b.x, minf(yb, apoio_y))]), 30.0, vermelho, -1)
+			linha(PackedVector2Array([Vector2(a.x, y), Vector2(b.x, y)]), 22.0, vermelho.darkened(0.15), -1)
+			y += 650.0
+			desce = not desce
+	return sup
+
+static func _y_em(sup: PackedVector2Array, x: float) -> float:
+	for i in sup.size() - 1:
+		if sup[i].x <= x and x <= sup[i + 1].x:
+			return lerpf(sup[i].y, sup[i + 1].y, (x - sup[i].x) / maxf(sup[i + 1].x - sup[i].x, 0.001))
+	return sup[sup.size() - 1].y
+
+## prédio de concreto com janelas; o telhado é pista
+func predio(x0: float, x1: float, chao: float, altura: float) -> void:
+	var sb := StaticBody2D.new()
+	sb.collision_layer = 0b01
+	sb.physics_material_override = mat
+	var cs := CollisionShape2D.new()
+	var r := RectangleShape2D.new()
+	r.size = Vector2(x1 - x0, altura + 200)
+	cs.shape = r
+	cs.position = Vector2((x0 + x1) / 2.0, chao - altura + (altura + 200) / 2.0)
+	sb.add_child(cs)
+	raiz.add_child(sb)
+	var corpo := retangulo(cs.position, r.size)
+	poligono(corpo, Color(0.85, 0.82, 0.78), 0, tex("concreto"), 2.0, sb)
+	var andares := int(altura / 260.0)
+	for a in andares:
+		var y := chao - altura + 120 + a * 260
+		var x := x0 + 110
+		while x < x1 - 200:
+			var jan := retangulo(Vector2(x + 70, y + 60), Vector2(140, 120))
+			poligono(jan, Color(0.45, 0.62, 0.78), 0, null, 1.0, sb)
+			poligono(retangulo(Vector2(x + 40, y + 40), Vector2(40, 70)), Color(0.75, 0.86, 0.95), 0, null, 1.0, sb)
+			linha(_fechar(jan), 10.0, CONTORNO_METAL, 0, sb)
+			x += 240
+	var beiral := retangulo(Vector2((x0 + x1) / 2.0, chao - altura + 20), Vector2(x1 - x0 + 40, 40))
+	poligono(beiral, Color(0.5, 0.48, 0.46), 1, null, 1.0, sb)
+	linha(_fechar(corpo), LARG_CONTORNO * 1.4, CONTORNO_METAL, 1, sb)
 
 # ---------- metal ----------
 func barra_metal(a: Vector2, b: Vector2, espessura: float, cor: Color, z := -1, pai: Node = null) -> void:
-	linha(PackedVector2Array([a, b]), espessura + LARG_CONTORNO * 1.4, CONTORNO_METAL, z, pai)
 	linha(PackedVector2Array([a, b]), espessura, cor, z, pai)
 
 ## treliça entre dois banzos paralelos (a0→a1 em cima, b0→b1 embaixo) com diagonais em X
@@ -313,12 +388,11 @@ func passarela(x0: float, x1: float, topo: float, base_y: float, pilares: Array)
 	sb.add_child(cs)
 	raiz.add_child(sb)
 	var corpo := retangulo(Vector2((x0 + x1) / 2.0, topo + 55), Vector2(x1 - x0, 110))
-	poligono(corpo, Color.WHITE, 1, tex("metal"), 1.7, sb)
-	linha(_fechar(corpo), LARG_CONTORNO, CONTORNO_METAL, 1, sb)
+	poligono(corpo, CINZA, 1, null, 1.0, sb)
 	for x in pilares:
 		var px: float = x
 		trelica(Vector2(px - 130, topo + 110), Vector2(px - 130, base_y), Vector2(px + 130, topo + 110), Vector2(px + 130, base_y),
-			int((base_y - topo) / 280.0), Color(0.55, 0.6, 0.68), 40.0)
+			int((base_y - topo) / 280.0), VERMELHO, 40.0)
 	var gc := PackedVector2Array()                 # guarda-corpo atrás
 	var n := int((x1 - x0) / 400.0)
 	for i in n + 1:
@@ -541,6 +615,11 @@ func prensa(x: float, chao: float, periodo := 4.5, atraso := 0.0) -> AnimatableB
 	cabeca.add_to_group("pistao")
 	cabeca.set_meta("x", x)
 	cabeca.set_meta("fase", 0.5)
+	cabeca.set_meta("T", periodo)
+	cabeca.set_meta("atraso", atraso)
+	cabeca.set_meta("topo", alto + 150)
+	cabeca.set_meta("fundo", chao - 180.0)
+	cabeca.set_meta("chao", chao)
 	pistoes.append({"cabeca": cabeca, "haste": haste, "topo": alto + 150, "fundo": chao - 150 - 30,
 		"T": periodo, "atraso": atraso, "embaixo": false})
 	var zona := zona_letal(Vector2.ZERO, Vector2(larg - 40, 80), "prensa")
@@ -551,15 +630,17 @@ func prensa(x: float, chao: float, periodo := 4.5, atraso := 0.0) -> AnimatableB
 	cabeca.set_meta("zona", zona)
 	return cabeca
 
+static func descida_prensa(f: float) -> float:
+	if f < 0.06: return ease(f / 0.06, 2.4)
+	if f < 0.16: return 1.0
+	if f < 0.40: return 1.0 - smoothstep(0.16, 0.40, f)
+	return 0.0
+
 func mover_pistoes(t: float) -> void:
 	for p in pistoes:
 		var c: AnimatableBody2D = p["cabeca"]
 		var f := fposmod(t + float(p["atraso"]), float(p["T"])) / float(p["T"])
-		var k: float
-		if f < 0.06: k = ease(f / 0.06, 2.4)
-		elif f < 0.16: k = 1.0
-		elif f < 0.40: k = 1.0 - smoothstep(0.16, 0.40, f)
-		else: k = 0.0
+		var k := descida_prensa(f)
 		c.position.y = lerpf(p["topo"], p["fundo"], k)
 		c.set_meta("fase", f)
 		(p["haste"] as Line2D).set_point_position(1, c.position)
@@ -593,6 +674,64 @@ func placa(pos: Vector2, texto: String, chegada := false) -> void:
 	l.position = Vector2(40, 70 if chegada else 40)
 	l.size = Vector2(820, 260 if chegada else 290)
 	s.add_child(l)
+
+## pórtico de chegada: dois pilares, faixa quadriculada no alto com CHEGADA e
+## chão quadriculado entre eles
+func portal_chegada(base: Vector2) -> void:
+	var vao := 1400.0
+	var alto := 1950.0
+	for x in [base.x, base.x + vao]:
+		poligono(retangulo(Vector2(x, base.y - alto / 2.0), Vector2(110, alto)), CINZA, -1)
+		var y := base.y - 300.0
+		while y > base.y - alto + 200.0:                   # listras vermelhas no pilar
+			poligono(retangulo(Vector2(x, y), Vector2(110, 90)), VERMELHO, -1)
+			y -= 300.0
+		poligono(retangulo(Vector2(x, base.y - alto - 60), Vector2(180, 120)), VERMELHO.darkened(0.2), -1)
+	var faixa_y := base.y - alto + 180.0
+	var cols := 14
+	var lado := (vao + 110.0) / cols
+	for i in cols:
+		for j in 3:
+			var cor := Color.BLACK if (i + j) % 2 == 0 else Color.WHITE
+			poligono(retangulo(Vector2(base.x - 55 + (i + 0.5) * lado, faixa_y + (j - 1) * lado), Vector2(lado, lado)), cor, 1)
+	var placa_c := retangulo(Vector2(base.x + vao / 2.0, faixa_y), Vector2(900, 230))
+	poligono(placa_c, VERMELHO, 2)
+	var l := Label.new()
+	l.text = "CHEGADA"
+	l.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	l.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	l.add_theme_font_size_override("font_size", 170)
+	l.add_theme_color_override("font_outline_color", Color.BLACK)
+	l.add_theme_constant_override("outline_size", 24)
+	l.size = Vector2(900, 230)
+	l.position = Vector2(base.x + vao / 2.0 - 450, faixa_y - 115)
+	l.z_index = 3
+	raiz.add_child(l)
+	var cols_chao := 16
+	var lc := vao / cols_chao
+	for i in cols_chao:
+		for j in 2:
+			var cor := Color.BLACK if (i + j) % 2 == 0 else Color.WHITE
+			poligono(retangulo(Vector2(base.x + (i + 0.5) * lc, base.y + 20 + j * 40), Vector2(lc, 40)), cor, 3)
+	for k in 6:                                            # bandeirinhas penduradas
+		var px := base.x + 120 + k * (vao - 240) / 5.0
+		var py := faixa_y + 1.6 * lado
+		poligono(PackedVector2Array([Vector2(px - 50, py), Vector2(px + 50, py), Vector2(px, py + 120)]),
+			[Color(0.95, 0.25, 0.2), Color(1, 0.8, 0.15), Color(0.2, 0.6, 1.0)][k % 3], 1)
+
+## festa da vitória: confete caindo sobre o jogador e fogos estourando no pórtico
+func festa(portal: Vector2, jogador: Vector2) -> void:
+	var cores := [Color(1, 0.25, 0.25), Color(1, 0.85, 0.2), Color(0.3, 0.7, 1), Color(0.3, 0.95, 0.4), Color(0.95, 0.4, 1)]
+	for c in cores:
+		particulas(jogador + Vector2(0, -900), 70, c, Color(c, 0.0), 500.0, 1600.0, 3.5, 40.0, 80.0, 700.0, Vector2.UP, 160.0)
+	for k in 8:
+		var alvo := jogador + Vector2(randf_range(-1600, 2200), randf_range(-1900, -1100))
+		var cor: Color = cores[k % cores.size()]
+		raiz.get_tree().create_timer(0.25 * k).timeout.connect(func() -> void:
+			if not raiz.is_inside_tree():
+				return
+			Audio.tocar("impacto_forte", 0.6)
+			particulas(alvo, 70, cor.lightened(0.3), Color(cor, 0.0), 700.0, 1500.0, 1.4, 40.0, 80.0, 600.0, Vector2.UP, 180.0))
 
 func sprite(nome: String, base: Vector2, escala := 1.0, z := -3, espelhar := false) -> Sprite2D:
 	var s := Sprite2D.new()
@@ -639,6 +778,9 @@ func particulas(pos: Vector2, qtd: int, cor0: Color, cor1: Color, v0: float, v1:
 	g.set_color(1, cor1)
 	p.color_ramp = g
 	p.z_index = 25
+	if not raiz.is_inside_tree():
+		p.free()
+		return
 	raiz.add_child(p)
 	p.emitting = true
 	raiz.get_tree().create_timer(vida + 0.5).timeout.connect(p.queue_free)

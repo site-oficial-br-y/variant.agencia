@@ -23,6 +23,7 @@ var painel: HBoxContainer
 var pecas: Pecas
 var cps: Array = []                         # checkpoints da fase: [x, chão]
 var morte_y := CHAO_Y + 2200.0
+var _meta_pos := Vector2.ZERO
 var _sorteio := RandomNumberGenerator.new()  # decoração: mesma fase, mesma arrumação
 
 var player: Player
@@ -39,15 +40,18 @@ func _ready() -> void:
 			Game.personagem = a.substr(2)
 		if a.begins_with("f="):
 			Game.fase = int(a.substr(2))
-	Engine.time_scale = Game.RITMO           # física a 90 Hz x 1,5 = mesmo passo de 1/60 s de jogo
+	Engine.time_scale = Game.RITMO           # física a 180 Hz x 3 = mesmo passo de 1/60 s de jogo
 	RenderingServer.set_default_clear_color(Color(0.33, 0.55, 0.93))
 	tema = ["campo", "obra", "montanha"][clampi(Game.fase, 1, 3) - 1]
-	_construir_fundo(tema)
+	_construir_fundo("hw" if tema == "campo" else tema)
 	_mat = PhysicsMaterial.new()
 	_mat.friction = 1.0
 	_mat.bounce = 0.0
 	pecas = Pecas.new(self, _mat, _on_perigo)
 	_construir_chao()
+	if "ultimo_cp" in OS.get_cmdline_user_args() and cps.size() > 0:    # teste: começa perto da chegada
+		Game.checkpoint_x = (cps[cps.size() - 1] as Vector2).x
+		Game.checkpoint_chao = (cps[cps.size() - 1] as Vector2).y
 
 	player = Player.new()
 	player.personagem = Game.personagem
@@ -67,19 +71,29 @@ func _ready() -> void:
 	player.bateu_chao.connect(func(pos: Vector2, forca: float) -> void: pecas.poeira(pos, forca))
 
 	camera = FollowCamera.new()
-	camera.zoom = Vector2(0.18, 0.18)         # boneco ~30% da altura da tela (visual-quality §2)
-	camera.offset = Vector2(1100, -300)       # mostra bastante fase à frente, pista acima dos botões
+	camera.zoom = Vector2(0.26, 0.26)         # câmera perto como no gênero: boneco ~metade da tela
+	camera.offset = Vector2(800, -150)
 	add_child(camera)
 	camera.alvo = player.foco()
 
 	_construir_hud()
 
+	if "contar" in OS.get_cmdline_user_args():       # tamanho da fase: nós e comprimento
+		var n := 0
+		var pilha: Array = [self]
+		while pilha.size() > 0:
+			var x: Node = pilha.pop_back()
+			n += 1
+			pilha.append_array(x.get_children())
+		print("[FASE] nos=%d comprimento=%.0f" % [n, _meta_pos.x])
+		get_tree().quit()
 	if "sem_hud" in OS.get_cmdline_user_args():      # capturas para miniatura
 		$HUD.visible = false
 	if "autoteste" in OS.get_cmdline_user_args():
 		_rodar_teste()
 	elif "screenshot" in OS.get_cmdline_user_args():
 		_rodar_screenshots()
+
 
 func _process(delta: float) -> void:
 	for p in _pendulos:
@@ -124,6 +138,9 @@ func _bola_demolicao(ancora: Vector2, comprimento: float, angulo_ini: float, rai
 	bola.set_meta("alcance", comprimento * sin(angulo_ini))
 	bola.set_meta("raio", raio)
 	bola.set_meta("vel", Vector2.ZERO)
+	bola.set_meta("L", comprimento)                 # para quem quiser prever o balanço (bot)
+	bola.set_meta("th0", angulo_ini)
+	bola.set_meta("w", w if w > 0.0 else sqrt(980.0 / comprimento))
 	var corrente := pecas.vestir_bola(bola, raio)
 	var som := _area(Vector2.ZERO, Vector2(raio * 2.1, raio * 2.1))
 	remove_child(som)
@@ -185,6 +202,8 @@ const DECOR := {"campo": ["arvore1", "arvore2", "pedra1", "pedra2"], "obra": ["c
 var tema := "campo"
 
 func _enfeitar(x0: float, x1: float, y: float) -> void:
+	if tema != "":                                  # visual chapado do gênero: pista limpa, sem enfeite
+		return
 	var x := x0 + _sorteio.randf_range(150, 700)
 	while x < x1 - 200:
 		var nome: String = DECOR[tema][_sorteio.randi() % DECOR[tema].size()]
@@ -197,7 +216,7 @@ func _enfeitar(x0: float, x1: float, y: float) -> void:
 		x += _sorteio.randf_range(1100, 2200)
 
 func _t_plano(p: Vector2, comp: float, enfeite := true) -> Vector2:
-	pecas.terreno(PackedVector2Array([p, p + Vector2(comp, 0)]), p.y + 1700.0)
+	pecas.terreno(PackedVector2Array([p, p + Vector2(comp, 0)]), p.y + 2600.0)
 	if enfeite:
 		_enfeitar(p.x, p.x + comp, p.y)
 	return p + Vector2(comp, 0)
@@ -222,29 +241,26 @@ func _t_ponte(p: Vector2, comp: float, dy: float) -> Vector2:
 ## e sobe alto nas pontas: brecha de ~1,2–1,9 s por balanço, ver level-design §8)
 func _t_bola(p: Vector2) -> Vector2:
 	_t_plano(p, 4300, false)
-	pecas.cerca(p.x + 150, p.x + 950, p.y)
 	var piv := Vector2(p.x + 2600, p.y - 700.0 - 450.0 - 1300.0)
 	pecas.guindaste(piv.x + 2200, p.y, piv.y - 480.0, piv.x - 150, piv.x, piv)
-	_bola_demolicao(piv, 1300.0, deg_to_rad(85.0), 450.0, 0.6)
+	_bola_demolicao(piv, 1300.0, deg_to_rad(85.0), 450.0, 0.38)
 	return p + Vector2(4300, 0)
 
 ## rampa de madeira saltando um lago
 func _t_lago(p: Vector2) -> Vector2:
-	pecas.terreno(PackedVector2Array([p, p + Vector2(800, 0)]), p.y + 1700.0)
+	pecas.terreno(PackedVector2Array([p, p + Vector2(800, 0)]), p.y + 2600.0)
 	pecas.rampa(p.x, p.x + 800, p.y, 280)
-	pecas.terreno(PackedVector2Array([p + Vector2(800, 1200), p + Vector2(1800, 1200)]), p.y + 1700.0, false)
+	pecas.terreno(PackedVector2Array([p + Vector2(800, 1200), p + Vector2(1800, 1200)]), p.y + 2600.0, false)
 	pecas.agua(p.x + 800, p.x + 1800, p.y + 400, p.y + 1200)
-	pecas.terreno(PackedVector2Array([p + Vector2(1800, 80), p + Vector2(2400, 160), p + Vector2(3200, 160)]), p.y + 1700.0)
+	pecas.terreno(PackedVector2Array([p + Vector2(1800, 80), p + Vector2(2400, 160), p + Vector2(3200, 160)]), p.y + 2600.0)
 	return p + Vector2(3200, 160)
 
 ## passarela de vigas sobre ravina de espinhos, com caixas e (opcional) TNT
-func _t_passarela(p: Vector2, comp := 2000.0, com_tnt := true) -> Vector2:
+func _t_passarela(p: Vector2, comp := 2000.0, com_tnt := true, caixas := true) -> Vector2:
 	var fundo := p.y + 1140.0
 	pecas.terreno(PackedVector2Array([Vector2(p.x, fundo), Vector2(p.x + comp, fundo)]), fundo + 600.0, false)
 	pecas.espinhos(p.x + 40, p.x + comp - 40, fundo)
 	pecas.passarela(p.x - 40, p.x + comp + 40, p.y, fundo, [p.x + comp * 0.3, p.x + comp * 0.72])
-	pecas.caixa(p + Vector2(550, -200), 400)
-	pecas.caixa(p + Vector2(550, -600), 400)
 	if com_tnt:
 		pecas.tnt(p + Vector2(comp * 0.68, 0))
 	return p + Vector2(comp, 0)
@@ -260,8 +276,6 @@ func _t_vigas(p: Vector2) -> Vector2:
 	pecas.terreno(PackedVector2Array([Vector2(p.x, poco), Vector2(p.x + 1800, poco)]), poco + 600.0, false)
 	pecas.espinhos(p.x + 40, p.x + 1760, poco)
 	pecas.passarela(p.x, p.x + 800, p.y, poco, [p.x + 400])
-	pecas.caixa(p + Vector2(500, -150), 300)
-	pecas.caixa(p + Vector2(500, -450), 300)
 	pecas.passarela(p.x + 1000, p.x + 1800, p.y, poco, [p.x + 1400])
 	return p + Vector2(1800, 0)
 
@@ -274,108 +288,232 @@ func _t_tabuas(p: Vector2, comp := 1000.0) -> Vector2:
 
 func _t_prensa(p: Vector2) -> Vector2:
 	_t_plano(p, 2800, false)
-	pecas.prensa(p.x + 2100, p.y, 4.5, _sorteio.randf_range(0.0, 4.5))
+	pecas.prensa(p.x + 2100, p.y, 6.0, _sorteio.randf_range(0.0, 6.0))
 	pecas.cone(p + Vector2(2750, 0))
 	return p + Vector2(2800, 0)
 
 ## rampinha e salto sobre o fosso das serras (vem embalado de uma descida)
 func _t_serras(p: Vector2) -> Vector2:
-	pecas.terreno(PackedVector2Array([p, p + Vector2(400, 0), p + Vector2(900, -200)]), p.y + 1700.0)
-	pecas.terreno(PackedVector2Array([p + Vector2(900, 600), p + Vector2(2000, 600)]), p.y + 1700.0, false)
+	pecas.terreno(PackedVector2Array([p, p + Vector2(400, 0), p + Vector2(900, -200)]), p.y + 2600.0)
+	pecas.terreno(PackedVector2Array([p + Vector2(900, 600), p + Vector2(2000, 600)]), p.y + 2600.0, false)
 	pecas.espinhos(p.x + 940, p.x + 1960, p.y + 600)
 	pecas.serra(p + Vector2(1230, 360), 330.0)
 	pecas.serra(p + Vector2(1720, 360), 330.0)
-	pecas.terreno(PackedVector2Array([p + Vector2(2000, -100), p + Vector2(2800, 100), p + Vector2(3400, 100)]), p.y + 1700.0)
+	pecas.terreno(PackedVector2Array([p + Vector2(2000, -100), p + Vector2(2800, 100), p + Vector2(3400, 100)]), p.y + 2600.0)
 	return p + Vector2(3400, 100)
 
 func _t_tnt(p: Vector2) -> Vector2:
 	_t_plano(p, 1200, false)
 	pecas.tnt(p + Vector2(550, 0), 500.0)
-	pecas.caixa(p + Vector2(850, -170), 340)
 	return p + Vector2(1200, 0)
+
+## penhasco: anda reto e despenca `queda` px para o próximo patamar
+func _t_degrau(p: Vector2, queda: float) -> Vector2:
+	_t_plano(p, 700, false)
+	return _t_plano(p + Vector2(700, queda), 900)
+
+## chão ondulado (lombadas)
+func _t_ondas(p: Vector2, n := 4, amp := 160.0) -> Vector2:
+	var pts := PackedVector2Array([p])
+	for i in n:
+		pts.append(p + Vector2(i * 700 + 350, -amp))
+		pts.append(p + Vector2(i * 700 + 700, 0))
+	pts.append(p + Vector2(n * 700 + 300, 0))
+	pecas.terreno(pts, p.y + 2600.0)
+	return p + Vector2(n * 700 + 300, 0)
+
+## rampinha de madeira e salto por cima de um fosso de espinhos
+func _t_salto(p: Vector2) -> Vector2:
+	pecas.terreno(PackedVector2Array([p, p + Vector2(800, 0)]), p.y + 2600.0)
+	pecas.rampa(p.x, p.x + 800, p.y, 260)
+	pecas.terreno(PackedVector2Array([p + Vector2(800, 1100), p + Vector2(1600, 1100)]), p.y + 2600.0, false)
+	pecas.espinhos(p.x + 840, p.x + 1560, p.y + 1100)
+	pecas.terreno(PackedVector2Array([p + Vector2(1600, 60), p + Vector2(2200, 140), p + Vector2(2800, 140)]), p.y + 2600.0)
+	return p + Vector2(2800, 140)
+
+## ladeira de concreto sobe até o telhado de um prédio, atravessa e cai do outro lado
+func _t_predio(p: Vector2, altura := 520.0) -> Vector2:
+	var sobe := altura * 2.6
+	pecas.terreno(PackedVector2Array([p, p + Vector2(250, 0), p + Vector2(250 + sobe, -altura),
+		p + Vector2(350 + sobe, -altura)]), p.y + 2600.0)
+	var xb := p.x + 350 + sobe
+	pecas.predio(xb, xb + 1800, p.y, altura)
+	pecas.terreno(PackedVector2Array([Vector2(xb, p.y), Vector2(xb + 1800, p.y)]), p.y + 2600.0, false)
+	var xd := xb + 1800                             # desce do telhado por rampa (queda seca derrubava a cadeira)
+	pecas.terreno(PackedVector2Array([Vector2(xd - 100, p.y - altura), Vector2(xd, p.y - altura),
+		Vector2(xd + sobe, p.y), Vector2(xd + sobe + 250, p.y)]), p.y + 2600.0)
+	return _t_plano(Vector2(xd + sobe + 250, p.y), 1200)
+
+## pista elevada descendo (queda > 0) ou subindo (queda < 0) sobre treliça
+func _t_mega(p: Vector2, comp: float, queda: float) -> Vector2:
+	var fim := p + Vector2(comp, queda)
+	var pts := PackedVector2Array([p - Vector2(60, 0)])
+	for i in 15:                                    # perfil suave (smoothstep): sem quina em alta velocidade
+		var t := i / 14.0
+		pts.append(p + Vector2(comp * t, queda * smoothstep(0.0, 1.0, t)))
+	pts.append(fim + Vector2(60, 0))
+	pecas.pista_elevada(pts, maxf(p.y, fim.y) + 2600.0)
+	return fim
+
+## salto gigante: rampinha de 31°, abismo com espinhos e pouso numa descida longa
+## de 25° (pouso em descida não quebra; calculado para 1000–1300 px/s)
+func _t_mega_salto(p: Vector2) -> Vector2:
+	pecas.pista_elevada(PackedVector2Array([p - Vector2(60, 0), p + Vector2(500, 0), p + Vector2(1100, -150),
+		p + Vector2(1400, -330)]), p.y + 2600.0)
+	pecas.terreno(PackedVector2Array([p + Vector2(1450, 1900), p + Vector2(2250, 1900)]), p.y + 2500.0, false)
+	pecas.espinhos(p.x + 1490, p.x + 2210, p.y + 1900)
+	var fim := p + Vector2(7700, 2400)
+	pecas.pista_elevada(PackedVector2Array([p + Vector2(2300, 100), p + Vector2(2700, 290), p + Vector2(6800, 2200),
+		p + Vector2(7400, 2400), fim + Vector2(60, 0)]), p.y + 4800.0)
+	return fim
+
+## voo: rampinha de 20°, vão com perigo (espinhos, água ou serras) e pouso numa
+## descida longa de 26° — aterrissa de 900 a 2100 px/s sempre ~25° de ângulo
+## (calculado; ver level-design §8). Depois do pouso, curva e reta.
+func _t_voo(p: Vector2, perigo := "espinhos") -> Vector2:
+	pecas.pista_elevada(PackedVector2Array([p - Vector2(60, 0), p + Vector2(200, 0), p + Vector2(500, -40),
+		p + Vector2(800, -150)]), p.y + 2600.0)
+	var fosso := p.y + 1500.0
+	if perigo == "agua":
+		pecas.terreno(PackedVector2Array([p + Vector2(820, 2300), p + Vector2(1480, 2300)]), p.y + 2900.0, false)
+		pecas.agua(p.x + 820, p.x + 1480, p.y + 700, p.y + 2300)
+	else:
+		pecas.terreno(PackedVector2Array([Vector2(p.x + 820, fosso), Vector2(p.x + 1480, fosso)]), fosso + 700.0, false)
+		pecas.espinhos(p.x + 860, p.x + 1440, fosso)
+		if perigo == "serras":
+			pecas.serra(Vector2(p.x + 1150, fosso - 500), 330.0)
+	var inc := tan(deg_to_rad(26.0))
+	var desce := 8500.0 * inc
+	var saida := 2600.0                             # saída longa: a inclinação vai a zero aos poucos
+	var pts := PackedVector2Array([p + Vector2(1500, 100), p + Vector2(1500 + 8500, 100 + desce)])
+	for i in range(1, 9):
+		var u := i / 8.0
+		pts.append(p + Vector2(10000 + saida * u, 100 + desce + inc * saida * (u - u * u / 2.0)))
+	var fim: Vector2 = pts[pts.size() - 1]
+	pts.append(fim + Vector2(60, 0))
+	pecas.pista_elevada(pts, fim.y + 2600.0)
+	return fim
 
 func _largada() -> Vector2:
 	var p := _t_plano(Vector2(-2600, CHAO_Y), 1100, false)
 	pecas.placa(Vector2(-900, CHAO_Y), "LARGADA")
 	return _t_plano(p, 2800)
 
-func _chegada(p: Vector2, cps_fase: Array, fundo_max: float) -> void:
-	_t_plano(p, 4000)
-	pecas.placa(p + Vector2(1500, 0), "CHEGADA", true)
-	_marcos(cps_fase, p + Vector2(1500, 0), fundo_max + 900.0, false)
+func _chegada(p: Vector2, cps_fase: Array) -> void:
+	_t_plano(p, 5000)
+	pecas.portal_chegada(p + Vector2(1500, 0))
+	_meta_pos = p + Vector2(2200, 0)
+	_marcos(cps_fase, p + Vector2(1500, 0), pecas.y_max + 600.0, false)
 
-# ---------- FASE 1: Primeiro Rolê (campo) ----------
+func _cp(lista: Array, p: Vector2, dx := 200.0) -> void:
+	lista.append(p + Vector2(dx, 0))
+
+## quanto o voo desce (rampa + descida de 26° + saída); a subida seguinte devolve isso
+func _queda_voo() -> float:
+	var inc := tan(deg_to_rad(26.0))
+	return 100.0 + 8500.0 * inc + inc * 2600.0 * 0.5
+
+# ---------- FASE 1: Primeiro Rolê ----------
+## ritmo do gênero: voa, pousa descendo, sobe no embalo, obstáculo no alto, voa de novo.
+## Cada bloco desce e sobe a mesma altura: a fase cresce sem afundar.
 func _fase_1() -> void:
 	_sorteio.seed = 101
-	var p := _largada()                                   # (1300, chão)
+	var c: Array = []
+	var qv := _queda_voo()
+	var p := _largada()
 	p = _t_ponte(p, 2300, 350)
-	p = _t_ladeira(p, 1600, -250)
-	var cp1 := p + Vector2(200, 0)
-	p = _t_bola(p)
-	p = _t_lago(p)
-	p = _t_passarela(p)
-	p = _t_ladeira(p, 1800, -300)
-	var cp2 := p + Vector2(300, 0)
-	p = _t_plano(p, 1500)
-	p = _t_ponte(p, 2300, 300)
 	p = _t_plano(p, 800)
-	var cp3 := p + Vector2(200, 0)
-	p = _t_bola(p)
-	p = _t_lago(p)
-	p = _t_passarela(p, 2400)
-	p = _t_ladeira(p, 1600, -400)
-	_chegada(p, [cp1, cp2, cp3], CHAO_Y + 2600.0)
+	for volta in 3:
+		_cp(c, p)
+		p = _t_bola(p)
+		p = _t_voo(p, "agua")
+		p = _t_mega(p, 15000, -qv)
+		_cp(c, p)
+		p = _t_passarela(p)
+		p = _t_gangorra(p)
+		p = _t_vigas(p)
+		p = _t_tnt(p)
+		p = _t_plano(p, 1000)
+		p = _t_voo(p, "espinhos")
+		p = _t_mega(p, 15000, -qv)
+		_cp(c, p)
+		p = _t_prensa(p)
+		p = _t_ondas(p)
+		p = _t_ponte(p, 2300, 250)
+		p = _t_plano(p, 1000)
+		p = _t_voo(p, "serras")
+		p = _t_mega(p, 15000, -qv - 250.0)
+	_cp(c, p)
+	p = _t_passarela(p)
+	p = _t_plano(p, 1000)
+	p = _t_voo(p, "agua")
+	p = _t_plano(p, 1500)
+	_chegada(p, c)
 
-# ---------- FASE 2: Obra (gangorra, vigas, tábuas que caem, prensas, bola) ----------
+# ---------- FASE 2: Obra ----------
 func _fase_2() -> void:
 	_sorteio.seed = 202
-	pecas.chao_tex = "concreto"
-	pecas.topo_tex = "asfalto"
-	pecas.contorno_chao = Pecas.CONTORNO_METAL
+	var c: Array = []
+	var qv := _queda_voo()
 	var p := _largada()
 	pecas.guindaste(1200, CHAO_Y, CHAO_Y - 3000, -1300, -400)
 	p = _t_plano(p, 400, false)
 	p = _t_gangorra(p)
 	p = _t_vigas(p)
 	p = _t_tabuas(p)
-	var cp1 := p + Vector2(200, 0)
+	for volta in 3:
+		_cp(c, p)
+		p = _t_prensa(p)
+		p = _t_predio(p, 520.0 + volta * 90.0)
+		p = _t_plano(p, 1500)
+		p = _t_voo(p, "espinhos")
+		p = _t_mega(p, 15000, -qv)
+		_cp(c, p)
+		p = _t_bola(p)
+		p = _t_passarela(p)
+		p = _t_tabuas(p, 1400)
+		p = _t_plano(p, 1000)
+		p = _t_voo(p, "serras")
+		p = _t_mega(p, 15000, -qv)
+		_cp(c, p)
+		p = _t_vigas(p)
+		p = _t_tnt(p)
+		p = _t_gangorra(p)
+		p = _t_plano(p, 1000)
+		p = _t_voo(p, "agua")
+		p = _t_mega(p, 15000, -qv)
+	_cp(c, p)
 	p = _t_prensa(p)
-	p = _t_passarela(p)
-	p = _t_plano(p, 600)
-	p = _t_gangorra(p)
-	p = _t_vigas(p)
-	var cp2 := p + Vector2(200, 0)
-	p = _t_plano(p, 600)
-	p = _t_bola(p)
-	p = _t_tabuas(p, 1400)
-	var cp3 := p + Vector2(200, 0)
-	p = _t_prensa(p)
-	p = _t_plano(p, 1200)
-	p = _t_prensa(p)
-	_chegada(p, [cp1, cp2, cp3], CHAO_Y + 2600.0)
+	p = _t_plano(p, 1500)
+	_chegada(p, c)
 
-# ---------- FASE 3: Descidão (montanha: ladeiras, serras, pontes, TNT, lago) ----------
+# ---------- FASE 3: Descidão ----------
 func _fase_3() -> void:
 	_sorteio.seed = 303
-	pecas.chao_tex = "rocha"
-	pecas.topo_tex = "grama_alpina"
-	pecas.contorno_chao = Color(0.13, 0.12, 0.15)
+	var c: Array = []
+	var qv := _queda_voo()
 	var p := _largada()
-	p = _t_ladeira(p, 2800, 900, true)
-	p = _t_serras(p)
-	var cp1 := p + Vector2(-400, 0)
-	p = _t_ponte(p, 1900, -150)
-	p = _t_tnt(p)
-	p = _t_ladeira(p, 2600, 700, true)
-	var cp2 := p + Vector2(-2500, -700)
-	p = _t_serras(p)
-	p = _t_plano(p, 600)
-	var cp3 := p + Vector2(-300, 0)
-	p = _t_lago(p)
-	p = _t_ponte(p, 2300, -200)
-	p = _t_tnt(p)
-	p = _t_ladeira(p, 1800, -500)
-	_chegada(p, [cp1, cp2, cp3], CHAO_Y + 3400.0)
+	p = _t_ladeira(p, 2800, 900)
+	for volta in 3:
+		p = _t_voo(p, "serras")
+		p = _t_mega(p, 15000, -qv)
+		_cp(c, p)
+		p = _t_ponte(p, 1900, -150)
+		p = _t_tnt(p)
+		p = _t_plano(p, 1000)
+		p = _t_voo(p, "espinhos")
+		p = _t_mega(p, 15000, -qv + 150.0)
+		_cp(c, p)
+		p = _t_bola(p)
+		p = _t_plano(p, 800)
+		p = _t_voo(p, "agua")
+		p = _t_mega(p, 15000, -qv)
+		_cp(c, p)
+		p = _t_ondas(p)
+		p = _t_plano(p, 800)
+	p = _t_voo(p, "espinhos")
+	p = _t_plano(p, 1500)
+	_chegada(p, c)
 
 ## cerca de espetos decorativa ao longo de uma ladeira (atrás de tudo)
 func _cerca(a: Vector2, b: Vector2) -> void:
@@ -444,7 +582,7 @@ func _tabuas_que_caem(x0: float, x1: float, topo: float) -> void:
 		add_child(t)
 		var sensor := _area(t.position - Vector2(0, 60), Vector2(196, 100))
 		sensor.body_entered.connect(func(b: Node2D) -> void:
-			if t.freeze and (b.is_in_group("veiculo") or b.is_in_group("piloto")):
+			if t.freeze and is_inside_tree() and (b.is_in_group("veiculo") or b.is_in_group("piloto")):
 				Audio.tocar("caixa", 0.6)
 				get_tree().create_timer(0.45).timeout.connect(func() -> void:
 					if is_instance_valid(t): t.set_deferred("freeze", false)))
@@ -472,7 +610,7 @@ func _construir_fundo(tema: String) -> void:
 	ceu_s.stretch_mode = TextureRect.STRETCH_SCALE
 	fundo_ceu.add_child(ceu_s)
 	var camadas: Array = [["nuvem", 0.12, -1300.0, 4.8], ["ui/morros_longe", 0.25, 720.0, 4.1], ["ui/morros_perto", 0.45, 980.0, 4.4]]
-	if tema in ["campo", "obra", "montanha"]:
+	if tema in ["campo", "obra", "montanha", "hw"]:
 		camadas = [["nuvem", 0.1, -1500.0, 5.5], ["arte/fundo_%s_longe" % tema, 0.18, 380.0, 3.4],
 			["arte/fundo_%s_meio" % tema, 0.32, 700.0, 3.2], ["arte/fundo_%s_perto" % tema, 0.5, 1000.0, 3.0]]
 	for camada in camadas:
@@ -551,6 +689,7 @@ func _fim(ganhou: bool, motivo: String) -> void:
 		Game.checkpoint_x = -1.0
 		Audio.motor(false)
 		Audio.tocar("vitoria")
+		pecas.festa(_meta_pos, player.foco().global_position)
 		print("[FASE] venceu %.2f" % tempo)
 		venceu.emit(tempo)
 	else:
@@ -651,7 +790,7 @@ func _construir_hud() -> void:
 			b.add_theme_stylebox_override(k, _estilo_botao())
 		b.pressed.connect(_acao_fim.bind(item[1]))
 		painel.add_child(b)
-	_hud.append([painel, func(v: Vector2) -> Vector2: return Vector2((v.x - painel.size.x) / 2.0, v.y * 0.52)])
+	_hud.append([painel, func(v: Vector2) -> Vector2: return Vector2((v.x - painel.size.x) / 2.0, v.y * 0.06 + 175.0)])
 	get_viewport().size_changed.connect(_posicionar_hud)
 	_posicionar_hud()
 
@@ -684,7 +823,13 @@ func _on_perigo(b: Node2D, motivo: String) -> void:
 	if motivo != "agua":
 		Audio.tocar("splat")
 		Audio.tocar("metal" if motivo == "serra" else "impacto_forte")
-	if is_instance_valid(player) and player.montado:
+		if is_instance_valid(player):                   # espinho, serra e prensa estouram o que pegam
+			var parte := "cabeca"
+			for k in player.corpos:
+				if player.corpos[k] == b:
+					parte = k
+			player.explodir.call_deferred(parte)
+	elif is_instance_valid(player) and player.montado:
 		player.soltar_ragdoll.call_deferred(player.chassi.linear_velocity * 0.5, false)
 	_fim(false, motivo)
 
@@ -714,17 +859,21 @@ func _rodar_teste() -> void:
 	for k in player.corpos:
 		vmax = maxf(vmax, player.corpos[k].linear_velocity.length())
 	print("[RAGDOLL] pecas=%d  vel_max=%.1f (finita = nao explodiu)" % [player.corpos.size(), vmax])
+	var pecas_ok: bool = player.corpos.size() == player.D["piloto"].size()
 
 	player.arrancar("braco")
+	await _esperar(1.0)
+	player.explodir("cabeca")
 	if "fotos" in OS.get_cmdline_user_args():
 		for k in 4:
-			await _esperar(0.5)
+			await _esperar(0.35)
 			await _captura("teste_sangue_%d" % k)
 	await _esperar(2.5)
+	print("[EXPLODE] cabeca_existe=%s morto=%s" % [player.corpos.has("cabeca"), player.morto])
 	print("[SANGUE] manchas=%d  gotas_no_ar=%d  juntas_restantes=%d" % [sangue.manchas.size(), sangue.gotas.size(), player.juntas.size()])
 
-	var ok: bool = rot_spawn < 0.35 and dx > 150.0 and player.corpos.size() == player.D["piloto"].size() and vmax < 8000.0 \
-		and sangue.manchas.size() > 10 and not player.juntas.has("braco")
+	var ok: bool = rot_spawn < 0.35 and dx > 150.0 and pecas_ok and vmax < 8000.0 \
+		and sangue.manchas.size() > 10 and not player.juntas.has("braco") and not player.corpos.has("cabeca") and player.morto
 	print("[RESULTADO] ", "PASS" if ok else "FALHA")
 	get_tree().quit()
 

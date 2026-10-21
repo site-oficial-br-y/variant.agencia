@@ -510,6 +510,23 @@ def fundo_montanha():
     salvar(_faixa_generica(2048, 512, picos((62, 96, 70, 255), (0, 0, 0, 0), 0.22, 0.32, 6, 53, 30, (36, 66, 46, 255), vale=0.62), 53), 'fundo_montanha_perto.png')
 
 
+def fundo_hw():
+    """Morros lisos e chapados, sem enfeite (como o fundo do gênero)."""
+    def faixa(cor, amp, seed, base=0.45, freq=(1, 2)):
+        def desenhar(r, w, h):
+            xs = np.arange(w)
+            fases = [r.uniform(0, 6) for _ in freq]
+            amps = [r.uniform(0.5, 1) for _ in freq]
+            y = h * base + sum(amp * h * a * np.sin(2 * np.pi * k * xs / w + f) for k, a, f in zip(freq, amps, fases))
+            def monte(d, ox):
+                d.polygon([(ox, h)] + [(ox + x, yv) for x, yv in zip(xs, y)] + [(ox + w, h)], fill=cor)
+            return [monte]
+        return desenhar
+    salvar(_faixa_generica(2048, 512, faixa((120, 176, 120, 255), 0.16, 71, 0.5, (1, 3)), 71), 'fundo_hw_longe.png')
+    salvar(_faixa_generica(2048, 512, faixa((88, 160, 70, 255), 0.14, 72, 0.55, (1, 2)), 72), 'fundo_hw_meio.png')
+    salvar(_faixa_generica(2048, 512, faixa((64, 140, 52, 255), 0.1, 73, 0.62, (2, 3)), 73), 'fundo_hw_perto.png')
+
+
 if __name__ == '__main__':
     print('gerando arte em', OUT)
     textura_terra(); faixa_grama(); textura_madeira(); textura_metal(); faixa_perigo(); elo()
@@ -520,4 +537,4 @@ if __name__ == '__main__':
     cerca(); fundo_campo()
     textura_concreto(); textura_rocha(); faixa_asfalto(); faixa_grama_alpina()
     pinheiro('pinheiro1.png', 61); pinheiro('pinheiro2.png', 62, alt=1400); cone()
-    fundo_obra(); fundo_montanha()
+    fundo_obra(); fundo_montanha(); fundo_hw()
