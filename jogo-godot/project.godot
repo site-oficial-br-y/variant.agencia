@@ -13,7 +13,7 @@ Audio="*res://autoload/Audio.gd"
 
 [physics]
 2d/default_gravity=980.0
-common/physics_ticks_per_second=60
+common/physics_ticks_per_second=90
 
 [rendering]
 textures/canvas_textures/default_texture_filter=1

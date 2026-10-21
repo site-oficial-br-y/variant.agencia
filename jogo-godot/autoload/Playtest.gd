@@ -14,7 +14,7 @@ var resultado := ""
 var log_path := "user://playtest/log.jsonl"
 var falhas: Array = []
 var _vx_ant: Dictionary = {}
-var _liberado := false
+var _liberado: Dictionary = {}             # pêndulo -> já saiu atrás dele
 var _prensas_liberadas: Dictionary = {}
 
 func _ready() -> void:
@@ -82,7 +82,7 @@ func _jogar(fase: Node, estrategia: String) -> void:
 	# estratégia de gente: em obstáculo de tempo (pêndulo), esperar antes de ir
 	var espera := 0.0 if estrategia == "reativo" else rng.randf_range(0.0, 5.0)
 	var proxima_foto := 0.0
-	_liberado = false
+	_liberado.clear()
 	_vx_ant.clear()
 	_prensas_liberadas.clear()
 	while resultado == "":
@@ -150,18 +150,17 @@ func _esperar_pendulo(foco: Node2D) -> bool:
 		var raio: float = b.get_meta("raio", 100.0)
 		var dist := ancora.x - foco.global_position.x
 		# para logo antes do alcance (frente do veículo ~550 px à frente do centro)
-		if dist < 300.0 or dist > alcance + raio + 1100.0:
+		if dist < 300.0 or dist > alcance + raio + 1100.0 or _liberado.has(b):
 			continue
 		var bola := b as Node2D
 		var vx: float = (b.get_meta("vel", Vector2.ZERO) as Vector2).x
-		# sai no instante em que a bola VIRA no canto de cá (velocidade troca de sinal)
 		var vx_ant: float = _vx_ant.get(bola, 0.0)
 		_vx_ant[bola] = vx
 		# sai quando a bola vem subindo do lado de cá: passa por baixo dela no alto
 		var virou := vx_ant < 0.0 and vx < 0.0 and bola.global_position.x < ancora.x - alcance * 0.8
 		if virou:
-			_liberado = true
-		return not _liberado
+			_liberado[bola] = true
+		return not _liberado.has(bola)
 	return false
 
 ## prensa à frente: para fora do alcance e sai quando a cabeça já está subindo

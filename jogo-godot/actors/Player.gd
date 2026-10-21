@@ -10,6 +10,7 @@ signal bateu_chao(pos: Vector2, forca: float)
 
 @export var personagem: String = "segway"
 @export var chao_y: float = 1000.0
+var fundo_y := INF                 # abaixo disso o veículo caiu num buraco (a fase define)
 @export var spawn_x: float = 600.0
 @export var balance_stiffness: float = 55.0
 @export var balance_damping: float = 14.0
@@ -243,7 +244,7 @@ func _dirigir() -> void:
 		bateu_chao.emit(roda_motriz.global_position + Vector2(0, (roda_motriz.get_child(0).shape as CircleShape2D).radius), dv / 2000.0)
 	var tomba := deg_to_rad(78.0 if equilibra else 115.0)
 	if dv > limiar_queda_montado or absf(chassi.rotation) > tomba \
-			or chassi.global_position.y > chao_y + 900.0:
+			or chassi.global_position.y > (fundo_y if fundo_y < INF else chao_y + 900.0):
 		soltar_ragdoll(_vel(), false)
 
 # ---------- montado -> ragdoll ----------

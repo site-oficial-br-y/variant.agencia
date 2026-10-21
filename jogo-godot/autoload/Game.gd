@@ -9,6 +9,8 @@ var estado: int = Estado.JOGANDO
 var personagem: String = "segway"
 var fase: int = 1
 const FASES := ["PRIMEIRO ROLÊ", "OBRA", "DESCIDÃO"]
+const NOMES := {"segway": "PÉRINE", "cadeira": "GABRIEL", "scooter": "GIAN"}
+const RITMO := 1.5                   # jogo roda 1,5x mais rápido (gravidade mais pesada, tudo mais ágil)
 const ARQ_PROGRESSO := "user://progresso.cfg"
 var checkpoint_x: float = -1.0       # -1 = começa do início; sobrevive ao reinício (R)
 var checkpoint_chao: float = 1000.0

@@ -22,6 +22,8 @@ var _hud: Array = []
 var painel: HBoxContainer
 var pecas: Pecas
 var cps: Array = []                         # checkpoints da fase: [x, chão]
+var morte_y := CHAO_Y + 2200.0
+var _sorteio := RandomNumberGenerator.new()  # decoração: mesma fase, mesma arrumação
 
 var player: Player
 var sangue: Sangue
@@ -37,8 +39,10 @@ func _ready() -> void:
 			Game.personagem = a.substr(2)
 		if a.begins_with("f="):
 			Game.fase = int(a.substr(2))
+	Engine.time_scale = Game.RITMO           # física a 90 Hz x 1,5 = mesmo passo de 1/60 s de jogo
 	RenderingServer.set_default_clear_color(Color(0.33, 0.55, 0.93))
-	_construir_fundo(["campo", "obra", "montanha"][clampi(Game.fase, 1, 3) - 1])
+	tema = ["campo", "obra", "montanha"][clampi(Game.fase, 1, 3) - 1]
+	_construir_fundo(tema)
 	_mat = PhysicsMaterial.new()
 	_mat.friction = 1.0
 	_mat.bounce = 0.0
@@ -49,6 +53,7 @@ func _ready() -> void:
 	player.personagem = Game.personagem
 	player.chao_y = CHAO_Y
 	player.spawn_x = SPAWN_X
+	player.fundo_y = morte_y - 300.0
 	do_inicio = Game.checkpoint_x <= 0.0
 	if Game.checkpoint_x > 0.0:               # renasce no checkpoint depois de morrer
 		player.spawn_x = Game.checkpoint_x
@@ -82,7 +87,7 @@ func _process(delta: float) -> void:
 		var gancho: Vector2 = bola.global_position + (p["ancora"] - bola.global_position).normalized() * float(p["raio"]) * 0.95
 		(p["corrente"] as Line2D).points = PackedVector2Array([p["ancora"], gancho])
 	if ativo:
-		tempo += delta
+		tempo += delta / Engine.time_scale      # cronômetro em segundos de verdade
 		# caiu do veículo: a tentativa acaba 2,5 s depois (dá tempo de rolar até a chegada)
 		if is_instance_valid(player) and not player.montado:
 			if _caiu_em < 0.0:
@@ -96,7 +101,7 @@ func _process(delta: float) -> void:
 		var alvo_x: float = player.foco().global_position.x
 		recorde = maxi(recorde, int(maxf(0.0, (alvo_x - SPAWN_X) / 40.0)))
 		if dist_label:
-			dist_label.text = "%d m   %.1f s" % [recorde, tempo]
+			dist_label.text = "%s   %d m   %.1f s" % [Game.NOMES.get(Game.personagem, ""), recorde, tempo]
 
 ## bola de demolição: pêndulo CINEMÁTICO (AnimatableBody2D) — segue θ(t)=θ0·cos(ωt),
 ## nunca estica nem perde energia, e empurra corpos com massa "infinita"
@@ -152,7 +157,8 @@ func _construir_chao() -> void:
 		_: _fase_1()
 
 ## marcos comuns: zona de morte, checkpoints (lista de Vector2: x, chão) e chegada
-func _marcos(checkpoints: Array, chegada: Vector2, morte_y: float, bandeiras := true) -> void:
+func _marcos(checkpoints: Array, chegada: Vector2, y_morte: float, bandeiras := true) -> void:
+	morte_y = y_morte
 	var morte := _area(Vector2(chegada.x / 2.0, morte_y), Vector2(absf(chegada.x) * 2.0 + 12000.0, 400))
 	morte.body_entered.connect(func(b: Node2D) -> void:
 		if b.is_in_group("veiculo") or b.is_in_group("piloto"): _fim(false, "buraco"))
@@ -171,129 +177,205 @@ func _marcos(checkpoints: Array, chegada: Vector2, morte_y: float, bandeiras := 
 	meta.body_entered.connect(func(b: Node2D) -> void:
 		if b.is_in_group("veiculo") or b.is_in_group("piloto"): _fim(true, "meta"))
 
-# ---------- FASE 1: Primeiro Rolê (campo) ----------
-## largada no platô -> ponte de madeira descendo sobre espinhos -> morro -> guindaste
-## com bola de demolição -> rampa sobre o lago -> passarela de vigas com caixas e TNT
-## -> subida até a chegada. Dois checkpoints.
-func _fase_1() -> void:
-	var P := pecas
-	var fundo := CHAO_Y + 1700.0
-	P.terreno(PackedVector2Array([Vector2(-2600, CHAO_Y), Vector2(1300, CHAO_Y)]), fundo)
-	P.placa(Vector2(-900, CHAO_Y), "LARGADA")
-	P.cerca(-2600, -1300, CHAO_Y)
-	P.sprite("arvore1", Vector2(-2000, CHAO_Y), 2.6, -4)
-	P.sprite("arvore2", Vector2(500, CHAO_Y), 2.3, -4, true)
-	P.sprite("pedra2", Vector2(1050, CHAO_Y), 1.3, -2)
-	# ponte descendo sobre o fosso de espinhos
-	P.terreno(PackedVector2Array([Vector2(1300, CHAO_Y + 1100), Vector2(3460, CHAO_Y + 1100)]), fundo, false)
-	P.espinhos(1340, 3440, CHAO_Y + 1100)
-	P.ponte_madeira(Vector2(1250, CHAO_Y), Vector2(3560, CHAO_Y + 350), CHAO_Y + 1100)
-	# morro e reta da bola de demolição
-	var reta := CHAO_Y + 100.0
-	P.terreno(PackedVector2Array([Vector2(3460, CHAO_Y + 350), Vector2(3950, CHAO_Y + 360), Vector2(4650, reta + 40),
-		Vector2(5200, reta), Vector2(9800, reta)]), fundo)
-	P.sprite("arvore2", Vector2(4300, CHAO_Y + 300), 2.0, -4)
-	P.sprite("pedra1", Vector2(4900, reta), 1.1, -2)
-	P.cerca(5600, 6400, reta)
-	# bola passa na altura do peito (700 acima do chão) e sobe alto nas pontas (85°):
-	# brecha de ~1,2–1,9 s por balanço para os 3 veículos (simulado e testado no bot)
-	var piv := Vector2(7800, reta - 700.0 - 450.0 - 1300.0)
-	P.guindaste(10000, reta, piv.y - 480.0, 7650, 7800, piv)
+# ---------- trechos reutilizáveis ----------
+## Cada trecho começa em `p` (onde o chão do trecho anterior termina, na mesma altura)
+## e devolve o ponto onde o próximo começa. As fases são sequências de trechos.
+const DECOR := {"campo": ["arvore1", "arvore2", "pedra1", "pedra2"], "obra": ["cone", "cone", "pedra1"],
+	"montanha": ["pinheiro1", "pinheiro2", "pinheiro2", "pedra1"]}
+var tema := "campo"
+
+func _enfeitar(x0: float, x1: float, y: float) -> void:
+	var x := x0 + _sorteio.randf_range(150, 700)
+	while x < x1 - 200:
+		var nome: String = DECOR[tema][_sorteio.randi() % DECOR[tema].size()]
+		if nome == "cone":
+			pecas.cone(Vector2(x, y))
+		elif nome.begins_with("pedra"):
+			pecas.sprite(nome, Vector2(x, y), _sorteio.randf_range(0.9, 1.3), -2, _sorteio.randf() < 0.5)
+		else:
+			pecas.sprite(nome, Vector2(x, y), _sorteio.randf_range(2.0, 2.6), -4, _sorteio.randf() < 0.5)
+		x += _sorteio.randf_range(1100, 2200)
+
+func _t_plano(p: Vector2, comp: float, enfeite := true) -> Vector2:
+	pecas.terreno(PackedVector2Array([p, p + Vector2(comp, 0)]), p.y + 1700.0)
+	if enfeite:
+		_enfeitar(p.x, p.x + comp, p.y)
+	return p + Vector2(comp, 0)
+
+## subida (dy < 0) ou descida (dy > 0) com começo e fim retos
+func _t_ladeira(p: Vector2, comp: float, dy: float, cerca := false) -> Vector2:
+	pecas.terreno(PackedVector2Array([p, p + Vector2(250, 0), p + Vector2(comp - 250, dy), p + Vector2(comp, dy)]),
+		maxf(p.y, p.y + dy) + 1700.0)
+	if cerca:
+		_cerca(p + Vector2(250, 0), p + Vector2(comp - 250, dy))
+	return p + Vector2(comp, dy)
+
+## ponte de madeira sobre fosso de espinhos
+func _t_ponte(p: Vector2, comp: float, dy: float) -> Vector2:
+	var fundo := maxf(p.y, p.y + dy) + 1100.0
+	pecas.terreno(PackedVector2Array([Vector2(p.x, fundo), Vector2(p.x + comp, fundo)]), fundo + 600.0, false)
+	pecas.espinhos(p.x + 40, p.x + comp - 40, fundo)
+	pecas.ponte_madeira(p + Vector2(-50, 0), p + Vector2(comp + 60, dy), fundo)
+	return p + Vector2(comp, dy)
+
+## guindaste com bola de demolição numa reta (a bola passa na altura do peito
+## e sobe alto nas pontas: brecha de ~1,2–1,9 s por balanço, ver level-design §8)
+func _t_bola(p: Vector2) -> Vector2:
+	_t_plano(p, 4300, false)
+	pecas.cerca(p.x + 150, p.x + 950, p.y)
+	var piv := Vector2(p.x + 2600, p.y - 700.0 - 450.0 - 1300.0)
+	pecas.guindaste(piv.x + 2200, p.y, piv.y - 480.0, piv.x - 150, piv.x, piv)
 	_bola_demolicao(piv, 1300.0, deg_to_rad(85.0), 450.0, 0.6)
-	# rampa e lago
-	var dx := 500.0
-	P.rampa(9000 + dx, 9800 + dx, reta, 280)
-	P.terreno(PackedVector2Array([Vector2(9800 + dx, CHAO_Y + 1300), Vector2(10800 + dx, CHAO_Y + 1300)]), fundo, false)
-	P.agua(9800 + dx, 10800 + dx, CHAO_Y + 500, CHAO_Y + 1300)
-	var pouso := CHAO_Y + 260.0
-	P.terreno(PackedVector2Array([Vector2(10800 + dx, CHAO_Y + 180), Vector2(11400 + dx, pouso), Vector2(12200 + dx, pouso)]), fundo)
-	P.sprite("arvore1", Vector2(11900 + dx, pouso), 2.2, -4, true)
-	# passarela de vigas sobre a ravina, com caixas e TNT
-	P.terreno(PackedVector2Array([Vector2(12200 + dx, CHAO_Y + 1400), Vector2(14200 + dx, CHAO_Y + 1400)]), fundo, false)
-	P.espinhos(12240 + dx, 14160 + dx, CHAO_Y + 1400)
-	P.passarela(12160 + dx, 14240 + dx, pouso, CHAO_Y + 1400, [12800 + dx, 13650 + dx])
-	P.caixa(Vector2(12750 + dx, pouso - 200), 400)
-	P.caixa(Vector2(12750 + dx, pouso - 600), 400)
-	P.tnt(Vector2(13550 + dx, pouso))
-	# subida final
-	var alto := CHAO_Y - 40.0
-	P.terreno(PackedVector2Array([Vector2(14200 + dx, pouso), Vector2(14700 + dx, pouso - 20), Vector2(15500 + dx, alto),
-		Vector2(19000, alto)]), fundo)
-	P.placa(Vector2(16900, alto), "CHEGADA", true)
-	P.sprite("arvore2", Vector2(17800, alto), 2.5, -4)
-	P.sprite("pedra2", Vector2(16400, alto), 1.0, -2, true)
-	_marcos([Vector2(5400, reta), Vector2(12200, pouso)], Vector2(16900, alto), CHAO_Y + 2200, false)
+	return p + Vector2(4300, 0)
 
-# ---------- FASE 2: Obra (gangorra, vigas sobre o fosso, tábuas que caem, prensa) ----------
+## rampa de madeira saltando um lago
+func _t_lago(p: Vector2) -> Vector2:
+	pecas.terreno(PackedVector2Array([p, p + Vector2(800, 0)]), p.y + 1700.0)
+	pecas.rampa(p.x, p.x + 800, p.y, 280)
+	pecas.terreno(PackedVector2Array([p + Vector2(800, 1200), p + Vector2(1800, 1200)]), p.y + 1700.0, false)
+	pecas.agua(p.x + 800, p.x + 1800, p.y + 400, p.y + 1200)
+	pecas.terreno(PackedVector2Array([p + Vector2(1800, 80), p + Vector2(2400, 160), p + Vector2(3200, 160)]), p.y + 1700.0)
+	return p + Vector2(3200, 160)
+
+## passarela de vigas sobre ravina de espinhos, com caixas e (opcional) TNT
+func _t_passarela(p: Vector2, comp := 2000.0, com_tnt := true) -> Vector2:
+	var fundo := p.y + 1140.0
+	pecas.terreno(PackedVector2Array([Vector2(p.x, fundo), Vector2(p.x + comp, fundo)]), fundo + 600.0, false)
+	pecas.espinhos(p.x + 40, p.x + comp - 40, fundo)
+	pecas.passarela(p.x - 40, p.x + comp + 40, p.y, fundo, [p.x + comp * 0.3, p.x + comp * 0.72])
+	pecas.caixa(p + Vector2(550, -200), 400)
+	pecas.caixa(p + Vector2(550, -600), 400)
+	if com_tnt:
+		pecas.tnt(p + Vector2(comp * 0.68, 0))
+	return p + Vector2(comp, 0)
+
+func _t_gangorra(p: Vector2) -> Vector2:
+	_t_plano(p, 1300, false)
+	_gangorra(p + Vector2(650, -95), 1100.0)
+	return p + Vector2(1300, 0)
+
+## duas vigas com um vão de espinhos no meio
+func _t_vigas(p: Vector2) -> Vector2:
+	var poco := p.y + 1300.0
+	pecas.terreno(PackedVector2Array([Vector2(p.x, poco), Vector2(p.x + 1800, poco)]), poco + 600.0, false)
+	pecas.espinhos(p.x + 40, p.x + 1760, poco)
+	pecas.passarela(p.x, p.x + 800, p.y, poco, [p.x + 400])
+	pecas.caixa(p + Vector2(500, -150), 300)
+	pecas.caixa(p + Vector2(500, -450), 300)
+	pecas.passarela(p.x + 1000, p.x + 1800, p.y, poco, [p.x + 1400])
+	return p + Vector2(1800, 0)
+
+func _t_tabuas(p: Vector2, comp := 1000.0) -> Vector2:
+	var poco := p.y + 1300.0
+	_tabuas_que_caem(p.x, p.x + comp, p.y)
+	pecas.terreno(PackedVector2Array([Vector2(p.x, poco), Vector2(p.x + comp, poco)]), poco + 600.0, false)
+	pecas.espinhos(p.x + 40, p.x + comp - 40, poco)
+	return p + Vector2(comp, 0)
+
+func _t_prensa(p: Vector2) -> Vector2:
+	_t_plano(p, 2800, false)
+	pecas.prensa(p.x + 2100, p.y, 4.5, _sorteio.randf_range(0.0, 4.5))
+	pecas.cone(p + Vector2(2750, 0))
+	return p + Vector2(2800, 0)
+
+## rampinha e salto sobre o fosso das serras (vem embalado de uma descida)
+func _t_serras(p: Vector2) -> Vector2:
+	pecas.terreno(PackedVector2Array([p, p + Vector2(400, 0), p + Vector2(900, -200)]), p.y + 1700.0)
+	pecas.terreno(PackedVector2Array([p + Vector2(900, 600), p + Vector2(2000, 600)]), p.y + 1700.0, false)
+	pecas.espinhos(p.x + 940, p.x + 1960, p.y + 600)
+	pecas.serra(p + Vector2(1230, 360), 330.0)
+	pecas.serra(p + Vector2(1720, 360), 330.0)
+	pecas.terreno(PackedVector2Array([p + Vector2(2000, -100), p + Vector2(2800, 100), p + Vector2(3400, 100)]), p.y + 1700.0)
+	return p + Vector2(3400, 100)
+
+func _t_tnt(p: Vector2) -> Vector2:
+	_t_plano(p, 1200, false)
+	pecas.tnt(p + Vector2(550, 0), 500.0)
+	pecas.caixa(p + Vector2(850, -170), 340)
+	return p + Vector2(1200, 0)
+
+func _largada() -> Vector2:
+	var p := _t_plano(Vector2(-2600, CHAO_Y), 1100, false)
+	pecas.placa(Vector2(-900, CHAO_Y), "LARGADA")
+	return _t_plano(p, 2800)
+
+func _chegada(p: Vector2, cps_fase: Array, fundo_max: float) -> void:
+	_t_plano(p, 4000)
+	pecas.placa(p + Vector2(1500, 0), "CHEGADA", true)
+	_marcos(cps_fase, p + Vector2(1500, 0), fundo_max + 900.0, false)
+
+# ---------- FASE 1: Primeiro Rolê (campo) ----------
+func _fase_1() -> void:
+	_sorteio.seed = 101
+	var p := _largada()                                   # (1300, chão)
+	p = _t_ponte(p, 2300, 350)
+	p = _t_ladeira(p, 1600, -250)
+	var cp1 := p + Vector2(200, 0)
+	p = _t_bola(p)
+	p = _t_lago(p)
+	p = _t_passarela(p)
+	p = _t_ladeira(p, 1800, -300)
+	var cp2 := p + Vector2(300, 0)
+	p = _t_plano(p, 1500)
+	p = _t_ponte(p, 2300, 300)
+	p = _t_plano(p, 800)
+	var cp3 := p + Vector2(200, 0)
+	p = _t_bola(p)
+	p = _t_lago(p)
+	p = _t_passarela(p, 2400)
+	p = _t_ladeira(p, 1600, -400)
+	_chegada(p, [cp1, cp2, cp3], CHAO_Y + 2600.0)
+
+# ---------- FASE 2: Obra (gangorra, vigas, tábuas que caem, prensas, bola) ----------
 func _fase_2() -> void:
-	var P := pecas
-	P.chao_tex = "concreto"
-	P.topo_tex = "asfalto"
-	P.contorno_chao = Pecas.CONTORNO_METAL
-	var fundo := CHAO_Y + 1700.0
-	var poco := CHAO_Y + 1300.0
-	P.terreno(PackedVector2Array([Vector2(-2600, CHAO_Y), Vector2(3000, CHAO_Y)]), fundo)   # largada + chão da gangorra
-	P.placa(Vector2(-900, CHAO_Y), "LARGADA")
-	P.guindaste(1200, CHAO_Y, CHAO_Y - 3000, -1300, -400)
-	for x in [300.0, 650.0, 1900.0]:
-		P.cone(Vector2(x, CHAO_Y))
-	_gangorra(Vector2(2350, CHAO_Y - 95), 1100.0)
-	P.passarela(3000, 3800, CHAO_Y, poco, [3400])                                         # viga 1
-	P.caixa(Vector2(3500, CHAO_Y - 150), 300)
-	P.caixa(Vector2(3500, CHAO_Y - 450), 300)
-	P.terreno(PackedVector2Array([Vector2(3800, poco), Vector2(4000, poco)]), fundo, false)
-	P.espinhos(3800, 4000, poco)
-	P.passarela(4000, 4800, CHAO_Y, poco, [4400])                                         # viga 2
-	_tabuas_que_caem(4800.0, 5800.0, CHAO_Y)                                              # ponte que despenca
-	P.terreno(PackedVector2Array([Vector2(4800, poco), Vector2(5800, poco)]), fundo, false)
-	P.espinhos(4840, 5760, poco)
-	P.terreno(PackedVector2Array([Vector2(5800, CHAO_Y), Vector2(9500, CHAO_Y)]), fundo)  # chegada
-	P.prensa(6500, CHAO_Y)
-	P.cone(Vector2(7100, CHAO_Y))
-	P.placa(Vector2(7700, CHAO_Y), "CHEGADA", true)
-	_marcos([Vector2(4400, CHAO_Y)], Vector2(7700, CHAO_Y), CHAO_Y + 2000, false)
+	_sorteio.seed = 202
+	pecas.chao_tex = "concreto"
+	pecas.topo_tex = "asfalto"
+	pecas.contorno_chao = Pecas.CONTORNO_METAL
+	var p := _largada()
+	pecas.guindaste(1200, CHAO_Y, CHAO_Y - 3000, -1300, -400)
+	p = _t_plano(p, 400, false)
+	p = _t_gangorra(p)
+	p = _t_vigas(p)
+	p = _t_tabuas(p)
+	var cp1 := p + Vector2(200, 0)
+	p = _t_prensa(p)
+	p = _t_passarela(p)
+	p = _t_plano(p, 600)
+	p = _t_gangorra(p)
+	p = _t_vigas(p)
+	var cp2 := p + Vector2(200, 0)
+	p = _t_plano(p, 600)
+	p = _t_bola(p)
+	p = _t_tabuas(p, 1400)
+	var cp3 := p + Vector2(200, 0)
+	p = _t_prensa(p)
+	p = _t_plano(p, 1200)
+	p = _t_prensa(p)
+	_chegada(p, [cp1, cp2, cp3], CHAO_Y + 2600.0)
 
-# ---------- FASE 3: Descidão (montanha: ladeira, salto sobre as serras, ponte sobre a ravina, TNT) ----------
+# ---------- FASE 3: Descidão (montanha: ladeiras, serras, pontes, TNT, lago) ----------
 func _fase_3() -> void:
-	var P := pecas
-	P.chao_tex = "rocha"
-	P.topo_tex = "grama_alpina"
-	P.contorno_chao = Color(0.13, 0.12, 0.15)
-	var fundo := CHAO_Y + 3200.0
-	P.terreno(PackedVector2Array([Vector2(-2600, CHAO_Y), Vector2(1200, CHAO_Y),
-		Vector2(4000, CHAO_Y + 900), Vector2(4400, CHAO_Y + 900), Vector2(4900, CHAO_Y + 700)]), fundo)
-	P.placa(Vector2(-900, CHAO_Y), "LARGADA")
-	_cerca(Vector2(1200, CHAO_Y), Vector2(4000, CHAO_Y + 900))
-	P.sprite("pinheiro2", Vector2(-2000, CHAO_Y), 2.4, -4)
-	P.sprite("pinheiro1", Vector2(500, CHAO_Y), 2.2, -4)
-	P.sprite("pinheiro2", Vector2(2600, CHAO_Y + 450), 2.0, -4)
-	P.sprite("pedra1", Vector2(3300, CHAO_Y + 680), 1.3, -2)
-	P.sprite("pinheiro1", Vector2(4200, CHAO_Y + 900), 2.3, -4)
-	P.terreno(PackedVector2Array([Vector2(4900, CHAO_Y + 1500), Vector2(6000, CHAO_Y + 1500)]), fundo, false)
-	P.espinhos(4940, 5960, CHAO_Y + 1500)
-	P.serra(Vector2(5230, CHAO_Y + 1260), 330.0)
-	P.serra(Vector2(5720, CHAO_Y + 1260), 330.0)
-	var pouso := CHAO_Y + 1000.0
-	P.terreno(PackedVector2Array([Vector2(6000, CHAO_Y + 800), Vector2(6800, pouso),
-		Vector2(8000, pouso)]), fundo)
-	P.sprite("pedra2", Vector2(6900, pouso), 1.1, -2)
-	P.sprite("pinheiro2", Vector2(7700, pouso), 2.5, -4)
-	# ponte de madeira subindo sobre a ravina de espinhos
-	var ravina := CHAO_Y + 1800.0
-	P.terreno(PackedVector2Array([Vector2(8000, ravina), Vector2(9800, ravina)]), fundo, false)
-	P.espinhos(8040, 9760, ravina)
-	P.ponte_madeira(Vector2(7950, pouso), Vector2(9850, pouso - 150), ravina)
-	# trilha dos barris de TNT e subida até a chegada
-	var trilha := pouso - 150.0
-	var topo := CHAO_Y + 500.0
-	P.terreno(PackedVector2Array([Vector2(9800, trilha), Vector2(10900, trilha), Vector2(11700, topo),
-		Vector2(14500, topo)]), fundo)
-	P.tnt(Vector2(10350, trilha), 500.0)
-	P.caixa(Vector2(10650, trilha - 170), 340)
-	P.sprite("pinheiro1", Vector2(11200, trilha - 150), 2.2, -4)
-	P.placa(Vector2(12600, topo), "CHEGADA", true)
-	P.sprite("pinheiro2", Vector2(13400, topo), 2.5, -4)
-	_marcos([Vector2(7200, pouso)], Vector2(12600, topo), CHAO_Y + 3500, false)
+	_sorteio.seed = 303
+	pecas.chao_tex = "rocha"
+	pecas.topo_tex = "grama_alpina"
+	pecas.contorno_chao = Color(0.13, 0.12, 0.15)
+	var p := _largada()
+	p = _t_ladeira(p, 2800, 900, true)
+	p = _t_serras(p)
+	var cp1 := p + Vector2(-400, 0)
+	p = _t_ponte(p, 1900, -150)
+	p = _t_tnt(p)
+	p = _t_ladeira(p, 2600, 700, true)
+	var cp2 := p + Vector2(-2500, -700)
+	p = _t_serras(p)
+	p = _t_plano(p, 600)
+	var cp3 := p + Vector2(-300, 0)
+	p = _t_lago(p)
+	p = _t_ponte(p, 2300, -200)
+	p = _t_tnt(p)
+	p = _t_ladeira(p, 1800, -500)
+	_chegada(p, [cp1, cp2, cp3], CHAO_Y + 3400.0)
 
 ## cerca de espetos decorativa ao longo de uma ladeira (atrás de tudo)
 func _cerca(a: Vector2, b: Vector2) -> void:
@@ -312,7 +394,7 @@ func _gangorra(pivo: Vector2, comprimento: float) -> void:
 	var calco := StaticBody2D.new()
 	calco.collision_layer = 0b01
 	var cs := CollisionPolygon2D.new()
-	cs.polygon = PackedVector2Array([Vector2(-70, CHAO_Y - pivo.y + 5), Vector2(70, CHAO_Y - pivo.y + 5), Vector2(0, 0)])
+	cs.polygon = PackedVector2Array([Vector2(-70, 100.0), Vector2(70, 100.0), Vector2(0, 0)])
 	calco.add_child(cs)
 	pecas.poligono(cs.polygon, Color(0.62, 0.66, 0.72), 0, null, 1.0, calco)
 	var cont := cs.polygon.duplicate()
@@ -333,7 +415,7 @@ func _gangorra(pivo: Vector2, comprimento: float) -> void:
 	var h := comprimento / 2.0
 	pecas.tabua(Vector2(-h, 0), Vector2(h, 0), 34.0, 1, prancha)
 	prancha.position = pivo
-	prancha.rotation = -atan2(CHAO_Y - pivo.y - 17.0, h)    # ponta de cá (esquerda) encostada no chão
+	prancha.rotation = -atan2(78.0, h)    # ponta de cá (esquerda) encostada no chão
 	add_child(prancha)
 	var j := PinJoint2D.new()
 	add_child(j)
@@ -678,3 +760,4 @@ func _captura(nome: String) -> void:
 
 func _exit_tree() -> void:
 	Audio.motor(false)                        # sair da fase cala o motor
+	Engine.time_scale = 1.0

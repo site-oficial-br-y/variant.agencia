@@ -10,6 +10,8 @@ var preview: TextureRect
 var quadros: Array = []
 var pedra: TextureRect
 var ok: TextureButton
+var nome: Label
+var nomes_quadro: Array = []
 
 func _ready() -> void:
 	set_anchors_preset(Control.PRESET_FULL_RECT)
@@ -47,6 +49,11 @@ func _ready() -> void:
 			b.offset_left = 6; b.offset_top = 6; b.offset_right = -6; b.offset_bottom = -6
 			b.pressed.connect(_selecionar.bind(i))
 			q.add_child(b)
+			var n := _rotulo(Game.NOMES[OPCOES[i]], 22, 6)
+			n.position = Vector2(-20, lado + 2)
+			n.size = Vector2(lado + 40, 30)
+			q.add_child(n)
+			nomes_quadro.append(n)
 		quadros.append(q)
 
 	pedra = TextureRect.new()
@@ -60,6 +67,8 @@ func _ready() -> void:
 	preview.size = Vector2(520, 440)
 	add_child(preview)
 
+	nome = _rotulo("", 76, 16)
+	add_child(nome)
 	ok = _botao("confirma", Vector2.ZERO, 140)
 	ok.pressed.connect(_jogar)
 	get_viewport().size_changed.connect(_atualizar)   # tela cheia/girar muda o tamanho
@@ -75,6 +84,16 @@ func _ready() -> void:
 				await RenderingServer.frame_post_draw
 			get_viewport().get_texture().get_image().save_png("user://menu2.png")
 		get_tree().quit()
+
+func _rotulo(texto: String, tamanho: int, contorno: int) -> Label:
+	var l := Label.new()
+	l.text = texto
+	l.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	l.add_theme_font_size_override("font_size", tamanho)
+	l.add_theme_color_override("font_outline_color", Color.BLACK)
+	l.add_theme_constant_override("outline_size", contorno)
+	l.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	return l
 
 func _botao(icone: String, pos: Vector2, tam: float) -> TextureButton:
 	var b := TextureButton.new()
@@ -110,6 +129,12 @@ func _atualizar() -> void:
 	var vp := get_viewport().get_visible_rect().size
 	preview.position = Vector2(vp.x / 2.0 - preview.size.x / 2.0, vp.y - 108 - h)   # em pé na pedra
 	pedra.position = Vector2(vp.x / 2.0 - 300, vp.y - 130)
+	nome.text = Game.NOMES[OPCOES[atual]]
+	nome.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
+	nome.size = Vector2(600, 100)
+	nome.position = Vector2(preview.position.x - 620, preview.position.y + h * 0.35)
+	for i in nomes_quadro.size():
+		(nomes_quadro[i] as Label).add_theme_color_override("font_color", Color.WHITE if i == atual else Color(1, 1, 1, 0.5))
 	ok.position = Vector2(vp.x - 175, vp.y - 165)
 	var lado := 100.0
 	var x0 := vp.x / 2.0 - (SLOTS * (lado + 12) - 12) / 2.0 + 60
