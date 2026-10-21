@@ -188,13 +188,13 @@ func _marcos(checkpoints: Array, chegada: Vector2, y_morte: float, bandeiras := 
 	var morte := _area(Vector2(chegada.x / 2.0, morte_y), Vector2(absf(chegada.x) * 2.0 + 12000.0, 400))
 	morte.body_entered.connect(func(b: Node2D) -> void:
 		if b.is_in_group("veiculo") or b.is_in_group("piloto"): _fim(false, "buraco"))
-	for c in checkpoints:
+	for c in (checkpoints if Game.CHECKPOINTS else []):
 		var ck: Vector2 = c
 		cps.append(ck)
 		_bandeira(ck.x, ck.y, Color(0.3, 0.85, 0.35))
 		var cp := _area(Vector2(ck.x, ck.y - 600), Vector2(60, 1200))
 		cp.body_entered.connect(_on_checkpoint.bind(ck))
-	if checkpoints.size() > 0:
+	if Game.CHECKPOINTS and checkpoints.size() > 0:
 		cp_x = (checkpoints[0] as Vector2).x
 		cp_chao = (checkpoints[0] as Vector2).y
 	if bandeiras:
