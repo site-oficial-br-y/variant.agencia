@@ -542,7 +542,7 @@ func tnt(pos: Vector2, altura := 560.0) -> RigidBody2D:
 			rel -= (b as RigidBody2D).linear_velocity
 		if rel.length() > 180.0 or b.is_in_group("veiculo") or b.is_in_group("piloto"):
 			c.set_meta("explodiu", true)
-			explodir.call_deferred(c.global_position, 1700.0, 1100.0)
+			explodir.call_deferred(c.global_position, 1700.0, 760.0)
 			c.queue_free.call_deferred())
 	raiz.add_child(c)
 	return c

@@ -566,8 +566,8 @@ GAMER_PILOTO.update({
                'coxa': [('poly', [(540, 840), (770, 830), (780, 1050), (570, 1060)])]},
 })
 GAMER_PILOTO['fisica'] = json.loads(json.dumps(GAMER['fisica']))
-GAMER_PILOTO['fisica']['corpos']['canela']['forma'] = ['caps', [660, 1060], [668, 1300], 70]   # sensor até o tornozelo:
-GAMER_PILOTO['fisica']['corpos']['perna2']['forma'] = ['caps', [830, 900], [850, 1190], 72]   # o tênis fica abaixo das rodinhas na arte
+GAMER_PILOTO['fisica']['corpos']['canela']['forma'] = ['caps', [660, 1060], [665, 1200], 70]   # sensor até o tornozelo:
+GAMER_PILOTO['fisica']['corpos']['perna2']['forma'] = ['caps', [830, 900], [845, 1110], 72]   # o tênis fica abaixo das rodinhas na arte
 GAMER_PILOTO['fisica']['juntas'][3]['p'] = [680, 1030]
 
 if __name__ == '__main__':
