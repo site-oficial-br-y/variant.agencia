@@ -861,9 +861,9 @@ func explodir(membro: String) -> void:
 	if sangue:
 		sangue.jorrar(pos, 110, 2600.0, Vector2.ZERO, vel * 0.3)
 	var cabeca := membro == "cabeca"
-	var pedacos: Array = [["carne", 7], ["osso", 2]]
+	var pedacos: Array = [["carne", 5]]              # pedacinhos de carne pequenos (estilo do gênero)
 	if cabeca:
-		pedacos = [["carne", 6], ["osso", 3], ["olho", 2], ["dente", 3]]
+		pedacos = [["carne", 6], ["olho", 1]]
 	for tipo in pedacos:
 		for i in tipo[1]:
 			_pedaco(tipo[0], pos, vel)
@@ -872,7 +872,7 @@ func explodir(membro: String) -> void:
 		morreu.emit()
 
 func _pedaco(tipo: String, pos: Vector2, vel: Vector2) -> void:
-	var r: float = {"carne": randf_range(85, 170), "osso": randf_range(65, 110), "olho": 75.0, "dente": 34.0}[tipo]
+	var r: float = {"carne": randf_range(28, 55), "olho": 26.0}[tipo]
 	var g := RigidBody2D.new()
 	g.mass = 0.3
 	g.collision_layer = 0b100
@@ -887,10 +887,10 @@ func _pedaco(tipo: String, pos: Vector2, vel: Vector2) -> void:
 	var lados := 9
 	for k in lados:
 		var esc := 1.0 if tipo in ["olho", "dente"] else randf_range(0.65, 1.15)
-		var raio := r * esc * (1.6 if tipo == "osso" and k % 4 < 2 else 1.0)
+		var raio := r * esc
 		pts.append(Vector2(raio, 0).rotated(TAU * k / lados))
-	var cor: Color = {"carne": Color(0.62, 0.05, 0.08).lerp(Color(0.86, 0.38, 0.42), randf() * 0.6),
-		"osso": Color(0.93, 0.89, 0.78), "olho": Color(0.97, 0.97, 0.95), "dente": Color(0.98, 0.96, 0.9)}[tipo]
+	var cor: Color = {"carne": Color(0.55, 0.03, 0.06).lerp(Color(0.75, 0.1, 0.12), randf() * 0.6),
+		"olho": Color(0.97, 0.97, 0.95)}[tipo]
 	var corpo := Polygon2D.new()
 	corpo.polygon = pts
 	corpo.color = cor
@@ -899,7 +899,7 @@ func _pedaco(tipo: String, pos: Vector2, vel: Vector2) -> void:
 	var fechado := pts.duplicate()
 	fechado.append(pts[0])
 	borda.points = fechado
-	borda.width = 14.0
+	borda.width = 5.0
 	borda.default_color = Color(0.3, 0.02, 0.03)
 	g.add_child(borda)
 	if tipo == "olho":
@@ -913,7 +913,7 @@ func _pedaco(tipo: String, pos: Vector2, vel: Vector2) -> void:
 	if tipo == "carne":
 		var veia := Line2D.new()
 		veia.points = PackedVector2Array([Vector2(-r * 0.5, 0), Vector2(0, r * 0.3), Vector2(r * 0.4, -r * 0.2)])
-		veia.width = 18.0
+		veia.width = 6.0
 		veia.default_color = Color(0.4, 0.0, 0.03)
 		g.add_child(veia)
 	g.position = pos + Vector2(randf_range(-40, 40), randf_range(-40, 40))
