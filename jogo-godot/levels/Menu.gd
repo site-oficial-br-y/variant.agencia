@@ -11,6 +11,7 @@ var quadros: Array = []
 
 func _ready() -> void:
 	set_anchors_preset(Control.PRESET_FULL_RECT)
+	Audio.motor(false)
 	var vp := get_viewport().get_visible_rect().size
 	var cx := vp.x / 2.0                    # tela larga: tudo centralizado na largura real
 	atual = maxi(0, OPCOES.find(Game.personagem))
@@ -102,9 +103,12 @@ func _atualizar() -> void:
 	preview.position = Vector2(vp.x / 2.0 - preview.size.x / 2.0, vp.y - 108 - h)   # em pé na pedra
 
 func _selecionar(i: int) -> void:
+	Audio.tocar("clique")
 	atual = i
 	_atualizar()
 
 func _jogar() -> void:
+	Audio.tocar("confirma")
 	Game.personagem = OPCOES[atual]
+	Game.checkpoint_x = -1.0
 	get_tree().change_scene_to_file("res://levels/Main.tscn")

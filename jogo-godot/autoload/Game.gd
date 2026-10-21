@@ -7,6 +7,8 @@ signal estado_mudou(novo)
 enum Estado { JOGANDO, MORTO, VITORIA }
 var estado: int = Estado.JOGANDO
 var personagem: String = "segway"
+var checkpoint_x: float = -1.0       # -1 = começa do início; sobrevive ao reinício (R)
+var checkpoint_chao: float = 1000.0
 
 const ACOES := {
 	"accelerate": [KEY_RIGHT, KEY_D],

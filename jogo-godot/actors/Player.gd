@@ -119,7 +119,7 @@ func _montar() -> void:
 		poly.polygon = rel
 		chassi.add_child(poly)
 		chassi.collision_layer = 0b010
-		chassi.collision_mask = 0b001
+		chassi.collision_mask = 0b1001          # mundo + objetos
 		chassi.physics_material_override = _mat
 		var bb := Rect2(pts[0], Vector2.ZERO)
 		for p in pts:
@@ -129,6 +129,7 @@ func _montar() -> void:
 	chassi.position = origem + desloc
 	chassi.continuous_cd = RigidBody2D.CCD_MODE_CAST_RAY
 	add_child(chassi)
+	chassi.add_to_group("veiculo")
 
 	for r in D["rodas"]:
 		var c := v2(r["c"])
@@ -137,7 +138,7 @@ func _montar() -> void:
 		rb.mass = r["massa"]
 		rb.physics_material_override = _mat
 		rb.collision_layer = 0b010
-		rb.collision_mask = 0b001
+		rb.collision_mask = 0b1001              # mundo + objetos
 		rb.continuous_cd = RigidBody2D.CCD_MODE_CAST_RAY
 		var cs := CollisionShape2D.new()
 		var circ := CircleShape2D.new()
@@ -149,6 +150,7 @@ func _montar() -> void:
 			s.position = centro_peca(k) - c
 			rb.add_child(s)
 		add_child(rb)
+		rb.add_to_group("veiculo")
 		var eixo := PinJoint2D.new()
 		add_child(eixo)
 		eixo.global_position = c + desloc
@@ -228,6 +230,9 @@ func _dirigir() -> void:
 	# pouso/batida forte arremessa o piloto; capotou ou caiu no buraco também
 	var dv := (v_roda_ant - roda_motriz.linear_velocity).length()
 	v_roda_ant = roda_motriz.linear_velocity
+	Audio.motor(true, chassi.linear_velocity.length() / float(ch["vmax"]))
+	if dv > 700.0:                       # pouso / batida do veículo
+		Audio.tocar("impacto_leve" if dv < 1600.0 else "metal", dv / 2500.0)
 	var tomba := deg_to_rad(78.0 if equilibra else 115.0)
 	if dv > limiar_queda_montado or absf(chassi.rotation) > tomba \
 			or chassi.global_position.y > chao_y + 900.0:
@@ -238,6 +243,7 @@ func soltar_ragdoll(herda_vel: Vector2, pulo: bool = false) -> void:
 	if not montado:
 		return
 	montado = false
+	Audio.motor(false)
 	var rot := chassi.global_rotation
 	for corpo in D["piloto"]:
 		var base := centro_peca(corpo)          # origem do corpo = centro da peça de mesmo nome
@@ -245,7 +251,7 @@ func soltar_ragdoll(herda_vel: Vector2, pulo: bool = false) -> void:
 		rb.mass = D["corpos"][corpo]["massa"]
 		rb.physics_material_override = _mat
 		rb.collision_layer = 0b100
-		rb.collision_mask = 0b001
+		rb.collision_mask = 0b1001              # mundo + objetos
 		rb.continuous_cd = RigidBody2D.CCD_MODE_CAST_RAY
 		rb.angular_damp = 0.4
 		rb.add_child(_forma_cs(corpo, base))
@@ -255,6 +261,7 @@ func soltar_ragdoll(herda_vel: Vector2, pulo: bool = false) -> void:
 			sprites[k].reparent(rb)            # mantém a transform global: zero salto
 		rb.linear_velocity = herda_vel + (Vector2(160, -380) if pulo else Vector2.ZERO)
 		corpos[corpo] = rb
+		rb.add_to_group("piloto")
 		v_ant[rb] = rb.linear_velocity
 	for j in D["juntas"]:
 		var pj := PinJoint2D.new()
@@ -279,6 +286,9 @@ func _checar_pancadas() -> void:
 		if dv < limiar_sangue:
 			continue
 		var n := int(clampf(dv / 70.0, 4.0, 40.0))
+		Audio.tocar("impacto_forte" if dv > 1600.0 else "impacto_leve", dv / 2500.0)
+		if sangue:
+			Audio.tocar("splat", dv / 3000.0)
 		if sangue:
 			sangue.jorrar(rb.global_position, n, clampf(dv * 0.55, 250.0, 900.0), Vector2.ZERO, rb.linear_velocity * 0.3)
 		if k == "cabeca" and dv > limiar_arranca * 0.8 and not morto:
@@ -298,6 +308,7 @@ func arrancar(membro: String) -> void:
 	j.queue_free()
 	var lado: RigidBody2D = corpos[membro]
 	lado.apply_central_impulse((lado.global_position - p_global).normalized() * 220.0 * lado.mass)
+	Audio.tocar("osso")
 	if sangue:
 		sangue.jorrar(p_global, 40, 700.0)
 		var no_pai := pai.to_local(p_global)
