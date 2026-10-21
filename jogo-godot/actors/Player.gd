@@ -16,6 +16,7 @@ var fundo_y := INF                 # abaixo disso o veículo caiu num buraco (a 
 @export var balance_damping: float = 14.0
 @export var velocidade: float = 1.6           # multiplica a velocidade máxima no plano
 @export var aceleracao: float = 900.0         # px/s² de jogo: ~0,5 s real até a máxima, e ainda sobe rampa de 27°
+@export var equilibrio_mono: float = 14.0      # força dos botões de girar no monociclo
 @export var arrasto: float = 0.15             # resistência do ar: descida chega num limite em vez de disparar
 @export var limiar_sangue: float = 420.0       # Δv (px/s) num passo que já espirra sangue
 @export var limiar_arranca: float = 2700.0     # Δv que arranca o membro
@@ -37,6 +38,11 @@ var v_ant: Dictionary = {}
 var v_roda_ant := Vector2.ZERO
 var montado := true
 var massa_total := 1.0
+var membros: Dictionary = {}            # corpo -> Node2D articulado (montado: animado por molas)
+var _mola: Dictionary = {}              # corpo -> [ângulo, velocidade]
+var _v_chassi_ant := Vector2.ZERO
+var _t_anim := 0.0
+var _ac := Vector2.ZERO                 # aceleração do veículo suavizada (para o corpo reagir)
 var fogo: CPUParticles2D                 # jato do turbo (cadeira e scooter)
 var _espera_pulo := 0.0
 var _som_turbo := 0.0
@@ -186,23 +192,85 @@ func _montar() -> void:
 		s.position = centro_peca(k) - origem
 		chassi.add_child(s)
 
-	if not ch["auto_equilibrio"]:
+	if ch.has("poly"):
 		_montar_turbo(ch)
 	boneco = Node2D.new()
 	chassi.add_child(boneco)
 	var sensor := Area2D.new()
 	sensor.collision_layer = 0
 	sensor.collision_mask = 0b10001           # mundo + perigo pesado (bola de demolição)
+	_montar_membros()
 	for corpo in D["piloto"]:
-		for k in _pecas_do(corpo):
-			var s := _sprite(k)
-			s.position = centro_peca(k) - origem
-			boneco.add_child(s)
-			sprites[k] = s
 		sensor.add_child(_forma_cs(corpo, origem))
 	chassi.add_child(sensor)
 	sensor.body_entered.connect(_on_corpo_bateu)
 	montado = true
+
+## piloto montado em articulações: tronco gira no quadril, os outros nas juntas do
+## parts.json. Só visual (a colisão do sensor fica fixa no chassi).
+func _montar_membros() -> void:
+	var raiz := "tronco"
+	var piv_raiz := centro_peca(raiz)
+	for j in D["juntas"]:
+		if j["a"] == raiz and (str(j["b"]).begins_with("perna") or j["b"] == "coxa"):
+			piv_raiz = v2(j["p"])
+			break
+	var pivos := {raiz: piv_raiz}
+	membros[raiz] = _membro(raiz, boneco, piv_raiz - origem, piv_raiz)
+	for j in D["juntas"]:
+		var pai: String = j["a"]
+		var filho: String = j["b"]
+		if not membros.has(pai):
+			continue
+		var p := v2(j["p"])
+		pivos[filho] = p
+		membros[filho] = _membro(filho, membros[pai], p - (pivos[pai] as Vector2), p)
+	for c in membros:
+		_mola[c] = [0.0, 0.0]
+
+func _membro(corpo: String, pai: Node, pos: Vector2, pivo_arte: Vector2) -> Node2D:
+	var n := Node2D.new()
+	n.position = pos
+	pai.add_child(n)
+	for k in _pecas_do(corpo):
+		var s := _sprite(k)
+		s.position = centro_peca(k) - pivo_arte
+		n.add_child(s)
+		sprites[k] = s
+	return n
+
+## o boneco montado se mexe: corpo inclina com a aceleração, cabeça chacoalha
+## nas pancadas (mola frouxa), braço balança, perna pedala o monociclo e as das
+## cadeiras balançam soltas
+func _animar(delta: float) -> void:
+	_t_anim += delta
+	var v := chassi.linear_velocity
+	var a := (v - _v_chassi_ant) / maxf(delta, 0.001)
+	_v_chassi_ant = v
+	_ac = _ac.lerp(a.clamp(Vector2(-9000, -9000), Vector2(9000, 9000)), 0.35)
+	var ax := _ac.x * cos(chassi.rotation) + _ac.y * sin(chassi.rotation)
+	var ay := -_ac.x * sin(chassi.rotation) + _ac.y * cos(chassi.rotation)
+	var vel := clampf(chassi.linear_velocity.length() / 1500.0, 0.0, 1.5)   # chacoalha mais quanto mais rápido
+	var corpo_alvo := clampf(-ax * 0.00005, -0.3, 0.3) + (0.035 + 0.03 * vel) * sin(_t_anim * (2.3 + 3.0 * vel))
+	var alvos := {"tronco": [corpo_alvo, 45.0, 9.0],
+		"cabeca": [corpo_alvo * 0.5 - clampf(ay * 0.00006, -0.4, 0.4) + 0.04 * vel * sin(_t_anim * 7.0), 60.0, 4.5],
+		"braco": [clampf(-ax * 0.00005, -0.4, 0.4) + 0.05 * sin(_t_anim * 1.7 + 1.0), 35.0, 5.0]}
+	var solto := clampf(-ax * 0.00008, -0.5, 0.5) + (0.07 + 0.08 * vel) * sin(_t_anim * (3.1 + 4.0 * vel))
+	for c in ["perna", "perna2", "coxa", "canela"]:
+		alvos[c] = [solto * (0.4 if c == "coxa" else 1.0), 22.0, 3.0]
+	if D["chassi"].get("monociclo", false) and membros.has("perna"):
+		alvos.erase("perna")                       # pedal: segue o giro da roda
+		(membros["perna"] as Node2D).rotation = 0.38 * sin(roda_motriz.rotation)
+	elif D["chassi"]["auto_equilibrio"] and membros.has("perna"):
+		alvos["perna"] = [-corpo_alvo * 0.6, 40.0, 8.0]
+	for c in alvos:
+		if not membros.has(c):
+			continue
+		var m: Array = _mola[c]
+		var alvo: float = alvos[c][0]
+		m[1] += ((alvo - float(m[0])) * float(alvos[c][1]) - float(m[1]) * float(alvos[c][2])) * delta
+		m[0] = clampf(float(m[0]) + float(m[1]) * delta, -0.7, 0.7)
+		(membros[c] as Node2D).rotation = m[0]
 
 ## bocal de jato na traseira + partículas de fogo que só saem com o turbo ligado
 func _montar_turbo(ch: Dictionary) -> void:
@@ -274,6 +342,8 @@ func _no_chao() -> bool:
 ## botão especial: Périne pula com o segway; Gabriel e Gian ligam o turbo
 func _especial(ch: Dictionary, delta: float) -> void:
 	_espera_pulo -= delta
+	if ch.get("monociclo", false):
+		return
 	if ch["auto_equilibrio"]:
 		if Input.is_action_just_pressed("especial") and _espera_pulo <= 0.0 and _no_chao():
 			_espera_pulo = 0.5
@@ -323,6 +393,7 @@ func _physics_process(delta: float) -> void:
 	if montado:
 		_dirigir()
 		_especial(D["chassi"], delta)
+		_animar(delta)
 	else:
 		_checar_pancadas()
 
@@ -332,16 +403,21 @@ func _vel() -> Vector2:
 func _dirigir() -> void:
 	var ch: Dictionary = D["chassi"]
 	var equilibra: bool = ch["auto_equilibrio"]
+	var mono: bool = ch.get("monociclo", false)
 	var dir := Input.get_axis("brake", "accelerate")
 	if dir != 0.0 and chassi.linear_velocity.length() < ch["vmax"] * velocidade:
 		var forca := massa_total * aceleracao       # arranque gradual, igual para os três
-		if equilibra:   # segway: empurra embaixo, o equilíbrio segura
+		if mono:        # monociclo: pedala no eixo; o corpo fica pra trás e você tem que se jogar pra frente
+			chassi.apply_force(Vector2(dir * forca, 0.0), roda_motriz.global_position - chassi.global_position)
+		elif equilibra:   # segway: empurra embaixo, o equilíbrio segura
 			var baixo: float = (roda_motriz.global_position - chassi.global_position).length() * 0.8
 			chassi.apply_force(Vector2(dir * forca, 0.0), Vector2(0, baixo).rotated(chassi.rotation))
 		else:           # 2 rodas: pelo centro de massa, sem empinar sozinho (empinar é no botão)
 			chassi.apply_central_force(Vector2(dir * forca, 0.0))
 	var lean := Input.get_axis("lean_back", "lean_fwd")
-	if equilibra:   # girar muda o ângulo-alvo; o equilíbrio nunca desliga (desligar fazia tombar)
+	if mono:        # sem ajuda nenhuma: só amortece o giro um pouco pra dar tempo de corrigir
+		chassi.apply_torque(inercia_chassi * (lean * equilibrio_mono - chassi.angular_velocity * 1.6))
+	elif equilibra:   # girar muda o ângulo-alvo; o equilíbrio nunca desliga (desligar fazia tombar)
 		var alvo := lean * 0.45
 		chassi.apply_torque(inercia_chassi * (-(chassi.rotation - alvo) * balance_stiffness
 			- chassi.angular_velocity * balance_damping))
@@ -357,7 +433,7 @@ func _dirigir() -> void:
 	if dv > 700.0:                       # pouso / batida do veículo
 		Audio.tocar("impacto_leve" if dv < 1600.0 else "metal", dv / 2500.0)
 		bateu_chao.emit(roda_motriz.global_position + Vector2(0, (roda_motriz.get_child(0).shape as CircleShape2D).radius), dv / 2000.0)
-	var tomba := deg_to_rad(78.0 if equilibra else 115.0)
+	var tomba := deg_to_rad(65.0 if mono else (78.0 if equilibra else 115.0))
 	if dv > limiar_queda_montado or absf(chassi.rotation) > tomba \
 			or chassi.global_position.y > (fundo_y if fundo_y < INF else chao_y + 900.0):
 		soltar_ragdoll(_vel(), false)
@@ -379,6 +455,8 @@ func soltar_ragdoll(herda_vel: Vector2, pulo: bool = false) -> void:
 	if not montado:
 		return
 	montado = false
+	for c in membros:                              # volta à pose da arte antes de virar ragdoll
+		(membros[c] as Node2D).rotation = 0.0
 	Audio.motor(false)
 	if fogo:
 		fogo.emitting = false

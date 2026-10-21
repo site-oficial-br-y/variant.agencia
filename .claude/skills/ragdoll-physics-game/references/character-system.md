@@ -200,3 +200,31 @@ documente isso; não é segmentação semântica automática.
 3. `characters/<id>/character.tres` apontando para `assets/<id>/parts.json`.
 4. Rodar o teste de carga e o playtest da fase 1 com ele
    ([testing.md](testing.md#criterios-por-fase)).
+
+
+## Lições do Bicho Ehn (personagens novos: monociclo e cadeira gamer)
+
+- **Fundo preto com roupa preta**: tire o fundo por *flood fill* a partir das bordas
+  (pixels com máximo de canal < 14 ligados à borda), não por limiar global — o
+  moletom preto (25–45) não some e o vão entre os raios da roda fica vazado.
+- **Roda com raios tampada**: em vez do perfil radial (vira disco cinza e perde os
+  raios), complete a parte escondida copiando o ponto oposto pelo cubo
+  (`rodas_espelho` no `segmenta.py`): raio continua raio e vão continua vazado.
+- **Imagem do piloto sem o veículo**: se o usuário mandar, use-a para o corpo (o
+  ragdoll fica completo) e a imagem original só para o veículo. As duas não batem
+  pixel a pixel (pose muda): alinhe pela cabeça (busca do menor erro em ±40 px) e
+  confira o encaixe numa composição antes de recortar (`manter_pecas` no script).
+- **Pé abaixo da roda na arte** (cadeira de escritório): o sensor do piloto encosta
+  no chão já na largada e derruba. Termine o sensor no tornozelo e aumente o raio de
+  colisão das rodinhas.
+- **Veículo de entre-eixos curto e centro alto** empina e capota em subida de 27°:
+  ponha a roda física na ponta da base (pode ficar escondida), a roda desenhada vira
+  parte do chassi.
+- **Animação do piloto montado**: monte as peças em nós articulados (tronco no
+  quadril, filhos nas juntas do `parts.json`) e mova por molas cujo alvo vem da
+  aceleração do veículo (inclina pra trás ao acelerar, cabeça chacoalha em pancada
+  vertical) + respiração; perna do monociclo segue o giro da roda. Zere as rotações
+  antes de virar ragdoll (o sprite herda a transform global).
+- **Monociclo sem ajuda**: força motora no eixo (o corpo fica pra trás), só
+  amortecimento leve de giro; o bot equilibra com PD bang-bang
+  (`u = rot + 0,35·ω`, botão quando |u| > 0,03) — inclusive enquanto espera.

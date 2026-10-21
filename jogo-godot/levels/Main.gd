@@ -763,7 +763,7 @@ func _construir_hud() -> void:
 		[_toque("re", Vector2.ZERO, 155, "brake"), func(v: Vector2) -> Vector2: return Vector2(v.x - 400, v.y - 185)],
 		[_toque("gas", Vector2.ZERO, 200, "accelerate"), func(v: Vector2) -> Vector2: return Vector2(v.x - 225, v.y - 225)],
 		[_toque("pula" if Game.personagem == "segway" else "turbo", Vector2.ZERO, 165, "especial"),
-			func(v: Vector2) -> Vector2: return Vector2(v.x - 195, v.y - 410)],
+			func(v: Vector2) -> Vector2: return Vector2(v.x - 195, v.y - 410) if Game.personagem != "monociclo" else Vector2(-9999, 0)],
 		[_botao("R", Vector2.ZERO, Vector2(80, 64), "reset"), func(v: Vector2) -> Vector2: return Vector2(v.x - 96, 14)],
 		[_botao("TROCAR", Vector2.ZERO, Vector2(180, 64), "menu"), func(v: Vector2) -> Vector2: return Vector2(v.x - 290, 14)],
 	]
@@ -841,7 +841,25 @@ func _on_morreu() -> void:
 	_fim(false, "cabeca")
 
 # ---------- teste automatizado de física (headless) ----------
+## monociclo não se equilibra sozinho: no teste, um controle simples segura ele
+## (prova que dá pra equilibrar com os botões de girar)
+func _equilibrar_mono() -> void:
+	while is_instance_valid(player) and player.montado and _equilibrando:
+		await get_tree().physics_frame
+		var u := player.chassi.rotation + 0.35 * player.chassi.angular_velocity
+		Input.action_release("lean_fwd")
+		Input.action_release("lean_back")
+		if u < -0.03:
+			Input.action_press("lean_fwd")
+		elif u > 0.03:
+			Input.action_press("lean_back")
+
+var _equilibrando := false
+
 func _rodar_teste() -> void:
+	if player.D["chassi"].get("monociclo", false):
+		_equilibrando = true
+		_equilibrar_mono()
 	await _esperar(1.0)
 	print("[SPAWN 1s] rotacao=%.3f" % absf(player.chassi.rotation))
 	await _esperar(5.0)
@@ -858,6 +876,7 @@ func _rodar_teste() -> void:
 	print("[DRIVE] avancou dx=%.1f  rotacao=%.3f" % [dx, rot_drive])
 
 	await _testar_especial()
+	_equilibrando = false
 	player.soltar_ragdoll(player.chassi.linear_velocity, true)
 	await _esperar(1.3)
 	var vmax := 0.0
@@ -885,6 +904,8 @@ func _rodar_teste() -> void:
 ## botão especial: pulo do segway sobe de verdade; turbo passa da velocidade máxima
 func _testar_especial() -> void:
 	var ch: Dictionary = player.D["chassi"]
+	if ch.get("monociclo", false):
+		return
 	if ch["auto_equilibrio"]:
 		await _esperar(1.0)
 		var y0 := player.chassi.global_position.y

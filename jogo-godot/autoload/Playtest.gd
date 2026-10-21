@@ -110,6 +110,10 @@ func _jogar(fase: Node, estrategia: String) -> void:
 		_soltar()
 		if not fase.player.montado:
 			continue
+		if fase.player.D["chassi"].get("monociclo", false) and estrategia != "busca":   # equilibra até esperando
+			var u0: float = fase.player.chassi.rotation + 0.35 * fase.player.chassi.angular_velocity
+			if u0 < -0.03: Input.action_press("lean_fwd")
+			elif u0 > 0.03: Input.action_press("lean_back")
 		if estrategia == "reativo_espera" and (_esperar_pendulo(foco) or _esperar_prensa(foco)):
 			parado = 0.0
 			Input.action_press("brake") if fase.player.chassi.linear_velocity.x > 30.0 else null
@@ -130,7 +134,11 @@ func _jogar(fase: Node, estrategia: String) -> void:
 					re_ate = -1.0
 					parado = 0.0
 				Input.action_press("accelerate")
-			if rot < -0.3: Input.action_press("lean_fwd")
+			if fase.player.D["chassi"].get("monociclo", false):   # monociclo: equilibra o tempo todo
+				var u: float = fase.player.chassi.rotation + 0.35 * fase.player.chassi.angular_velocity
+				if u < -0.03: Input.action_press("lean_fwd")
+				elif u > 0.03: Input.action_press("lean_back")
+			elif rot < -0.3: Input.action_press("lean_fwd")
 			elif rot > 0.3: Input.action_press("lean_back")
 		else:
 			if fase.tempo >= macro_ate:

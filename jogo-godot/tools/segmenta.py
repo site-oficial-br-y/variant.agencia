@@ -1,6 +1,6 @@
 """Recorta UMA ilustração (personagem + veículo) em peças de ragdoll para o Godot.
 
-Uso: python3 segmenta.py <cadeira|scooter>
+Uso: python3 segmenta.py <cadeira|scooter|monociclo|gamer>
 
 Regras:
 - partição: cada pixel opaco vai para UMA peça (regras em ordem de prioridade);
@@ -18,7 +18,8 @@ CHARS = os.path.join(AQUI, 'fonte')
 
 
 def carregar(nome):
-    im = np.asarray(Image.open(os.path.join(CHARS, f'{nome}_full.png')).convert('RGBA')).astype(np.int16)
+    arq = nome if nome.endswith('.png') else f'{nome}_full.png'
+    im = np.asarray(Image.open(os.path.join(CHARS, arq)).convert('RGBA')).astype(np.int16)
     return im
 
 
@@ -134,7 +135,7 @@ def roda_radial(ctx, c, r, visivel):
 
 
 def rodar(cfg_nome, cfg):
-    ctx = Ctx(carregar(cfg_nome))
+    ctx = Ctx(carregar(cfg.get('fonte', cfg_nome)))
     H, W = ctx.H, ctx.W
     opaco = ctx.alpha > 8
     labels = cfg['ordem']                           # ordem de desenho (z)
@@ -168,8 +169,10 @@ def rodar(cfg_nome, cfg):
 
     out_dir = os.path.join(AQUI, '..', 'assets', cfg_nome)
     os.makedirs(out_dir, exist_ok=True)
+    manter = cfg.get('manter_pecas', [])             # peças de outra passada (ex.: a cadeira)
+    velho = json.load(open(os.path.join(out_dir, 'parts.json'))) if manter else None
     for f in os.listdir(out_dir):
-        if f.endswith(('.png', '.json', '.import')):
+        if f.endswith(('.png', '.json', '.import')) and f.split('.')[0] not in manter:
             os.remove(os.path.join(out_dir, f))
 
     pecas = {}
@@ -177,7 +180,17 @@ def rodar(cfg_nome, cfg):
         i = lab_id[n]
         own = L == i
         cor = ctx.rgb.copy(); a = np.where(own, ctx.alpha, 0).astype(np.int16)
-        if n in cfg.get('rodas_radiais', {}):
+        if n in cfg.get('rodas_espelho', {}):
+            # parte tampada da roda: copia o ponto oposto pelo cubo (raios simétricos, vão continua vazado)
+            c, r = cfg['rodas_espelho'][n]
+            tampa = ctx.disco(c, r) & ~own & (L > 0)
+            ty, tx = np.where(tampa)
+            oy = np.clip(np.round(2 * c[1] - ty).astype(int), 0, H - 1)
+            ox = np.clip(np.round(2 * c[0] - tx).astype(int), 0, W - 1)
+            ok = own[oy, ox]
+            cor[ty[ok], tx[ok]] = ctx.rgb[oy[ok], ox[ok]]
+            a[ty[ok], tx[ok]] = ctx.alpha[oy[ok], ox[ok]]
+        elif n in cfg.get('rodas_radiais', {}):
             c, r = cfg['rodas_radiais'][n]
             cor, a = roda_radial(ctx, c, r, own)
         else:
@@ -191,6 +204,8 @@ def rodar(cfg_nome, cfg):
                 fonte = own & (ctx.alpha > 200)
                 if cfg.get('fonte_casca', {}).get(n) == 'pele':
                     fonte &= ctx.pele
+                elif cfg.get('fonte_casca', {}).get(n) == 'escuro':
+                    fonte &= ctx.escuro(90)
                 sm = suave(ctx, fonte, cfg.get('sigma', 14))
                 cor[enche] = sm[enche].astype(np.int16)
                 a[enche] = 255
@@ -201,6 +216,10 @@ def rodar(cfg_nome, cfg):
         pecas[n] = {'x': bb[0], 'y': bb[1], 'w': img.width, 'h': img.height}
         print(f'  {n:10s} bbox={bb} px_proprios={int(own.sum())}')
 
+    if manter:
+        for k in manter:
+            pecas[k] = velho['pecas'][k]
+        labels = cfg['ordem_final']
     meta = {'nome': cfg_nome, 'src_w': W, 'src_h': H, 'ordem': labels, 'pecas': pecas}
     meta.update(cfg['fisica'])
     json.dump(meta, open(os.path.join(out_dir, 'parts.json'), 'w'), indent=1)
@@ -382,10 +401,179 @@ SCOOTER = {
     },
 }
 
+def monociclo_regras(c):
+    RODA = (568.0, 1098.0); RR = 203
+    manga = c.poly([(490, 330), (575, 300), (602, 335), (606, 505), (530, 516), (488, 480), (470, 420)])
+    sapato = c.poly([(508, 1000), (560, 972), (628, 982), (708, 1058), (714, 1102), (640, 1114), (560, 1096), (503, 1060)])
+    coxa = c.poly([(455, 598), (720, 636), (772, 752), (700, 795), (565, 722), (468, 704)])
+    canela = c.poly([(690, 742), (778, 758), (762, 822), (692, 992), (598, 1002), (582, 962), (640, 880)])
+    assento = c.poly([(402, 638), (500, 645), (562, 660), (562, 702), (402, 702)])
+    canote = c.poly([(484, 690), (550, 690), (562, 800), (592, 830), (596, 990), (556, 1002), (544, 870), (500, 860)])
+    garfo_baixo = c.poly([(545, 1000), (596, 1000), (596, 1112), (545, 1112)])
+    return [
+        ('cabeca', (c.ys < 200) | ((c.ys < 272) & (c.xs > 585) & c.pele)),
+        ('braco', c.pele & (c.ys > 480) & (c.xs > 500) & (c.ys < 720)),
+        ('braco', manga),
+        ('perna', sapato),
+        ('perna', c.pele & (c.ys > 950) & (c.xs > 540) & (c.xs < 640)),          # meia/tornozelo
+        ('quadro', canote & ~canela),
+        ('quadro', assento & ~coxa),
+        ('perna', coxa | canela),
+        ('quadro', garfo_baixo & c.cinza(40) & (c.mx > 60)),
+        ('roda', c.disco(RODA, RR + 12)),
+        ('tronco', c.ys < 720),
+        ('perna', np.ones_like(c.pele)),
+    ]
+
+
+MONOCICLO = {
+    'ordem': ['roda', 'quadro', 'tronco', 'perna', 'cabeca', 'braco'],
+    'regras': monociclo_regras,
+    'rodas_espelho': {'roda': ((568.0, 1098.0), 212)},
+    'fonte_casca': {'tronco': 'escuro', 'perna': 'escuro'},
+    'cascas': {
+        'cabeca': [('disco', (612, 245), 34)],
+        'tronco': [('poly', [(372, 230), (560, 210), (615, 300), (612, 520), (580, 640), (400, 650), (362, 560)])],
+        'perna': [('poly', [(460, 600), (720, 636), (772, 752), (700, 1000), (560, 1000), (565, 722), (468, 704)])],
+        'quadro': [('poly', [(402, 640), (562, 655), (562, 702), (402, 702)]),
+                   ('poly', [(484, 690), (550, 690), (595, 830), (596, 1110), (545, 1110), (500, 860)])],
+    },
+    'fisica': {
+        'corpo_de': {'roda': 'roda0', 'quadro': 'chassi', 'cabeca': 'cabeca', 'tronco': 'tronco',
+                     'braco': 'braco', 'perna': 'perna'},
+        'piloto': ['tronco', 'cabeca', 'braco', 'perna'],
+        'rodas': [{'corpo': 'roda0', 'c': [568.0, 1098.0], 'r': 203, 'massa': 2.0, 'motriz': True}],
+        'chassi': {'massa': 5.0, 'auto_equilibrio': False, 'monociclo': True, 'vmax': 820.0, 'forca': 0.0,
+                   'mastro': {'x': 540.0, 'y0': 640.0, 'y1': 1098.0, 'w': 90.0}},
+        'corpos': {
+            'cabeca': {'massa': 0.8, 'forma': ['circ', [632, 132], 112]},
+            'tronco': {'massa': 2.0, 'forma': ['caps', [500, 290], [480, 600], 120]},
+            'braco': {'massa': 0.5, 'forma': ['caps', [545, 335], [640, 670], 42]},
+            'perna': {'massa': 1.4, 'forma': ['caps', [485, 625], [625, 1050], 66]},
+        },
+        'juntas': [
+            {'a': 'tronco', 'b': 'cabeca', 'p': [600, 252], 'lim': 40, 'teste': 25},
+            {'a': 'tronco', 'b': 'braco', 'p': [545, 325], 'lim': 80, 'teste': -45},
+            {'a': 'tronco', 'b': 'perna', 'p': [483, 617], 'lim': 70, 'teste': 30},
+        ],
+    },
+}
+
+
+def gamer_regras(c):
+    R0 = (71.0, 1327.0); R1 = (357.0, 1362.0)
+    preto_cinza = c.cinza(30) & c.escuro(80)
+    cabeca = c.poly([(368, 212), (662, 198), (662, 442), (560, 485), (468, 472), (418, 440), (372, 380)])
+    celular = c.poly([(672, 545), (765, 508), (780, 548), (690, 580)])
+    manga = c.poly([(438, 600), (560, 560), (622, 600), (616, 664), (560, 692), (468, 692), (428, 650)])
+    canela = c.poly([(600, 1040), (792, 1030), (797, 1230), (832, 1300), (838, 1442), (578, 1442), (586, 1280), (628, 1272), (622, 1210)])
+    apoio = c.poly([(172, 732), (490, 732), (490, 794), (172, 794)])
+    assento_frente = c.poly([(150, 898), (330, 902), (452, 930), (562, 986), (606, 1040), (606, 1068), (150, 1068)])
+    tronco = c.poly([(236, 400), (330, 332), (470, 362), (560, 480), (700, 515), (725, 700), (842, 778),
+                     (852, 870), (832, 1005), (600, 1032), (430, 1000), (300, 900), (240, 720)])
+    return [
+        ('roda0', c.disco(R0, 32)),
+        ('roda1', c.disco(R1, 35)),
+        ('cabeca', cabeca & ~(preto_cinza & (c.ys > 400) & (c.xs < 480))),   # cabelo inteiro; capuz fica no tronco
+        ('braco', c.pele & (c.ys > 520) & (c.ys < 700) & (c.xs > 555)),
+        ('braco', celular),
+        ('braco', manga),
+        ('canela', canela),
+        ('perna2', (c.xs >= 790) & (c.ys >= 940)),
+        ('perna2', c.pele & (c.xs >= 778) & (c.ys >= 815)),
+        ('coxa', c.pele & (c.xs >= 555) & (c.ys >= 830) & (c.ys < 1060)),
+        ('apoio', apoio & ~c.pele),
+        ('apoio', assento_frente & ~c.pele & ~tronco),
+        ('cadeira', c.poly([(696, 730), (836, 730), (836, 790), (696, 790)]) & ~c.pele),   # apoio de braço de trás
+        ('cadeira', (c.rgb[:, :, 0] > 140) & (c.rgb[:, :, 1] < 90) & ~c.pele),              # faixas vermelhas
+        ('tronco', tronco),
+        ('cadeira', np.ones_like(c.pele)),
+    ]
+
+
+GAMER = {
+    'ordem': ['cadeira', 'roda0', 'roda1', 'perna2', 'tronco', 'apoio', 'coxa', 'canela', 'braco', 'cabeca'],
+    'regras': gamer_regras,
+    'rodas_radiais': {'roda0': ((71.0, 1327.0), 31), 'roda1': ((357.0, 1362.0), 33)},
+    'fonte_casca': {'tronco': 'escuro', 'cadeira': 'escuro'},
+    'migalha': 400,
+    'cascas': {
+        'tronco': [('poly', [(236, 400), (330, 332), (470, 362), (560, 480), (700, 515), (725, 700), (842, 778),
+                             (852, 870), (832, 1005), (600, 1032), (430, 1000), (300, 900), (240, 720)])],
+        'cadeira': [('poly', [(120, 300), (330, 300), (360, 560), (360, 880), (620, 900), (620, 1062), (120, 1062)])],
+        'cabeca': [('disco', (500, 455), 45)],
+        'coxa': [('poly', [(560, 840), (790, 830), (800, 1050), (590, 1060)])],
+    },
+    'fisica': {
+        'corpo_de': {'cadeira': 'chassi', 'apoio': 'chassi', 'roda0': 'roda0', 'roda1': 'chassi',
+                     'cabeca': 'cabeca', 'tronco': 'tronco', 'braco': 'braco', 'coxa': 'coxa',
+                     'canela': 'canela', 'perna2': 'perna2'},
+        'piloto': ['tronco', 'cabeca', 'braco', 'coxa', 'canela', 'perna2'],
+        'rodas': [{'corpo': 'roda0', 'c': [71.0, 1327.0], 'r': 88, 'massa': 1.0, 'motriz': True},
+                  {'corpo': 'roda1', 'c': [600.0, 1328.0], 'r': 88, 'massa': 1.0, 'motriz': False}],   # na ponta da base: entre-eixos largo, não empina na subida
+        'chassi': {'massa': 8.0, 'auto_equilibrio': False, 'vmax': 800.0, 'forca': 0.0,
+                   'poly': [[60, 180], [330, 180], [330, 880], [620, 990], [620, 1080], [420, 1100],
+                            [420, 1250], [620, 1250], [600, 1300], [40, 1300], [130, 1060], [60, 900]]},
+        'corpos': {
+            'cabeca': {'massa': 1.0, 'forma': ['circ', [520, 330], 130]},
+            'tronco': {'massa': 3.0, 'forma': ['caps', [400, 470], [560, 900], 170]},
+            'braco': {'massa': 0.6, 'forma': ['caps', [470, 640], [740, 560], 55]},
+            'coxa': {'massa': 1.2, 'forma': ['caps', [560, 930], [700, 1000], 95]},
+            'canela': {'massa': 1.0, 'forma': ['caps', [690, 1060], [700, 1380], 72]},
+            'perna2': {'massa': 1.6, 'forma': ['caps', [850, 900], [880, 1270], 75]},
+        },
+        'juntas': [
+            {'a': 'tronco', 'b': 'cabeca', 'p': [490, 462], 'lim': 40, 'teste': 20},
+            {'a': 'tronco', 'b': 'braco', 'p': [470, 640], 'lim': 80, 'teste': -40},
+            {'a': 'tronco', 'b': 'coxa', 'p': [560, 930], 'lim': 70, 'teste': -30},
+            {'a': 'coxa', 'b': 'canela', 'p': [700, 1030], 'lim': 75, 'teste': 35},
+            {'a': 'tronco', 'b': 'perna2', 'p': [800, 870], 'lim': 70, 'teste': 30},
+        ],
+    },
+}
+
+def gamer_piloto_regras(c):
+    """Corpo do Gorisch da imagem sem cadeira (alinhada pela cabeça): tudo opaco é piloto."""
+    cabeca = c.poly([(368, 212), (662, 198), (662, 442), (560, 485), (468, 472), (418, 440), (372, 380)])
+    preto_cinza = c.cinza(30) & c.escuro(80)
+    celular = c.poly([(672, 545), (775, 508), (790, 552), (690, 585)])
+    manga = c.poly([(438, 600), (560, 560), (622, 600), (616, 664), (560, 692), (468, 692), (428, 650)])
+    canela = c.poly([(560, 1030), (760, 1020), (768, 1230), (805, 1300), (812, 1460), (540, 1460), (548, 1280), (585, 1260), (580, 1200)])
+    return [
+        ('cabeca', cabeca & ~(preto_cinza & (c.ys > 400) & (c.xs < 480))),
+        ('braco', c.pele & (c.ys > 520) & (c.ys < 700) & (c.xs > 555)),
+        ('braco', celular | manga),
+        ('canela', canela),
+        ('perna2', (c.xs >= 758) & (c.ys >= 940)),
+        ('perna2', c.pele & (c.xs >= 748) & (c.ys >= 815)),
+        ('coxa', c.pele & (c.xs >= 530) & (c.ys >= 830) & (c.ys < 1060)),
+        ('tronco', np.ones_like(c.pele)),
+    ]
+
+
+GAMER_PILOTO = dict(GAMER)
+GAMER_PILOTO.update({
+    'fonte': 'gamer_piloto.png',
+    'ordem': ['perna2', 'tronco', 'coxa', 'canela', 'braco', 'cabeca'],
+    'ordem_final': GAMER['ordem'],
+    'manter_pecas': ['cadeira', 'roda0', 'roda1', 'apoio'],
+    'regras': gamer_piloto_regras,
+    'rodas_radiais': {},
+    'fonte_casca': {'tronco': 'escuro'},
+    'cascas': {'cabeca': [('disco', (500, 455), 45)],
+               'tronco': [('poly', [(260, 400), (470, 360), (720, 520), (740, 700), (840, 780), (850, 880), (800, 1010),
+                                     (560, 1030), (320, 1000), (250, 900), (240, 600)])],
+               'coxa': [('poly', [(540, 840), (770, 830), (780, 1050), (570, 1060)])]},
+})
+GAMER_PILOTO['fisica'] = json.loads(json.dumps(GAMER['fisica']))
+GAMER_PILOTO['fisica']['corpos']['canela']['forma'] = ['caps', [660, 1060], [668, 1300], 70]   # sensor até o tornozelo:
+GAMER_PILOTO['fisica']['corpos']['perna2']['forma'] = ['caps', [830, 900], [850, 1190], 72]   # o tênis fica abaixo das rodinhas na arte
+GAMER_PILOTO['fisica']['juntas'][3]['p'] = [680, 1030]
+
 if __name__ == '__main__':
     S = '/tmp/claude-0/-home-user-variant-agencia/d602722c-012a-5dc7-9c23-bb5704ae8c56/scratchpad/'
     for nome in sys.argv[1:]:
-        cfg = {'cadeira': CADEIRA, 'scooter': SCOOTER}[nome]
+        cfg = {'cadeira': CADEIRA, 'scooter': SCOOTER, 'monociclo': MONOCICLO, 'gamer': GAMER, 'gamer_piloto': GAMER_PILOTO}[nome]
         cfg['dbg'] = S + f'seg-{nome}.png'
         print('==', nome)
-        rodar(nome, cfg)
+        rodar('gamer' if nome == 'gamer_piloto' else nome, cfg)
