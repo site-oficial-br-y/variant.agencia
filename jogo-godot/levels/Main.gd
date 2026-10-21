@@ -479,7 +479,7 @@ func _t_trampolim(p: Vector2) -> Vector2:
 ## painel de aceleração na reta antes de um voo: salto bem mais longo
 func _t_turbo_salto(p: Vector2) -> Vector2:
 	_t_plano(p, 1600, false)
-	mec.painel_aceleracao(p + Vector2(700, 0), 900.0, 1100.0)
+	mec.painel_aceleracao(p + Vector2(700, 0), 900.0, 650.0, 2400.0)   # pouso do voo aguenta até ~3300
 	return _t_voo(p + Vector2(1600, 0), "espinhos")
 
 ## túnel de vento por cima do abismo: empurra pra frente e um pouco pra cima
