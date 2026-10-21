@@ -28,6 +28,7 @@ var topo_tex := "grama"          # faixa do topo (grama, asfalto, grama_alpina)
 var contorno_chao := CONTORNO_TERRA
 var pistoes: Array = []
 var y_max := 0.0                 # fundo mais baixo construído (para a zona de morte)
+var ao_explodir: Callable        # (pos, raio) -> a fase reage (jogador se machuca, plataforma quebra)
 
 func _init(no: Node2D, material: PhysicsMaterial, ao_perigo: Callable) -> void:
 	raiz = no
@@ -548,6 +549,8 @@ func tnt(pos: Vector2, altura := 560.0) -> RigidBody2D:
 	return c
 
 func explodir(pos: Vector2, raio: float, dv_max: float) -> void:
+	if ao_explodir.is_valid():
+		ao_explodir.call(pos, raio)
 	Audio.tocar("impacto_forte", 1.0)
 	Audio.tocar("metal", 0.8)
 	for n in raiz.get_tree().get_nodes_in_group("veiculo") + raiz.get_tree().get_nodes_in_group("piloto"):

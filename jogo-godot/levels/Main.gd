@@ -21,9 +21,13 @@ var _t_fisica := 0.0
 var _hud: Array = []
 var painel: HBoxContainer
 var pecas: Pecas
+var mec: Mecanicas
+var _carga: Label
+var _botao_especial: TouchScreenButton
 var cps: Array = []                         # checkpoints da fase: [x, chão]
 var morte_y := CHAO_Y + 2200.0
 var _meta_pos := Vector2.ZERO
+var _explosoes := 0
 var _sorteio := RandomNumberGenerator.new()  # decoração: mesma fase, mesma arrumação
 
 var player: Player
@@ -48,6 +52,8 @@ func _ready() -> void:
 	_mat.friction = 1.0
 	_mat.bounce = 0.0
 	pecas = Pecas.new(self, _mat, _on_perigo)
+	mec = Mecanicas.new(self, pecas, func() -> Player: return player)
+	pecas.ao_explodir = _ao_explodir
 	_construir_chao()
 	if "ultimo_cp" in OS.get_cmdline_user_args() and cps.size() > 0:    # teste: começa perto da chegada
 		Game.checkpoint_x = (cps[cps.size() - 1] as Vector2).x
@@ -69,6 +75,7 @@ func _ready() -> void:
 	player.sangue = sangue
 	player.morreu.connect(_on_morreu)
 	player.bateu_chao.connect(func(pos: Vector2, forca: float) -> void: pecas.poeira(pos, forca))
+	player.explodir_cb = func(pos: Vector2, raio: float, dv: float) -> void: mec.explosao(pos, raio, dv)
 
 	camera = FollowCamera.new()
 	camera.zoom = Vector2(0.26, 0.26)         # câmera perto como no gênero: boneco ~metade da tela
@@ -114,6 +121,7 @@ func _process(delta: float) -> void:
 			camera.alvo = f
 		var alvo_x: float = player.foco().global_position.x
 		recorde = maxi(recorde, int(maxf(0.0, (alvo_x - SPAWN_X) / 40.0)))
+		_atualizar_carga()
 		if dist_label:
 			dist_label.text = "%s   %d m   %.1f s" % [Game.NOMES.get(Game.personagem, ""), recorde, tempo]
 
@@ -157,6 +165,7 @@ func _physics_process(delta: float) -> void:
 	_t_fisica += delta
 	_mover_pendulos(_t_fisica)
 	pecas.mover_pistoes(_t_fisica)
+	mec.atualizar(delta)
 
 func _mover_pendulos(t: float) -> void:
 	for p in _pendulos:
@@ -409,6 +418,85 @@ func _chegada(p: Vector2, cps_fase: Array) -> void:
 func _cp(lista: Array, p: Vector2, dx := 200.0) -> void:
 	lista.append(p + Vector2(dx, 0))
 
+# ---------- trechos com as mecânicas novas (armadilhas, plataformas, impulsos) ----------
+func _fosso(x0: float, x1: float, y: float) -> void:
+	pecas.terreno(PackedVector2Array([Vector2(x0, y + 1400), Vector2(x1, y + 1400)]), y + 2100.0, false)
+	pecas.espinhos(x0 + 40, x1 - 40, y + 1400)
+
+## campo minado: três minas no caminho (pula, desvia ou leva o tranco)
+func _t_minas(p: Vector2) -> Vector2:
+	_t_plano(p, 3200, false)
+	for dx in [900.0, 1800.0, 2600.0]:
+		mec.mina(p + Vector2(dx, 0))
+	return p + Vector2(3200, 0)
+
+## drone-bomba pairando: acorda quando você chega e te persegue; corra
+func _t_drone(p: Vector2) -> Vector2:
+	_t_plano(p, 4200, false)
+	mec.bomba_perseguidora(p + Vector2(2600, -1500), 2600.0)
+	return p + Vector2(4200, 0)
+
+## plataformas que somem em sequência ("onda"): sai quando a primeira acabou de aparecer
+func _t_temporarias(p: Vector2) -> Vector2:
+	_t_plano(p, 700, false)
+	_fosso(p.x + 700, p.x + 3700, p.y)
+	for k in 3:
+		mec.plataforma_temporaria(p + Vector2(1200 + k * 1000, 0), 980.0, 3.6, -k * 0.2)
+	return _t_plano(p + Vector2(3700, 0), 800, false)
+
+## aparecem quando você chega perto e somem logo depois: não dá pra parar no meio
+func _t_retrateis(p: Vector2) -> Vector2:
+	_t_plano(p, 600, false)
+	_fosso(p.x + 600, p.x + 3600, p.y)
+	for k in 3:
+		mec.plataforma_retratil(p + Vector2(1100 + k * 1000, 0), 980.0, 4.0)
+	return _t_plano(p + Vector2(3600, 0), 800, false)
+
+## lajes que sobem e descem fora de fase sobre o fosso
+func _t_moveis(p: Vector2) -> Vector2:
+	_t_plano(p, 600, false)
+	_fosso(p.x + 600, p.x + 3600, p.y)
+	for k in 3:
+		var c := p + Vector2(1100 + k * 1000, 0)
+		mec.plataforma_movel(c + Vector2(0, -220), c + Vector2(0, 220), 980.0, 3.0 + k * 0.4)
+	return _t_plano(p + Vector2(3600, 0), 800, false)
+
+## ponte de lajes rachadas: cedem pouco depois de receber o peso (passa quem não para)
+func _t_quebraveis(p: Vector2) -> Vector2:
+	_t_plano(p, 900, false)
+	_fosso(p.x + 900, p.x + 4400, p.y)
+	for k in 5:
+		mec.plataforma_quebravel(p + Vector2(1250 + k * 700, 0), 690.0)
+	return _t_plano(p + Vector2(4400, 0), 900, false)
+
+## trampolim antes de um muro: a mola joga por cima
+func _t_trampolim(p: Vector2) -> Vector2:
+	_t_plano(p, 1700, false)
+	mec.trampolim(p + Vector2(950, 0), 1650.0)
+	pecas.terreno(PackedVector2Array([p + Vector2(1700, -900), p + Vector2(2300, -900)]), p.y + 2600.0)
+	return _t_plano(p + Vector2(2300, 0), 5200, false)
+
+## painel de aceleração na reta antes de um voo: salto bem mais longo
+func _t_turbo_salto(p: Vector2) -> Vector2:
+	_t_plano(p, 1600, false)
+	mec.painel_aceleracao(p + Vector2(700, 0), 900.0, 1100.0)
+	return _t_voo(p + Vector2(1600, 0), "espinhos")
+
+## túnel de vento por cima do abismo: empurra pra frente e um pouco pra cima
+func _t_tunel(p: Vector2) -> Vector2:
+	_t_plano(p, 700, false)
+	_fosso(p.x + 700, p.x + 3900, p.y)
+	mec.tunel_vento(p + Vector2(300, -380), p + Vector2(4100, -700), 1000.0, 3000.0)
+	return _t_plano(p + Vector2(3900, 0), 900, false)
+
+## bloco de mecânicas novas: cada volta da fase usa uma combinação diferente
+func _bloco_novo(p: Vector2, c: Array, combinacao: Array) -> Vector2:
+	for nome in combinacao:
+		_cp(c, p)
+		p = call("_t_" + nome, p)
+		p = _t_plano(p, 500, false)
+	return p
+
 ## quanto o voo desce (rampa + descida de 26° + saída); a subida seguinte devolve isso
 func _queda_voo() -> float:
 	var inc := tan(deg_to_rad(26.0))
@@ -425,6 +513,7 @@ func _fase_1() -> void:
 	p = _t_ponte(p, 2300, 350)
 	p = _t_plano(p, 800)
 	for volta in 3:
+		p = _bloco_novo(p, c, [["minas", "temporarias"], ["drone", "quebraveis", "trampolim"], ["tunel", "moveis", "turbo_salto"]][volta])
 		_cp(c, p)
 		p = _t_bola(p)
 		p = _t_voo(p, "agua")
@@ -463,6 +552,7 @@ func _fase_2() -> void:
 	p = _t_vigas(p)
 	p = _t_tabuas(p)
 	for volta in 3:
+		p = _bloco_novo(p, c, [["drone", "quebraveis"], ["trampolim", "temporarias", "minas"], ["retrateis", "tunel"]][volta])
 		_cp(c, p)
 		p = _t_prensa(p)
 		p = _t_predio(p)
@@ -497,6 +587,7 @@ func _fase_3() -> void:
 	p = _t_ladeira(p, 2800, 900)
 	p = _t_plano(p, 1200)                           # reta antes do 1º salto: vindo da descida batia na rampa
 	for volta in 3:
+		p = _bloco_novo(p, c, [["retrateis", "minas"], ["moveis", "turbo_salto"], ["drone", "temporarias", "trampolim"]][volta])
 		p = _t_voo(p, "serras")
 		p = _t_mega(p, qv * 3.0, -qv)
 		_cp(c, p)
@@ -762,8 +853,8 @@ func _construir_hud() -> void:
 		[_toque("gira_frente", Vector2.ZERO, 180, "lean_fwd"), func(v: Vector2) -> Vector2: return Vector2(236, v.y - 210)],
 		[_toque("re", Vector2.ZERO, 155, "brake"), func(v: Vector2) -> Vector2: return Vector2(v.x - 400, v.y - 185)],
 		[_toque("gas", Vector2.ZERO, 200, "accelerate"), func(v: Vector2) -> Vector2: return Vector2(v.x - 225, v.y - 225)],
-		[_toque("pula" if Game.personagem == "segway" else "turbo", Vector2.ZERO, 165, "especial"),
-			func(v: Vector2) -> Vector2: return Vector2(v.x - 195, v.y - 410) if Game.personagem != "monociclo" else Vector2(-9999, 0)],
+		[_toque_especial(), func(v: Vector2) -> Vector2: return Vector2(v.x - 195, v.y - 410)],
+		[_rotulo_carga(), func(v: Vector2) -> Vector2: return Vector2(v.x - 213, v.y - 452)],
 		[_botao("R", Vector2.ZERO, Vector2(80, 64), "reset"), func(v: Vector2) -> Vector2: return Vector2(v.x - 96, 14)],
 		[_botao("TROCAR", Vector2.ZERO, Vector2(180, 64), "menu"), func(v: Vector2) -> Vector2: return Vector2(v.x - 290, 14)],
 	]
@@ -821,6 +912,43 @@ func _posicionar_hud() -> void:
 		aviso.size = Vector2(v.x, 160)
 		aviso.position = Vector2(0, v.y * 0.06)
 
+const ICONES := {"salto": "pula", "turbo": "turbo", "bomba": "bomba", "equilibrio": "equilibrio", "arpao": "arpao"}
+
+func _toque_especial() -> TouchScreenButton:
+	_botao_especial = _toque(ICONES.get(Game.HABILIDADES.get(Game.personagem, "salto"), "pula"), Vector2.ZERO, 165, "especial")
+	return _botao_especial
+
+## carga da habilidade embaixo do botão: PRONTO, segundos ou % do turbo
+func _rotulo_carga() -> Label:
+	_carga = Label.new()
+	_carga.custom_minimum_size = Vector2(200, 40)
+	_carga.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	_carga.add_theme_font_size_override("font_size", 26)
+	_carga.add_theme_color_override("font_outline_color", Color.BLACK)
+	_carga.add_theme_constant_override("outline_size", 8)
+	$HUD.add_child(_carga)
+	return _carga
+
+func _atualizar_carga() -> void:
+	if not _carga or not is_instance_valid(player) or not player.montado:
+		return
+	var f := player.pronto()
+	if player.habilidade == "turbo":
+		_carga.text = "%d%%" % int(f * 100.0)
+	elif f >= 1.0:
+		_carga.text = "PRONTO"
+	else:
+		_carga.text = "%.1f s" % player.recarga
+	_carga.add_theme_color_override("font_color", Color(0.5, 1, 0.55) if f >= 1.0 or (player.habilidade == "turbo" and f > 0.2) else Color(1, 0.8, 0.35))
+	_botao_especial.modulate.a = 1.0 if f >= 1.0 or player.habilidade == "turbo" else 0.45
+
+## toda explosão: o jogador reage (membros, queda) e plataformas frágeis quebram
+func _ao_explodir(pos: Vector2, raio: float) -> void:
+	_explosoes += 1
+	if is_instance_valid(player):
+		player.explosao(pos, raio)
+	mec.quebrar_perto(pos, raio)
+
 func _on_perigo(b: Node2D, motivo: String) -> void:
 	if b is RigidBody2D:
 		sangue.jorrar(b.global_position, 90, 1400.0, Vector2.ZERO, (b as RigidBody2D).linear_velocity * 0.2)
@@ -876,6 +1004,7 @@ func _rodar_teste() -> void:
 	print("[DRIVE] avancou dx=%.1f  rotacao=%.3f" % [dx, rot_drive])
 
 	await _testar_especial()
+	var montado_antes := player.montado
 	_equilibrando = false
 	player.soltar_ragdoll(player.chassi.linear_velocity, true)
 	await _esperar(1.3)
@@ -883,7 +1012,7 @@ func _rodar_teste() -> void:
 	for k in player.corpos:
 		vmax = maxf(vmax, player.corpos[k].linear_velocity.length())
 	print("[RAGDOLL] pecas=%d  vel_max=%.1f (finita = nao explodiu)" % [player.corpos.size(), vmax])
-	var pecas_ok: bool = player.corpos.size() == player.D["piloto"].size()
+	var pecas_ok: bool = player.corpos.size() == player.D["piloto"].size() - player.perdeu.size() or not montado_antes
 
 	player.arrancar("braco")
 	await _esperar(1.0)
@@ -901,40 +1030,91 @@ func _rodar_teste() -> void:
 	print("[RESULTADO] ", "PASS" if ok else "FALHA")
 	get_tree().quit()
 
-## botão especial: pulo do segway sobe de verdade; turbo passa da velocidade máxima
+## botão especial: cada habilidade faz o que promete
 func _testar_especial() -> void:
-	var ch: Dictionary = player.D["chassi"]
-	if ch.get("monociclo", false):
-		return
-	if ch["auto_equilibrio"]:
-		await _esperar(1.0)
-		var y0 := player.chassi.global_position.y
-		Input.action_press("especial")
-		await get_tree().physics_frame
-		await get_tree().physics_frame
-		Input.action_release("especial")
-		var topo := y0
-		for k in 60:
+	match player.habilidade:
+		"salto":
+			await _esperar(1.0)
+			var y0 := player.chassi.global_position.y
+			Input.action_press("especial")
 			await get_tree().physics_frame
-			topo = minf(topo, player.chassi.global_position.y)
-			if k == 22 and "fotos" in OS.get_cmdline_user_args():
-				await _captura("pulo_" + Game.personagem)
-		print("[ESPECIAL] pulo subiu %.0f px (montado=%s)" % [y0 - topo, player.montado])
-	else:
-		Input.action_press("accelerate")
-		await _esperar(1.0)
-		var v0 := player.chassi.linear_velocity.length()
-		Input.action_press("especial")
-		var vmax_t := 0.0
-		for k in 50:
 			await get_tree().physics_frame
-			vmax_t = maxf(vmax_t, player.chassi.linear_velocity.length())
-			if k == 25 and "fotos" in OS.get_cmdline_user_args():
-				await _captura("turbo_" + Game.personagem)
-		print("[ESPECIAL] turbo: %.0f -> %.0f px/s, fogo=%s" % [v0, vmax_t, player.fogo.emitting])
-		Input.action_release("especial")
-		Input.action_release("accelerate")
-		await _esperar(1.0)
+			Input.action_release("especial")
+			var topo := y0
+			for k in 60:
+				await get_tree().physics_frame
+				topo = minf(topo, player.chassi.global_position.y)
+				if k == 22 and "fotos" in OS.get_cmdline_user_args():
+					await _captura("hab_" + Game.personagem)
+			print("[ESPECIAL] salto subiu %.0f px (montado=%s, recarga=%.1f)" % [y0 - topo, player.montado, player.recarga])
+		"turbo":
+			Input.action_press("accelerate")
+			await _esperar(1.0)
+			var v0 := player.chassi.linear_velocity.length()
+			Input.action_press("especial")
+			var vmax_t := 0.0
+			for k in 30:
+				await get_tree().physics_frame
+				vmax_t = maxf(vmax_t, player.chassi.linear_velocity.length())
+				if k == 20 and "fotos" in OS.get_cmdline_user_args():
+					await _captura("hab_" + Game.personagem)
+			print("[ESPECIAL] turbo: %.0f -> %.0f px/s, combustivel=%.2f" % [v0, vmax_t, player.combustivel])
+			Input.action_release("especial")
+			Input.action_release("accelerate")
+			Input.action_press("brake")
+			await _esperar(1.5)
+			Input.action_release("brake")
+		"bomba":
+			var n0 := _explosoes
+			Input.action_press("especial")
+			await get_tree().physics_frame
+			await get_tree().physics_frame
+			Input.action_release("especial")
+			for k in 40:
+				await get_tree().physics_frame
+				if k == 20 and "fotos" in OS.get_cmdline_user_args():
+					await _captura("hab_" + Game.personagem)
+			await _esperar(2.4)
+			print("[ESPECIAL] bomba: explosoes %d -> %d, recarga=%.1f" % [n0, _explosoes, player.recarga])
+		"equilibrio":
+			_equilibrando = false                      # larga os botões: só a habilidade segura
+			await get_tree().physics_frame
+			Input.action_release("lean_fwd")
+			Input.action_release("lean_back")
+			Input.action_press("especial")
+			await get_tree().physics_frame
+			await get_tree().physics_frame
+			Input.action_release("especial")
+			var pior := 0.0
+			for k in 150:
+				await get_tree().physics_frame
+				pior = maxf(pior, absf(player.chassi.rotation))
+			print("[ESPECIAL] equilibrio: 2,5 s sem botao, inclinacao max %.2f rad, montado=%s" % [pior, player.montado])
+			_equilibrando = true
+			_equilibrar_mono()
+		"arpao":
+			var alvo := StaticBody2D.new()                # bloco de teste à frente e acima
+			alvo.collision_layer = 0b01
+			var cs := CollisionShape2D.new()
+			var r := RectangleShape2D.new()
+			r.size = Vector2(800, 200)
+			cs.shape = r
+			alvo.add_child(cs)
+			pecas.poligono(Pecas.retangulo(Vector2.ZERO, Vector2(800, 200)), Pecas.CINZA, 2, null, 1.0, alvo)
+			add_child(alvo)
+			alvo.global_position = player.chassi.global_position + Vector2(1500, -2300)
+			await get_tree().physics_frame
+			var p0 := player.chassi.global_position
+			Input.action_press("especial")
+			for k in 90:
+				await get_tree().physics_frame
+				if k == 45 and "fotos" in OS.get_cmdline_user_args():
+					await _captura("hab_" + Game.personagem)
+			var preso := not player._arpao.is_empty()
+			Input.action_release("especial")
+			print("[ESPECIAL] arpao: preso=%s, subiu %.0f px, andou %.0f px" % [preso, p0.y - player.chassi.global_position.y, player.chassi.global_position.x - p0.x])
+			await _esperar(1.0)
+			alvo.queue_free()
 
 func _esperar(s: float) -> void:
 	await get_tree().create_timer(s).timeout

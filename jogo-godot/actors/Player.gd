@@ -44,10 +44,24 @@ var _v_chassi_ant := Vector2.ZERO
 var _t_anim := 0.0
 var _ac := Vector2.ZERO                 # aceleração do veículo suavizada (para o corpo reagir)
 var fogo: CPUParticles2D                 # jato do turbo (cadeira e scooter)
-var _espera_pulo := 0.0
 var _som_turbo := 0.0
-const PULO := 1500.0                     # Δv pra cima do pulo do segway (px/s de jogo)
+const PULO := 1700.0                     # Δv pra cima do salto reforçado (px/s de jogo)
 const TURBO := 2600.0                    # aceleração extra do turbo (px/s² de jogo)
+## habilidade (botão especial): recarga em s, combustível do turbo 0..1, estado do arpão
+var habilidade := ""
+var recarga := 0.0
+var recarga_total := 1.0
+var combustivel := 1.0
+var _equilibrio_t := 0.0
+var _arpao: Dictionary = {}              # preso: {corpo, local, comp}
+var _corda: Line2D
+var explodir_cb: Callable                # (pos, raio, dv) -> explosão no mundo (bomba do Gian)
+## dano por parte do corpo enquanto montado
+var vida: Dictionary = {}                # corpo -> 0..100
+var perdeu: Dictionary = {}              # corpo -> true (membro arrancado montado)
+var _forma_corpo: Array = []             # formas do sensor (meta "corpo")
+var sensor_piloto: Area2D
+const MEMBROS := ["braco", "perna", "perna2", "coxa", "canela"]
 var morto := false
 var sangue: Sangue
 var _mat: PhysicsMaterial
@@ -192,7 +206,8 @@ func _montar() -> void:
 		s.position = centro_peca(k) - origem
 		chassi.add_child(s)
 
-	if ch.has("poly"):
+	habilidade = Game.HABILIDADES.get(personagem, "")
+	if habilidade == "turbo" and ch.has("poly"):
 		_montar_turbo(ch)
 	boneco = Node2D.new()
 	chassi.add_child(boneco)
@@ -201,9 +216,14 @@ func _montar() -> void:
 	sensor.collision_mask = 0b10001           # mundo + perigo pesado (bola de demolição)
 	_montar_membros()
 	for corpo in D["piloto"]:
-		sensor.add_child(_forma_cs(corpo, origem))
+		var cs := _forma_cs(corpo, origem)
+		cs.set_meta("corpo", corpo)
+		sensor.add_child(cs)
+		_forma_corpo.append(cs)
+		vida[corpo] = 100.0
 	chassi.add_child(sensor)
-	sensor.body_entered.connect(_on_corpo_bateu)
+	sensor_piloto = sensor
+	sensor.body_shape_entered.connect(_on_corpo_bateu)
 	montado = true
 
 ## piloto montado em articulações: tronco gira no quadril, os outros nas juntas do
@@ -339,30 +359,159 @@ func _no_chao() -> bool:
 	var q := PhysicsRayQueryParameters2D.create(roda_motriz.global_position, roda_motriz.global_position + Vector2(0, r + 70.0), 0b0001)
 	return not get_world_2d().direct_space_state.intersect_ray(q).is_empty()
 
-## botão especial: Périne pula com o segway; Gabriel e Gian ligam o turbo
+## botão especial: cada personagem tem a sua habilidade, com limite
+##  salto (Périne): pulo reforçado, recarga 1,2 s, só com a roda no chão
+##  turbo (Gabriel): jato enquanto segura; combustível acaba e recarrega
+##  bomba (Gian): arremessa uma bomba pra frente, recarga 2,5 s
+##  equilibrio (Erick): 3 s de equilíbrio automático, recarga 8 s
+##  arpao (Gorisch): dispara pra frente e pra cima, prende e puxa; solta ao largar
 func _especial(ch: Dictionary, delta: float) -> void:
-	_espera_pulo -= delta
-	if ch.get("monociclo", false):
+	recarga = maxf(0.0, recarga - delta)
+	_equilibrio_t = maxf(0.0, _equilibrio_t - delta)
+	var apertou := Input.is_action_just_pressed("especial")
+	var segura := Input.is_action_pressed("especial")
+	match habilidade:
+		"salto":
+			if apertou and recarga <= 0.0 and _no_chao():
+				_usar(1.2)
+				for rb in [chassi] + rodas:
+					var c := rb as RigidBody2D
+					c.apply_central_impulse((Vector2(0, -PULO) + Vector2.RIGHT.rotated(chassi.rotation) * 250.0) * c.mass)
+				Audio.tocar("pulo")
+		"turbo":
+			var ligado := segura and combustivel > (0.0 if _som_turbo > 0.0 else 0.2)
+			if fogo:
+				fogo.emitting = ligado
+			if ligado:
+				combustivel = maxf(0.0, combustivel - 0.4 * delta)
+				if chassi.linear_velocity.length() < float(ch["vmax"]) * velocidade * 1.9:
+					chassi.apply_central_force(Vector2.RIGHT.rotated(chassi.rotation) * massa_total * TURBO)
+				_som_turbo -= delta
+				if _som_turbo <= 0.0:
+					_som_turbo = 0.9
+					Audio.tocar("turbo", 0.9, 0.04)
+			else:
+				_som_turbo = 0.0
+				combustivel = minf(1.0, combustivel + 0.18 * delta)
+		"bomba":
+			if apertou and recarga <= 0.0:
+				_usar(2.5)
+				_lancar_bomba()
+		"equilibrio":
+			if apertou and recarga <= 0.0:
+				_usar(8.0)
+				_equilibrio_t = 3.0
+				Audio.tocar("checkpoint", 0.8)
+			if _equilibrio_t > 0.0:              # segura em pé sozinho e amortece o giro
+				chassi.apply_torque(inercia_chassi * (-chassi.rotation * 45.0 - chassi.angular_velocity * 10.0))
+		"arpao":
+			_arpoar(apertou, segura, delta)
+
+func _usar(tempo: float) -> void:
+	recarga = tempo
+	recarga_total = tempo
+
+## 0..1 do quanto a habilidade está pronta (HUD)
+func pronto() -> float:
+	if habilidade == "turbo":
+		return combustivel
+	if habilidade == "equilibrio" and _equilibrio_t > 0.0:
+		return 1.0
+	return 1.0 - recarga / maxf(recarga_total, 0.001)
+
+func _lancar_bomba() -> void:
+	var b := RigidBody2D.new()
+	b.mass = 1.0
+	b.collision_layer = 0b1000
+	b.collision_mask = 0b1001
+	b.contact_monitor = true
+	b.max_contacts_reported = 2
+	var cs := CollisionShape2D.new()
+	var c := CircleShape2D.new()
+	c.radius = 75.0
+	cs.shape = c
+	b.add_child(cs)
+	var corpo := Polygon2D.new()
+	var pts := PackedVector2Array()
+	for k in 20:
+		pts.append(Vector2(75, 0).rotated(TAU * k / 20.0))
+	corpo.polygon = pts
+	corpo.color = Color(0.12, 0.12, 0.14)
+	b.add_child(corpo)
+	var pavio := Line2D.new()
+	pavio.points = PackedVector2Array([Vector2(0, -70), Vector2(20, -120), Vector2(45, -135)])
+	pavio.width = 14.0
+	pavio.default_color = Color(0.75, 0.6, 0.35)
+	b.add_child(pavio)
+	var faisca := CPUParticles2D.new()
+	faisca.position = Vector2(45, -135)
+	faisca.amount = 16
+	faisca.lifetime = 0.3
+	faisca.initial_velocity_min = 150.0
+	faisca.initial_velocity_max = 400.0
+	faisca.spread = 180.0
+	faisca.scale_amount_min = 6.0
+	faisca.scale_amount_max = 12.0
+	faisca.color = Color(1, 0.8, 0.2)
+	b.add_child(faisca)
+	var frente := Vector2.RIGHT.rotated(chassi.rotation)
+	b.position = chassi.global_position + frente * 500.0 + Vector2(0, -350)
+	get_parent().add_child(b)
+	b.linear_velocity = chassi.linear_velocity + frente.rotated(-0.55) * 1700.0
+	b.angular_velocity = 8.0
+	Audio.tocar("pulo", 0.6)
+	var estoura := func() -> void:
+		if is_instance_valid(b) and not b.has_meta("foi"):
+			b.set_meta("foi", true)
+			var pos := b.global_position
+			b.queue_free()
+			if explodir_cb.is_valid():
+				explodir_cb.call(pos, 1300.0, 1000.0)
+	b.body_entered.connect(func(_o: Node) -> void: estoura.call_deferred())
+	get_tree().create_timer(2.2).timeout.connect(estoura)
+
+## arpão: no toque, procura parede/chão à frente e acima (até 5 mil px); preso, a
+## corda puxa o veículo e vai encurtando enquanto segura; soltar o botão libera
+func _arpoar(apertou: bool, segura: bool, delta: float) -> void:
+	if _corda == null:
+		_corda = Line2D.new()
+		_corda.width = 16.0
+		_corda.default_color = Color(0.85, 0.82, 0.7)
+		_corda.z_index = 15
+		get_parent().add_child(_corda)
+	if _arpao.is_empty():
+		_corda.visible = false
+		if apertou and recarga <= 0.0:
+			var de := chassi.global_position + Vector2(0, -300)
+			var direcao := Vector2.RIGHT.rotated(chassi.rotation - deg_to_rad(52.0))
+			var q := PhysicsRayQueryParameters2D.create(de, de + direcao * 5000.0, 0b1001)
+			q.exclude = [chassi.get_rid()]
+			var hit := get_world_2d().direct_space_state.intersect_ray(q)
+			_usar(0.6)
+			Audio.tocar("metal", 0.6)
+			if hit.is_empty():
+				return
+			var alvo: Node2D = hit["collider"]
+			_arpao = {"corpo": alvo, "local": alvo.to_local(hit["position"]),
+				"comp": de.distance_to(hit["position"]) * 0.92}
 		return
-	if ch["auto_equilibrio"]:
-		if Input.is_action_just_pressed("especial") and _espera_pulo <= 0.0 and _no_chao():
-			_espera_pulo = 0.5
-			for rb in [chassi] + rodas:
-				(rb as RigidBody2D).apply_central_impulse(Vector2(0, -PULO) * (rb as RigidBody2D).mass)
-			Audio.tocar("pulo")
+	var corpo: Node2D = _arpao["corpo"]
+	if not segura or not is_instance_valid(corpo):
+		_arpao.clear()
+		_usar(0.8)
 		return
-	var ligado := Input.is_action_pressed("especial")
-	if fogo:
-		fogo.emitting = ligado
-	if not ligado:
-		_som_turbo = 0.0
-		return
-	if chassi.linear_velocity.length() < float(ch["vmax"]) * velocidade * 1.9:
-		chassi.apply_central_force(Vector2.RIGHT.rotated(chassi.rotation) * massa_total * TURBO)
-	_som_turbo -= delta
-	if _som_turbo <= 0.0:
-		_som_turbo = 0.9
-		Audio.tocar("turbo", 0.9, 0.04)
+	var ponto: Vector2 = corpo.to_global(_arpao["local"])
+	var de := chassi.global_position + Vector2(0, -300)
+	_corda.visible = true
+	_corda.points = PackedVector2Array([de, ponto])
+	_arpao["comp"] = maxf(500.0, float(_arpao["comp"]) - 900.0 * delta)     # vai recolhendo
+	var d := ponto - de
+	var estica := d.length() - float(_arpao["comp"])
+	if estica > 0.0:                                     # corda esticada: puxa (mola firme + amortecimento)
+		var dir := d.normalized()
+		var vrel := chassi.linear_velocity.dot(dir)
+		var f := dir * (estica * 22.0 - vrel * 3.0) * massa_total
+		chassi.apply_force(f, Vector2(0, -300).rotated(chassi.rotation))
 
 func _centroide(pts: PackedVector2Array) -> Vector2:
 	var area := 0.0
@@ -375,14 +524,116 @@ func _centroide(pts: PackedVector2Array) -> Vector2:
 		c += (a + b) * cr
 	return c / (3.0 * area)
 
-func _on_corpo_bateu(body: Node) -> void:
+func _on_corpo_bateu(_rid: RID, body: Node, _forma_outro: int, forma: int) -> void:
+	if not montado:
+		return
+	var corpo := "tronco"
+	var dono := sensor_piloto.shape_find_owner(forma)
+	var no_forma := sensor_piloto.shape_owner_get_owner(dono)
+	if no_forma:
+		corpo = no_forma.get_meta("corpo", "tronco")
 	# bola de demolição: esbarrão lento só empurra; pancada rápida derruba
 	if body.is_in_group("pendulo"):
-		var rel := ((body.get_meta("vel", Vector2.ZERO) as Vector2) - chassi.linear_velocity).length()
-		if rel < 300.0:
+		var relp := ((body.get_meta("vel", Vector2.ZERO) as Vector2) - chassi.linear_velocity).length()
+		if relp < 300.0:
 			return
-	if montado:   # dentro do callback de física não pode criar corpos: adia pro fim do passo
-		soltar_ragdoll.call_deferred(_vel(), false)
+	var rel := chassi.linear_velocity.length()
+	if body is RigidBody2D:
+		rel = (chassi.linear_velocity - (body as RigidBody2D).linear_velocity).length()
+	# braço/perna raspando: machuca a parte (pode cair) mas ele continua montado
+	if corpo in MEMBROS and rel < 2200.0 and not body.is_in_group("pendulo"):
+		if rel > 350.0:
+			_ferir_membro.call_deferred(corpo, rel)
+		return
+	# cabeça/tronco ou pancada muito forte: voa do veículo (adiado: callback de física)
+	soltar_ragdoll.call_deferred(_vel(), false)
+
+## dano localizado montado: cada parte tem vida; zerou, o membro sai voando
+func _ferir_membro(corpo: String, forca: float) -> void:
+	if not montado or perdeu.has(corpo) or not membros.has(corpo):
+		return
+	vida[corpo] = float(vida.get(corpo, 100.0)) - forca / 14.0
+	var onde: Vector2 = (membros[corpo] as Node2D).global_position
+	if sangue:
+		sangue.jorrar(onde, 30, 900.0, Vector2.ZERO, chassi.linear_velocity * 0.3)
+	Audio.tocar("splat", 0.6)
+	if vida[corpo] <= 0.0:
+		_amputar_montado(corpo)
+
+func _amputar_montado(corpo: String) -> void:
+	var lista: Array = [corpo]
+	for j in D["juntas"]:                            # leva junto o que está preso nele (canela na coxa)
+		if j["a"] in lista:
+			lista.append(j["b"])
+	for c in lista:
+		perdeu[c] = true
+	for cs in _forma_corpo:
+		if (cs as Node).get_meta("corpo", "") in lista:
+			(cs as CollisionShape2D).set_deferred("disabled", true)
+	var no: Node2D = membros[corpo]
+	var pivo := no.global_position
+	var rb := RigidBody2D.new()
+	rb.mass = D["corpos"][corpo]["massa"]
+	rb.physics_material_override = _mat
+	rb.collision_layer = 0b100
+	rb.collision_mask = 0b1001
+	var base := centro_peca(corpo)
+	rb.add_child(_forma_cs(corpo, base))
+	add_child(rb)
+	rb.global_transform = Transform2D(no.global_rotation, no.to_global(base - v2(_pivo_arte(corpo))))
+	for c in lista:
+		for k in _pecas_do(c):
+			if sprites.has(k) and is_instance_valid(sprites[k]):
+				sprites[k].reparent(rb)
+				sprites[k].z_index += 20
+		membros.erase(c)
+	no.queue_free()
+	rb.linear_velocity = chassi.linear_velocity * 0.6 + Vector2(randf_range(-300, 300), -700)
+	rb.angular_velocity = randf_range(-8, 8)
+	Audio.tocar("osso", 1.0)
+	if sangue:
+		sangue.jorrar(pivo, 90, 1300.0)
+		sangue.esguichar(rb, rb.to_local(pivo), Vector2.ZERO - rb.to_local(pivo).normalized(), 3.0)
+		sangue.esguichar(chassi, chassi.to_local(pivo), Vector2(-1, 0.3), 4.0)
+
+func _pivo_arte(corpo: String) -> Array:
+	for j in D["juntas"]:
+		if j["b"] == corpo:
+			return j["p"]
+	var c := centro_peca(corpo)
+	return [c.x, c.y]
+
+func _sem_perna() -> bool:
+	for c in ["perna", "perna2", "coxa", "canela"]:
+		if perdeu.has(c):
+			return true
+	return false
+
+func _sem_braco() -> bool:
+	return perdeu.has("braco")
+
+## explosão por perto: montado, machuca os membros (ou derruba se for colado);
+## caído, arranca ou estoura as partes mais próximas
+func explosao(pos: Vector2, raio: float) -> void:
+	if not is_instance_valid(chassi):
+		return
+	if montado:
+		if chassi.global_position.distance_to(pos) < raio * 0.25:
+			soltar_ragdoll.call_deferred(_vel(), false)
+			return
+		for c in MEMBROS:
+			if membros.has(c) and not perdeu.has(c):
+				var dm := (membros[c] as Node2D).global_position.distance_to(pos)
+				if dm < raio * 0.6:
+					_ferir_membro.call_deferred(c, 1900.0 * (1.0 - dm / raio))
+		return
+	for c in corpos.keys():
+		var rbc: RigidBody2D = corpos[c]
+		var d := rbc.global_position.distance_to(pos)
+		if d < raio * 0.22:
+			explodir.call_deferred(c)
+		elif d < raio * 0.45 and juntas.has(c):
+			arrancar.call_deferred(c)
 
 # ---------- controle ----------
 func _physics_process(delta: float) -> void:
@@ -406,7 +657,7 @@ func _dirigir() -> void:
 	var mono: bool = ch.get("monociclo", false)
 	var dir := Input.get_axis("brake", "accelerate")
 	if dir != 0.0 and chassi.linear_velocity.length() < ch["vmax"] * velocidade:
-		var forca := massa_total * aceleracao       # arranque gradual, igual para os três
+		var forca := massa_total * aceleracao * (0.55 if _sem_perna() else 1.0)   # sem perna, pedala/empurra mal
 		if mono:        # monociclo: pedala no eixo; o corpo fica pra trás e você tem que se jogar pra frente
 			chassi.apply_force(Vector2(dir * forca, 0.0), roda_motriz.global_position - chassi.global_position)
 		elif equilibra:   # segway: empurra embaixo, o equilíbrio segura
@@ -416,13 +667,14 @@ func _dirigir() -> void:
 			chassi.apply_central_force(Vector2(dir * forca, 0.0))
 	var lean := Input.get_axis("lean_back", "lean_fwd")
 	if mono:        # sem ajuda nenhuma: só amortece o giro um pouco pra dar tempo de corrigir
-		chassi.apply_torque(inercia_chassi * (lean * equilibrio_mono - chassi.angular_velocity * 1.6))
+		chassi.apply_torque(inercia_chassi * (lean * equilibrio_mono * (0.6 if _sem_perna() else 1.0) * (0.6 if _sem_braco() else 1.0)
+			- chassi.angular_velocity * 1.6))
 	elif equilibra:   # girar muda o ângulo-alvo; o equilíbrio nunca desliga (desligar fazia tombar)
 		var alvo := lean * 0.45
 		chassi.apply_torque(inercia_chassi * (-(chassi.rotation - alvo) * balance_stiffness
 			- chassi.angular_velocity * balance_damping))
-	elif lean != 0.0:
-		chassi.apply_torque(lean * inercia_chassi * 5.0)
+	elif lean != 0.0:                # sem braço, controla mal
+		chassi.apply_torque(lean * inercia_chassi * (2.2 if _sem_braco() else 5.0))
 	else:           # sem botão, se alinha sozinho com o chão embaixo: pousa certo na descida
 		var alvo := _angulo_chao_embaixo() if ch.get("nivela_chao", true) else 0.0   # pé comprido na frente: fica reto
 		chassi.apply_torque(inercia_chassi * (-wrapf(chassi.rotation - alvo, -PI, PI) * 6.0 - chassi.angular_velocity * 2.5))
@@ -462,6 +714,8 @@ func soltar_ragdoll(herda_vel: Vector2, pulo: bool = false) -> void:
 		fogo.emitting = false
 	var rot := chassi.global_rotation
 	for corpo in D["piloto"]:
+		if perdeu.has(corpo):
+			continue
 		var base := centro_peca(corpo)          # origem do corpo = centro da peça de mesmo nome
 		var rb := RigidBody2D.new()
 		rb.mass = D["corpos"][corpo]["massa"]
@@ -481,6 +735,8 @@ func soltar_ragdoll(herda_vel: Vector2, pulo: bool = false) -> void:
 		rb.add_to_group("piloto")
 		v_ant[rb] = rb.linear_velocity
 	for j in D["juntas"]:
+		if perdeu.has(j["a"]) or perdeu.has(j["b"]):
+			continue
 		var pj := PinJoint2D.new()
 		add_child(pj)
 		pj.global_position = arte_para_mundo(v2(j["p"]))

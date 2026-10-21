@@ -114,7 +114,7 @@ func _jogar(fase: Node, estrategia: String) -> void:
 			var u0: float = fase.player.chassi.rotation + 0.35 * fase.player.chassi.angular_velocity
 			if u0 < -0.03: Input.action_press("lean_fwd")
 			elif u0 > 0.03: Input.action_press("lean_back")
-		if estrategia == "reativo_espera" and (_esperar_pendulo(foco) or _esperar_prensa(foco)):
+		if estrategia == "reativo_espera" and (_esperar_pendulo(foco) or _esperar_prensa(foco) or _esperar_onda(foco)):
 			parado = 0.0
 			Input.action_press("brake") if fase.player.chassi.linear_velocity.x > 30.0 else null
 			continue
@@ -229,6 +229,20 @@ func _passa_prensa(p: Node, x0: float, fator: float) -> bool:
 		x += v * 0.02
 		t += 0.02
 	return true
+
+## plataformas temporárias: espera na borda até a primeira da onda acabar de aparecer
+func _esperar_onda(foco: Node2D) -> bool:
+	for p in get_tree().get_nodes_in_group("plataforma_temporaria"):
+		var borda: float = (p as Node2D).global_position.x - float(p.get_meta("larg", 980.0)) / 2.0
+		var dist := borda - foco.global_position.x
+		if dist < 250.0 or dist > 1500.0 or _prensas_liberadas.has(p):
+			continue
+		var f: float = p.get_meta("ciclo", 0.5)
+		if f < 0.08:
+			_prensas_liberadas[p] = true
+			return false
+		return true
+	return false
 
 ## ângulo do terreno sob a posição (dois raios: 200 px atrás e na frente); 0 se no ar
 func _angulo_chao(pos: Vector2) -> float:
