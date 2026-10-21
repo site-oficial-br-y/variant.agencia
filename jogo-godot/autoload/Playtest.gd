@@ -187,7 +187,7 @@ func _passa_bola(b: Node, x0: float, v: float) -> bool:
 func _esperar_prensa(foco: Node2D) -> bool:
 	for p in get_tree().get_nodes_in_group("pistao"):
 		var dist: float = float(p.get_meta("x")) - foco.global_position.x
-		if dist < 300.0 or dist > 2000.0 or _prensas_liberadas.has(p):
+		if dist < 300.0 or dist > 2800.0 or _prensas_liberadas.has(p):
 			continue
 		var ch: Dictionary = _fase().player.D["chassi"]
 		var vmax: float = float(ch["vmax"]) * _fase().player.velocidade

@@ -465,7 +465,7 @@ func _fase_2() -> void:
 	for volta in 3:
 		_cp(c, p)
 		p = _t_prensa(p)
-		p = _t_predio(p, 520.0 + volta * 90.0)
+		p = _t_predio(p)
 		p = _t_plano(p, 1500)
 		p = _t_voo(p, "espinhos")
 		p = _t_mega(p, qv * 3.0, -qv)
