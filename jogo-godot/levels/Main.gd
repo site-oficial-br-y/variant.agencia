@@ -47,7 +47,7 @@ func _ready() -> void:
 			Game.fase = int(a.substr(2))
 	Engine.time_scale = Game.RITMO           # física a 180 Hz x 3 = mesmo passo de 1/60 s de jogo
 	RenderingServer.set_default_clear_color(Color(0.33, 0.55, 0.93))
-	tema = ["campo", "obra", "montanha", "lab", "boss"][clampi(Game.fase, 1, 5) - 1]
+	tema = ["campo", "obra", "montanha", "lab", "boss", "mercado"][clampi(Game.fase, 1, 6) - 1]
 	_construir_fundo("hw" if tema == "campo" else tema)
 	_mat = PhysicsMaterial.new()
 	_mat.friction = 1.0
@@ -169,6 +169,8 @@ func _physics_process(delta: float) -> void:
 	mec.atualizar(delta)
 	if Game.fase == 4:
 		_atualizar_lab(delta)
+	if Game.fase == 6:
+		_atualizar_mercado(delta)
 	if boss:
 		boss.atualizar(delta)
 		_rodada_boss(delta)
@@ -188,6 +190,7 @@ func _construir_chao() -> void:
 		3: _fase_3()
 		4: _fase_4()
 		5: _fase_5()
+		6: _fase_6()
 		_: _fase_1()
 
 ## marcos comuns: zona de morte, checkpoints (lista de Vector2: x, chão) e chegada
@@ -583,6 +586,148 @@ func _bloco_novo(p: Vector2, c: Array, combinacao: Array) -> Vector2:
 func _queda_voo() -> float:
 	var inc := tan(deg_to_rad(26.0))
 	return 100.0 + POUSO * inc + inc * 2600.0 * 0.5
+
+# ---------- FASE 6: Atacadão (mercado + chefe Vendedor) ----------
+var vendedor: Vendedor
+var _carrinhos: Array = []
+var _portao6: StaticBody2D
+const MERC_CP := 23500.0
+const MERC_ARENA := 25500.0
+const MERC_FIM := 37000.0
+
+func _fase_6() -> void:
+	var y := CHAO_Y
+	pecas.terreno(PackedVector2Array([Vector2(-3000, y), Vector2(MERC_FIM + 6000.0, y)]), y + 2600.0, false)
+	pecas.poligono(Pecas.retangulo(Vector2(MERC_FIM / 2.0, y + 1300.0), Vector2(MERC_FIM + 12000.0, 2600)), Color(0.72, 0.7, 0.66), 1)
+	pecas.poligono(Pecas.retangulo(Vector2(MERC_FIM / 2.0, y + 25.0), Vector2(MERC_FIM + 12000.0, 50)), Color(0.85, 0.83, 0.79), 1)
+	_mercado_cenario(y)
+	pecas.placa(Vector2(-900, y), "LARGADA")
+	# corredor 1: pilha de caixas pra atravessar no peito
+	_parede_arena(-2700.0, y)
+	for i in 4:
+		pecas.caixa(Vector2(3300 + i * 330, y - 160), 300)
+	# paletes: rampa sobe num estrado comprido e desce
+	pecas.rampa(7400, 8200, y, 380)
+	pecas.terreno(PackedVector2Array([Vector2(8200, y - 380), Vector2(10000, y - 380), Vector2(11000, y)]), y + 2600.0)
+	# carrinhos descendo o corredor na sua direção
+	for i in 4:
+		_carrinho_solto(Vector2(13400 + i * 900, y))
+	# compactador de papelão (prensa) e fatiador de frios (serra no trilho)
+	pecas.prensa(15200, y, 5.0, 1.3)
+	mec.serra_trilho(Vector2(17800, y), 3.2, 0.7)
+	# piso que cede sobre o depósito
+	_fosso(19400, 21800, y)
+	for i in 3:
+		mec.plataforma_quebravel(Vector2(19800 + i * 800, y), 780.0)
+	# checkpoint e arena do chefe
+	_cp_forcado(Vector2(MERC_CP, y))
+	_portao6 = StaticBody2D.new()
+	_portao6.collision_layer = 0b01
+	var cs := CollisionShape2D.new()
+	var r := RectangleShape2D.new()
+	r.size = Vector2(260, 3600)
+	cs.shape = r
+	_portao6.add_child(cs)
+	pecas.poligono(Pecas.retangulo(Vector2.ZERO, Vector2(260, 3600)), Color(0.45, 0.47, 0.5), 3, null, 1.0, _portao6)
+	pecas.poligono(Pecas.retangulo(Vector2(0, 1500), Vector2(260, 160)), Color.WHITE, 3, pecas.tex("perigo"), 0.8, _portao6)
+	_portao6.position = Vector2(MERC_FIM - 2500.0, y - 1800.0)
+	add_child(_portao6)
+	pecas.portal_chegada(Vector2(MERC_FIM, y))
+	_meta_pos = Vector2(MERC_FIM + 700, y)
+	_marcos([], Vector2(MERC_FIM, y), y + 3200.0, false)
+	vendedor = Vendedor.new()
+	add_child(vendedor)
+	vendedor.global_position = Vector2(MERC_ARENA + 2000.0, y + 80.0)
+	vendedor.montar(self, y)
+	vendedor.cansou.connect(func() -> void:
+		var tw := _portao6.create_tween()
+		tw.tween_property(_portao6, "position:y", _portao6.position.y - 3700.0, 1.2))
+	var gat := _area(Vector2(MERC_ARENA, y - 700), Vector2(200, 1600))
+	gat.body_entered.connect(func(b: Node2D) -> void:
+		if b.is_in_group("veiculo") or b.is_in_group("piloto"): vendedor.comecar())
+
+## checkpoint desta fase (mesmo com os checkpoints gerais desligados)
+func _cp_forcado(ck: Vector2) -> void:
+	_bandeira(ck.x, ck.y, Color(0.3, 0.85, 0.35))
+	var cp := _area(Vector2(ck.x, ck.y - 600), Vector2(60, 1200))
+	cp.body_entered.connect(_on_checkpoint.bind(ck))
+
+func _carrinho_solto(base: Vector2) -> void:
+	var c := RigidBody2D.new()
+	c.mass = 3.0
+	c.collision_layer = 0b1000
+	c.collision_mask = 0b1011
+	var cs := CollisionShape2D.new()
+	var r := RectangleShape2D.new()
+	r.size = Vector2(800, 600)
+	cs.shape = r
+	c.add_child(cs)
+	var s := Sprite2D.new()
+	s.texture = load("res://assets/bicho/veiculo.png")
+	s.scale = Vector2.ONE * 0.62
+	c.add_child(s)
+	c.position = base + Vector2(0, -330)
+	c.freeze = true
+	c.freeze_mode = RigidBody2D.FREEZE_MODE_KINEMATIC
+	add_child(c)
+	_carrinhos.append(c)
+
+func _atualizar_mercado(_dt: float) -> void:
+	if not is_instance_valid(player):
+		return
+	var px := player.foco().global_position.x
+	for c in _carrinhos.duplicate():
+		if not is_instance_valid(c):
+			_carrinhos.erase(c)
+			continue
+		var rc := c as RigidBody2D
+		if rc.freeze and rc.global_position.x - px < 3600.0:   # chegou perto: o carrinho desce
+			rc.freeze = false
+			rc.linear_velocity = Vector2(-1100, 0)
+			Audio.tocar("caixa", 0.6)
+	if vendedor:
+		vendedor.atualizar(_dt)
+
+## fundo do mercado: parede, gôndolas cheias de produto, placas penduradas
+func _mercado_cenario(y: float) -> void:
+	var teto := y - 3000.0
+	pecas.poligono(Pecas.retangulo(Vector2(MERC_FIM / 2.0, (teto + y) / 2.0), Vector2(MERC_FIM + 12000.0, y - teto)), Color(0.93, 0.9, 0.82), -7)
+	pecas.poligono(Pecas.retangulo(Vector2(MERC_FIM / 2.0, teto + 150.0), Vector2(MERC_FIM + 12000.0, 300)), Color(0.4, 0.42, 0.45), -6)
+	var cores := [Color(0.9, 0.2, 0.2), Color(0.2, 0.5, 0.9), Color(1, 0.8, 0.2), Color(0.3, 0.75, 0.3), Color(1, 0.5, 0.1), Color(0.8, 0.3, 0.8)]
+	var x := -3000.0
+	var m := 0
+	while x < MERC_FIM + 4000.0:
+		# gôndola
+		var gx := x + 1000.0
+		pecas.poligono(Pecas.retangulo(Vector2(gx, y - 1000), Vector2(1700, 2000)), Color(0.62, 0.65, 0.7), -6)
+		for f in 5:
+			var fy := y - 1850.0 + f * 380.0
+			pecas.poligono(Pecas.retangulo(Vector2(gx, fy + 160), Vector2(1700, 36)), Color(0.4, 0.42, 0.46), -5)
+			for i in 9:
+				var c: Color = cores[(m + f * 2 + i) % cores.size()]
+				var h := 200.0 + float((i * 37 + f * 13 + m) % 3) * 30.0
+				pecas.poligono(Pecas.retangulo(Vector2(gx - 720 + i * 180, fy + 140 - h / 2.0), Vector2(150, h)), c, -5)
+				pecas.poligono(Pecas.retangulo(Vector2(gx - 720 + i * 180, fy + 140 - h * 0.6), Vector2(110, 40)), c.lightened(0.5), -5)
+		# placa pendurada
+		var px := x + 2600.0
+		pecas.linha(PackedVector2Array([Vector2(px - 350, teto + 300), Vector2(px - 350, teto + 700)]), 10.0, Color(0.3, 0.3, 0.32), -5)
+		pecas.linha(PackedVector2Array([Vector2(px + 350, teto + 300), Vector2(px + 350, teto + 700)]), 10.0, Color(0.3, 0.3, 0.32), -5)
+		pecas.poligono(Pecas.retangulo(Vector2(px, teto + 800), Vector2(1000, 260)), Color(1, 0.5, 0.1), -5)
+		var l := Label.new()
+		l.text = ["ATACADÃO", "OFERTA!", "LEVE 3 PAGUE 2", "CORREDOR %d" % (m + 1)][m % 4]
+		l.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+		l.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+		l.size = Vector2(1000, 260)
+		l.position = Vector2(px - 500, teto + 670)
+		l.add_theme_font_size_override("font_size", 130)
+		l.add_theme_color_override("font_color", Color.WHITE)
+		l.add_theme_color_override("font_outline_color", Color(0.1, 0.4, 0.2))
+		l.add_theme_constant_override("outline_size", 22)
+		l.z_index = -5
+		add_child(l)
+		pecas.poligono(Pecas.retangulo(Vector2(px, teto + 400), Vector2(500, 40)), Color(1, 1, 0.9), -5)
+		x += 3600.0
+		m += 1
 
 # ---------- FASE 5: Chefão ----------
 ## pista no escuro com o chefe gigante no fundo. Passar nos botões vermelhos dá
@@ -1154,8 +1299,8 @@ func _construir_fundo(tema: String) -> void:
 	var pb := ParallaxBackground.new()
 	add_child(pb)
 	var grad := Gradient.new()
-	grad.set_color(0, {"boss": Color(0.01, 0.01, 0.02), "obra": Color(0.36, 0.52, 0.78), "montanha": Color(0.2, 0.38, 0.78)}.get(tema, Color(0.27, 0.47, 0.92)))
-	grad.set_color(1, {"boss": Color(0.05, 0.03, 0.07), "lab": Color(0.6, 0.65, 0.7), "campo": Color(0.86, 0.93, 0.98), "obra": Color(0.95, 0.85, 0.72), "montanha": Color(0.78, 0.88, 0.98)}.get(tema, Color(0.62, 0.78, 0.98)))
+	grad.set_color(0, {"mercado": Color(0.9, 0.85, 0.75), "boss": Color(0.01, 0.01, 0.02), "obra": Color(0.36, 0.52, 0.78), "montanha": Color(0.2, 0.38, 0.78)}.get(tema, Color(0.27, 0.47, 0.92)))
+	grad.set_color(1, {"mercado": Color(0.95, 0.9, 0.8), "boss": Color(0.05, 0.03, 0.07), "lab": Color(0.6, 0.65, 0.7), "campo": Color(0.86, 0.93, 0.98), "obra": Color(0.95, 0.85, 0.72), "montanha": Color(0.78, 0.88, 0.98)}.get(tema, Color(0.62, 0.78, 0.98)))
 	var gt := GradientTexture2D.new()
 	gt.gradient = grad
 	gt.fill_from = Vector2(0, 0)
@@ -1169,7 +1314,7 @@ func _construir_fundo(tema: String) -> void:
 	ceu_s.stretch_mode = TextureRect.STRETCH_SCALE
 	fundo_ceu.add_child(ceu_s)
 	var camadas: Array = [["nuvem", 0.12, -1300.0, 4.8], ["ui/morros_longe", 0.25, 720.0, 4.1], ["ui/morros_perto", 0.45, 980.0, 4.4]]
-	if tema in ["lab", "boss"]:
+	if tema in ["lab", "boss", "mercado"]:
 		camadas = []
 	if tema in ["campo", "obra", "montanha", "hw"]:
 		camadas = [["nuvem", 0.1, -1500.0, 5.5], ["arte/fundo_%s_longe" % tema, 0.18, 380.0, 3.4],

@@ -8,7 +8,7 @@ enum Estado { JOGANDO, MORTO, VITORIA }
 var estado: int = Estado.JOGANDO
 var personagem: String = "segway"
 var fase: int = 1
-const FASES := ["FASE 1", "FASE 2", "FASE 3", "FASE 4: LABORATÓRIO", "FASE 5: CHEFÃO"]
+const FASES := ["FASE 1", "FASE 2", "FASE 3", "FASE 4: LABORATÓRIO", "FASE 5: CHEFÃO", "FASE 6: ATACADÃO"]
 const NOMES := {"segway": "PÉRINE", "cadeira": "GABRIEL", "scooter": "GIAN", "monociclo": "ERICK", "gamer": "GORISCH", "bicho": "BICHO", "wendell": "WENDELL"}
 ## habilidade de cada um (botão especial), sempre com limite de uso
 const CHECKPOINTS := false              # sem checkpoint: morreu, volta pro começo da fase
