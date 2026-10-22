@@ -740,12 +740,13 @@ func _on_corpo_bateu(_rid: RID, body: Node, _forma_outro: int, forma: int) -> vo
 		var v := chassi.linear_velocity
 		contra = absf(v.y)                                   # pouso
 		var q := PhysicsRayQueryParameters2D.create(chassi.global_position, chassi.global_position + Vector2(signf(v.x) * 900.0, -300.0), 0b0001)
-		if not get_world_2d().direct_space_state.intersect_ray(q).is_empty():
-			contra = maxf(contra, absf(v.x))                 # parede na frente: conta a batida
+		var r := get_world_2d().direct_space_state.intersect_ray(q)
+		if not r.is_empty() and absf((r["normal"] as Vector2).x) > 0.85:
+			contra = maxf(contra, absf(v.x))                 # parede de verdade na frente: conta a batida
 	if body.is_in_group("pendulo"):
 		contra = maxf(contra, 3000.0)
 	if corpo in MEMBROS and contra < 3200.0:
-		if contra > 1400.0:
+		if contra > 1400.0 and not (body is StaticBody2D or body is AnimatableBody2D):
 			_ferir_membro.call_deferred(corpo, contra * 0.5)
 		return
 	if contra < 2600.0:                                   # cabeça/tronco raspando: segue montado
@@ -762,11 +763,7 @@ func _ferir_membro(corpo: String, forca: float) -> void:
 		sangue.jorrar(onde, 14, 900.0, Vector2.ZERO, chassi.linear_velocity * 0.3)
 	Audio.tocar("splat", 0.6)
 	if vida[corpo] <= 0.0:
-		if corpo == "braco":
-			_amputar_montado(corpo)            # braço pode sair e ele segue montado
-		else:
-			soltar_ragdoll.call_deferred(_vel(), false)   # perna destruída: cai do veículo
-			arrancar.call_deferred(corpo)
+		_amputar_montado(corpo)                # membro sai e ele segue montado
 
 func _amputar_montado(corpo: String) -> void:
 	var lista: Array = [corpo]
