@@ -783,8 +783,9 @@ func soltar_ragdoll(herda_vel: Vector2, pulo: bool = false) -> void:
 		pj.disable_collision = true
 		pj.softness = 0.0
 		pj.angular_limit_enabled = true
-		pj.angular_limit_lower = -deg_to_rad(float(j["lim"]) * 0.55)
-		pj.angular_limit_upper = deg_to_rad(float(j["lim"]) * 0.55)
+		var lim_j := 28.0 if j["b"] == "cabeca" else float(j["lim"]) * 0.55
+		pj.angular_limit_lower = -deg_to_rad(lim_j)
+		pj.angular_limit_upper = deg_to_rad(lim_j)
 		juntas[j["b"]] = pj
 		_ang0[j["b"]] = corpos[j["b"]].rotation - corpos[j["a"]].rotation
 	boneco.queue_free()
@@ -804,6 +805,14 @@ func _musculos() -> void:
 		var wrel := rb.angular_velocity - ra.angular_velocity
 		var forca := 0.35 if morto else 1.0
 		var t := (-rel * 4.0 - wrel * 1.0) * forca
+		# limite duro (o do PinJoint2D escapa): passou do ângulo, empurra de volta com força
+		# e corta o giro pra fora. Pescoço mais curto: a cabeça não entra no peito.
+		var lim := deg_to_rad(28.0 if b == "cabeca" else float(j["lim"]) * 0.6)
+		if absf(rel) > lim:
+			var passou := rel - signf(rel) * lim
+			t += -passou * 120.0 - wrel * 12.0
+			if signf(wrel) == signf(rel):
+				rb.angular_velocity = ra.angular_velocity + wrel * 0.3
 		rb.apply_torque(t * _inercia(rb))
 		ra.apply_torque(-t * _inercia(rb) * 0.5)
 
