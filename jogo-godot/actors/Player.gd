@@ -26,7 +26,7 @@ var delta_fisica := 1.0 / 60.0
 @export var arrasto: float = 0.15             # resistência do ar: descida chega num limite em vez de disparar
 @export var limiar_sangue: float = 420.0       # Δv (px/s) num passo que já espirra sangue
 @export var limiar_arranca: float = 2700.0     # Δv que arranca o membro
-@export var limiar_queda_montado: float = 2400.0
+@export var limiar_queda_montado: float = 6000.0   # só porrada gigante derruba (pouso de voo alto não)
 @export var limiar_explode: float = 3300.0      # Δv que estoura a parte do corpo (cabeça estoura antes)
 
 var D: Dictionary = {}
@@ -733,12 +733,23 @@ func _on_corpo_bateu(_rid: RID, body: Node, _forma_outro: int, forma: int) -> vo
 	var rel := chassi.linear_velocity.length()
 	if body is RigidBody2D:
 		rel = (chassi.linear_velocity - (body as RigidBody2D).linear_velocity).length()
-	# braço/perna raspando: machuca a parte (pode cair) mas ele continua montado
-	if corpo in MEMBROS and rel < 2200.0 and not body.is_in_group("pendulo"):
-		if rel > 350.0:
-			_ferir_membro.call_deferred(corpo, rel)
+	# preso no veículo: chão e parede só derrubam com pancada gigante. A velocidade
+	# que conta é a de encontro (contra a superfície), não a de andar
+	var contra := rel
+	if body is StaticBody2D or body is AnimatableBody2D:
+		var v := chassi.linear_velocity
+		contra = absf(v.y)                                   # pouso
+		var q := PhysicsRayQueryParameters2D.create(chassi.global_position, chassi.global_position + Vector2(signf(v.x) * 900.0, -300.0), 0b0001)
+		if not get_world_2d().direct_space_state.intersect_ray(q).is_empty():
+			contra = maxf(contra, absf(v.x))                 # parede na frente: conta a batida
+	if body.is_in_group("pendulo"):
+		contra = maxf(contra, 3000.0)
+	if corpo in MEMBROS and contra < 3200.0:
+		if contra > 1400.0:
+			_ferir_membro.call_deferred(corpo, contra * 0.5)
 		return
-	# cabeça/tronco ou pancada muito forte: voa do veículo (adiado: callback de física)
+	if contra < 2600.0:                                   # cabeça/tronco raspando: segue montado
+		return
 	soltar_ragdoll.call_deferred(_vel(), false)
 
 ## dano localizado montado: cada parte tem vida; zerou, o membro sai voando
@@ -882,7 +893,7 @@ func _dirigir() -> void:
 	if dv > 1300.0:                      # pouso / batida do veículo (quique pequeno não faz barulho)
 		Audio.tocar("impacto_leve" if dv < 2000.0 else "impacto_forte", dv / 3000.0)
 		bateu_chao.emit(roda_motriz.global_position + Vector2(0, (roda_motriz.get_child(0).shape as CircleShape2D).radius), dv / 2000.0)
-	var tomba := deg_to_rad(65.0 if mono else (78.0 if equilibra else 115.0))
+	var tomba := deg_to_rad(65.0 if mono else (78.0 if equilibra else 150.0))
 	if imortal_t > 0.0:
 		return
 	if dv > limiar_queda_montado or absf(chassi.rotation) > tomba \

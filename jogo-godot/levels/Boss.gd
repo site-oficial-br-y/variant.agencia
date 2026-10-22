@@ -313,6 +313,9 @@ func _acertou(b: Node2D, m: Dictionary) -> void:
 	var pl: Player = fase.player
 	if pl.imortal_t > 0.0 and pl.montado:
 		return
+	# só pega quem está dentro da área vermelha (a mão desenhada é maior que o golpe)
+	if absf(b.global_position.x - (m["alvo"] as Vector2).x) > 650.0:
+		return
 	(m["hit"] as Area2D).set_deferred("monitoring", false)
 	if String(m.get("golpe", "")).begins_with("agarra"):
 		_agarrar.call_deferred()

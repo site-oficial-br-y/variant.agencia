@@ -64,6 +64,9 @@ func _ready() -> void:
 	player.personagem = Game.personagem
 	player.chao_y = CHAO_Y
 	player.spawn_x = SPAWN_X
+	for a in OS.get_cmdline_user_args():
+		if a.begins_with("queda="):                    # teste: nasce lá no alto e despenca
+			player.chao_y = CHAO_Y - float(a.substr(6))
 	player.fundo_y = morte_y - 300.0
 	do_inicio = Game.checkpoint_x <= 0.0
 	if Game.checkpoint_x > 0.0:               # renasce no checkpoint depois de morrer
@@ -86,6 +89,8 @@ func _ready() -> void:
 
 	_construir_hud()
 
+	if "teste_queda" in OS.get_cmdline_user_args():
+		_teste_queda()
 	if "contar" in OS.get_cmdline_user_args():       # tamanho da fase: nós e comprimento
 		var n := 0
 		var pilha: Array = [self]
@@ -1820,6 +1825,11 @@ func _testar_especial() -> void:
 			print("[ESPECIAL] arpao: preso=%s, subiu %.0f px, andou %.0f px" % [preso, p0.y - player.chassi.global_position.y, player.chassi.global_position.x - p0.x])
 			await _esperar(1.0)
 			alvo.queue_free()
+
+func _teste_queda() -> void:
+	await _esperar(3.0)
+	print("[QUEDA] %s: montado=%s" % [Game.personagem, player.montado])
+	get_tree().quit()
 
 func _esperar(s: float) -> void:
 	await get_tree().create_timer(s).timeout
