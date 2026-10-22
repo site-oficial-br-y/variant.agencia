@@ -171,6 +171,7 @@ func _physics_process(delta: float) -> void:
 		_atualizar_lab(delta)
 	if boss:
 		boss.atualizar(delta)
+		_rodada_boss(delta)
 
 func _mover_pendulos(t: float) -> void:
 	for p in _pendulos:
@@ -588,35 +589,35 @@ func _queda_voo() -> float:
 ## choque nele (5 de vida). O portão do fim só abre com ele derrotado.
 var boss: Boss
 var _portao: StaticBody2D
-const BOSS_FIM := 38000.0
+const BOSS_FIM := 13000.0
+const ARENA_X0 := -1900.0
+const ARENA_X1 := 9600.0
+var _botoes: Array = []
+var _botoes_x := [7400.0, 600.0, 4800.0, 8600.0, 2400.0]   # ordem em que acendem: espalhados pela arena
+var _botao_ativo := -1
+var _rodada_t := 7.0
+var _msg: Label
 
 func _fase_5() -> void:
+	# arena fechada: parede atrás e portão na frente. Não dá pra passar correndo:
+	# os botões acendem um por vez, só depois de sobreviver a uma rodada de ataques
 	var y := CHAO_Y
-	var bruto := PackedVector2Array([Vector2(-3000, y)])
-	var x := 2000.0
-	var k := 0
-	while x < BOSS_FIM + 4000.0:                       # pista reta com lombadas suaves
-		bruto.append(Vector2(x, y))
-		if k % 3 == 1:
-			bruto.append(Vector2(x + 700, y - 260))
-			bruto.append(Vector2(x + 1400, y))
-		x += 2600.0
-		k += 1
-	bruto.append(Vector2(BOSS_FIM + 6000.0, y))
+	var bruto := PackedVector2Array([Vector2(ARENA_X0 - 2000.0, y), Vector2(1800, y), Vector2(2600, y - 220),
+		Vector2(3400, y), Vector2(6400, y), Vector2(7200, y - 220), Vector2(8000, y), Vector2(BOSS_FIM + 6000.0, y)])
 	pecas.pista_elevada(bruto, y + 2600.0)
-	for i in 5:
-		_botao_choque(Vector2(6000.0 + i * 6400.0, y))
-	# portão do fim (fechado até o chefe cair)
+	_parede_arena(ARENA_X0, y)
+	for i in _botoes_x.size():
+		_botoes.append(_botao_choque(Vector2(_botoes_x[i], y)))
 	_portao = StaticBody2D.new()
 	_portao.collision_layer = 0b01
 	var cs := CollisionShape2D.new()
 	var r := RectangleShape2D.new()
-	r.size = Vector2(260, 3200)
+	r.size = Vector2(260, 3600)
 	cs.shape = r
 	_portao.add_child(cs)
-	pecas.poligono(Pecas.retangulo(Vector2.ZERO, Vector2(260, 3200)), Color(0.4, 0.42, 0.46), 3, null, 1.0, _portao)
-	pecas.poligono(Pecas.retangulo(Vector2(0, 1300), Vector2(260, 160)), Color.WHITE, 3, pecas.tex("perigo"), 0.8, _portao)
-	_portao.position = Vector2(BOSS_FIM - 1200.0, y - 1600.0)
+	pecas.poligono(Pecas.retangulo(Vector2.ZERO, Vector2(260, 3600)), Color(0.4, 0.42, 0.46), 3, null, 1.0, _portao)
+	pecas.poligono(Pecas.retangulo(Vector2(0, 1500), Vector2(260, 160)), Color.WHITE, 3, pecas.tex("perigo"), 0.8, _portao)
+	_portao.position = Vector2(ARENA_X1, y - 1800.0)
 	add_child(_portao)
 	pecas.portal_chegada(Vector2(BOSS_FIM, y))
 	_meta_pos = Vector2(BOSS_FIM + 700, y)
@@ -626,17 +627,60 @@ func _fase_5() -> void:
 	boss.global_position = Vector2(1200, y - 690.0)
 	boss.montar(self, y)
 	boss.derrotado.connect(func() -> void:
+		_mensagem("O PORTÃO ABRIU! CORRE!", Color(0.5, 1, 0.5))
 		var tw := _portao.create_tween()
-		tw.tween_property(_portao, "position:y", _portao.position.y - 3300.0, 1.2))
+		tw.tween_property(_portao, "position:y", _portao.position.y - 3700.0, 1.2))
 
-## botão vermelho no chão: passou por cima, raio no chefe
-func _botao_choque(base: Vector2) -> void:
+func _parede_arena(x: float, y: float) -> void:
+	var sb := StaticBody2D.new()
+	sb.collision_layer = 0b01
+	var cs := CollisionShape2D.new()
+	var r := RectangleShape2D.new()
+	r.size = Vector2(400, 4000)
+	cs.shape = r
+	sb.add_child(cs)
+	pecas.poligono(Pecas.retangulo(Vector2.ZERO, Vector2(400, 4000)), Color(0.4, 0.42, 0.46), 3, null, 1.0, sb)
+	sb.position = Vector2(x, y - 2000.0)
+	add_child(sb)
+
+## rodadas: sobrevive X segundos de ataque, aí um botão acende num canto da arena
+func _rodada_boss(dt: float) -> void:
+	if not is_instance_valid(boss) or boss.morto or not ativo:
+		return
+	if _botao_ativo >= 0:
+		return
+	_rodada_t -= dt / Engine.time_scale
+	if _rodada_t > 0.0:
+		return
+	_botao_ativo = 5 - boss.vida                            # próximo da lista
+	_ligar_botao(_botoes[_botao_ativo])
+	_mensagem("BOTÃO LIGADO! VAI LÁ!", Color(1, 0.9, 0.3))
+
+func _mensagem(t: String, cor: Color) -> void:
+	if _msg == null:
+		_msg = Label.new()
+		_msg.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+		_msg.add_theme_font_size_override("font_size", 56)
+		_msg.add_theme_color_override("font_outline_color", Color.BLACK)
+		_msg.add_theme_constant_override("outline_size", 12)
+		$HUD.add_child(_msg)
+	var v := get_viewport().get_visible_rect().size
+	_msg.size = Vector2(v.x, 90)
+	_msg.position = Vector2(0, v.y * 0.3)
+	_msg.text = t
+	_msg.add_theme_color_override("font_color", cor)
+	_msg.visible = true
+	_msg.modulate.a = 1.0
+	var tw := _msg.create_tween()
+	tw.tween_interval(1.6)
+	tw.tween_property(_msg, "modulate:a", 0.0, 0.5)
+
+## botão no chão: desligado (cinza) até a rodada acabar; ligado, passou por cima = raio
+func _botao_choque(base: Vector2) -> Dictionary:
 	pecas.poligono(Pecas.retangulo(base + Vector2(0, -20), Vector2(420, 40)), Color(0.25, 0.25, 0.28), 3)
-	var cupula := pecas.poligono(Pecas.retangulo(base + Vector2(0, -70), Vector2(300, 70)), Color(1, 0.15, 0.1), 3)
-	var luz := pecas.poligono(Pecas.retangulo(base + Vector2(0, -500), Vector2(40, 700)), Color(1, 0.2, 0.15, 0.25), 2)
-	var tw := luz.create_tween().set_loops()
-	tw.tween_property(luz, "modulate:a", 0.2, 0.4)
-	tw.tween_property(luz, "modulate:a", 1.0, 0.4)
+	var cupula := pecas.poligono(Pecas.retangulo(base + Vector2(0, -70), Vector2(300, 70)), Color(0.35, 0.35, 0.38), 3)
+	var luz := pecas.poligono(Pecas.retangulo(base + Vector2(0, -900), Vector2(60, 1500)), Color(1, 0.85, 0.2, 0.0), 2)
+	var b := {"cupula": cupula, "luz": luz, "base": base, "ligado": false}
 	var a := Area2D.new()
 	a.collision_layer = 0
 	a.collision_mask = 0b110
@@ -647,13 +691,27 @@ func _botao_choque(base: Vector2) -> void:
 	a.add_child(cs)
 	a.position = base + Vector2(0, -700)
 	add_child(a)
-	a.body_entered.connect(func(b: Node2D) -> void:
-		if cupula.color.g > 0.5 or not (b.is_in_group("veiculo") or b.is_in_group("piloto")) or not is_instance_valid(boss):
+	a.body_entered.connect(func(c: Node2D) -> void:
+		if not b["ligado"] or not (c.is_in_group("veiculo") or c.is_in_group("piloto")) or not is_instance_valid(boss):
 			return
+		b["ligado"] = false
 		cupula.color = Color(0.4, 0.8, 0.4)
-		luz.queue_free()
+		luz.color.a = 0.0
 		_raio(base + Vector2(0, -80), boss.cabeca.global_position)
-		boss.levar_choque())
+		boss.levar_choque()
+		_botao_ativo = -1
+		_rodada_t = maxf(5.0, 9.0 - 1.0 * float(5 - boss.vida)))
+	return b
+
+func _ligar_botao(b: Dictionary) -> void:
+	b["ligado"] = true
+	(b["cupula"] as Polygon2D).color = Color(1, 0.15, 0.1)
+	var luz: Polygon2D = b["luz"]
+	luz.color.a = 0.55
+	var tw := luz.create_tween().set_loops(8)
+	tw.tween_property(luz, "modulate:a", 0.2, 0.35)
+	tw.tween_property(luz, "modulate:a", 1.0, 0.35)
+	Audio.tocar("checkpoint", 0.8)
 
 func _raio(de: Vector2, para: Vector2) -> void:
 	for camada in 2:

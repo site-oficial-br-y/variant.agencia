@@ -361,18 +361,21 @@ func _pedras_passo(dt: float) -> void:
 			c.radius = 200.0
 			cs.shape = c
 			r.add_child(cs)
-			var pts := PackedVector2Array()
-			for k in 9:
-				pts.append(Vector2(randf_range(170, 230), 0).rotated(TAU * k / 9.0))
-			var vis := Polygon2D.new()
-			vis.polygon = pts
-			vis.color = Color(0.45, 0.42, 0.4)
-			r.add_child(vis)
-			var borda := Line2D.new()
-			borda.points = pts + PackedVector2Array([pts[0]])
-			borda.width = 16.0
-			borda.default_color = Color(0.15, 0.14, 0.13)
-			r.add_child(borda)
+			var formulas := ["π", "Σ", "∫", "√x", "x²", "∞", "a²+b²", "Δ", "÷", "%", "f(x)", "=", "e^x", "sen θ"]
+			var cores := [Color(1, 1, 1), Color(1, 0.9, 0.3), Color(0.5, 0.9, 1), Color(1, 0.55, 0.7), Color(0.6, 1, 0.6)]
+			var txt := Label.new()
+			txt.text = formulas[randi() % formulas.size()]
+			txt.add_theme_font_size_override("font_size", 260)
+			txt.add_theme_color_override("font_color", cores[randi() % cores.size()])
+			txt.add_theme_color_override("font_outline_color", Color(0.05, 0.05, 0.08))
+			txt.add_theme_constant_override("outline_size", 40)
+			txt.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+			txt.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+			txt.size = Vector2(700, 380)
+			txt.position = Vector2(-350, -190)
+			txt.pivot_offset = Vector2(350, 190)
+			r.add_child(txt)
+			r.angular_velocity = randf_range(-3.0, 3.0)
 			r.position = Vector2(p["x"], chao - 3600.0)
 			fase.add_child(r)
 			r.linear_velocity = Vector2(0, 600)
