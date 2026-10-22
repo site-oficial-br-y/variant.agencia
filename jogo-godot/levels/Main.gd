@@ -736,7 +736,7 @@ const BOSS_FIM := 13000.0
 const ARENA_X0 := -1900.0
 const ARENA_X1 := 9600.0
 var _botoes: Array = []
-var _botoes_x := [7400.0, 600.0, 4800.0, 8600.0, 2400.0]   # ordem em que acendem: espalhados pela arena
+var _botoes_x := [5800.0, 600.0, 4000.0, 8800.0, 1300.0]   # ordem em que acendem: espalhados pela arena
 var _botao_ativo := -1
 var _rodada_t := 7.0
 var _msg: Label
@@ -791,6 +791,11 @@ func _rodada_boss(dt: float) -> void:
 	if not is_instance_valid(boss) or boss.morto or not ativo:
 		return
 	if _botao_ativo >= 0:
+		var b: Dictionary = _botoes[_botao_ativo]
+		for c in (b["area"] as Area2D).get_overlapping_bodies():
+			if c.is_in_group("veiculo") or c.is_in_group("piloto"):
+				_apertar(b)
+				break
 		return
 	_rodada_t -= dt / Engine.time_scale
 	if _rodada_t > 0.0:
@@ -834,17 +839,19 @@ func _botao_choque(base: Vector2) -> Dictionary:
 	a.add_child(cs)
 	a.position = base + Vector2(0, -700)
 	add_child(a)
-	a.body_entered.connect(func(c: Node2D) -> void:
-		if not b["ligado"] or not (c.is_in_group("veiculo") or c.is_in_group("piloto")) or not is_instance_valid(boss):
-			return
-		b["ligado"] = false
-		cupula.color = Color(0.4, 0.8, 0.4)
-		luz.color.a = 0.0
-		_raio(base + Vector2(0, -80), boss.cabeca.global_position)
-		boss.levar_choque()
-		_botao_ativo = -1
-		_rodada_t = maxf(5.0, 9.0 - 1.0 * float(5 - boss.vida)))
+	b["area"] = a
 	return b
+
+func _apertar(b: Dictionary) -> void:
+	if not b["ligado"] or not is_instance_valid(boss):
+		return
+	b["ligado"] = false
+	(b["cupula"] as Polygon2D).color = Color(0.3, 0.3, 0.33)
+	(b["luz"] as Polygon2D).color.a = 0.0
+	_raio(b["base"] + Vector2(0, -80), boss.cabeca.global_position)
+	boss.levar_choque()
+	_botao_ativo = -1
+	_rodada_t = maxf(5.0, 9.0 - 1.0 * float(5 - boss.vida))
 
 func _ligar_botao(b: Dictionary) -> void:
 	b["ligado"] = true
