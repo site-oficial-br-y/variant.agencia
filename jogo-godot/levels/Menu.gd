@@ -2,7 +2,7 @@ extends Control
 ## Seleção de personagem no estilo Happy Wheels: rostos em quadros no topo,
 ## o escolhido grande em cima da pedra, ✓ pra confirmar.
 
-const OPCOES := ["segway", "cadeira", "scooter", "monociclo", "gamer"]
+const OPCOES := ["segway", "cadeira", "scooter", "monociclo", "gamer", "bicho", "wendell"]
 const SLOTS := 7                    # quadros vazios = personagens que ainda vão vir
 
 var atual := 0

@@ -44,6 +44,10 @@ var v_ant: Dictionary = {}
 var v_roda_ant := Vector2.ZERO
 var montado := true
 var massa_total := 1.0
+var foto: Sprite2D
+var imortal_t := 0.0
+var _baloes_t := 0.0
+var _baloes: Node2D
 var membros: Dictionary = {}            # corpo -> Node2D articulado (montado: animado por molas)
 var _mola: Dictionary = {}              # corpo -> [ângulo, velocidade]
 var _v_chassi_ant := Vector2.ZERO
@@ -225,6 +229,17 @@ func _montar() -> void:
 	sensor.collision_layer = 0
 	sensor.collision_mask = 0b10001           # mundo + perigo pesado (bola de demolição)
 	_montar_membros()
+	if D.has("montado_img"):                 # usa a foto inteira enquanto está montado
+		foto = Sprite2D.new()
+		foto.texture = load("res://assets/%s/%s.png" % [personagem, D["montado_img"]])
+		foto.position = Vector2(D["src_w"], D["src_h"]) / 2.0 - origem
+		foto.z_index = 5
+		chassi.add_child(foto)
+		boneco.visible = false
+		for k in _pecas_do("chassi"):
+			for c in chassi.get_children():
+				if c is Sprite2D and c != foto:
+					c.visible = false
 	for corpo in D["piloto"]:
 		var cs := _forma_cs(corpo, origem)
 		cs.set_meta("corpo", corpo)
@@ -234,6 +249,8 @@ func _montar() -> void:
 	chassi.add_child(sensor)
 	sensor_piloto = sensor
 	sensor.body_shape_entered.connect(_on_corpo_bateu)
+	if D["chassi"].get("cesto", false):
+		_encher_cesto.call_deferred()
 	montado = true
 
 ## piloto montado em articulações: tronco gira no quadril, os outros nas juntas do
@@ -408,6 +425,33 @@ func _especial(ch: Dictionary, delta: float) -> void:
 			if apertou and recarga <= 0.0:
 				_usar(2.5)
 				_lancar_bomba()
+		"baloes":                          # Bicho: 3 balões nas costas, plana 10 s e estouram
+			if apertou and recarga <= 0.0 and _baloes_t <= 0.0:
+				_usar(20.0)
+				_baloes_t = 10.0
+				_criar_baloes()
+				Audio.tocar("baloes", 1.0, 0.0)
+			if _baloes_t > 0.0:
+				_baloes_t -= delta
+				for rb in [chassi] + rodas:
+					var c := rb as RigidBody2D
+					c.apply_central_force(Vector2(0, -980.0 * 0.92) * c.mass)
+					if c.linear_velocity.y > 220.0:
+						c.linear_velocity.y = lerpf(c.linear_velocity.y, 220.0, 0.15)
+				chassi.apply_torque(inercia_chassi * (-chassi.rotation * 20.0 - chassi.angular_velocity * 6.0))
+				if _baloes_t <= 0.0:
+					_estourar_baloes()
+		"estrela":                         # Wendell: 10 s imortal piscando colorido
+			if apertou and recarga <= 0.0 and imortal_t <= 0.0:
+				_usar(25.0)
+				imortal_t = 10.0
+				Audio.tocar("checkpoint", 1.0)
+			if imortal_t > 0.0:
+				imortal_t -= delta
+				var cor := Color.from_hsv(fmod(Time.get_ticks_msec() / 400.0, 1.0), 0.6, 1.0)
+				chassi.modulate = cor if imortal_t > 0.0 else Color.WHITE
+				for r in rodas:
+					(r as Node2D).modulate = chassi.modulate
 		"pulo_duplo":                       # Erick: pula no chão e pula de novo no ar
 			var no_chao := _no_chao()
 			if no_chao and _espera_chao <= 0.0:
@@ -438,6 +482,98 @@ func _especial(ch: Dictionary, delta: float) -> void:
 			recarga_bomba = 2.5
 			_lancar_bomba()
 
+## Bicho: compras soltas no carrinho (maçãs, bananas, laranja): caem quando ele anda torto
+func _encher_cesto() -> void:
+	var itens := [["maca", 55.0, Color(0.85, 0.1, 0.12)], ["maca", 55.0, Color(0.3, 0.75, 0.2)],
+		["banana", 0.0, Color(0.98, 0.85, 0.2)], ["laranja", 60.0, Color(1.0, 0.55, 0.1)],
+		["maca", 50.0, Color(0.85, 0.1, 0.12)], ["banana", 0.0, Color(0.98, 0.85, 0.2)]]
+	for i in itens.size():
+		var it: Array = itens[i]
+		var f := RigidBody2D.new()
+		f.mass = 0.15
+		f.collision_layer = 0b1000
+		f.collision_mask = 0b1011
+		var mat := PhysicsMaterial.new()
+		mat.bounce = 0.3
+		mat.friction = 0.7
+		f.physics_material_override = mat
+		var cs := CollisionShape2D.new()
+		var vis := Polygon2D.new()
+		var pts := PackedVector2Array()
+		if it[0] == "banana":
+			var cap := CapsuleShape2D.new()
+			cap.radius = 26.0
+			cap.height = 150.0
+			cs.shape = cap
+			cs.rotation = PI / 2.0
+			for k in 13:
+				var a := lerpf(-1.1, 1.1, k / 12.0)
+				pts.append(Vector2(sin(a) * 80.0, -cos(a) * 30.0 + 20.0))
+			for k in 13:
+				var a := lerpf(1.1, -1.1, k / 12.0)
+				pts.append(Vector2(sin(a) * 70.0, -cos(a) * 10.0 + 20.0))
+		else:
+			var c := CircleShape2D.new()
+			c.radius = it[1]
+			cs.shape = c
+			for k in 18:
+				pts.append(Vector2(it[1], 0).rotated(TAU * k / 18.0))
+		vis.polygon = pts
+		vis.color = it[2]
+		f.add_child(cs)
+		f.add_child(vis)
+		var borda := Line2D.new()
+		borda.points = pts + PackedVector2Array([pts[0]])
+		borda.width = 6.0
+		borda.default_color = (it[2] as Color).darkened(0.5)
+		f.add_child(borda)
+		if it[0] != "banana":
+			var cab := Line2D.new()
+			cab.points = PackedVector2Array([Vector2(0, -it[1]), Vector2(8, -it[1] - 22)])
+			cab.width = 7.0
+			cab.default_color = Color(0.35, 0.22, 0.1)
+			f.add_child(cab)
+		f.z_index = 4
+		get_parent().add_child(f)
+		f.global_position = arte_para_mundo(Vector2(520 + i * 95, 760 - (i % 2) * 60))
+
+func _criar_baloes() -> void:
+	_baloes = Node2D.new()
+	_baloes.z_index = -1
+	chassi.add_child(_baloes)
+	var topo := Vector2(-150, -650)
+	var cores := [Color(0.95, 0.2, 0.25), Color(0.25, 0.6, 1.0), Color(1.0, 0.85, 0.2)]
+	for i in 3:
+		var centro := topo + Vector2(-180 + i * 180, -700 - (i % 2) * 140)
+		var fio := Line2D.new()
+		fio.points = PackedVector2Array([topo, centro + Vector2(0, 150)])
+		fio.width = 6.0
+		fio.default_color = Color(0.9, 0.9, 0.9)
+		_baloes.add_child(fio)
+		var b := Polygon2D.new()
+		var pts := PackedVector2Array()
+		for k in 24:
+			var v := Vector2(115, 0).rotated(TAU * k / 24.0)
+			pts.append(centro + Vector2(v.x, v.y * 1.25))
+		b.polygon = pts
+		b.color = cores[i]
+		_baloes.add_child(b)
+		var brilho := Polygon2D.new()
+		var bp := PackedVector2Array()
+		for k in 12:
+			bp.append(centro + Vector2(-40, -55) + Vector2(22, 0).rotated(TAU * k / 12.0) * Vector2(1, 1.6))
+		brilho.polygon = bp
+		brilho.color = Color(1, 1, 1, 0.55)
+		_baloes.add_child(brilho)
+
+func _estourar_baloes() -> void:
+	_baloes_t = 0.0
+	if not is_instance_valid(_baloes):
+		return
+	Audio.tocar("impacto_leve", 1.0)
+	_baloes.queue_free()
+	_baloes = null
+
 func _usar(tempo: float) -> void:
 	recarga = tempo
 	recarga_total = tempo
@@ -450,6 +586,10 @@ func pronto() -> float:
 		return 1.0
 	if habilidade == "pulo_duplo":
 		return 1.0 if pulos > 0 else 0.0
+	if habilidade == "baloes" and _baloes_t > 0.0:
+		return 1.0
+	if habilidade == "estrela" and imortal_t > 0.0:
+		return 1.0
 	return 1.0 - recarga / maxf(recarga_total, 0.001)
 
 func _lancar_bomba() -> void:
@@ -578,7 +718,7 @@ func _centroide(pts: PackedVector2Array) -> Vector2:
 	return c / (3.0 * area)
 
 func _on_corpo_bateu(_rid: RID, body: Node, _forma_outro: int, forma: int) -> void:
-	if not montado:
+	if not montado or imortal_t > 0.0:
 		return
 	var corpo := "tronco"
 	var dono := sensor_piloto.shape_find_owner(forma)
@@ -672,7 +812,7 @@ func _sem_braco() -> bool:
 ## explosão por perto: montado, machuca os membros (ou derruba se for colado);
 ## caído, arranca ou estoura as partes mais próximas
 func explosao(pos: Vector2, raio: float) -> void:
-	if not is_instance_valid(chassi):
+	if not is_instance_valid(chassi) or (montado and imortal_t > 0.0):
 		return
 	if montado:                    # o empurrão é físico (Pecas._empurrar); aqui só machuca os membros
 		for c in MEMBROS:
@@ -743,6 +883,8 @@ func _dirigir() -> void:
 		Audio.tocar("impacto_leve" if dv < 2000.0 else "impacto_forte", dv / 3000.0)
 		bateu_chao.emit(roda_motriz.global_position + Vector2(0, (roda_motriz.get_child(0).shape as CircleShape2D).radius), dv / 2000.0)
 	var tomba := deg_to_rad(65.0 if mono else (78.0 if equilibra else 115.0))
+	if imortal_t > 0.0:
+		return
 	if dv > limiar_queda_montado or absf(chassi.rotation) > tomba \
 			or chassi.global_position.y > (fundo_y if fundo_y < INF else chao_y + 900.0):
 		soltar_ragdoll(_vel(), false)
@@ -764,6 +906,14 @@ func soltar_ragdoll(herda_vel: Vector2, pulo: bool = false) -> void:
 	if not montado:
 		return
 	montado = false
+	if is_instance_valid(_baloes):
+		_estourar_baloes()
+	if is_instance_valid(foto):              # caiu: some a foto, aparece o veículo sozinho e o boneco
+		foto.queue_free()
+		boneco.visible = true
+		for c in chassi.get_children():
+			if c is Sprite2D:
+				c.visible = true
 	for c in membros:                              # volta à pose da arte antes de virar ragdoll
 		(membros[c] as Node2D).rotation = 0.0
 	Audio.motor(false)

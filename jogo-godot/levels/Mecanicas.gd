@@ -115,7 +115,7 @@ func bomba_perseguidora(pos: Vector2, alcance := 3200.0) -> void:
 	tw.tween_property(olho, "modulate:a", 0.2, 0.3)
 	tw.tween_property(olho, "modulate:a", 1.0, 0.3)
 	_vivos.append({"tipo": "drone", "no": n, "helice": helice, "olho": olho, "base": pos, "alcance": alcance,
-		"ativa": false, "pavio": 6.0, "vel": Vector2.ZERO, "bip": 0.0})
+		"ativa": false, "pavio": 4.5, "vel": Vector2.ZERO, "bip": 0.0})
 
 # ---------- serra no trilho ----------
 ## serra que sobe e desce num trilho vermelho: embaixo corta, em cima passa por baixo.
@@ -433,11 +433,11 @@ func _drone(m: Dictionary, dt: float, alvo: Vector2) -> void:
 			m["ativa"] = true
 		return
 	m["pavio"] -= dt
-	var desejo := (alvo + Vector2(0, -300) - n.global_position).normalized() * 1050.0
-	m["vel"] = (m["vel"] as Vector2).lerp(desejo, 2.2 * dt)
+	var desejo := (alvo + Vector2(0, -300) - n.global_position).normalized() * 680.0   # mais lento que o jogador embalado
+	m["vel"] = (m["vel"] as Vector2).lerp(desejo, 1.4 * dt)
 	n.global_position += (m["vel"] as Vector2) * dt
-	if n.global_position.distance_to(alvo) < 420.0 or m["pavio"] <= 0.0:
+	if n.global_position.distance_to(alvo) < 380.0 or m["pavio"] <= 0.0:
 		_vivos.erase(m)
 		var pos := n.global_position
 		n.queue_free()
-		explosao(pos, 1500.0, 1100.0)
+		explosao(pos, 1000.0, 750.0)

@@ -390,7 +390,7 @@ func _t_mega_salto(p: Vector2) -> Vector2:
 ## voo: rampinha de 15°, vão com perigo (espinhos, água ou serras) e pouso numa
 ## descida longa de 26° — aterrissa de 900 a 3300 px/s sempre ~25° de ângulo
 ## (calculado; ver level-design §8). Depois do pouso, curva e reta.
-const POUSO := 15000.0                              # pista de pouso: pega de 900 a 3300 px/s
+const POUSO := 9500.0                               # pista de pouso: pega de 900 a ~2400 px/s
 
 func _t_voo(p: Vector2, perigo := "espinhos") -> Vector2:
 	pecas.pista_elevada(PackedVector2Array([p - Vector2(60, 0), p + Vector2(200, 0), p + Vector2(500, -30),
@@ -486,10 +486,12 @@ func _t_quebraveis(p: Vector2) -> Vector2:
 
 ## trampolim antes de um muro: a mola joga por cima
 func _t_trampolim(p: Vector2) -> Vector2:
+	# a mola joga pra cima de um patamar comprido (pousa fácil, qualquer veículo) e desce por rampa
 	_t_plano(p, 1700, false)
-	mec.trampolim(p + Vector2(950, 0), 1650.0)
-	pecas.terreno(PackedVector2Array([p + Vector2(1700, -900), p + Vector2(2300, -900)]), p.y + 2600.0)
-	return _t_plano(p + Vector2(2300, 0), 5200, false)
+	mec.trampolim(p + Vector2(950, 0), 1650.0, 750.0)
+	pecas.terreno(PackedVector2Array([p + Vector2(1700, -650), p + Vector2(4600, -650), p + Vector2(6200, 0),
+		p + Vector2(6500, 0)]), p.y + 2600.0)
+	return p + Vector2(6500, 0)
 
 ## painel de aceleração na reta antes de um voo: salto bem mais longo
 func _t_turbo_salto(p: Vector2) -> Vector2:
@@ -599,16 +601,14 @@ func _fase_1() -> void:
 		p = _t_gangorra(p)
 		p = _t_vigas(p)
 		p = _t_tnt(p)
-		p = _t_plano(p, 1000)
+		p = _t_plano(p, 500)
 		p = _t_voo(p, "espinhos")
 		p = _t_mega(p, qv * 3.0, -qv)
 		_cp(c, p)
 		p = _t_prensa(p)
 		p = _t_ondas(p)
 		p = _t_ponte(p, 2300, 250)
-		p = _t_plano(p, 1000)
-		p = _t_voo(p, "serras")
-		p = _t_mega(p, qv * 3.0, -qv - 250.0)
+		p = _t_ladeira(p, 1500, -250)
 	_cp(c, p)
 	p = _t_passarela(p)
 	p = _t_plano(p, 1000)
@@ -635,23 +635,20 @@ func _fase_2() -> void:
 		_cp(c, p)
 		p = _t_prensa(p)
 		p = _t_predio(p)
-		p = _t_plano(p, 1500)
+		p = _t_plano(p, 600)
 		p = _t_voo(p, "espinhos")
 		p = _t_mega(p, qv * 3.0, -qv)
 		_cp(c, p)
 		p = _t_bola(p)
 		p = _t_passarela(p)
 		p = _t_tabuas(p, 1400)
-		p = _t_plano(p, 1000)
+		p = _t_plano(p, 500)
 		p = _t_voo(p, "serras")
 		p = _t_mega(p, qv * 3.0, -qv)
 		_cp(c, p)
 		p = _t_vigas(p)
 		p = _t_tnt(p)
 		p = _t_gangorra(p)
-		p = _t_plano(p, 1000)
-		p = _t_voo(p, "agua")
-		p = _t_mega(p, qv * 3.0, -qv)
 	_cp(c, p)
 	p = _t_prensa(p)
 	p = _t_plano(p, 1500)
@@ -674,14 +671,13 @@ func _fase_3() -> void:
 		p = _t_mega(p, 16000.0, -(4 + volta) * ANDAR)  # sobe de volta o que desceu no prédio
 		p = _t_ponte(p, 1900, -150)
 		p = _t_tnt(p)
-		p = _t_plano(p, 1000)
+		p = _t_plano(p, 500)
 		p = _t_voo(p, "espinhos")
 		p = _t_mega(p, qv * 3.0, -qv + 150.0)
 		_cp(c, p)
 		p = _t_bola(p)
-		p = _t_plano(p, 800)
-		p = _t_voo(p, "agua")
-		p = _t_mega(p, qv * 3.0, -qv)
+		p = _t_lago(p)
+		p = _t_ladeira(p, 1500, -160)
 		_cp(c, p)
 		p = _t_ondas(p)
 		p = _t_plano(p, 800)
@@ -994,7 +990,7 @@ func _posicionar_hud() -> void:
 		aviso.size = Vector2(v.x, 160)
 		aviso.position = Vector2(0, v.y * 0.06)
 
-const ICONES := {"pulo_duplo": "pula", "salto": "pula", "turbo": "turbo", "bomba": "bomba", "equilibrio": "equilibrio", "arpao": "arpao"}
+const ICONES := {"baloes": "baloes", "estrela": "estrela", "pulo_duplo": "pula", "salto": "pula", "turbo": "turbo", "bomba": "bomba", "equilibrio": "equilibrio", "arpao": "arpao"}
 
 func _toque_especial() -> TouchScreenButton:
 	_botao_especial = _toque(ICONES.get(Game.HABILIDADES.get(Game.personagem, "salto"), "pula"), Vector2.ZERO, 165, "especial")
@@ -1037,6 +1033,8 @@ func _ao_explodir(pos: Vector2, raio: float) -> void:
 	mec.quebrar_perto(pos, raio)
 
 func _on_perigo(b: Node2D, motivo: String) -> void:
+	if is_instance_valid(player) and player.montado and player.imortal_t > 0.0 and motivo != "agua":
+		return                                   # Wendell com estrela: passa por tudo
 	if motivo == "espetos":
 		_espetar(b)
 		return
@@ -1204,6 +1202,29 @@ func _testar_especial() -> void:
 					await _captura("hab_" + Game.personagem)
 			await _esperar(2.4)
 			print("[ESPECIAL] bomba: explosoes %d -> %d, recarga=%.1f" % [n0, _explosoes, player.recarga])
+		"baloes":
+			await _esperar(1.0)
+			Input.action_press("especial")
+			await get_tree().physics_frame
+			Input.action_release("especial")
+			var y0 := player.chassi.global_position.y
+			var antes := player._baloes_t
+			for k in 3:
+				await _esperar(1.0)
+			var tinha := is_instance_valid(player._baloes)
+			print("[ESPECIAL] baloes: ativou=%s, apos 3s ainda tem baloes=%s, subiu/desceu %.0f px, montado=%s" % [player._baloes_t > 0.0 or antes > 0.0, tinha, y0 - player.chassi.global_position.y, player.montado])
+			await _esperar(8.0)
+			print("[ESPECIAL] baloes depois de 10s: estouraram=%s" % (not is_instance_valid(player._baloes)))
+		"estrela":
+			Input.action_press("especial")
+			await get_tree().physics_frame
+			Input.action_release("especial")
+			await get_tree().physics_frame
+			var t0 := player.imortal_t
+			player.chassi.apply_central_impulse(Vector2(0, 6000) * player.chassi.mass)   # pancada forte: sem estrela derruba
+			await _esperar(1.0)
+			print("[ESPECIAL] estrela: imortal=%.1f s, depois da pancada montado=%s" % [t0, player.montado])
+			await _esperar(9.5)
 		"pulo_duplo":
 			await _esperar(1.0)
 			var y0 := player.chassi.global_position.y
