@@ -3,7 +3,7 @@ extends Node
 ## e o ronco do motor em loop, cujo tom acompanha a velocidade.
 
 const SONS := ["clique", "confirma", "impacto_leve", "impacto_forte", "osso", "splat",
-	"caixa", "metal", "checkpoint", "vitoria", "morte", "pulo", "turbo", "baloes"]
+	"caixa", "metal", "checkpoint", "vitoria", "morte", "pulo", "turbo", "baloes", "passo"]
 const VOZES := 10
 
 var _streams: Dictionary = {}

@@ -591,6 +591,8 @@ var _boss_vel := 0.0
 var _boss_t := 0.0
 var _alarme: AudioStreamPlayer
 var _alerta: Label
+var _vermelho: ColorRect
+var _passo_ant := 0.0
 const LAB_FIM := 36000.0
 
 func _fase_4() -> void:
@@ -621,8 +623,9 @@ func _fase_4() -> void:
 			var fx := x - 330.0 + i * 220.0
 			pecas.poligono(PackedVector2Array([Vector2(fx - 60, py - 20), Vector2(fx + 60, py - 20), Vector2(fx + 22, py - 150), Vector2(fx - 22, py - 150)]), c, -4)
 			pecas.poligono(Pecas.retangulo(Vector2(fx, py - 190), Vector2(44, 80)), Color(0.85, 0.92, 0.95, 0.8), -4)
-		x += 2600.0
+		x += 5200.0
 		k += 1
+	_lab_cenario(y, teto)
 	# teto com luminárias
 	pecas.poligono(Pecas.retangulo(Vector2(LAB_FIM / 2.0, teto - 200.0), Vector2(LAB_FIM + 12000.0, 400)), Color(0.35, 0.37, 0.4), 2)
 	x = -5000.0
@@ -661,6 +664,82 @@ func _fase_4() -> void:
 	add_child(_alarme)
 	_iniciar_alerta.call_deferred()
 
+## fundo rico do laboratório: tubos de vidro com líquido e bolhas, canos, armários,
+## monitores, placas de risco; repete a cada módulo de 5200 px
+func _lab_cenario(y: float, teto: float) -> void:
+	var x := -4000.0
+	var m := 0
+	var liquidos := [Color(0.3, 0.95, 0.35, 0.75), Color(0.25, 0.75, 1.0, 0.75), Color(0.95, 0.35, 0.85, 0.75)]
+	while x < LAB_FIM + 4000.0:
+		var liq: Color = liquidos[m % 3]
+		# tubo de vidro grande com algo dentro
+		var tx := x + 700.0
+		var topo_t := y - 2050.0
+		pecas.poligono(Pecas.retangulo(Vector2(tx, y - 90), Vector2(620, 180)), Color(0.3, 0.32, 0.36), -4)
+		pecas.poligono(Pecas.retangulo(Vector2(tx, topo_t - 60), Vector2(620, 140)), Color(0.3, 0.32, 0.36), -4)
+		pecas.poligono(Pecas.retangulo(Vector2(tx, (topo_t + y - 180) / 2.0), Vector2(500, y - 180 - topo_t)), Color(0.85, 0.95, 1.0, 0.35), -4)
+		pecas.poligono(Pecas.retangulo(Vector2(tx, (topo_t + 300 + y - 180) / 2.0), Vector2(480, y - 180 - topo_t - 300)), liq, -4)
+		pecas.poligono(Pecas.retangulo(Vector2(tx - 170, (topo_t + y) / 2.0), Vector2(40, y - topo_t - 300)), Color(1, 1, 1, 0.35), -4)
+		var silhueta := PackedVector2Array([Vector2(tx - 60, y - 300), Vector2(tx + 60, y - 300), Vector2(tx + 90, y - 900),
+			Vector2(tx + 50, y - 1150), Vector2(tx, y - 1250), Vector2(tx - 50, y - 1150), Vector2(tx - 90, y - 900)])
+		pecas.poligono(silhueta, liq.darkened(0.55), -4)                 # coisa estranha flutuando
+		for b in 5:                                                        # bolhas subindo
+			var bolha := pecas.poligono(_circulo_lab(20.0 + (b % 3) * 10.0), Color(1, 1, 1, 0.55), -4)
+			var bx := tx - 180.0 + b * 90.0
+			bolha.position = Vector2(bx, y - 220)
+			var tw := bolha.create_tween().set_loops()
+			tw.tween_interval(b * 0.45)
+			tw.tween_property(bolha, "position:y", topo_t + 330.0, 2.6 + (b % 2) * 0.8).from(y - 220.0)
+		# canos no alto
+		pecas.linha(PackedVector2Array([Vector2(x, teto + 260), Vector2(x + 5200, teto + 260)]), 70.0, Color(0.5, 0.52, 0.56), -4)
+		pecas.linha(PackedVector2Array([Vector2(x, teto + 380), Vector2(x + 5200, teto + 380)]), 40.0, Color(0.75, 0.45, 0.2), -4)
+		pecas.linha(PackedVector2Array([Vector2(tx, teto + 260), Vector2(tx, topo_t - 130)]), 50.0, Color(0.5, 0.52, 0.56), -4)
+		pecas.poligono(Pecas.retangulo(Vector2(x + 2600, teto + 260), Vector2(110, 110)), Color(0.85, 0.2, 0.15), -4)
+		# armário de metal
+		var ax := x + 1900.0
+		pecas.poligono(Pecas.retangulo(Vector2(ax, y - 650), Vector2(700, 1300)), Color(0.55, 0.6, 0.66), -4)
+		for i in 3:
+			pecas.linha(PackedVector2Array([Vector2(ax - 350 + 233 * (i + 1), y - 1300), Vector2(ax - 350 + 233 * (i + 1), y)]), 8.0, Color(0.35, 0.38, 0.42), -4)
+			for v in 3:
+				pecas.poligono(Pecas.retangulo(Vector2(ax - 233 + 233 * i, y - 1180 + v * 26), Vector2(110, 10)), Color(0.35, 0.38, 0.42), -4)
+		# bancada com monitores
+		var bx2 := x + 3400.0
+		pecas.poligono(Pecas.retangulo(Vector2(bx2, y - 520), Vector2(1300, 70)), Color(0.32, 0.34, 0.38), -4)
+		pecas.poligono(Pecas.retangulo(Vector2(bx2, y - 250), Vector2(1200, 470)), Color(0.42, 0.45, 0.5), -4)
+		for i in 2:
+			var mx := bx2 - 300.0 + i * 600.0
+			pecas.poligono(Pecas.retangulo(Vector2(mx, y - 820), Vector2(460, 320)), Color(0.12, 0.13, 0.15), -4)
+			var tela := pecas.poligono(Pecas.retangulo(Vector2(mx, y - 820), Vector2(410, 270)), Color(0.1, 0.35, 0.2), -4)
+			for l in 4:
+				pecas.linha(PackedVector2Array([Vector2(mx - 170, y - 900 + l * 50), Vector2(mx - 170 + 80 + ((m + l * 37) % 5) * 50, y - 900 + l * 50)]), 12.0, Color(0.4, 1.0, 0.5), -4)
+			var tw2 := tela.create_tween().set_loops()
+			tw2.tween_property(tela, "color", Color(0.15, 0.5, 0.28), 0.7)
+			tw2.tween_property(tela, "color", Color(0.1, 0.35, 0.2), 0.7)
+			pecas.poligono(Pecas.retangulo(Vector2(mx, y - 620), Vector2(60, 80)), Color(0.12, 0.13, 0.15), -4)
+		# placa de risco biológico
+		var px := x + 4600.0
+		var tri := PackedVector2Array([Vector2(px, y - 1700), Vector2(px + 200, y - 1350), Vector2(px - 200, y - 1350)])
+		pecas.poligono(tri, Pecas.AMARELO, -4)
+		pecas.linha(tri + PackedVector2Array([tri[0]]), 18.0, Color(0.1, 0.1, 0.1), -4)
+		for k in 3:
+			pecas.poligono(_circulo_lab(38.0, Vector2(px, y - 1480) + Vector2(0, -50).rotated(TAU * k / 3.0)), Color(0.1, 0.1, 0.1), -4)
+		pecas.poligono(_circulo_lab(22.0, Vector2(px, y - 1480)), Pecas.AMARELO, -4)
+		# giroflex do alarme
+		var gx := x + 2600.0
+		pecas.poligono(Pecas.retangulo(Vector2(gx, teto + 120), Vector2(120, 60)), Color(0.25, 0.25, 0.28), -3)
+		var gir := pecas.poligono(_circulo_lab(70.0, Vector2(gx, teto + 200)), Color(1, 0.15, 0.1), -3)
+		var tw3 := gir.create_tween().set_loops()
+		tw3.tween_property(gir, "modulate:a", 0.25, 0.3)
+		tw3.tween_property(gir, "modulate:a", 1.0, 0.3)
+		x += 5200.0
+		m += 1
+
+func _circulo_lab(r: float, c := Vector2.ZERO) -> PackedVector2Array:
+	var pts := PackedVector2Array()
+	for k in 16:
+		pts.append(c + Vector2(r, 0).rotated(TAU * k / 16.0))
+	return pts
+
 func _iniciar_alerta() -> void:
 	_alerta = Label.new()
 	_alerta.text = "⚠ ALERTA ⚠\nVOCÊ ESQUECEU O JALECO!"
@@ -674,6 +753,12 @@ func _iniciar_alerta() -> void:
 	_alerta.position = Vector2(0, v.y * 0.18)
 	$HUD.add_child(_alerta)
 	_alarme.play()
+	_vermelho = ColorRect.new()
+	_vermelho.color = Color(1, 0, 0, 0.0)
+	_vermelho.set_anchors_preset(Control.PRESET_FULL_RECT)
+	_vermelho.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	$HUD.add_child(_vermelho)
+	$HUD.move_child(_vermelho, 0)
 
 ## porta corrediça: sobe e desce num ciclo; aberta ~55% do tempo
 func _porta(base: Vector2, teto: float, periodo: float) -> void:
@@ -717,6 +802,15 @@ func _atualizar_lab(dt: float) -> void:
 	_boss_x = minf(_boss_x + _boss_vel * dt, LAB_FIM - 200.0)
 	_boss.position = Vector2(_boss_x, CHAO_Y + absf(sin(_boss_t * 9.0)) * -40.0)
 	_boss.rotation = sin(_boss_t * 9.0) * 0.06
+	# passos: um a cada pisada; mais alto e mais rápido quanto mais perto ele está
+	var dist := alvo - _boss_x
+	var perto := clampf(1.0 - dist / 9000.0, 0.0, 1.0)
+	var fase_passo := fposmod(_boss_t * 9.0 * (1.0 + perto * 0.6), PI)
+	if fase_passo < _passo_ant:
+		Audio.tocar("passo", 0.15 + 0.85 * perto, 0.05)
+	_passo_ant = fase_passo
+	if _vermelho:
+		_vermelho.color.a = (0.06 + 0.16 * perto) * (0.5 + 0.5 * sin(_boss_t * (6.0 + 8.0 * perto)))
 	if alvo - _boss_x < 250.0:
 		_fim(false, "pego")
 		if player.montado:
