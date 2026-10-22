@@ -660,7 +660,7 @@ func _fase_4() -> void:
 	st.loop_mode = AudioStreamWAV.LOOP_FORWARD
 	st.loop_end = int(st.get_length() * st.mix_rate)
 	_alarme.stream = st
-	_alarme.volume_db = -10.0
+	_alarme.volume_db = -19.0
 	add_child(_alarme)
 	_iniciar_alerta.call_deferred()
 
