@@ -41,7 +41,7 @@ func _ready() -> void:
 func _cartao(n: int) -> Button:
 	var b := Button.new()
 	b.focus_mode = Control.FOCUS_NONE
-	b.custom_minimum_size = Vector2(285, 300)
+	b.custom_minimum_size = Vector2(232, 270)
 	var st := StyleBoxFlat.new()
 	st.bg_color = Color(1, 1, 1, 0.1)
 	st.set_corner_radius_all(18)
@@ -58,21 +58,21 @@ func _cartao(n: int) -> Button:
 	mini.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
 	mini.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_COVERED
 	mini.position = Vector2(14, 14)
-	mini.size = Vector2(257, 145)
+	mini.size = Vector2(204, 115)
 	mini.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	b.add_child(mini)
 	var nome := Label.new()
 	nome.text = Game.FASES[n - 1]
-	nome.position = Vector2(14, 168)
-	nome.add_theme_font_size_override("font_size", 24)
+	nome.position = Vector2(12, 138)
+	nome.add_theme_font_size_override("font_size", 20)
 	nome.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	b.add_child(nome)
 	var rec := Label.new()
 	var r := Game.recorde(n)
 	rec.text = ("✓ melhor: %.1f s" % r) if r < INF else "ainda não terminou"
 	rec.add_theme_color_override("font_color", Color(0.5, 1, 0.55) if r < INF else Color(1, 1, 1, 0.55))
-	rec.position = Vector2(14, 230)
-	rec.add_theme_font_size_override("font_size", 24)
+	rec.position = Vector2(12, 205)
+	rec.add_theme_font_size_override("font_size", 18)
 	rec.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	b.add_child(rec)
 	b.pressed.connect(func() -> void:
@@ -86,8 +86,8 @@ func _cartao(n: int) -> Button:
 func _layout() -> void:
 	var v := get_viewport().get_visible_rect().size
 	titulo.position = Vector2((v.x - titulo.get_minimum_size().x) / 2.0, 40)
-	var larg := 285.0
-	var esp := 22.0
+	var larg := 232.0
+	var esp := 14.0
 	var total := cartoes.size() * larg + (cartoes.size() - 1) * esp
 	for i in cartoes.size():
 		(cartoes[i] as Button).position = Vector2((v.x - total) / 2.0 + i * (larg + esp), v.y / 2.0 - 140)

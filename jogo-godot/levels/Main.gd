@@ -47,7 +47,7 @@ func _ready() -> void:
 			Game.fase = int(a.substr(2))
 	Engine.time_scale = Game.RITMO           # física a 180 Hz x 3 = mesmo passo de 1/60 s de jogo
 	RenderingServer.set_default_clear_color(Color(0.33, 0.55, 0.93))
-	tema = ["campo", "obra", "montanha", "lab"][clampi(Game.fase, 1, 4) - 1]
+	tema = ["campo", "obra", "montanha", "lab", "boss"][clampi(Game.fase, 1, 5) - 1]
 	_construir_fundo("hw" if tema == "campo" else tema)
 	_mat = PhysicsMaterial.new()
 	_mat.friction = 1.0
@@ -169,6 +169,8 @@ func _physics_process(delta: float) -> void:
 	mec.atualizar(delta)
 	if Game.fase == 4:
 		_atualizar_lab(delta)
+	if boss:
+		boss.atualizar(delta)
 
 func _mover_pendulos(t: float) -> void:
 	for p in _pendulos:
@@ -184,6 +186,7 @@ func _construir_chao() -> void:
 		2: _fase_2()
 		3: _fase_3()
 		4: _fase_4()
+		5: _fase_5()
 		_: _fase_1()
 
 ## marcos comuns: zona de morte, checkpoints (lista de Vector2: x, chão) e chegada
@@ -579,6 +582,95 @@ func _bloco_novo(p: Vector2, c: Array, combinacao: Array) -> Vector2:
 func _queda_voo() -> float:
 	var inc := tan(deg_to_rad(26.0))
 	return 100.0 + POUSO * inc + inc * 2600.0 * 0.5
+
+# ---------- FASE 5: Chefão ----------
+## pista no escuro com o chefe gigante no fundo. Passar nos botões vermelhos dá
+## choque nele (5 de vida). O portão do fim só abre com ele derrotado.
+var boss: Boss
+var _portao: StaticBody2D
+const BOSS_FIM := 38000.0
+
+func _fase_5() -> void:
+	var y := CHAO_Y
+	var bruto := PackedVector2Array([Vector2(-3000, y)])
+	var x := 2000.0
+	var k := 0
+	while x < BOSS_FIM + 4000.0:                       # pista reta com lombadas suaves
+		bruto.append(Vector2(x, y))
+		if k % 3 == 1:
+			bruto.append(Vector2(x + 700, y - 260))
+			bruto.append(Vector2(x + 1400, y))
+		x += 2600.0
+		k += 1
+	bruto.append(Vector2(BOSS_FIM + 6000.0, y))
+	pecas.pista_elevada(bruto, y + 2600.0)
+	for i in 5:
+		_botao_choque(Vector2(6000.0 + i * 6400.0, y))
+	# portão do fim (fechado até o chefe cair)
+	_portao = StaticBody2D.new()
+	_portao.collision_layer = 0b01
+	var cs := CollisionShape2D.new()
+	var r := RectangleShape2D.new()
+	r.size = Vector2(260, 3200)
+	cs.shape = r
+	_portao.add_child(cs)
+	pecas.poligono(Pecas.retangulo(Vector2.ZERO, Vector2(260, 3200)), Color(0.4, 0.42, 0.46), 3, null, 1.0, _portao)
+	pecas.poligono(Pecas.retangulo(Vector2(0, 1300), Vector2(260, 160)), Color.WHITE, 3, pecas.tex("perigo"), 0.8, _portao)
+	_portao.position = Vector2(BOSS_FIM - 1200.0, y - 1600.0)
+	add_child(_portao)
+	pecas.portal_chegada(Vector2(BOSS_FIM, y))
+	_meta_pos = Vector2(BOSS_FIM + 700, y)
+	_marcos([], Vector2(BOSS_FIM, y), y + 3200.0, false)
+	boss = Boss.new()
+	add_child(boss)
+	boss.global_position = Vector2(1200, y - 690.0)
+	boss.montar(self, y)
+	boss.derrotado.connect(func() -> void:
+		var tw := _portao.create_tween()
+		tw.tween_property(_portao, "position:y", _portao.position.y - 3300.0, 1.2))
+
+## botão vermelho no chão: passou por cima, raio no chefe
+func _botao_choque(base: Vector2) -> void:
+	pecas.poligono(Pecas.retangulo(base + Vector2(0, -20), Vector2(420, 40)), Color(0.25, 0.25, 0.28), 3)
+	var cupula := pecas.poligono(Pecas.retangulo(base + Vector2(0, -70), Vector2(300, 70)), Color(1, 0.15, 0.1), 3)
+	var luz := pecas.poligono(Pecas.retangulo(base + Vector2(0, -500), Vector2(40, 700)), Color(1, 0.2, 0.15, 0.25), 2)
+	var tw := luz.create_tween().set_loops()
+	tw.tween_property(luz, "modulate:a", 0.2, 0.4)
+	tw.tween_property(luz, "modulate:a", 1.0, 0.4)
+	var a := Area2D.new()
+	a.collision_layer = 0
+	a.collision_mask = 0b110
+	var cs := CollisionShape2D.new()
+	var r := RectangleShape2D.new()
+	r.size = Vector2(500, 1400)
+	cs.shape = r
+	a.add_child(cs)
+	a.position = base + Vector2(0, -700)
+	add_child(a)
+	a.body_entered.connect(func(b: Node2D) -> void:
+		if cupula.color.g > 0.5 or not (b.is_in_group("veiculo") or b.is_in_group("piloto")) or not is_instance_valid(boss):
+			return
+		cupula.color = Color(0.4, 0.8, 0.4)
+		luz.queue_free()
+		_raio(base + Vector2(0, -80), boss.cabeca.global_position)
+		boss.levar_choque())
+
+func _raio(de: Vector2, para: Vector2) -> void:
+	for camada in 2:
+		var l := Line2D.new()
+		var pts := PackedVector2Array([de])
+		for i in range(1, 12):
+			pts.append(de.lerp(para, i / 12.0) + Vector2(randf_range(-220, 220), randf_range(-120, 120)))
+		pts.append(para)
+		l.points = pts
+		l.width = 90.0 if camada == 0 else 30.0
+		l.default_color = Color(0.4, 0.8, 1.0, 0.6) if camada == 0 else Color(1, 1, 1)
+		l.z_index = 9
+		add_child(l)
+		var tw := l.create_tween()
+		tw.tween_property(l, "modulate:a", 0.0, 0.5)
+		tw.tween_callback(l.queue_free)
+	Audio.tocar("metal", 1.0)
 
 # ---------- FASE 4: Laboratório (boss: cientista) ----------
 ## reto, mais curto. Começa com o aviso "você esqueceu o jaleco", toca o alarme e o
@@ -1004,8 +1096,8 @@ func _construir_fundo(tema: String) -> void:
 	var pb := ParallaxBackground.new()
 	add_child(pb)
 	var grad := Gradient.new()
-	grad.set_color(0, {"obra": Color(0.36, 0.52, 0.78), "montanha": Color(0.2, 0.38, 0.78)}.get(tema, Color(0.27, 0.47, 0.92)))
-	grad.set_color(1, {"campo": Color(0.86, 0.93, 0.98), "obra": Color(0.95, 0.85, 0.72), "montanha": Color(0.78, 0.88, 0.98)}.get(tema, Color(0.62, 0.78, 0.98)))
+	grad.set_color(0, {"boss": Color(0.01, 0.01, 0.02), "obra": Color(0.36, 0.52, 0.78), "montanha": Color(0.2, 0.38, 0.78)}.get(tema, Color(0.27, 0.47, 0.92)))
+	grad.set_color(1, {"boss": Color(0.05, 0.03, 0.07), "lab": Color(0.6, 0.65, 0.7), "campo": Color(0.86, 0.93, 0.98), "obra": Color(0.95, 0.85, 0.72), "montanha": Color(0.78, 0.88, 0.98)}.get(tema, Color(0.62, 0.78, 0.98)))
 	var gt := GradientTexture2D.new()
 	gt.gradient = grad
 	gt.fill_from = Vector2(0, 0)
@@ -1019,7 +1111,7 @@ func _construir_fundo(tema: String) -> void:
 	ceu_s.stretch_mode = TextureRect.STRETCH_SCALE
 	fundo_ceu.add_child(ceu_s)
 	var camadas: Array = [["nuvem", 0.12, -1300.0, 4.8], ["ui/morros_longe", 0.25, 720.0, 4.1], ["ui/morros_perto", 0.45, 980.0, 4.4]]
-	if tema == "lab":
+	if tema in ["lab", "boss"]:
 		camadas = []
 	if tema in ["campo", "obra", "montanha", "hw"]:
 		camadas = [["nuvem", 0.1, -1500.0, 5.5], ["arte/fundo_%s_longe" % tema, 0.18, 380.0, 3.4],
@@ -1106,7 +1198,7 @@ func _fim(ganhou: bool, motivo: String) -> void:
 	else:
 		if _alarme:
 			_alarme.stop()
-		aviso.text = {"pego": "TE PEGOU!", "agua": "AFOGOU!", "buraco": "CAIU!", "caiu": "CAIU!"}.get(motivo, "MORREU!") + "\naperta R"
+		aviso.text = {"esmagado": "ESMAGADO!", "agarrado": "TE PEGOU!", "pedra": "ESMAGADO!", "pego": "TE PEGOU!", "agua": "AFOGOU!", "buraco": "CAIU!", "caiu": "CAIU!"}.get(motivo, "MORREU!") + "\naperta R"
 		Audio.motor(false)
 		Audio.tocar("morte")
 		print("[FASE] perdeu %s x=%.0f" % [motivo, player.foco().global_position.x if is_instance_valid(player) else 0.0])
