@@ -596,35 +596,28 @@ func _queda_voo() -> float:
 var vendedor: Vendedor
 var _carrinhos: Array = []
 var _portao6: StaticBody2D
-const MERC_CP := 23500.0
-const MERC_ARENA := 25500.0
-const MERC_FIM := 37000.0
+var MERC_CP := 23500.0
+var MERC_ARENA := 25500.0
+var MERC_FIM := 37000.0
+var mercado_x0 := 0.0
 
 func _fase_6() -> void:
 	var y := CHAO_Y
-	pecas.terreno(PackedVector2Array([Vector2(-3000, y), Vector2(MERC_FIM + 6000.0, y)]), y + 2600.0, false)
-	pecas.poligono(Pecas.retangulo(Vector2(MERC_FIM / 2.0, y + 1300.0), Vector2(MERC_FIM + 12000.0, 2600)), Color(0.72, 0.7, 0.66), 1)
-	pecas.poligono(Pecas.retangulo(Vector2(MERC_FIM / 2.0, y + 25.0), Vector2(MERC_FIM + 12000.0, 50)), Color(0.85, 0.83, 0.79), 1)
-	_mercado_cenario(y)
-	pecas.placa(Vector2(-900, y), "LARGADA")
-	# corredor 1: pilha de caixas pra atravessar no peito
+	pecas.cor_chao = Color(0.72, 0.7, 0.66)
 	_parede_arena(-2700.0, y)
-	for i in 4:
-		pecas.caixa(Vector2(3300 + i * 330, y - 160), 300)
-	# paletes: rampa sobe num estrado comprido e desce
-	pecas.rampa(7400, 8200, y, 380)
-	pecas.terreno(PackedVector2Array([Vector2(8200, y - 380), Vector2(10000, y - 380), Vector2(11000, y)]), y + 2600.0)
-	# carrinhos descendo o corredor na sua direção
-	for i in 4:
-		_carrinho_solto(Vector2(13400 + i * 900, y))
-	# compactador de papelão (prensa) e fatiador de frios (serra no trilho)
-	pecas.prensa(15200, y, 5.0, 1.3)
-	mec.serra_trilho(Vector2(17800, y), 3.2, 0.7)
-	# piso que cede sobre o depósito
-	_fosso(19400, 21800, y)
-	for i in 3:
-		mec.plataforma_quebravel(Vector2(19800 + i * 800, y), 780.0)
-	# checkpoint e arena do chefe
+	# 1ª parte: fase normal (obstáculos de sempre) dentro do mercado
+	var p := _largada()
+	for nome in ["ondas", "prensa", "bola", "gangorra", "temporarias", "tnt", "quebraveis", "moveis"]:
+		p = call("_t_" + nome, p)
+		p = _t_plano(p, 500, false)
+	mercado_x0 = p.x
+	MERC_CP = mercado_x0 + 800.0
+	MERC_ARENA = mercado_x0 + 2600.0
+	MERC_FIM = mercado_x0 + 15000.0
+	# chão reto até o fim (checkpoint, arena e saída) e o fundo de mercado inteiro
+	pecas.terreno(PackedVector2Array([p, Vector2(MERC_FIM + 6000.0, y)]), y + 2600.0, false)
+	_mercado_cenario(y)
+	# checkpoint e arena do chefe logo depois da parte normal
 	_cp_forcado(Vector2(MERC_CP, y))
 	_portao6 = StaticBody2D.new()
 	_portao6.collision_layer = 0b01

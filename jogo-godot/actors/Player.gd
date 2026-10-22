@@ -17,7 +17,7 @@ var fundo_y := INF                 # abaixo disso o veículo caiu num buraco (a 
 @export var velocidade: float = 1.6           # multiplica a velocidade máxima no plano
 @export var aceleracao: float = 900.0         # px/s² de jogo: ~0,5 s real até a máxima, e ainda sobe rampa de 27°
 @export var equilibrio_mono: float = 6.0      # força dos botões de girar no monociclo
-@export var mono_rigidez: float = 30.0           # quanto ele volta sozinho pro prumo (menos que a gravidade: ainda cai)
+@export var mono_rigidez: float = 42.0           # quanto ele volta sozinho pro prumo (menos que a gravidade: ainda cai)
 @export var mono_amortece: float = 9.0
 @export var mono_balanco: float = 4.0
 @export var mono_pende: float = 0.5             # 1 = força no eixo (tomba bastante), 0 = no centro (não tomba)
@@ -893,7 +893,7 @@ func _dirigir() -> void:
 	if dv > 1300.0:                      # pouso / batida do veículo (quique pequeno não faz barulho)
 		Audio.tocar("impacto_leve" if dv < 2000.0 else "impacto_forte", dv / 3000.0)
 		bateu_chao.emit(roda_motriz.global_position + Vector2(0, (roda_motriz.get_child(0).shape as CircleShape2D).radius), dv / 2000.0)
-	var tomba := deg_to_rad(65.0 if mono else (78.0 if equilibra else 150.0))
+	var tomba := deg_to_rad(88.0 if mono else (88.0 if equilibra else 150.0))
 	if imortal_t > 0.0:
 		return
 	if dv > limiar_queda_montado or absf(chassi.rotation) > tomba \

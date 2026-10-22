@@ -27,6 +27,7 @@ var chao_tex := "terra"          # material do terreno da fase (terra, concreto,
 var topo_tex := "grama"          # faixa do topo (grama, asfalto, grama_alpina)
 var contorno_chao := CONTORNO_TERRA
 var pistoes: Array = []
+var cor_chao := VINHO            # cor do bloco de chão (mercado/laboratório usam piso cinza)
 var y_max := 0.0                 # fundo mais baixo construído (para a zona de morte)
 var ao_explodir: Callable        # (pos, raio) -> a fase reage (jogador se machuca, plataforma quebra)
 
@@ -131,7 +132,7 @@ func terreno(bruto: PackedVector2Array, fundo_y: float, grama := true) -> Packed
 	col.polygon = pts
 	sb.add_child(col)
 	raiz.add_child(sb)
-	poligono(pts, VINHO, 0, null, 1.0, sb)
+	poligono(pts, cor_chao, 0, null, 1.0, sb)
 	if grama:
 		var topo := PackedVector2Array()
 		for q in sup:
