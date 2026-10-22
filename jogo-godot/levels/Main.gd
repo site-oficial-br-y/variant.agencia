@@ -983,7 +983,7 @@ func _posicionar_hud() -> void:
 		aviso.size = Vector2(v.x, 160)
 		aviso.position = Vector2(0, v.y * 0.06)
 
-const ICONES := {"salto": "pula", "turbo": "turbo", "bomba": "bomba", "equilibrio": "equilibrio", "arpao": "arpao"}
+const ICONES := {"pulo_duplo": "pula", "salto": "pula", "turbo": "turbo", "bomba": "bomba", "equilibrio": "equilibrio", "arpao": "arpao"}
 
 func _toque_especial() -> TouchScreenButton:
 	_botao_especial = _toque(ICONES.get(Game.HABILIDADES.get(Game.personagem, "salto"), "pula"), Vector2.ZERO, 165, "especial")
@@ -1009,6 +1009,8 @@ func _atualizar_carga() -> void:
 	var f := player.pronto()
 	if player.habilidade == "turbo":
 		_carga.text = "INFINITO" if Game.personagem in Game.TURBO_INFINITO else "%d%%" % int(f * 100.0)
+	elif player.habilidade == "pulo_duplo":
+		_carga.text = "PULOS: %d" % player.pulos
 	elif f >= 1.0:
 		_carga.text = "PRONTO"
 	else:
@@ -1191,6 +1193,24 @@ func _testar_especial() -> void:
 					await _captura("hab_" + Game.personagem)
 			await _esperar(2.4)
 			print("[ESPECIAL] bomba: explosoes %d -> %d, recarga=%.1f" % [n0, _explosoes, player.recarga])
+		"pulo_duplo":
+			await _esperar(1.0)
+			var y0 := player.chassi.global_position.y
+			Input.action_press("especial")
+			await get_tree().physics_frame
+			Input.action_release("especial")
+			for k in 25:
+				await get_tree().physics_frame
+			var y1 := player.chassi.global_position.y
+			Input.action_press("especial")
+			await get_tree().physics_frame
+			Input.action_release("especial")
+			var topo := y0
+			for k in 90:
+				await get_tree().physics_frame
+				topo = minf(topo, player.chassi.global_position.y)
+			print("[ESPECIAL] pulo duplo: 1o pulo ate %.0f px, total %.0f px, pulos=%d, montado=%s" % [y0 - y1, y0 - topo, player.pulos, player.montado])
+			await _esperar(1.5)
 		"equilibrio":
 			_equilibrando = false                      # larga os botões: só a habilidade segura
 			await get_tree().physics_frame

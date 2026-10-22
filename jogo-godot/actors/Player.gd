@@ -59,6 +59,8 @@ var recarga := 0.0
 var recarga_total := 1.0
 var combustivel := 1.0
 var recarga_bomba := 0.0
+var pulos := 2
+var _espera_chao := 0.0
 var _equilibrio_t := 0.0
 var _arpao: Dictionary = {}              # preso: {corpo, local, comp}
 var _corda: Line2D
@@ -406,6 +408,21 @@ func _especial(ch: Dictionary, delta: float) -> void:
 			if apertou and recarga <= 0.0:
 				_usar(2.5)
 				_lancar_bomba()
+		"pulo_duplo":                       # Erick: pula no chão e pula de novo no ar
+			var no_chao := _no_chao()
+			if no_chao and _espera_chao <= 0.0:
+				pulos = 2
+			_espera_chao = maxf(0.0, _espera_chao - delta)
+			if apertou and pulos > 0:
+				pulos -= 1
+				_espera_chao = 0.25             # não recarrega no mesmo instante em que sai do chão
+				for rb in [chassi] + rodas:
+					var c := rb as RigidBody2D
+					var vy := minf(c.linear_velocity.y, 0.0)   # 2º pulo zera a queda antes de subir
+					c.linear_velocity = Vector2(c.linear_velocity.x + 150.0, vy - (1000.0 if pulos == 0 else 1150.0))
+				Audio.tocar("pulo", 1.0 if pulos == 1 else 0.8)
+			if not no_chao:                    # no ar fica em pé: pousa de roda
+				chassi.apply_torque(inercia_chassi * (-chassi.rotation * 30.0 - chassi.angular_velocity * 8.0))
 		"equilibrio":
 			if apertou and recarga <= 0.0:
 				_usar(8.0)
@@ -431,6 +448,8 @@ func pronto() -> float:
 		return 1.0 if personagem in Game.TURBO_INFINITO else combustivel
 	if habilidade == "equilibrio" and _equilibrio_t > 0.0:
 		return 1.0
+	if habilidade == "pulo_duplo":
+		return 1.0 if pulos > 0 else 0.0
 	return 1.0 - recarga / maxf(recarga_total, 0.001)
 
 func _lancar_bomba() -> void:
