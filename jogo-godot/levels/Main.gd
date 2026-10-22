@@ -273,7 +273,7 @@ func _t_passarela(p: Vector2, comp := 2000.0, com_tnt := true, caixas := true) -
 	pecas.espinhos(p.x + 40, p.x + comp - 40, fundo)
 	pecas.passarela(p.x - 40, p.x + comp + 40, p.y, fundo, [p.x + comp * 0.3, p.x + comp * 0.72])
 	if com_tnt:
-		_tnt_suspenso(p + Vector2(comp * 0.68, 0))
+		mec.serra_trilho(p + Vector2(comp * 0.68, 0), 3.2, _sorteio.randf_range(0.0, 3.2))
 	return p + Vector2(comp, 0)
 
 func _t_gangorra(p: Vector2) -> Vector2:
@@ -312,29 +312,20 @@ func _t_serras(p: Vector2) -> Vector2:
 	pecas.terreno(PackedVector2Array([p + Vector2(2000, -100), p + Vector2(2800, 100), p + Vector2(3400, 100)]), p.y + 2600.0)
 	return p + Vector2(3400, 100)
 
-## TNT numa prateleira de aço acima da pista: todo personagem passa por baixo
-## (ninguém fica sem saída); só explode se você pular ou for arremessado nele
-func _tnt_suspenso(base: Vector2, altura := 1700.0) -> void:
-	var y := base.y - altura
-	pecas.barra_metal(Vector2(base.x + 380, base.y), Vector2(base.x + 380, y - 60), 54.0, Pecas.VERMELHO, -2)
-	pecas.barra_metal(Vector2(base.x + 380, y + 260), Vector2(base.x + 120, y + 30), 26.0, Pecas.VERMELHO, -2)
-	var prateleira := StaticBody2D.new()
-	prateleira.collision_layer = 0b01
-	var cs := CollisionShape2D.new()
-	var r := RectangleShape2D.new()
-	r.size = Vector2(700, 50)
-	cs.shape = r
-	prateleira.add_child(cs)
-	prateleira.position = Vector2(base.x + 80, y + 25)
-	pecas.poligono(Pecas.retangulo(Vector2.ZERO, Vector2(700, 50)), Pecas.CINZA, 1, null, 1.0, prateleira)
-	pecas.poligono(Pecas.retangulo(Vector2(0, 10), Vector2(700, 16)), Color.WHITE, 1, pecas.tex("perigo"), 0.6, prateleira)
-	add_child(prateleira)
-	pecas.tnt(Vector2(base.x, y), 420.0)
-
+## obstáculo de reta (antes era TNT): alterna serra no trilho e mina com lombada,
+## os dois dá pra passar com qualquer personagem
+var _reta_n := 0
 func _t_tnt(p: Vector2) -> Vector2:
-	_t_plano(p, 1200, false)
-	_tnt_suspenso(p + Vector2(550, 0))
-	return p + Vector2(1200, 0)
+	_reta_n += 1
+	if _reta_n % 2 == 1:
+		_t_plano(p, 2000, false)
+		mec.serra_trilho(p + Vector2(1100, 0), 3.2, _sorteio.randf_range(0.0, 3.2))
+		return p + Vector2(2000, 0)
+	_t_plano(p, 2200, false)
+	pecas.rampa(p.x + 400, p.x + 1000, p.y, 170)
+	mec.mina(p + Vector2(1450, 0))
+	pecas.placa_perigo(p + Vector2(250, 0))
+	return p + Vector2(2200, 0)
 
 ## penhasco: anda reto e despenca `queda` px para o próximo patamar
 func _t_degrau(p: Vector2, queda: float) -> Vector2:

@@ -117,6 +117,29 @@ func bomba_perseguidora(pos: Vector2, alcance := 3200.0) -> void:
 	_vivos.append({"tipo": "drone", "no": n, "helice": helice, "olho": olho, "base": pos, "alcance": alcance,
 		"ativa": false, "pavio": 6.0, "vel": Vector2.ZERO, "bip": 0.0})
 
+# ---------- serra no trilho ----------
+## serra que sobe e desce num trilho vermelho: embaixo corta, em cima passa por baixo.
+## Fica 45% do ciclo lá em cima (dá tempo pra todo mundo passar, só esperar a hora)
+func serra_trilho(base: Vector2, periodo := 3.2, atraso := 0.0) -> void:
+	var alto := base.y - 1820.0                       # em cima: borda da serra ~1500 px, acima da cabeça de todos
+	pecas.barra_metal(Vector2(base.x, base.y), Vector2(base.x, alto - 200.0), 40.0, Pecas.VERMELHO, -2)
+	pecas.barra_metal(Vector2(base.x - 60, alto - 200.0), Vector2(base.x + 60, alto - 200.0), 30.0, Pecas.VERMELHO, -2)
+	var n := Node2D.new()
+	n.position = Vector2(base.x, alto)
+	n.z_index = 2
+	raiz.add_child(n)
+	var s := Sprite2D.new()
+	s.texture = pecas.tex("serra")
+	s.scale = Vector2.ONE * (2.0 * 300.0 / 600.0)
+	n.add_child(s)
+	var tw := s.create_tween().set_loops()
+	tw.tween_property(s, "rotation", TAU, 0.5).as_relative()
+	var zona := pecas.zona_letal(Vector2.ZERO, Vector2(500, 500), "serra")
+	raiz.remove_child(zona)
+	n.add_child(zona)
+	_vivos.append({"tipo": "serra_trilho", "no": n, "alto": alto, "baixo": base.y - 300.0,
+		"periodo": periodo, "atraso": atraso})
+
 # ---------- gancho do arpão ----------
 ## poste vermelho com braço por cima do vão e argola pendurada: é onde o arpão
 ## do Gorisch prende (camada própria: ninguém bate nele, só o arpão acha)
@@ -382,6 +405,13 @@ func atualizar(dt: float) -> void:
 						_quebrar(m)
 			"trampolim":
 				m["espera"] = maxf(0.0, m["espera"] - dt)
+			"serra_trilho":                         # desce rápido, segura embaixo, sobe, fica em cima
+				var f := fposmod(_t + float(m["atraso"]), float(m["periodo"])) / float(m["periodo"])
+				var k := 0.0
+				if f < 0.12: k = f / 0.12
+				elif f < 0.40: k = 1.0
+				elif f < 0.55: k = 1.0 - (f - 0.40) / 0.15
+				(no as Node2D).position.y = lerpf(float(m["alto"]), float(m["baixo"]), smoothstep(0.0, 1.0, k))
 			"tunel":
 				var dentro := false
 				for b in (m["area"] as Area2D).get_overlapping_bodies():
