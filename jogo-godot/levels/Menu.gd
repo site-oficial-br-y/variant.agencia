@@ -14,6 +14,7 @@ var nome: Label
 var nomes_quadro: Array = []
 
 func _ready() -> void:
+	Audio.musica_menu(true)
 	set_anchors_preset(Control.PRESET_FULL_RECT)
 	Audio.motor(false)
 	var vp := get_viewport().get_visible_rect().size

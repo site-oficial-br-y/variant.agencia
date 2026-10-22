@@ -44,6 +44,22 @@ func tocar(nome: String, forca: float = 1.0, variacao: float = 0.08) -> void:
 	p.play()
 
 ## motor: liga/desliga e ajusta o tom pela fração da velocidade máxima
+## música de fundo dos menus (abertura, personagem, fases): loop; não reinicia
+## ao trocar de tela de menu; para quando a fase começa
+var _musica: AudioStreamPlayer
+func musica_menu(ligada: bool) -> void:
+	if _musica == null:
+		_musica = AudioStreamPlayer.new()
+		var st := load("res://assets/audio/musica/menu.mp3") as AudioStreamMP3
+		st.loop = true
+		_musica.stream = st
+		_musica.volume_db = -6.0
+		add_child(_musica)
+	if ligada and not _musica.playing:
+		_musica.play()
+	elif not ligada and _musica.playing:
+		_musica.stop()
+
 func motor(ligado: bool, fracao: float = 0.0) -> void:
 	ligado = false                       # ronco contínuo desligado: era o som chato que tocava o tempo todo
 	if not ligado:

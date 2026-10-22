@@ -9,6 +9,7 @@ var morros: Array = []
 var _saindo := false
 
 func _ready() -> void:
+	Audio.musica_menu(true)
 	set_anchors_preset(Control.PRESET_FULL_RECT)
 	Audio.motor(false)
 	var ceu := ColorRect.new()

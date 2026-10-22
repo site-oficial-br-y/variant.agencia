@@ -39,6 +39,7 @@ var recorde := 0
 var _mat: PhysicsMaterial
 
 func _ready() -> void:
+	Audio.musica_menu(false)
 	for a in OS.get_cmdline_user_args():
 		if a.begins_with("p="):
 			Game.personagem = a.substr(2)

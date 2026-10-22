@@ -6,6 +6,7 @@ var titulo: Label
 var voltar: Button
 
 func _ready() -> void:
+	Audio.musica_menu(true)
 	set_anchors_preset(Control.PRESET_FULL_RECT)
 	var fundo := TextureRect.new()
 	fundo.texture = load("res://assets/ui/fundo.png")
