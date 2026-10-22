@@ -47,7 +47,7 @@ func _ready() -> void:
 			Game.fase = int(a.substr(2))
 	Engine.time_scale = Game.RITMO           # física a 180 Hz x 3 = mesmo passo de 1/60 s de jogo
 	RenderingServer.set_default_clear_color(Color(0.33, 0.55, 0.93))
-	tema = ["campo", "obra", "montanha"][clampi(Game.fase, 1, 3) - 1]
+	tema = ["campo", "obra", "montanha", "lab"][clampi(Game.fase, 1, 4) - 1]
 	_construir_fundo("hw" if tema == "campo" else tema)
 	_mat = PhysicsMaterial.new()
 	_mat.friction = 1.0
@@ -167,6 +167,8 @@ func _physics_process(delta: float) -> void:
 	_mover_pendulos(_t_fisica)
 	pecas.mover_pistoes(_t_fisica)
 	mec.atualizar(delta)
+	if Game.fase == 4:
+		_atualizar_lab(delta)
 
 func _mover_pendulos(t: float) -> void:
 	for p in _pendulos:
@@ -181,6 +183,7 @@ func _construir_chao() -> void:
 	match Game.fase:
 		2: _fase_2()
 		3: _fase_3()
+		4: _fase_4()
 		_: _fase_1()
 
 ## marcos comuns: zona de morte, checkpoints (lista de Vector2: x, chão) e chegada
@@ -577,6 +580,148 @@ func _queda_voo() -> float:
 	var inc := tan(deg_to_rad(26.0))
 	return 100.0 + POUSO * inc + inc * 2600.0 * 0.5
 
+# ---------- FASE 4: Laboratório (boss: cientista) ----------
+## reto, mais curto. Começa com o aviso "você esqueceu o jaleco", toca o alarme e o
+## cientista vem correndo atrás. Portas que abrem e fecham e espinhos baixos com
+## rampinha pra pular. Se ele te alcançar, morreu.
+var _portas: Array = []
+var _boss: Node2D
+var _boss_x := -4000.0
+var _boss_vel := 0.0
+var _boss_t := 0.0
+var _alarme: AudioStreamPlayer
+var _alerta: Label
+const LAB_FIM := 36000.0
+
+func _fase_4() -> void:
+	var y := CHAO_Y
+	var teto := y - 2700.0
+	pecas.terreno(PackedVector2Array([Vector2(-6000, y), Vector2(LAB_FIM + 6000, y)]), y + 2600.0, false)
+	pecas.poligono(Pecas.retangulo(Vector2(LAB_FIM / 2.0, y + 1300.0), Vector2(LAB_FIM + 12000.0, 2600)), Color(0.42, 0.44, 0.47), 1)
+	pecas.poligono(Pecas.retangulo(Vector2(LAB_FIM / 2.0, y + 25.0), Vector2(LAB_FIM + 12000.0, 50)), Color(0.62, 0.64, 0.67), 1)
+	# parede do fundo: azulejo branco-azulado, faixa verde, prateleiras com frascos
+	pecas.poligono(Pecas.retangulo(Vector2(LAB_FIM / 2.0, (teto + y) / 2.0), Vector2(LAB_FIM + 12000.0, y - teto)), Color(0.82, 0.88, 0.9), -6)
+	var x := -6000.0
+	while x < LAB_FIM + 6000.0:
+		pecas.linha(PackedVector2Array([Vector2(x, teto), Vector2(x, y)]), 6.0, Color(0.7, 0.77, 0.8), -5)
+		x += 300.0
+	var yy := teto
+	while yy < y:
+		pecas.linha(PackedVector2Array([Vector2(-6000, yy), Vector2(LAB_FIM + 6000, yy)]), 6.0, Color(0.7, 0.77, 0.8), -5)
+		yy += 300.0
+	pecas.poligono(Pecas.retangulo(Vector2(LAB_FIM / 2.0, y - 600.0), Vector2(LAB_FIM + 12000.0, 90)), Color(0.25, 0.65, 0.45), -5)
+	var cores := [Color(0.3, 0.95, 0.4, 0.85), Color(0.3, 0.7, 1.0, 0.85), Color(1.0, 0.4, 0.8, 0.85), Color(1.0, 0.85, 0.2, 0.85)]
+	x = -3000.0
+	var k := 0
+	while x < LAB_FIM + 3000.0:
+		var py := y - 1700.0
+		pecas.poligono(Pecas.retangulo(Vector2(x, py), Vector2(900, 40)), Color(0.45, 0.47, 0.5), -4)
+		for i in 4:
+			var c: Color = cores[(k + i) % 4]
+			var fx := x - 330.0 + i * 220.0
+			pecas.poligono(PackedVector2Array([Vector2(fx - 60, py - 20), Vector2(fx + 60, py - 20), Vector2(fx + 22, py - 150), Vector2(fx - 22, py - 150)]), c, -4)
+			pecas.poligono(Pecas.retangulo(Vector2(fx, py - 190), Vector2(44, 80)), Color(0.85, 0.92, 0.95, 0.8), -4)
+		x += 2600.0
+		k += 1
+	# teto com luminárias
+	pecas.poligono(Pecas.retangulo(Vector2(LAB_FIM / 2.0, teto - 200.0), Vector2(LAB_FIM + 12000.0, 400)), Color(0.35, 0.37, 0.4), 2)
+	x = -5000.0
+	while x < LAB_FIM + 5000.0:
+		pecas.poligono(Pecas.retangulo(Vector2(x, teto + 30.0), Vector2(500, 50)), Color(1, 1, 0.85), 2)
+		x += 2000.0
+	var bancada := 2500.0
+	# sequência: portas e espinhos alternando, ficando mais apertado no fim
+	var obst := [["porta", 4200.0, 3.2], ["espinho", 8200.0], ["porta", 11800.0, 2.8], ["porta", 14200.0, 3.0],
+		["espinho", 17800.0], ["porta", 21200.0, 2.6], ["espinho", 24600.0], ["porta", 28000.0, 2.4],
+		["espinho", 31000.0], ["porta", 33600.0, 2.2]]
+	for o in obst:
+		if o[0] == "porta":
+			_porta(Vector2(o[1], y), teto, o[2])
+		else:
+			pecas.rampa(o[1] - 700.0, o[1] - 100.0, y, 230)
+			pecas.espinhos(o[1] + 60.0, o[1] + 380.0, y, 150.0)
+		bancada += 0.0
+	pecas.portal_chegada(Vector2(LAB_FIM, y))
+	_meta_pos = Vector2(LAB_FIM + 700, y)
+	_marcos([], Vector2(LAB_FIM, y), y + 3000.0, false)
+	# chefe
+	_boss = Sprite2D.new()
+	(_boss as Sprite2D).texture = load("res://assets/arte/cientista.png")
+	(_boss as Sprite2D).offset = Vector2(0, -575)
+	_boss.scale = Vector2.ONE * 1.3
+	_boss.z_index = 6
+	_boss.position = Vector2(_boss_x, y)
+	add_child(_boss)
+	_alarme = AudioStreamPlayer.new()
+	var st := load("res://assets/audio/sfx/alarme.wav") as AudioStreamWAV
+	st.loop_mode = AudioStreamWAV.LOOP_FORWARD
+	st.loop_end = int(st.get_length() * st.mix_rate)
+	_alarme.stream = st
+	_alarme.volume_db = -10.0
+	add_child(_alarme)
+	_iniciar_alerta.call_deferred()
+
+func _iniciar_alerta() -> void:
+	_alerta = Label.new()
+	_alerta.text = "⚠ ALERTA ⚠\nVOCÊ ESQUECEU O JALECO!"
+	_alerta.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	_alerta.add_theme_font_size_override("font_size", 64)
+	_alerta.add_theme_color_override("font_color", Color(1, 0.25, 0.2))
+	_alerta.add_theme_color_override("font_outline_color", Color.BLACK)
+	_alerta.add_theme_constant_override("outline_size", 14)
+	var v := get_viewport().get_visible_rect().size
+	_alerta.size = Vector2(v.x, 200)
+	_alerta.position = Vector2(0, v.y * 0.18)
+	$HUD.add_child(_alerta)
+	_alarme.play()
+
+## porta corrediça: sobe e desce num ciclo; aberta ~55% do tempo
+func _porta(base: Vector2, teto: float, periodo: float) -> void:
+	var alt := base.y - teto
+	var ab := AnimatableBody2D.new()
+	ab.sync_to_physics = false
+	ab.collision_layer = 0b01
+	var cs := CollisionShape2D.new()
+	var r := RectangleShape2D.new()
+	r.size = Vector2(220, alt)
+	cs.shape = r
+	ab.add_child(cs)
+	pecas.poligono(Pecas.retangulo(Vector2.ZERO, Vector2(220, alt)), Color(0.55, 0.6, 0.66), 3, null, 1.0, ab)
+	pecas.poligono(Pecas.retangulo(Vector2(0, alt / 2.0 - 80.0), Vector2(220, 100)), Color.WHITE, 3, pecas.tex("perigo"), 0.8, ab)
+	pecas.poligono(Pecas.retangulo(Vector2(0, -alt * 0.25), Vector2(120, 160)), Color(0.75, 0.9, 1.0, 0.7), 3, null, 1.0, ab)
+	ab.position = Vector2(base.x, base.y - alt / 2.0)
+	add_child(ab)
+	pecas.poligono(Pecas.retangulo(Vector2(base.x, teto + 40.0), Vector2(320, 80)), Color(0.25, 0.27, 0.3), 4)
+	var luz := pecas.poligono(Pecas.retangulo(Vector2(base.x + 200, teto + 200.0), Vector2(60, 60)), Color(1, 0.2, 0.2), 4)
+	_portas.append({"no": ab, "fechada": ab.position.y, "aberta": ab.position.y - alt + 120.0, "T": periodo,
+		"atraso": _sorteio.randf_range(0.0, periodo), "luz": luz})
+
+func _atualizar_lab(dt: float) -> void:
+	for p in _portas:
+		var f := fposmod(_t_fisica + float(p["atraso"]), float(p["T"])) / float(p["T"])
+		var k := 0.0                                  # 0 fechada, 1 aberta
+		if f < 0.15: k = f / 0.15
+		elif f < 0.70: k = 1.0
+		elif f < 0.85: k = 1.0 - (f - 0.70) / 0.15
+		(p["no"] as AnimatableBody2D).position.y = lerpf(p["fechada"], p["aberta"], smoothstep(0.0, 1.0, k))
+		(p["luz"] as Polygon2D).color = Color(0.2, 1, 0.3) if k > 0.9 else Color(1, 0.2, 0.2)
+	if _boss == null or not ativo or not is_instance_valid(player):
+		return
+	_boss_t += dt / Engine.time_scale
+	if _boss_t < 2.5:                                # tempo do aviso antes dele sair correndo
+		return
+	if _alerta and _boss_t > 4.0:
+		_alerta.visible = false
+	var alvo := player.foco().global_position.x
+	_boss_vel = minf(_boss_vel + 900.0 * dt, 1050.0 + 6.0 * (_boss_t - 2.5))   # vai apertando com o tempo
+	_boss_x = minf(_boss_x + _boss_vel * dt, LAB_FIM - 200.0)
+	_boss.position = Vector2(_boss_x, CHAO_Y + absf(sin(_boss_t * 9.0)) * -40.0)
+	_boss.rotation = sin(_boss_t * 9.0) * 0.06
+	if alvo - _boss_x < 250.0:
+		_fim(false, "pego")
+		if player.montado:
+			player.soltar_ragdoll.call_deferred(Vector2(1500, -900), false)
+
 # ---------- FASE 1 ----------
 ## ritmo do gênero: voa, pousa descendo, sobe no embalo, obstáculo no alto, voa de novo.
 ## Cada bloco desce e sobe a mesma altura: a fase cresce sem afundar.
@@ -780,6 +925,8 @@ func _construir_fundo(tema: String) -> void:
 	ceu_s.stretch_mode = TextureRect.STRETCH_SCALE
 	fundo_ceu.add_child(ceu_s)
 	var camadas: Array = [["nuvem", 0.12, -1300.0, 4.8], ["ui/morros_longe", 0.25, 720.0, 4.1], ["ui/morros_perto", 0.45, 980.0, 4.4]]
+	if tema == "lab":
+		camadas = []
 	if tema in ["campo", "obra", "montanha", "hw"]:
 		camadas = [["nuvem", 0.1, -1500.0, 5.5], ["arte/fundo_%s_longe" % tema, 0.18, 380.0, 3.4],
 			["arte/fundo_%s_meio" % tema, 0.32, 700.0, 3.2], ["arte/fundo_%s_perto" % tema, 0.5, 1000.0, 3.0]]
@@ -863,7 +1010,9 @@ func _fim(ganhou: bool, motivo: String) -> void:
 		print("[FASE] venceu %.2f" % tempo)
 		venceu.emit(tempo)
 	else:
-		aviso.text = {"agua": "AFOGOU!", "buraco": "CAIU!", "caiu": "CAIU!"}.get(motivo, "MORREU!") + "\naperta R"
+		if _alarme:
+			_alarme.stop()
+		aviso.text = {"pego": "TE PEGOU!", "agua": "AFOGOU!", "buraco": "CAIU!", "caiu": "CAIU!"}.get(motivo, "MORREU!") + "\naperta R"
 		Audio.motor(false)
 		Audio.tocar("morte")
 		print("[FASE] perdeu %s x=%.0f" % [motivo, player.foco().global_position.x if is_instance_valid(player) else 0.0])
