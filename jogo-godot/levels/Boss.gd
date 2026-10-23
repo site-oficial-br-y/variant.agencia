@@ -659,11 +659,35 @@ func _aditivo() -> CanvasItemMaterial:
 func _olhos() -> Vector2:
 	return cabeca.global_position + Vector2(0, -330).rotated(cabeca.global_rotation)
 
+## aviso: faixa vermelha da largura do feixe na mesma diagonal, bordas marcadas,
+## linha do meio e alvo no chão; pisca cada vez mais rápido até disparar
 func _laser(x: float) -> void:
-	var aviso := Line2D.new()
-	aviso.width = 10.0
-	aviso.default_color = Color(1.0, 0.25, 0.25, 0.9)
+	var aviso := Node2D.new()
 	aviso.z_index = 8
+	var faixa := Polygon2D.new()
+	faixa.color = Color(1, 0.1, 0.1, 0.38)
+	aviso.add_child(faixa)
+	for k in 3:                                      # borda, borda, meio
+		var l := Line2D.new()
+		l.width = 30.0 if k < 2 else 16.0
+		l.default_color = Color(1, 0.2, 0.15, 0.95) if k < 2 else Color(1, 0.85, 0.3, 0.9)
+		aviso.add_child(l)
+	var alvo := Polygon2D.new()
+	var anel := PackedVector2Array()
+	for k in 24:
+		anel.append(Vector2(LASER_LARGURA + 90.0, 0).rotated(TAU * k / 24.0) * Vector2(1, 0.22))
+	alvo.polygon = anel
+	alvo.color = Color(1, 0.1, 0.1, 0.55)
+	aviso.add_child(alvo)
+	var sinal := Label.new()
+	sinal.text = "!"
+	sinal.add_theme_font_size_override("font_size", 420)
+	sinal.add_theme_color_override("font_color", Color(1, 0.9, 0.2))
+	sinal.add_theme_color_override("font_outline_color", Color(0.6, 0.05, 0.0))
+	sinal.add_theme_constant_override("outline_size", 44)
+	sinal.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	sinal.size = Vector2(500, 500)
+	aviso.add_child(sinal)
 	fase.add_child(aviso)
 	_lasers.append({"x": x, "t": 0.0, "aviso": aviso, "luz": null})
 	Audio.tocar("turbo", 0.5, 0.0)
@@ -675,10 +699,16 @@ func _lasers_passo(dt: float) -> void:
 		var de := _olhos()
 		var ate := Vector2(float(l["x"]), chao)
 		if t < LASER_AVISO:
-			var aviso: Line2D = l["aviso"]
-			aviso.points = PackedVector2Array([de, ate])
-			aviso.width = 6.0 + 14.0 * t / LASER_AVISO
-			aviso.visible = fmod(t, 0.14) < 0.09
+			var aviso: Node2D = l["aviso"]
+			var lado := (ate - de).orthogonal().normalized() * LASER_LARGURA
+			(aviso.get_child(0) as Polygon2D).polygon = PackedVector2Array([de + lado, ate + lado, ate - lado, de - lado])
+			(aviso.get_child(1) as Line2D).points = PackedVector2Array([de + lado, ate + lado])
+			(aviso.get_child(2) as Line2D).points = PackedVector2Array([de - lado, ate - lado])
+			(aviso.get_child(3) as Line2D).points = PackedVector2Array([de, ate])
+			(aviso.get_child(4) as Node2D).position = ate
+			(aviso.get_child(5) as Control).position = ate + Vector2(-250, -820)
+			var ritmo := lerpf(0.22, 0.08, t / LASER_AVISO)       # pisca cada vez mais rápido
+			aviso.modulate.a = 1.0 if fmod(t, ritmo) < ritmo * 0.6 else 0.35
 			continue
 		if l["luz"] == null:
 			(l["aviso"] as Node).queue_free()
