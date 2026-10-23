@@ -96,14 +96,17 @@ func montar(main: Node2D, y_chao: float) -> void:
 			"de": Vector2.ZERO, "hit": hit, "i": i}
 		maos.append(m)
 		s.global_position = global_position + m["repouso"]
-	_sombra = Polygon2D.new()
-	var pts := PackedVector2Array()
-	for k in 24:
-		pts.append(Vector2(ALCANCE, 0).rotated(TAU * k / 24.0) * Vector2(1, 0.18))
-	_sombra.polygon = pts
-	_sombra.color = Color(1, 0.1, 0.1, 0.0)
-	_sombra.z_index = 4
-	fase.add_child(_sombra)
+	for m in maos:                                   # uma marca vermelha por mão (ataque duplo mostra as duas)
+		var sb := Polygon2D.new()
+		var pts := PackedVector2Array()
+		for k in 24:
+			pts.append(Vector2(ALCANCE, 0).rotated(TAU * k / 24.0) * Vector2(1, 0.18))
+		sb.polygon = pts
+		sb.color = Color(1, 0.1, 0.1, 0.0)
+		sb.z_index = 4
+		fase.add_child(sb)
+		m["sombra"] = sb
+	_sombra = maos[0]["sombra"]
 	_hud.call_deferred()
 
 func _parte(nome: String, p: Dictionary, centro: Vector2) -> Sprite2D:
@@ -233,6 +236,7 @@ func _iniciar(m: Dictionary, estado: String, alvo: Vector2) -> void:
 	m["de"] = (m["no"] as Node2D).global_position
 
 func _mover_mao(m: Dictionary, dt: float, foco: Vector2, vel: Vector2) -> void:
+	_sombra = m["sombra"]
 	var no: Sprite2D = m["no"]
 	var ombro: Vector2 = global_position + (m["ombro"] as Vector2).rotated(rotation)
 	var repouso: Vector2 = global_position + (m["repouso"] as Vector2) + Vector2(0, sin(_t * 2.0 + m["i"]) * 60.0)
@@ -269,7 +273,9 @@ func _mover_mao(m: Dictionary, dt: float, foco: Vector2, vel: Vector2) -> void:
 		"segura":
 			if t < 0.15 and not String(m.get("golpe", "")).begins_with("soco"):
 				_golpe(m)                   # mão no chão: quem entrar no vermelho ainda é pego
-			_mostrar_sombra(0.0, 0.0)
+				_mostrar_sombra(alvo.x, 1.0)    # marca fica acesa enquanto ainda mata
+			else:
+				_mostrar_sombra(0.0, 0.0)
 			if t >= 0.7:
 				m["estado"] = "volta"
 				m["t"] = 0.0
@@ -290,7 +296,6 @@ func _mover_mao(m: Dictionary, dt: float, foco: Vector2, vel: Vector2) -> void:
 			no.global_position = (m["de"] as Vector2).lerp(Vector2(alvo.x, chao - 450.0), minf(1.0, t / 0.3))
 			if t >= 0.3:
 				_golpe(m)
-				_mostrar_sombra(0.0, 0.0)
 				m["estado"] = "segura"
 				m["t"] = 0.0
 				_tremor = 0.15
@@ -557,7 +562,8 @@ func _transformar() -> void:
 		m["t"] = 0.0
 		m["de"] = (m["no"] as Node2D).global_position
 		(m["hit"] as Area2D).set_deferred("monitoring", false)
-	_mostrar_sombra(0.0, 0.0)
+	for m in maos:
+		(m["sombra"] as Polygon2D).color.a = 0.0
 	for p in _pedras:
 		(p["sombra"] as Node).queue_free()
 		if is_instance_valid(p["no"]):

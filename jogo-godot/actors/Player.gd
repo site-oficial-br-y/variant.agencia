@@ -560,7 +560,7 @@ func _especial(ch: Dictionary, delta: float) -> void:
 					_fumaca_pouso()
 		"repele":                          # Chefe: tira a camisa, 12 s rebatendo golpe de chefe (e tira 1 de vida dele)
 			if apertou and recarga <= 0.0 and _repele_t <= 0.0:
-				_usar(135.0)                         # ~45 s reais até poder de novo
+				_usar(105.0)                         # 35 s reais até poder de novo
 				_repele_t = 12.0
 				_repele_dano = false
 				_vestir(true)
