@@ -533,6 +533,7 @@ func _especial(ch: Dictionary, delta: float) -> void:
 						(rb as RigidBody2D).linear_velocity = v0
 					Audio.tocar("pulo", 1.0, 0.0)
 					Audio.tocar("turbo", 0.7, 0.0)
+					_impacto_hulk(1.0)                    # salto do Hulk: chão explode na saída
 					_dash_t = 0.5
 			if _dash_t > 0.0:
 				_dash_t -= delta
@@ -747,12 +748,71 @@ func pronto() -> float:
 	return 1.0 - recarga / maxf(recarga_total, 0.001)
 
 func _fumaca_pouso() -> void:
+	_impacto_hulk(1.0)
+
+## salto/pouso do gorila estilo Hulk: poeira grossa, pedaços do chão voando, rachaduras e tela tremendo
+func _impacto_hulk(forca: float) -> void:
 	var m := get_parent()
+	var chao := chassi.global_position + Vector2(0, 380)
+	var q := PhysicsRayQueryParameters2D.create(chassi.global_position, chassi.global_position + Vector2(0, 2500), 0b0001)
+	var r := get_world_2d().direct_space_state.intersect_ray(q)
+	if not r.is_empty():
+		chao = r["position"]
 	if m and m.get("pecas"):
-		for r in rodas:
-			m.pecas.poeira((r as Node2D).global_position + Vector2(0, 60), 3.2)
-		m.pecas.poeira(chassi.global_position + Vector2(0, 300), 3.6)
-	Audio.tocar("impacto_forte", 1.0)
+		for dx in [-700.0, -300.0, 0.0, 300.0, 700.0]:
+			m.pecas.poeira(chao + Vector2(dx, -20), 3.4 * forca)
+	var cascalho := CPUParticles2D.new()                 # pedaços do chão
+	cascalho.one_shot = true
+	cascalho.explosiveness = 0.95
+	cascalho.amount = int(45 * forca)
+	cascalho.lifetime = 0.7 * Engine.time_scale
+	cascalho.direction = Vector2(0, -1)
+	cascalho.spread = 70.0
+	cascalho.initial_velocity_min = 1400.0
+	cascalho.initial_velocity_max = 3600.0
+	cascalho.gravity = Vector2(0, 5200)
+	cascalho.scale_amount_min = 14.0
+	cascalho.scale_amount_max = 38.0
+	cascalho.angular_velocity_min = -400.0
+	cascalho.angular_velocity_max = 400.0
+	var gr := Gradient.new()
+	gr.set_color(0, Color(0.45, 0.4, 0.36))
+	gr.set_color(1, Color(0.3, 0.27, 0.24, 0.0))
+	cascalho.color_ramp = gr
+	cascalho.global_position = chao
+	cascalho.z_index = 8
+	get_parent().add_child(cascalho)
+	cascalho.emitting = true
+	get_tree().create_timer(2.0 * Engine.time_scale).timeout.connect(cascalho.queue_free)
+	var rachas := Node2D.new()                         # rachaduras no chão
+	rachas.global_position = chao + Vector2(0, -4)
+	rachas.z_index = 3
+	get_parent().add_child(rachas)
+	for i in 7:
+		var l := Line2D.new()
+		l.width = 18.0
+		l.default_color = Color(0.08, 0.06, 0.05, 0.85)
+		var dirx := -1.0 if i % 2 == 0 else 1.0
+		var pts := PackedVector2Array([Vector2.ZERO])
+		var p := Vector2.ZERO
+		for k in 5:
+			p += Vector2(dirx * randf_range(80, 180), randf_range(-12, 22))
+			pts.append(p)
+		l.points = pts
+		rachas.add_child(l)
+	var tw := rachas.create_tween()
+	tw.tween_interval(1.2 * Engine.time_scale)
+	tw.tween_property(rachas, "modulate:a", 0.0, 0.8 * Engine.time_scale)
+	tw.tween_callback(rachas.queue_free)
+	var cam = m.get("camera") if m else null           # tela treme
+	if cam:
+		var base: Vector2 = cam.offset
+		var t2: Tween = cam.create_tween()
+		for k in 7:
+			t2.tween_property(cam, "offset", base + Vector2(randf_range(-1, 1), randf_range(-1, 1)) * 110.0 * forca * (1.0 - k / 7.0), 0.04 * Engine.time_scale)
+		t2.tween_property(cam, "offset", base, 0.04 * Engine.time_scale)
+	Audio.tocar("impacto_forte", 1.0, 0.0)
+	Audio.tocar("osso", 0.7)
 
 ## brilho dourado em volta do Chefe enquanto o especial dura
 func _ligar_aura(liga: bool) -> void:
