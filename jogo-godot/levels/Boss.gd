@@ -14,6 +14,7 @@ signal derrotado
 
 const ESC := 2.6                         # tamanho do chefe (imagem 1672x941 -> ~4350 px)
 const VIDA_MAX := 5
+const ALCANCE := 650.0                   # metade da largura da área vermelha = área que mata
 var fase: Node2D                         # Main
 var vida := VIDA_MAX
 var morto := false
@@ -99,7 +100,7 @@ func montar(main: Node2D, y_chao: float) -> void:
 	_sombra = Polygon2D.new()
 	var pts := PackedVector2Array()
 	for k in 24:
-		pts.append(Vector2(700, 0).rotated(TAU * k / 24.0) * Vector2(1, 0.18))
+		pts.append(Vector2(ALCANCE, 0).rotated(TAU * k / 24.0) * Vector2(1, 0.18))
 	_sombra.polygon = pts
 	_sombra.color = Color(1, 0.1, 0.1, 0.0)
 	_sombra.z_index = 4
@@ -261,14 +262,14 @@ func _mover_mao(m: Dictionary, dt: float, foco: Vector2, vel: Vector2) -> void:
 				m["t"] = 0.0
 		"tapa_cai":
 			no.global_position = acima.lerp(Vector2(alvo.x, chao - 420.0), minf(1.0, t / 0.11))
-			(m["hit"] as Area2D).monitoring = true
 			if t >= 0.11:
+				_golpe(m)
 				_impacto(Vector2(alvo.x, chao), 1.0)
 				m["estado"] = "segura"
 				m["t"] = 0.0
 		"segura":
-			if t >= 0.15:
-				(m["hit"] as Area2D).monitoring = false
+			if t < 0.15:                      # mão no chão: quem entrar embaixo ainda é esmagado
+				_golpe(m)
 			_mostrar_sombra(0.0, 0.0)
 			if t >= 0.7:
 				m["estado"] = "volta"
@@ -288,8 +289,8 @@ func _mover_mao(m: Dictionary, dt: float, foco: Vector2, vel: Vector2) -> void:
 				m["de"] = no.global_position
 		"agarra_vai":
 			no.global_position = (m["de"] as Vector2).lerp(Vector2(alvo.x, chao - 450.0), minf(1.0, t / 0.3))
-			(m["hit"] as Area2D).monitoring = true
 			if t >= 0.3:
+				_golpe(m)
 				_mostrar_sombra(0.0, 0.0)
 				m["estado"] = "segura"
 				m["t"] = 0.0
@@ -338,20 +339,27 @@ func _impacto(onde: Vector2, forca: float) -> void:
 		for rb in [pl.chassi] + pl.rodas:                     # tranco no chão: o veículo pula
 			(rb as RigidBody2D).linear_velocity.y -= 500.0
 
-func _acertou(b: Node2D, m: Dictionary) -> void:
-	if morto or not (b.is_in_group("veiculo") or b.is_in_group("piloto")):
+func _acertou(_b: Node2D, _m: Dictionary) -> void:
+	pass                                 # área antiga desligada: o golpe é conferido em _golpe
+
+## a mão chegou no chão: pega só quem está dentro da área vermelha (|x - alvo| < ALCANCE)
+## e perto do chão. Não pega no caminho nem fora da marca
+func _golpe(m: Dictionary) -> void:
+	if morto or not fase.ativo:
 		return
 	var pl: Player = fase.player
-	if pl.imortal_t > 0.0 and pl.montado:
+	if not is_instance_valid(pl) or (pl.imortal_t > 0.0 and pl.montado):
 		return
-	# só pega quem está dentro da área vermelha (a mão desenhada é maior que o golpe)
-	if absf(b.global_position.x - (m["alvo"] as Vector2).x) > 650.0:
-		return
-	(m["hit"] as Area2D).set_deferred("monitoring", false)
-	if String(m.get("golpe", "")).begins_with("agarra"):
-		_agarrar.call_deferred()
-	else:
-		fase._on_perigo(b, "esmagado")
+	var alvo_x: float = (m["alvo"] as Vector2).x
+	var corpos: Array = ([pl.chassi] + pl.rodas) if pl.montado and is_instance_valid(pl.chassi) else pl.corpos.values()
+	for b in corpos:
+		var p: Vector2 = (b as Node2D).global_position
+		if absf(p.x - alvo_x) < ALCANCE and p.y > chao - 1100.0:
+			if String(m.get("golpe", "")).begins_with("agarra"):
+				_agarrar.call_deferred()
+			else:
+				fase._on_perigo(b, "esmagado")
+			return
 
 ## pegou: levanta e arremessa longe pra trás
 func _agarrar() -> void:

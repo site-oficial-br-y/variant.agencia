@@ -68,11 +68,11 @@ func recorde(f: int) -> float:
 	cfg.load(ARQ_PROGRESSO)
 	return float(cfg.get_value("recorde", str(f), INF))
 
-## Vini é exclusivo: só libera pelo link secreto (vencer a fase 5 não libera mais)
+## Vini libera pra quem vence a fase 5 (Péce e Cepé) ou abriu o link secreto do dono
 func vini_liberado() -> bool:
 	var cfg := ConfigFile.new()
 	cfg.load(ARQ_PROGRESSO)
-	return bool(cfg.get_value("extra", "vini_dono", false))
+	return recorde(5) < INF or bool(cfg.get_value("extra", "vini_dono", false))
 
 ## link secreto (?dono=vn7k2q): libera o Vini só no navegador de quem abriu por ele
 func _chave_secreta() -> void:

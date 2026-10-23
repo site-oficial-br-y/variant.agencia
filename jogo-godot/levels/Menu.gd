@@ -71,7 +71,7 @@ func _ready() -> void:
 
 	nome = _rotulo("", 76, 16)
 	add_child(nome)
-	trava = _rotulo("PERSONAGEM SECRETO", 40, 10)
+	trava = _rotulo("VENÇA O PÉCE (FASE 5) PRA LIBERAR", 36, 10)
 	trava.add_theme_color_override("font_color", Color(1, 0.85, 0.3))
 	add_child(trava)
 	ok = _botao("confirma", Vector2.ZERO, 140)

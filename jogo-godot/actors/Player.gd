@@ -471,12 +471,12 @@ func _especial(ch: Dictionary, delta: float) -> void:
 				_dash_ar = true                           # no ar só dá um dash até encostar no chão
 			if apertou and recarga <= 0.0 and _dash_ar:
 				_dash_ar = _no_chao()
-				_usar(1.6)
-				_dash_t = 0.25
+				_usar(0.8)
+				_dash_t = 0.4
 				var dirx := 1.0 if Input.get_axis("brake", "accelerate") >= 0.0 else -1.0
 				for rb in [chassi] + rodas:
 					var c := rb as RigidBody2D
-					c.linear_velocity = Vector2(dirx * 2600.0, c.linear_velocity.y)   # não segura a queda: não plana
+					c.linear_velocity = Vector2(dirx * 3300.0, c.linear_velocity.y)   # não segura a queda: não plana
 				Audio.tocar("turbo", 1.0, 0.0)
 				Audio.tocar("pulo", 0.6, 0.0)
 				_explosao_dash(dirx)
@@ -975,7 +975,7 @@ func _dirigir() -> void:
 	var dir := Input.get_axis("brake", "accelerate")
 	var rapido := 1.8 if _rapido_t > 0.0 else 1.0
 	var preciso: bool = ch.get("preciso", false)
-	if preciso and dir == 0.0 and _no_chao():               # Vini: soltou, para firme
+	if preciso and dir == 0.0 and _dash_t <= 0.0 and _no_chao():   # Vini: soltou, para firme (menos no meio do dash)
 		for rb in [chassi] + rodas:
 			(rb as RigidBody2D).linear_velocity.x = lerpf((rb as RigidBody2D).linear_velocity.x, 0.0, 0.06)
 	if dir != 0.0 and chassi.linear_velocity.length() < ch["vmax"] * velocidade * rapido:
