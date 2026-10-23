@@ -352,7 +352,7 @@ func _animar(delta: float) -> void:
 			elif not _no_chao():
 				alvo = 0.25 if perna else -0.4
 			else:
-				alvo = (0.42 if perna else 0.32) * sin(f) * amp
+				alvo = (0.28 if perna else 0.22) * sin(f) * amp
 			n.rotation = lerp_angle(n.rotation, alvo, 0.3 if _no_pulo else 0.35)
 	if D["chassi"].get("andar", false):            # Vini: passo de verdade, perna da frente e de trás alternando
 		var passo := roda_motriz.rotation * 1.1
