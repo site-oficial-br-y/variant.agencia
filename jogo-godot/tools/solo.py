@@ -92,7 +92,7 @@ CAIO = {
         'corpo_de': {'roda': 'roda0', 'cabeca': 'cabeca', 'tronco': 'tronco', 'braco': 'braco', 'perna': 'perna'},
         'piloto': ['tronco', 'cabeca', 'braco', 'perna'],
         'rodas': [{'corpo': 'roda0', 'peca': 'roda', 'c': [522.0, 1396.0], 'r': 124, 'massa': 2.0, 'motriz': True}],
-        'chassi': {'massa': 5.0, 'auto_equilibrio': True, 'vmax': 900.0, 'forca': 90000.0,
+        'chassi': {'massa': 5.0, 'auto_equilibrio': True, 'preciso': True, 'vmax': 900.0, 'forca': 90000.0,
                    'mastro': {'x': 520.0, 'y0': 300.0, 'y1': 1396.0, 'w': 100.0}},
         'corpos': {
             'cabeca': {'massa': 0.8, 'forma': ['circ', [530, 170], 120]},
