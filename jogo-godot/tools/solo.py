@@ -10,6 +10,7 @@ Uso: python3 tools/solo.py <caio|vini>
 import json, os, sys
 import numpy as np
 from PIL import Image, ImageDraw, ImageEnhance
+from scipy import ndimage
 
 AQUI = os.path.dirname(os.path.abspath(__file__))
 FONTE = os.path.join(AQUI, 'fonte')
@@ -49,7 +50,20 @@ def rodar(nome, cfg):
     for parte in cfg['ordem_recorte']:
         own = poly(W, H, cfg['partes'][parte]) & livre
         livre &= ~own
-        img = Image.fromarray(np.dstack([full[..., :3], np.where(own, full[..., 3], 0)]).astype(np.uint8), 'RGBA')
+        cor = full[..., :3].astype(float)
+        a = np.where(own, full[..., 3], 0)
+        if parte in cfg.get('completar', {}):          # buraco do braço no tronco: preenche com a cor em volta
+            n = cfg['completar'][parte]
+            dil = ndimage.distance_transform_edt(~own) <= n / 2       # fechamento por distância (leve)
+            fechado = ndimage.binary_fill_holes(ndimage.distance_transform_edt(dil) > n / 2)
+            buraco = fechado & ~own & (full[..., 3] > 0)
+            if buraco.any():
+                _, (iy, ix) = ndimage.distance_transform_edt(~own, return_indices=True)
+                viz = full[..., :3][iy, ix].astype(float)
+                viz = np.stack([ndimage.gaussian_filter(viz[..., c], 3) for c in range(3)], 2)
+                cor[buraco] = viz[buraco]
+                a = np.where(buraco, 255, a)
+        img = Image.fromarray(np.dstack([cor.clip(0, 255), a]).astype(np.uint8), 'RGBA')
         pecas[parte] = salvar(img, parte, out_dir)
         print(f'  {parte:8s} {pecas[parte]}')
     for copia, de in cfg.get('copias', {}).items():      # perna de trás: mesma perna, mais escura
@@ -105,6 +119,7 @@ VINI = {
         'canela': [(30, 1185), (260, 1185), (240, 1290), (340, 1380), (340, 1470), (20, 1470), (30, 1380), (70, 1290)],
     },
     'copias': {'coxa2': 'coxa', 'canela2': 'canela'},
+    'completar': {'tronco': 45},
     'ordem_desenho': ['coxa2', 'canela2', 'tronco', 'coxa', 'canela', 'braco', 'cabeca'],
     'fisica': {
         'corpo_de': {'cabeca': 'cabeca', 'tronco': 'tronco', 'braco': 'braco', 'coxa': 'coxa', 'canela': 'canela',
