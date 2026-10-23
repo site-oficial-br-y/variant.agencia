@@ -351,7 +351,7 @@ func _animar(delta: float) -> void:
 			var f: float = passo + float(n.get_meta("fase"))
 			var alvo := 0.0
 			if _no_pulo:
-				alvo = 0.7 if perna else -2.3             # pulo: pernas esticam pra trás, braços pro alto
+				alvo = 0.5 if perna else -0.75            # pulo: braços esticados pra frente, pernas pra trás (Hulk voando)
 			elif not _no_chao():
 				alvo = 0.25 if perna else -0.4
 			else:

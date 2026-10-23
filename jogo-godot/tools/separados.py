@@ -82,7 +82,21 @@ def rodar(nome, cfg):
     if n > 1:
         tam = ndimage.sum(corpo, lab, range(1, n + 1))
         corpo = np.isin(lab, [i + 1 for i in range(n) if tam[i] > 3000])
-    pecas['veiculo'] = recortar(veic, corpo, 'veiculo', out_dir)
+    img_corpo = veic.copy()
+    if cfg.get('fundo_corpo'):                           # atrás da pata (quando ela sai do lugar): pelo espelhado
+        buraco = np.zeros((H, W), bool)
+        for pol in cfg['fundo_corpo']:
+            buraco |= poly(W, H, pol)
+        buraco &= ~corpo
+        pelo = corpo & (veic[..., :3].max(2) < 110)
+        _, (iy, ix) = ndimage.distance_transform_edt(~pelo, return_indices=True)
+        ry = np.clip(2 * iy - yy, 0, H - 1)
+        rx = np.clip(2 * ix - xx, 0, W - 1)
+        esp = np.where(pelo[ry, rx][..., None], veic[..., :3][ry, rx], veic[..., :3][iy, ix])
+        img_corpo[..., :3][buraco] = esp[buraco]
+        img_corpo[..., 3][buraco] = 255
+        corpo |= buraco
+    pecas['veiculo'] = recortar(img_corpo, corpo, 'veiculo', out_dir)
     for copia, de in cfg.get('copias', {}).items():
         img = Image.open(os.path.join(out_dir, de + '.png'))
         a = img.getchannel('A')
@@ -138,7 +152,8 @@ LIMA = {
         'gperna2': [(392, 880), (735, 880), (735, 1182), (398, 1182), (392, 1060)],
     },
     'tapar': {'tronco': [(600, 330), (700, 318), (790, 462), (790, 520), (700, 530), (600, 520)]},
-    'manter': {'gbraco': [(820, 590), (1015, 590), (1050, 830), (830, 830)],
+    'fundo_corpo': [[(840, 690), (1000, 690), (1030, 800), (1010, 880), (900, 900), (850, 820)]],
+    'manter': {'gbraco': [(820, 590), (1015, 590), (1030, 700), (830, 700)],
                'gperna': [(140, 780), (430, 780), (430, 965), (140, 965)],
                'gperna2': [(385, 870), (740, 870)] + zig(385, 740, 1000)},
     'copias': {'gbraco2': 'gbraco'},
