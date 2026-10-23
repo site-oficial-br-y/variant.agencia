@@ -61,6 +61,7 @@ var _no_pulo := false
 var _repele_t := 0.0                    # Chefe: sem camisa, rebate golpe de chefe (segundos reais)
 var _repele_dano := false
 var _repele_fx := 0.0
+var _aura: Sprite2D
 var _pulo_t := 0.0
 var _baloes: Node2D
 var membros: Dictionary = {}            # corpo -> Node2D articulado (montado: animado por molas)
@@ -544,18 +545,24 @@ func _especial(ch: Dictionary, delta: float) -> void:
 					_fumaca_pouso()
 		"repele":                          # Chefe: tira a camisa, 12 s rebatendo golpe de chefe (e tira 1 de vida dele)
 			if apertou and recarga <= 0.0 and _repele_t <= 0.0:
-				_usar(60.0)
+				_usar(135.0)                         # ~45 s reais até poder de novo
 				_repele_t = 12.0
 				_repele_dano = false
 				_vestir(true)
+				_ligar_aura(true)
 				Audio.musica_ult(true)
 				Audio.tocar("checkpoint", 1.0, 0.0)
 			if _repele_t > 0.0:
 				_repele_t -= delta / Engine.time_scale
 				_repele_fx -= delta / Engine.time_scale
 				_rastro(Color(1.0, 0.82, 0.3, 0.35), 0.1)
+				if _aura:
+					var pulso := 1.0 + 0.12 * sin(Time.get_ticks_msec() / 90.0)
+					_aura.scale = Vector2.ONE * 9.0 * pulso
+					_aura.modulate.a = 0.55 + 0.25 * sin(Time.get_ticks_msec() / 130.0)
 				if _repele_t <= 0.0:
 					_vestir(false)
+					_ligar_aura(false)
 					Audio.musica_ult(false)
 		"dash":                            # Vini: arrancada muito rápida pra frente, com rastro
 			if apertou and recarga <= 0.0:
@@ -748,6 +755,82 @@ func _fumaca_pouso() -> void:
 		m.pecas.poeira(chassi.global_position + Vector2(0, 300), 3.6)
 	Audio.tocar("impacto_forte", 1.0)
 
+## brilho dourado em volta do Chefe enquanto o especial dura
+func _ligar_aura(liga: bool) -> void:
+	if not liga:
+		if _aura:
+			_aura.queue_free()
+			_aura = null
+		return
+	if _aura or not membros.has("tronco"):
+		return
+	_aura = Sprite2D.new()
+	var g := Gradient.new()
+	g.set_color(0, Color(1, 0.9, 0.5, 0.9))
+	g.add_point(0.4, Color(1, 0.75, 0.2, 0.45))
+	g.set_color(g.get_point_count() - 1, Color(1, 0.6, 0.1, 0.0))
+	var t := GradientTexture2D.new()
+	t.gradient = g
+	t.fill = GradientTexture2D.FILL_RADIAL
+	t.fill_from = Vector2(0.5, 0.5)
+	t.fill_to = Vector2(1.0, 0.5)
+	_aura.texture = t
+	var m := CanvasItemMaterial.new()
+	m.blend_mode = CanvasItemMaterial.BLEND_MODE_ADD
+	_aura.material = m
+	_aura.z_index = -1
+	_aura.position = centro_peca("tronco") - origem
+	chassi.add_child(_aura)
+
+## rebate: soco pra frente, dois anéis de choque, faíscas douradas e clarão
+func _efeito_rebate(onde: Vector2) -> void:
+	var add := CanvasItemMaterial.new()
+	add.blend_mode = CanvasItemMaterial.BLEND_MODE_ADD
+	for i in 2:
+		var anel := Line2D.new()
+		var pts := PackedVector2Array()
+		for k in 33:
+			pts.append(Vector2(200, 0).rotated(TAU * k / 32.0))
+		anel.points = pts
+		anel.width = 60.0 if i == 0 else 26.0
+		anel.default_color = Color(1, 0.8, 0.25, 0.95) if i == 0 else Color(1, 1, 0.9, 1.0)
+		anel.material = add
+		anel.z_index = 20
+		anel.global_position = onde
+		get_parent().add_child(anel)
+		var tw := anel.create_tween()
+		tw.tween_interval(0.07 * i * Engine.time_scale)
+		tw.tween_property(anel, "scale", Vector2.ONE * (5.0 - i), 0.4 * Engine.time_scale).set_ease(Tween.EASE_OUT).set_trans(Tween.TRANS_CUBIC)
+		tw.parallel().tween_property(anel, "modulate:a", 0.0, 0.4 * Engine.time_scale)
+		tw.tween_callback(anel.queue_free)
+	var f := CPUParticles2D.new()
+	f.one_shot = true
+	f.explosiveness = 1.0
+	f.amount = 70
+	f.lifetime = 0.45 * Engine.time_scale
+	f.spread = 180.0
+	f.initial_velocity_min = 1500.0
+	f.initial_velocity_max = 4200.0
+	f.gravity = Vector2(0, 1500)
+	f.scale_amount_min = 12.0
+	f.scale_amount_max = 30.0
+	f.color = Color(1, 0.85, 0.35)
+	f.material = add
+	f.z_index = 21
+	f.global_position = onde
+	get_parent().add_child(f)
+	f.emitting = true
+	get_tree().create_timer(1.0 * Engine.time_scale).timeout.connect(f.queue_free)
+	var m := get_parent()
+	if m and m.has_method("_clarao"):
+		m._clarao(Color(1, 0.85, 0.4), 0.28)
+	if _mola.has("braco"):                              # soco: o braço dá um tranco pra frente
+		_mola["braco"][1] = float(_mola["braco"][1]) - 22.0
+	if _mola.has("tronco"):
+		_mola["tronco"][1] = float(_mola["tronco"][1]) - 8.0
+	Audio.tocar("metal", 1.0)
+	Audio.tocar("impacto_forte", 0.8)
+
 ## Chefe: troca a roupa (tronco e braço) pela versão sem camisa e volta
 func _vestir(sem_camisa: bool) -> void:
 	for k in ["tronco", "braco"]:
@@ -766,24 +849,7 @@ func repelir(onde: Vector2) -> bool:
 		return false
 	if _repele_fx <= 0.0:
 		_repele_fx = 0.2
-		var anel := Line2D.new()
-		var pts := PackedVector2Array()
-		for k in 33:
-			pts.append(Vector2(220, 0).rotated(TAU * k / 32.0))
-		anel.points = pts
-		anel.width = 46.0
-		anel.default_color = Color(1, 0.85, 0.3, 0.95)
-		var m := CanvasItemMaterial.new()
-		m.blend_mode = CanvasItemMaterial.BLEND_MODE_ADD
-		anel.material = m
-		anel.z_index = 20
-		anel.global_position = onde
-		get_parent().add_child(anel)
-		var tw := anel.create_tween()
-		tw.tween_property(anel, "scale", Vector2.ONE * 4.0, 0.35 * Engine.time_scale)
-		tw.parallel().tween_property(anel, "modulate:a", 0.0, 0.35 * Engine.time_scale)
-		tw.tween_callback(anel.queue_free)
-		Audio.tocar("metal", 1.0)
+		_efeito_rebate(onde)
 	if not _repele_dano:
 		_repele_dano = true
 		var fase := get_parent()
@@ -1249,6 +1315,7 @@ func _angulo_chao_embaixo() -> float:
 func soltar_ragdoll(herda_vel: Vector2, pulo: bool = false) -> void:
 	if _repele_t > 0.0:
 		_repele_t = 0.0
+		_ligar_aura(false)
 		Audio.musica_ult(false)
 	_mirando = false
 	if _mira:
