@@ -382,19 +382,13 @@ func _sombra_pedra(x: float) -> Polygon2D:
 	fase.add_child(s)
 	return s
 
+## números e sinais: caem sem física (não ficam rolando no caminho). Só matam
+## enquanto estão caindo; ao bater no chão quicam um pouco e somem
 func _pedras_passo(dt: float) -> void:
 	for p in _pedras.duplicate():
 		p["t"] += dt
-		if p["no"] == null and p["t"] > 0.35:              # depois do aviso, a pedra cai
-			var r := RigidBody2D.new()
-			r.collision_layer = 0b11000
-			r.collision_mask = 0b1011
-			r.mass = 4.0
-			var cs := CollisionShape2D.new()
-			var c := CircleShape2D.new()
-			c.radius = 200.0
-			cs.shape = c
-			r.add_child(cs)
+		if p["no"] == null and p["t"] > 0.35:              # depois do aviso, começa a cair
+			var r := Node2D.new()
 			var formulas := ["π", "÷", "+", "−", "×", "=", "√", "%", "∞", "Σ", "x²", "3,14", "1", "2", "3", "4", "5", "6", "7", "8", "9", "0", "½", "≠"]
 			var cores := [Color(1, 1, 1), Color(1, 0.9, 0.3), Color(0.5, 0.9, 1), Color(1, 0.55, 0.7), Color(0.6, 1, 0.6)]
 			var txt := Label.new()
@@ -410,31 +404,47 @@ func _pedras_passo(dt: float) -> void:
 			txt.position = Vector2(-350, -190)
 			txt.pivot_offset = Vector2(350, 190)
 			r.add_child(txt)
-			r.angular_velocity = randf_range(-3.0, 3.0)
 			r.position = Vector2(p["x"], chao - 3600.0)
+			r.z_index = 5
 			fase.add_child(r)
-			r.linear_velocity = Vector2(0, 600)
-			p["no"] = r
 			r.add_to_group("pedra_boss")
-			var a := Area2D.new()
-			a.collision_layer = 0
-			a.collision_mask = 0b110
-			var ca := CollisionShape2D.new()
-			var cc := CircleShape2D.new()
-			cc.radius = 220.0
-			ca.shape = cc
-			a.add_child(ca)
-			r.add_child(a)
-			a.body_entered.connect(func(b: Node2D) -> void:
-				if is_instance_valid(r) and r.linear_velocity.y > 400.0 and (b.is_in_group("veiculo") or b.is_in_group("piloto")):
-					fase._on_perigo(b, "pedra"))
-		if p["t"] > 2.6:
-			(p["sombra"] as Node).queue_free()
-			_pedras.erase(p)
-			if is_instance_valid(p["no"]):
-				var no: Node = p["no"]
-				fase.get_tree().create_timer(4.0).timeout.connect(func() -> void:
-					if is_instance_valid(no): no.queue_free())
+			p["no"] = r
+			p["vy"] = 600.0
+			p["giro"] = randf_range(-3.0, 3.0)
+			p["caindo"] = true
+		var no: Node2D = p["no"]
+		if no == null or not is_instance_valid(no):
+			if p["t"] > 3.0:
+				(p["sombra"] as Node).queue_free()
+				_pedras.erase(p)
+			continue
+		if p["caindo"]:
+			p["vy"] += 9000.0 * dt                              # gravidade (segundos reais)
+			no.position.y += float(p["vy"]) * dt
+			no.rotation += float(p["giro"]) * dt
+			_pedra_acerta(no.global_position)
+			if no.position.y >= chao - 200.0:                   # bateu no chão: quica, para de matar e some
+				no.position.y = chao - 200.0
+				p["caindo"] = false
+				(p["sombra"] as Node).queue_free()
+				fase.pecas.poeira(Vector2(no.position.x, chao), 0.8)
+				Audio.tocar("impacto_leve", 0.6)
+				var tw := no.create_tween()
+				tw.tween_property(no, "position:y", chao - 420.0, 0.15).set_ease(Tween.EASE_OUT)
+				tw.tween_property(no, "position:y", chao - 200.0, 0.15).set_ease(Tween.EASE_IN)
+				tw.parallel().tween_property(no, "modulate:a", 0.0, 0.5)
+				tw.tween_callback(no.queue_free)
+				_pedras.erase(p)
+
+func _pedra_acerta(onde: Vector2) -> void:
+	var pl: Player = fase.player
+	if morto or not fase.ativo or not is_instance_valid(pl) or (pl.imortal_t > 0.0 and pl.montado):
+		return
+	var corpos: Array = [pl.chassi] + pl.membros.values() if pl.montado and is_instance_valid(pl.chassi) else pl.corpos.values()
+	for b in corpos:
+		if (b as Node2D).global_position.distance_to(onde) < 260.0:
+			fase._on_perigo(b, "pedra")
+			return
 
 # ---------- dano ----------
 func levar_choque() -> void:
