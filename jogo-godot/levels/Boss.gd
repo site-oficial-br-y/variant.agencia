@@ -14,6 +14,7 @@ signal derrotado
 
 const ESC := 2.6                         # tamanho do chefe (imagem 1672x941 -> ~4350 px)
 const VIDA_MAX := 5
+const ALCANCE := 650.0                   # raio da marca vermelha no chão = área que mata
 var fase: Node2D                         # Main
 var vida := VIDA_MAX
 var morto := false
@@ -93,13 +94,12 @@ func montar(main: Node2D, y_chao: float) -> void:
 		var m := {"no": s, "braco": braco, "listra": listra, "contorno": contorno, "ombro": (ombros[i] - centro) * ESC,
 			"repouso": (pulsos[i] - centro) * ESC, "estado": "repouso", "t": 0.0, "alvo": Vector2.ZERO,
 			"de": Vector2.ZERO, "hit": hit, "i": i}
-		hit.body_entered.connect(_acertou.bind(m))
 		maos.append(m)
 		s.global_position = global_position + m["repouso"]
 	_sombra = Polygon2D.new()
 	var pts := PackedVector2Array()
 	for k in 24:
-		pts.append(Vector2(700, 0).rotated(TAU * k / 24.0) * Vector2(1, 0.18))
+		pts.append(Vector2(ALCANCE, 0).rotated(TAU * k / 24.0) * Vector2(1, 0.18))
 	_sombra.polygon = pts
 	_sombra.color = Color(1, 0.1, 0.1, 0.0)
 	_sombra.z_index = 4
@@ -261,14 +261,14 @@ func _mover_mao(m: Dictionary, dt: float, foco: Vector2, vel: Vector2) -> void:
 				m["t"] = 0.0
 		"tapa_cai":
 			no.global_position = acima.lerp(Vector2(alvo.x, chao - 420.0), minf(1.0, t / 0.11))
-			(m["hit"] as Area2D).monitoring = true
 			if t >= 0.11:
 				_impacto(Vector2(alvo.x, chao), 1.0)
+				_golpe(m)
 				m["estado"] = "segura"
 				m["t"] = 0.0
 		"segura":
-			if t >= 0.15:
-				(m["hit"] as Area2D).monitoring = false
+			if t < 0.15 and not String(m.get("golpe", "")).begins_with("soco"):
+				_golpe(m)                   # mão no chão: quem entrar no vermelho ainda é pego
 			_mostrar_sombra(0.0, 0.0)
 			if t >= 0.7:
 				m["estado"] = "volta"
@@ -288,8 +288,8 @@ func _mover_mao(m: Dictionary, dt: float, foco: Vector2, vel: Vector2) -> void:
 				m["de"] = no.global_position
 		"agarra_vai":
 			no.global_position = (m["de"] as Vector2).lerp(Vector2(alvo.x, chao - 450.0), minf(1.0, t / 0.3))
-			(m["hit"] as Area2D).monitoring = true
 			if t >= 0.3:
+				_golpe(m)
 				_mostrar_sombra(0.0, 0.0)
 				m["estado"] = "segura"
 				m["t"] = 0.0
@@ -338,6 +338,21 @@ func _impacto(onde: Vector2, forca: float) -> void:
 		for rb in [pl.chassi] + pl.rodas:                     # tranco no chão: o veículo pula
 			(rb as RigidBody2D).linear_velocity.y -= 500.0
 
+## mão chegou no chão: pega quem estiver dentro da marca vermelha (e só quem estiver nela)
+func _golpe(m: Dictionary) -> void:
+	if morto or not fase.ativo or m["estado"] == "volta":
+		return
+	var pl: Player = fase.player
+	if not is_instance_valid(pl) or (pl.imortal_t > 0.0 and pl.montado):
+		return
+	var ax: float = (m["alvo"] as Vector2).x
+	var corpos: Array = ([pl.chassi] + pl.rodas) if pl.montado and is_instance_valid(pl.chassi) else pl.corpos.values()
+	for b in corpos:
+		var p: Vector2 = (b as Node2D).global_position
+		if absf(p.x - ax) < ALCANCE and p.y > chao - 1300.0:
+			_acertou(b, m)
+			return
+
 func _acertou(b: Node2D, m: Dictionary) -> void:
 	if morto or not (b.is_in_group("veiculo") or b.is_in_group("piloto")):
 		return
@@ -345,7 +360,7 @@ func _acertou(b: Node2D, m: Dictionary) -> void:
 	if pl.imortal_t > 0.0 and pl.montado:
 		return
 	# só pega quem está dentro da área vermelha (a mão desenhada é maior que o golpe)
-	if absf(b.global_position.x - (m["alvo"] as Vector2).x) > 650.0:
+	if absf(b.global_position.x - (m["alvo"] as Vector2).x) > ALCANCE:
 		return
 	(m["hit"] as Area2D).set_deferred("monitoring", false)
 	if pl.repelir(b.global_position):                  # Chefe sem camisa: a mão volta rebatida
@@ -786,7 +801,7 @@ func _laser_acerta(de: Vector2, ate: Vector2) -> void:
 	var corpos: Array = [pl.chassi] if pl.montado and is_instance_valid(pl.chassi) else pl.corpos.values()
 	for b in corpos:
 		var p: Vector2 = (b as Node2D).global_position
-		if p.distance_to(Geometry2D.get_closest_point_to_segment(p, de, ate)) < LASER_LARGURA + 90.0:
+		if absf(p.x - ate.x) < LASER_LARGURA + 90.0 and p.y > ate.y - 1300.0:   # só onde ele bate no chão (o alvo)
 			if pl.repelir(p):
 				return
 			fase._on_perigo(b, "laser")

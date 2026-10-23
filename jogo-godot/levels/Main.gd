@@ -623,8 +623,9 @@ func _fase_6() -> void:
 	_portao6.collision_layer = 0b01
 	var cs := CollisionShape2D.new()
 	var r := RectangleShape2D.new()
-	r.size = Vector2(260, 3600)
+	r.size = Vector2(260, 30000)
 	cs.shape = r
+	cs.position = Vector2(0, -13200)
 	_portao6.add_child(cs)
 	pecas.poligono(Pecas.retangulo(Vector2.ZERO, Vector2(260, 3600)), Color(0.45, 0.47, 0.5), 3, null, 1.0, _portao6)
 	pecas.poligono(Pecas.retangulo(Vector2(0, 1500), Vector2(260, 160)), Color.WHITE, 3, pecas.tex("perigo"), 0.8, _portao6)
@@ -639,7 +640,8 @@ func _fase_6() -> void:
 	vendedor.montar(self, y)
 	vendedor.cansou.connect(func() -> void:
 		var tw := _portao6.create_tween()
-		tw.tween_property(_portao6, "position:y", _portao6.position.y - 3700.0, 1.2))
+		tw.tween_property(_portao6, "position:y", _portao6.position.y - 3700.0, 1.2)
+		tw.tween_callback(func() -> void: _portao6.queue_free()))
 	var gat := _area(Vector2(MERC_ARENA, y - 700), Vector2(200, 1600))
 	gat.body_entered.connect(func(b: Node2D) -> void:
 		if b.is_in_group("veiculo") or b.is_in_group("piloto"): vendedor.comecar())
