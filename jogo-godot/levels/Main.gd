@@ -755,8 +755,9 @@ func _fase_5() -> void:
 	_portao.collision_layer = 0b01
 	var cs := CollisionShape2D.new()
 	var r := RectangleShape2D.new()
-	r.size = Vector2(260, 3600)
+	r.size = Vector2(260, 30000)                       # alto até o céu: o mega pulo do Lima não passa por cima
 	cs.shape = r
+	cs.position = Vector2(0, -13200)
 	_portao.add_child(cs)
 	pecas.poligono(Pecas.retangulo(Vector2.ZERO, Vector2(260, 3600)), Color(0.4, 0.42, 0.46), 3, null, 1.0, _portao)
 	pecas.poligono(Pecas.retangulo(Vector2(0, 1500), Vector2(260, 160)), Color.WHITE, 3, pecas.tex("perigo"), 0.8, _portao)
@@ -772,15 +773,17 @@ func _fase_5() -> void:
 	boss.derrotado.connect(func() -> void:
 		_mensagem("O PORTÃO ABRIU! CORRE!", Color(0.5, 1, 0.5))
 		var tw := _portao.create_tween()
-		tw.tween_property(_portao, "position:y", _portao.position.y - 3700.0, 1.2))
+		tw.tween_property(_portao, "position:y", _portao.position.y - 3700.0, 1.2)
+		tw.tween_callback(func() -> void: _portao.queue_free()))
 
 func _parede_arena(x: float, y: float) -> void:
 	var sb := StaticBody2D.new()
 	sb.collision_layer = 0b01
 	var cs := CollisionShape2D.new()
 	var r := RectangleShape2D.new()
-	r.size = Vector2(400, 4000)
+	r.size = Vector2(400, 30000)
 	cs.shape = r
+	cs.position = Vector2(0, -13000)
 	sb.add_child(cs)
 	pecas.poligono(Pecas.retangulo(Vector2.ZERO, Vector2(400, 4000)), Color(0.4, 0.42, 0.46), 3, null, 1.0, sb)
 	sb.position = Vector2(x, y - 2000.0)

@@ -58,6 +58,7 @@ var _trote: Array = []                  # sprites do gorila + boneco que sobem e
 const MEGA := 3300.0
 var _bracos_vei: Array = []             # braços do gorila: levantam no pulo
 var _no_pulo := false
+var _pulo_img: Sprite2D                 # Lima: desenho do gorila saltando (troca no mega pulo)
 var _repele_t := 0.0                    # Chefe: sem camisa, rebate golpe de chefe (segundos reais)
 var _repele_dano := false
 var _repele_fx := 0.0
@@ -256,9 +257,18 @@ func _montar() -> void:
 		_bracos_vei.append(n)
 	boneco = Node2D.new()
 	chassi.add_child(boneco)
+	if ResourceLoader.exists("res://assets/%s/pulo.png" % personagem):
+		_pulo_img = Sprite2D.new()
+		_pulo_img.texture = load("res://assets/%s/pulo.png" % personagem)
+		_pulo_img.offset = Vector2(6, -0.5)
+		_pulo_img.position = Vector2(610, 800) - origem
+		_pulo_img.rotation = deg_to_rad(20.0)
+		_pulo_img.z_index = D["ordem"].find("veiculo")
+		_pulo_img.visible = false
+		chassi.add_child(_pulo_img)
 	if ch.get("trote", false):
 		for c in chassi.get_children():
-			if c is Sprite2D or c == boneco or c in _bracos_vei:
+			if (c is Sprite2D or c == boneco or c in _bracos_vei) and c != _pulo_img:
 				_trote.append([c, (c as Node2D).position])
 	var sensor := Area2D.new()
 	sensor.collision_layer = 0
@@ -346,6 +356,11 @@ func _animar(delta: float) -> void:
 		var sobe := absf(cos(passo)) * 12.0 * amp
 		for t in _trote:                            # corpo e patas juntos: emenda não abre
 			(t[0] as Node2D).position = (t[1] as Vector2) + Vector2(0, -sobe)
+		if _pulo_img:                               # mega pulo: troca pelo desenho do gorila saltando
+			_pulo_img.visible = _no_pulo
+			for t in _trote:
+				if t[0] != boneco:
+					(t[0] as Node2D).visible = not _no_pulo
 		for n in _bracos_vei:
 			var perna: bool = n.get_meta("perna")
 			var f: float = passo + float(n.get_meta("fase"))
