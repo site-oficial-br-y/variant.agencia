@@ -1407,7 +1407,7 @@ func _fim(ganhou: bool, motivo: String) -> void:
 	else:
 		if _alarme:
 			_alarme.stop()
-		aviso.text = {"esmagado": "ESMAGADO!", "agarrado": "TE PEGOU!", "pedra": "ESMAGADO!", "pego": "TE PEGOU!", "agua": "AFOGOU!", "buraco": "CAIU!", "caiu": "CAIU!"}.get(motivo, "MORREU!") + "\naperta R"
+		aviso.text = {"esmagado": "ESMAGADO!", "agarrado": "TE PEGOU!", "laser": "DESINTEGRADO!", "pedra": "ESMAGADO!", "pego": "TE PEGOU!", "agua": "AFOGOU!", "buraco": "CAIU!", "caiu": "CAIU!"}.get(motivo, "MORREU!") + "\naperta R"
 		Audio.motor(false)
 		Audio.tocar("morte")
 		print("[FASE] perdeu %s x=%.0f" % [motivo, player.foco().global_position.x if is_instance_valid(player) else 0.0])

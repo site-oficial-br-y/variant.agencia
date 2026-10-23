@@ -35,6 +35,8 @@ var segunda := false                     # virou Cepé
 var _grito_t := 10.0
 var _chuva_t := 4.0
 var _musica := false
+var _laser_t := 3.0
+var _lasers: Array = []
 
 func _real(delta: float) -> float:
 	return delta / Engine.time_scale
@@ -168,6 +170,7 @@ func atualizar(delta: float) -> void:
 	for m in maos:
 		_mover_mao(m, dt, foco, vel)
 	_pedras_passo(dt)
+	_lasers_passo(dt)
 	if morto or not fase.ativo:
 		return
 	_grito_t -= dt
@@ -180,6 +183,13 @@ func atualizar(delta: float) -> void:
 		for i in (3 if segunda else 2):
 			var x := foco.x + vel.x * 0.4 + randf_range(900.0, 4200.0) * (1.0 if randf() < 0.75 else -0.5)
 			_pedras.append({"x": x, "t": 0.0, "no": null, "sombra": _sombra_pedra(x)})
+	if segunda:
+		_laser_t -= dt
+		if _laser_t <= 0.0:
+			_laser_t = randf_range(2.0, 3.0) if vida > 2 else randf_range(1.4, 2.2)
+			_laser(foco.x + vel.x * Engine.time_scale * 0.7)
+			if vida <= 2 and randf() < 0.5:                      # no fim, dois de uma vez
+				_laser(foco.x + randf_range(1800.0, 3000.0) * (1.0 if randf() < 0.5 else -1.0))
 	_prox_ataque -= dt
 	if _prox_ataque <= 0.0:
 		_atacar(foco, vel)
@@ -554,3 +564,79 @@ func _virar_cepe() -> void:
 	_rotulo.add_theme_color_override("font_color", Color(0.5, 0.95, 1.0))
 	_barra.color = Color(0.3, 0.85, 1.0)
 	_posicionar_barra()
+
+# ---------- laser negativo (só o Cepé) ----------
+## sai dos olhos e risca o chão onde você vai estar: linha fina piscando é o aviso,
+## depois o feixe inverte as cores de tudo que passa por baixo e desintegra quem estiver nele
+const FEIXE := "shader_type canvas_item;\nuniform sampler2D tela : hint_screen_texture, filter_linear;\nvoid fragment() { COLOR = vec4(vec3(1.0) - texture(tela, SCREEN_UV).rgb, 1.0); }"
+const LASER_AVISO := 0.9
+const LASER_FOGO := 0.45
+
+func _olhos() -> Vector2:
+	return cabeca.global_position + Vector2(0, -330).rotated(cabeca.global_rotation)
+
+func _laser(x: float) -> void:
+	var aviso := Line2D.new()
+	aviso.width = 18.0
+	aviso.default_color = Color(0.5, 0.95, 1.0, 0.8)
+	aviso.z_index = 8
+	fase.add_child(aviso)
+	_lasers.append({"x": x, "t": 0.0, "aviso": aviso, "feixe": null, "brilho": null})
+	Audio.tocar("turbo", 0.5, 0.0)
+
+func _lasers_passo(dt: float) -> void:
+	for l in _lasers.duplicate():
+		l["t"] += dt
+		var t: float = l["t"]
+		var de := _olhos()
+		var ate := Vector2(float(l["x"]), chao + 40.0)
+		if t < LASER_AVISO:
+			var aviso: Line2D = l["aviso"]
+			aviso.points = PackedVector2Array([de, ate])
+			aviso.visible = fmod(t, 0.14) < 0.08
+			continue
+		if l["feixe"] == null:
+			(l["aviso"] as Node).queue_free()
+			var feixe := Polygon2D.new()
+			var mat := ShaderMaterial.new()
+			var sh := Shader.new()
+			sh.code = FEIXE
+			mat.shader = sh
+			feixe.material = mat
+			feixe.z_index = 9
+			fase.add_child(feixe)
+			var brilho := Line2D.new()
+			brilho.default_color = Color(0.5, 0.95, 1.0, 0.9)
+			brilho.z_index = 10
+			fase.add_child(brilho)
+			l["feixe"] = feixe
+			l["brilho"] = brilho
+			Audio.tocar("metal", 1.0, 0.0)
+			Audio.tocar("impacto_forte", 0.7)
+			_tremor = 0.25
+			fase.pecas.poeira(ate, 1.4)
+		var feixe: Polygon2D = l["feixe"]
+		var brilho: Line2D = l["brilho"]
+		var lado := (ate - de).orthogonal().normalized()
+		var k := 1.0 - absf((t - LASER_AVISO) / LASER_FOGO * 2.0 - 1.0) * 0.5     # engrossa e afina
+		feixe.polygon = PackedVector2Array([de + lado * 70.0 * k, ate + lado * 240.0 * k, ate - lado * 240.0 * k, de - lado * 70.0 * k])
+		brilho.points = PackedVector2Array([de, ate])
+		brilho.width = 40.0 * k
+		_laser_acerta(de, ate)
+		if t >= LASER_AVISO + LASER_FOGO:
+			feixe.queue_free()
+			brilho.queue_free()
+			_lasers.erase(l)
+
+func _laser_acerta(de: Vector2, ate: Vector2) -> void:
+	var pl: Player = fase.player
+	if morto or not fase.ativo or not is_instance_valid(pl) or (pl.imortal_t > 0.0 and pl.montado):
+		return
+	var corpos: Array = [pl.chassi] if pl.montado and is_instance_valid(pl.chassi) else pl.corpos.values()
+	for b in corpos:
+		var p: Vector2 = (b as Node2D).global_position
+		var q := Geometry2D.get_closest_point_to_segment(p, de, ate)
+		var largura := lerpf(70.0, 240.0, clampf((q.y - de.y) / maxf(1.0, ate.y - de.y), 0.0, 1.0))
+		if p.distance_to(q) < largura + 90.0:
+			fase._on_perigo(b, "laser")
+			return
