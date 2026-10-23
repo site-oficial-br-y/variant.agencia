@@ -49,7 +49,6 @@ var imortal_t := 0.0
 var _baloes_t := 0.0
 var _rapido_t := 0.0                    # Caio: tudo mais rápido
 var _dash_t := 0.0                      # Vini: arrancada
-var _dash_ar := true
 var _rastro_t := 0.0
 var _baloes: Node2D
 var membros: Dictionary = {}            # corpo -> Node2D articulado (montado: animado por molas)
@@ -467,16 +466,13 @@ func _especial(ch: Dictionary, delta: float) -> void:
 				_rapido_t -= delta
 				_rastro(Color(1.0, 0.85, 0.2, 0.45), 0.12)
 		"dash":                            # Vini: arrancada muito rápida pra frente, com rastro
-			if _no_chao():
-				_dash_ar = true                           # no ar só dá um dash até encostar no chão
-			if apertou and recarga <= 0.0 and _dash_ar:
-				_dash_ar = _no_chao()
+			if apertou and recarga <= 0.0:
 				_usar(0.8)
 				_dash_t = 0.4
 				var dirx := 1.0 if Input.get_axis("brake", "accelerate") >= 0.0 else -1.0
 				for rb in [chassi] + rodas:
 					var c := rb as RigidBody2D
-					c.linear_velocity = Vector2(dirx * 3300.0, c.linear_velocity.y)   # não segura a queda: não plana
+					c.linear_velocity = Vector2(dirx * 3300.0, minf(c.linear_velocity.y, 0.0) - 120.0)   # zera a queda: espamando, ele plana
 				Audio.tocar("turbo", 1.0, 0.0)
 				Audio.tocar("pulo", 0.6, 0.0)
 				_explosao_dash(dirx)
