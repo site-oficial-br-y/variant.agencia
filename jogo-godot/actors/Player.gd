@@ -343,10 +343,9 @@ func _animar(delta: float) -> void:
 	if _trote.size() > 0:                           # gorila anda de quatro: patas cruzadas no passo, corpo sobe e desce
 		var amp := clampf(absf(chassi.linear_velocity.x) / 400.0, 0.0, 1.0)
 		var passo := roda_motriz.rotation * 0.75
-		var sobe := absf(cos(passo)) * 22.0 * amp
-		for t in _trote:
-			if not (t[0] in _bracos_vei):
-				(t[0] as Node2D).position = (t[1] as Vector2) + Vector2(0, -sobe)
+		var sobe := absf(cos(passo)) * 12.0 * amp
+		for t in _trote:                            # corpo e patas juntos: emenda não abre
+			(t[0] as Node2D).position = (t[1] as Vector2) + Vector2(0, -sobe)
 		for n in _bracos_vei:
 			var perna: bool = n.get_meta("perna")
 			var f: float = passo + float(n.get_meta("fase"))
