@@ -75,6 +75,15 @@ func musica_chefe(nome: String) -> void:
 	_chefe.stream = st
 	_chefe.play()
 
+## abaixa a música do chefe por um instante (grito do Péce por cima)
+func abaixar_chefe(segundos: float) -> void:
+	if _chefe == null or not _chefe.playing:
+		return
+	var tw := _chefe.create_tween()
+	tw.tween_property(_chefe, "volume_db", -16.0, 0.15)
+	tw.tween_interval(segundos)
+	tw.tween_property(_chefe, "volume_db", -4.0, 0.4)
+
 func parar_chefe() -> void:
 	if _chefe and _chefe.playing:
 		_chefe.stop()

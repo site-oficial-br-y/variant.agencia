@@ -177,6 +177,7 @@ func atualizar(delta: float) -> void:
 	if _grito_t <= 0.0:
 		_grito_t = 10.0
 		Audio.tocar("pece_grito", 1.0, 0.0)
+		Audio.abaixar_chefe(2.3)
 	_chuva_t -= dt
 	if _chuva_t <= 0.0:                                     # vai derrubando números e sinais
 		_chuva_t = randf_range(2.5, 3.5) if segunda else randf_range(3.5, 5.0)

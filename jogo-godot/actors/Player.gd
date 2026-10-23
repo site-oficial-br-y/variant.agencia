@@ -879,7 +879,7 @@ func _dirigir() -> void:
 		chassi.apply_torque(inercia_chassi * (-(chassi.rotation - alvo) * balance_stiffness
 			- chassi.angular_velocity * balance_damping))
 	elif lean != 0.0:                # sem braço, controla mal
-		chassi.apply_torque(lean * inercia_chassi * (2.2 if _sem_braco() else 5.0))
+		chassi.apply_torque(lean * inercia_chassi * (2.2 if _sem_braco() else 5.0) * float(ch.get("giro", 1.0)))
 	else:           # sem botão, se alinha sozinho com o chão embaixo: pousa certo na descida
 		var alvo := _angulo_chao_embaixo() if ch.get("nivela_chao", true) else 0.0   # pé comprido na frente: fica reto
 		chassi.apply_torque(inercia_chassi * (-wrapf(chassi.rotation - alvo, -PI, PI) * 6.0 - chassi.angular_velocity * 2.5))
