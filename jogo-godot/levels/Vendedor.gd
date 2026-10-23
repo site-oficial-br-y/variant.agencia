@@ -89,17 +89,41 @@ func atualizar(delta: float) -> void:
 		return
 	_prox -= dt
 	if _prox <= 0.0:
-		_prox = maxf(1.0, 2.1 - _t * 0.03)                 # vai jogando mais rápido
-		_arremessar(pl)
-		if _t > 18.0 and randf() < 0.4:                   # segunda coisa junto
-			_arremessar(pl, randf_range(-1800, 1800))
+		_prox = maxf(0.75, 1.8 - _t * 0.03)                # vai jogando mais rápido
+		_jogada(pl)
 
-func _arremessar(pl: Player, desvio := 0.0) -> void:
+## varia a mira pra não dar pra decorar: às vezes onde você vai estar, às vezes onde
+## você está, às vezes atrás (pega quem freia) e às vezes uma rajada que fecha o caminho
+func _jogada(pl: Player) -> void:
+	var modos := ["futuro", "agora", "atras", "cerco"]
+	if _t > 10.0:
+		modos += ["rajada", "cerco"]
+	if _t > 22.0:
+		modos += ["rajada", "parede"]
+	match modos[randi() % modos.size()]:
+		"futuro":
+			_arremessar(pl, 0.0, 0.85)
+		"agora":
+			_arremessar(pl, 0.0, 0.0)
+		"atras":
+			_arremessar(pl, -900.0, 0.3)
+		"cerco":                                          # onde você vai e onde você está
+			_arremessar(pl, 0.0, 0.9)
+			_arremessar(pl, 0.0, 0.0, 1.35)
+		"rajada":                                         # três seguidas varrendo pra frente
+			for i in 3:
+				get_tree().create_timer(0.3 * i * Engine.time_scale).timeout.connect(func() -> void:
+					if ativo and not acabou and is_instance_valid(pl) and is_instance_valid(pl.chassi):
+						_arremessar(pl, -600.0 + i * 900.0, 0.6))
+		"parede":                                         # uma na frente e uma atrás ao mesmo tempo
+			_arremessar(pl, 1600.0, 0.7)
+			_arremessar(pl, -1100.0, 0.2)
+
+func _arremessar(pl: Player, desvio := 0.0, mira := 0.85, voo := 1.1) -> void:
 	var tipos := ["caixa", "caixa", "melancia", "carrinho", "prateleira", "carro", "caminhao"]
 	var tipo: String = tipos[randi() % tipos.size()]
-	var voo := 1.1                                         # segundos reais no ar
 	var vx := pl.chassi.linear_velocity.x if pl.montado else 0.0
-	var alvo_x := pl.foco().global_position.x + vx * voo * Engine.time_scale * 0.85 + desvio
+	var alvo_x := pl.foco().global_position.x + vx * voo * Engine.time_scale * mira + desvio
 	var no := _visual(tipo)
 	no.z_index = 7
 	fase.add_child(no)
