@@ -70,6 +70,7 @@
  "chassi": {
   "massa": 5.0,
   "auto_equilibrio": true,
+  "preciso": true,
   "vmax": 900.0,
   "forca": 90000.0,
   "mastro": {
@@ -77,8 +78,7 @@
    "y0": 300.0,
    "y1": 1396.0,
    "w": 100.0
-  },
-  "preciso": true
+  }
  },
  "corpos": {
   "cabeca": {

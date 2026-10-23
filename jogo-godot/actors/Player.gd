@@ -1119,7 +1119,7 @@ func _dirigir() -> void:
 	var equilibra: bool = ch["auto_equilibrio"]
 	var mono: bool = ch.get("monociclo", false)
 	var dir := Input.get_axis("brake", "accelerate")
-	var rapido := 2.6 if _rapido_t > 0.0 else 1.0
+	var rapido := 2.2 if _rapido_t > 0.0 else 1.0
 	var preciso: bool = ch.get("preciso", false)
 	if preciso and dir == 0.0 and _dash_t <= 0.0 and _no_chao():   # Vini, Périne, Erick: soltou, para firme (menos no meio do dash)
 		for rb in [chassi] + rodas:
