@@ -1393,6 +1393,7 @@ func _fim(ganhou: bool, motivo: String) -> void:
 	if not ativo:
 		return
 	ativo = false
+	Audio.parar_chefe()
 	if ganhou:
 		var novo := do_inicio and Game.registrar_vitoria(Game.fase, tempo)
 		aviso.text = "CHEGOU!\n%.1f s%s" % [tempo, "  NOVO RECORDE!" if novo else ""]

@@ -3,7 +3,7 @@ extends Node
 ## e o ronco do motor em loop, cujo tom acompanha a velocidade.
 
 const SONS := ["clique", "confirma", "impacto_leve", "impacto_forte", "osso", "splat",
-	"caixa", "metal", "checkpoint", "vitoria", "morte", "pulo", "turbo", "baloes", "passo"]
+	"caixa", "metal", "checkpoint", "vitoria", "morte", "pulo", "turbo", "baloes", "passo", "pece_grito"]
 const VOZES := 10
 
 var _streams: Dictionary = {}
@@ -55,10 +55,29 @@ func musica_menu(ligada: bool) -> void:
 		_musica.stream = st
 		_musica.volume_db = -6.0
 		add_child(_musica)
+	if ligada:
+		parar_chefe()
 	if ligada and not _musica.playing:
 		_musica.play()
 	elif not ligada and _musica.playing:
 		_musica.stop()
+
+## música de chefe (pece, cepe, vendedor): loop até a fase acabar
+var _chefe: AudioStreamPlayer
+func musica_chefe(nome: String) -> void:
+	if _chefe == null:
+		_chefe = AudioStreamPlayer.new()
+		_chefe.process_mode = Node.PROCESS_MODE_ALWAYS     # segue tocando na cutscene (jogo pausado)
+		_chefe.volume_db = -4.0
+		add_child(_chefe)
+	var st := load("res://assets/audio/musica/%s.ogg" % nome) as AudioStreamOggVorbis
+	st.loop = true
+	_chefe.stream = st
+	_chefe.play()
+
+func parar_chefe() -> void:
+	if _chefe and _chefe.playing:
+		_chefe.stop()
 
 func motor(ligado: bool, fracao: float = 0.0) -> void:
 	ligado = false                       # ronco contínuo desligado: era o som chato que tocava o tempo todo

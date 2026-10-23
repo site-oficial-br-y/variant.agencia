@@ -54,6 +54,7 @@ func comecar() -> void:
 	_rotulo.add_theme_constant_override("outline_size", 8)
 	hud.add_child(_rotulo)
 	fase._mensagem("O VENDEDOR TE VIU! DESVIA DE TUDO!", Color(1, 0.6, 0.2))
+	Audio.musica_chefe("vendedor")
 
 func _real(delta: float) -> float:
 	return delta / Engine.time_scale

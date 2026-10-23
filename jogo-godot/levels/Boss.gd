@@ -7,7 +7,8 @@ class_name Boss
 ##  - agarrão: a mão desce na diagonal até onde você vai estar; pegou, arremessa;
 ##  - entulho: soca o chão lá na frente e caem pedregulhos com sombra.
 ## Toda a temporização é em segundos REAIS (o jogo roda acelerado).
-## Vida: 5. Os botões vermelhos da pista dão choque nele. Zerou, ele desaba.
+## Vida: 5. Os botões vermelhos da pista dão choque nele. Zerou a primeira vez, o
+## Péce se transforma no Cepé (negativo), mais rápido, com vida cheia. Zerou de novo, desaba.
 
 signal derrotado
 
@@ -30,6 +31,10 @@ var _barra_fundo: ColorRect
 var _rotulo: Label
 var _tremor := 0.0
 var _dano_t := 0.0
+var segunda := false                     # virou Cepé
+var _grito_t := 10.0
+var _chuva_t := 4.0
+var _musica := false
 
 func _real(delta: float) -> float:
 	return delta / Engine.time_scale
@@ -119,7 +124,7 @@ func _hud() -> void:
 	_barra.size = Vector2(600, 24)
 	hud.add_child(_barra)
 	_rotulo = Label.new()
-	_rotulo.text = "CHEFÃO"
+	_rotulo.text = "PÉCE"
 	_rotulo.add_theme_font_size_override("font_size", 30)
 	_rotulo.add_theme_color_override("font_outline_color", Color.BLACK)
 	_rotulo.add_theme_constant_override("outline_size", 8)
@@ -139,6 +144,9 @@ func _posicionar_barra() -> void:
 func atualizar(delta: float) -> void:
 	var dt := _real(delta)
 	_t += dt
+	if not _musica:
+		_musica = true
+		Audio.musica_chefe("pece")
 	var pl: Player = fase.player
 	if not is_instance_valid(pl) or not is_instance_valid(pl.chassi):
 		return
@@ -162,11 +170,23 @@ func atualizar(delta: float) -> void:
 	_pedras_passo(dt)
 	if morto or not fase.ativo:
 		return
+	_grito_t -= dt
+	if _grito_t <= 0.0:
+		_grito_t = 10.0
+		Audio.tocar("pece_grito", 1.0, 0.0)
+	_chuva_t -= dt
+	if _chuva_t <= 0.0:                                     # vai derrubando números e sinais
+		_chuva_t = randf_range(2.5, 3.5) if segunda else randf_range(3.5, 5.0)
+		for i in (3 if segunda else 2):
+			var x := foco.x + vel.x * 0.4 + randf_range(900.0, 4200.0) * (1.0 if randf() < 0.75 else -0.5)
+			_pedras.append({"x": x, "t": 0.0, "no": null, "sombra": _sombra_pedra(x)})
 	_prox_ataque -= dt
 	if _prox_ataque <= 0.0:
 		_atacar(foco, vel)
 
 func _intervalo() -> float:
+	if segunda:
+		return maxf(0.7, 1.9 - 0.25 * float(VIDA_MAX - vida))
 	return maxf(0.9, 2.6 - 0.35 * float(VIDA_MAX - vida))       # fica mais agressivo a cada choque
 
 func _livre() -> Array:
@@ -178,7 +198,7 @@ func _atacar(foco: Vector2, vel: Vector2) -> void:
 		_prox_ataque = 0.3
 		return
 	var golpes := ["tapa", "tapa", "agarrao", "entulho"]
-	if vida <= 3:
+	if vida <= 3 or segunda:
 		golpes += ["tapa", "agarrao"]
 	var g: String = golpes[randi() % golpes.size()]
 	var m: Dictionary = livres[randi() % livres.size()]
@@ -190,7 +210,7 @@ func _atacar(foco: Vector2, vel: Vector2) -> void:
 		"entulho":
 			_iniciar(m, "soco_sobe", foco + Vector2(5200, 0))
 	_prox_ataque = _intervalo()
-	if vida <= 2 and livres.size() == 2 and randf() < 0.5:     # combo: as duas mãos
+	if (vida <= 2 or segunda) and livres.size() == 2 and randf() < 0.5:     # combo: as duas mãos
 		var outra: Dictionary = livres[1] if livres[0] == m else livres[0]
 		_iniciar(outra, "tapa_sobe", foco + Vector2(vel.x * Engine.time_scale * 1.6, 0))
 
@@ -364,10 +384,11 @@ func _pedras_passo(dt: float) -> void:
 			c.radius = 200.0
 			cs.shape = c
 			r.add_child(cs)
-			var formulas := ["π", "Σ", "∫", "√x", "x²", "∞", "a²+b²", "Δ", "÷", "%", "f(x)", "=", "e^x", "sen θ"]
+			var formulas := ["π", "÷", "+", "−", "×", "=", "√", "%", "∞", "Σ", "x²", "3,14", "1", "2", "3", "4", "5", "6", "7", "8", "9", "0", "½", "≠"]
 			var cores := [Color(1, 1, 1), Color(1, 0.9, 0.3), Color(0.5, 0.9, 1), Color(1, 0.55, 0.7), Color(0.6, 1, 0.6)]
 			var txt := Label.new()
 			txt.text = formulas[randi() % formulas.size()]
+			txt.add_theme_font_override("font", load("res://assets/fonts/simbolos.ttf"))
 			txt.add_theme_font_size_override("font_size", 260)
 			txt.add_theme_color_override("font_color", cores[randi() % cores.size()])
 			txt.add_theme_color_override("font_outline_color", Color(0.05, 0.05, 0.08))
@@ -415,7 +436,9 @@ func levar_choque() -> void:
 	Audio.tocar("splat", 0.8)
 	if fase.sangue:
 		fase.sangue.jorrar(cabeca.global_position + Vector2(0, -300), 60, 1800.0)
-	if vida <= 0:
+	if vida <= 0 and not segunda:
+		_transformar()
+	elif vida <= 0:
 		morto = true
 		_dano_t = 0.0
 		for m in maos:
@@ -423,7 +446,7 @@ func levar_choque() -> void:
 			m["t"] = 0.0
 			m["de"] = (m["no"] as Node2D).global_position
 			(m["hit"] as Area2D).set_deferred("monitoring", false)
-		_rotulo.text = "CHEFÃO DERROTADO!"
+		_rotulo.text = "CEPÉ DERROTADO!"
 		_rotulo.add_theme_color_override("font_color", Color(0.5, 1, 0.5))
 		for k in 5:
 			fase.get_tree().create_timer(0.15 * k).timeout.connect(func() -> void:
@@ -433,3 +456,101 @@ func levar_choque() -> void:
 					fase.pecas.particulas(onde, 45, Color(1, 0.75, 0.2), Color(0.95, 0.2, 0.05, 0.0), 900.0, 2000.0, 0.8, 300.0, 600.0)
 					fase.pecas.particulas(onde, 26, Color(0.3, 0.28, 0.27, 0.95), Color(0.55, 0.55, 0.55, 0.0), 250.0, 800.0, 2.6, 500.0, 1000.0, -300.0))
 		derrotado.emit()
+
+# ---------- transformação: Péce vira Cepé ----------
+const NEGATIVO := "shader_type canvas_item;\nvoid fragment() { COLOR.rgb = vec3(1.0) - COLOR.rgb; }"
+
+func _transformar() -> void:
+	vida = 0
+	_dano_t = 0.0
+	for m in maos:
+		m["estado"] = "volta"
+		m["t"] = 0.0
+		m["de"] = (m["no"] as Node2D).global_position
+		(m["hit"] as Area2D).set_deferred("monitoring", false)
+	_mostrar_sombra(0.0, 0.0)
+	for p in _pedras:
+		(p["sombra"] as Node).queue_free()
+		if is_instance_valid(p["no"]):
+			(p["no"] as Node).queue_free()
+	_pedras.clear()
+	for n in fase.get_tree().get_nodes_in_group("pedra_boss"):
+		n.queue_free()
+	Audio.musica_chefe("cepe")
+	Audio.tocar("pece_grito", 1.0, 0.0)
+	fase.get_tree().paused = true
+	var cena := CanvasLayer.new()
+	cena.layer = 50
+	cena.process_mode = Node.PROCESS_MODE_ALWAYS
+	fase.add_child(cena)
+	var v := get_viewport().get_visible_rect().size
+	var fundo := ColorRect.new()
+	fundo.size = v
+	fundo.color = Color.WHITE
+	cena.add_child(fundo)
+	var img := TextureRect.new()
+	img.texture = load("res://assets/boss/cepe.png")
+	img.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+	img.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+	img.size = Vector2(v.x * 0.9, v.y * 0.75)
+	img.position = Vector2(v.x * 0.05, v.y * 0.2)
+	img.pivot_offset = img.size / 2.0
+	img.scale = Vector2.ONE * 0.4
+	img.modulate.a = 0.0
+	cena.add_child(img)
+	var txt := Label.new()
+	txt.text = "O PÉCE ESTÁ SE TRANSFORMANDO..."
+	txt.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	txt.size = Vector2(v.x, 100)
+	txt.position = Vector2(0, v.y * 0.04)
+	txt.add_theme_font_size_override("font_size", 54)
+	txt.add_theme_color_override("font_color", Color(1, 0.3, 0.3))
+	txt.add_theme_color_override("font_outline_color", Color.BLACK)
+	txt.add_theme_constant_override("outline_size", 14)
+	cena.add_child(txt)
+	var tw := cena.create_tween()
+	for k in 6:                                                   # pisca branco/preto
+		tw.tween_property(fundo, "color", Color.BLACK, 0.09)
+		tw.tween_property(fundo, "color", Color.WHITE, 0.09)
+	tw.tween_property(fundo, "color", Color.BLACK, 0.15)
+	tw.tween_property(img, "modulate:a", 1.0, 0.3)
+	tw.parallel().tween_property(img, "scale", Vector2.ONE, 2.2).set_trans(Tween.TRANS_CUBIC).set_ease(Tween.EASE_OUT)
+	tw.parallel().tween_method(func(f: float) -> void:
+		img.position = Vector2(v.x * 0.05, v.y * 0.2) + Vector2(randf_range(-1, 1), randf_range(-1, 1)) * 30.0 * f, 0.0, 1.0, 2.2)
+	tw.tween_callback(func() -> void:
+		txt.text = "CEPÉ!"
+		txt.add_theme_font_size_override("font_size", 110)
+		txt.add_theme_color_override("font_color", Color(0.5, 0.95, 1.0))
+		fundo.color = Color.WHITE
+		_virar_cepe())
+	tw.tween_property(fundo, "color", Color.BLACK, 0.25)
+	tw.tween_interval(1.4)
+	tw.tween_method(func(a: float) -> void:
+		fundo.modulate.a = a
+		img.modulate.a = a
+		txt.modulate.a = a, 1.0, 0.0, 0.5)
+	tw.tween_callback(func() -> void:
+		fase.get_tree().paused = false
+		fase._mensagem("O CEPÉ VEIO! CHOQUE NELE DE NOVO!", Color(0.5, 0.95, 1.0))
+		cena.queue_free())
+
+func _virar_cepe() -> void:
+	segunda = true
+	vida = VIDA_MAX
+	_prox_ataque = 2.5
+	_chuva_t = 3.0
+	var mat := ShaderMaterial.new()
+	var sh := Shader.new()
+	sh.code = NEGATIVO
+	mat.shader = sh
+	tronco.material = mat
+	cabeca.material = mat
+	for m in maos:
+		(m["no"] as Sprite2D).material = mat
+		(m["braco"] as Line2D).default_color = Color(0.87, 0.78, 0.38)
+		(m["listra"] as Line2D).default_color = Color(0.05, 0.05, 0.05)
+		(m["contorno"] as Line2D).default_color = Color(0.6, 0.85, 1.0)
+	_rotulo.text = "CEPÉ"
+	_rotulo.add_theme_color_override("font_color", Color(0.5, 0.95, 1.0))
+	_barra.color = Color(0.3, 0.85, 1.0)
+	_posicionar_barra()
