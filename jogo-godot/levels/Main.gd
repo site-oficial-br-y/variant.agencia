@@ -804,6 +804,18 @@ func _rodada_boss(dt: float) -> void:
 	_ligar_botao(_botoes[_botao_ativo])
 	_mensagem("BOTÃO LIGADO! VAI LÁ!", Color(1, 0.9, 0.3))
 
+## clarão rápido na tela inteira (laser, explosão de chefe)
+func _clarao(cor: Color, forca: float) -> void:
+	var c := ColorRect.new()
+	c.color = Color(cor, forca)
+	c.size = get_viewport().get_visible_rect().size
+	c.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	$HUD.add_child(c)
+	$HUD.move_child(c, 0)
+	var tw := c.create_tween()
+	tw.tween_property(c, "color:a", 0.0, 0.35)
+	tw.tween_callback(c.queue_free)
+
 func _mensagem(t: String, cor: Color) -> void:
 	if _msg == null:
 		_msg = Label.new()
@@ -1079,7 +1091,7 @@ func _porta(base: Vector2, teto: float, periodo: float) -> void:
 	pecas.poligono(Pecas.retangulo(Vector2(base.x, teto + 40.0), Vector2(320, 80)), Color(0.25, 0.27, 0.3), 4)
 	var luz := pecas.poligono(Pecas.retangulo(Vector2(base.x + 200, teto + 200.0), Vector2(60, 60)), Color(1, 0.2, 0.2), 4)
 	_portas.append({"no": ab, "fechada": ab.position.y, "aberta": ab.position.y - alt + 120.0, "T": periodo,
-		"atraso": _sorteio.randf_range(0.0, periodo), "luz": luz})
+		"atraso": _sorteio.randf_range(0.0, periodo), "luz": luz, "meia": alt / 2.0})
 
 func _atualizar_lab(dt: float) -> void:
 	for p in _portas:
@@ -1090,6 +1102,15 @@ func _atualizar_lab(dt: float) -> void:
 		elif f < 0.85: k = 1.0 - (f - 0.70) / 0.15
 		(p["no"] as AnimatableBody2D).position.y = lerpf(p["fechada"], p["aberta"], smoothstep(0.0, 1.0, k))
 		(p["luz"] as Polygon2D).color = Color(0.2, 1, 0.3) if k > 0.9 else Color(1, 0.2, 0.2)
+		if f >= 0.70 and f < 0.88 and ativo and is_instance_valid(player):   # descendo: quem estiver embaixo é esmagado
+			var porta: AnimatableBody2D = p["no"]
+			var baixo := porta.position.y + float(p["meia"])
+			var alvos: Array = [player.chassi] + player.membros.values() if player.montado else player.corpos.values()
+			for b in alvos:
+				var bp: Vector2 = (b as Node2D).global_position
+				if absf(bp.x - porta.position.x) < 150.0 and bp.y < baixo + 60.0 and bp.y > baixo - 500.0:
+					_on_perigo(b, "esmagado")
+					break
 	if _boss == null or not ativo or not is_instance_valid(player):
 		return
 	_boss_t += dt / Engine.time_scale

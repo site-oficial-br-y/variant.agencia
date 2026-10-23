@@ -572,13 +572,31 @@ const FEIXE := "shader_type canvas_item;\nuniform sampler2D tela : hint_screen_t
 const LASER_AVISO := 0.9
 const LASER_FOGO := 0.45
 
+var _brilho_cache: Texture2D
+func _brilho_tex() -> Texture2D:
+	if _brilho_cache == null:
+		var g := Gradient.new()
+		g.set_color(0, Color(0.8, 1.0, 1.0, 1.0))
+		g.set_color(1, Color(0.2, 0.6, 1.0, 0.0))
+		var t := GradientTexture2D.new()
+		t.gradient = g
+		t.fill = GradientTexture2D.FILL_RADIAL
+		t.fill_from = Vector2(0.5, 0.5)
+		t.fill_to = Vector2(1.0, 0.5)
+		t.width = 128
+		t.height = 128
+		_brilho_cache = t
+	return _brilho_cache
+
 func _olhos() -> Vector2:
 	return cabeca.global_position + Vector2(0, -330).rotated(cabeca.global_rotation)
 
 func _laser(x: float) -> void:
 	var aviso := Line2D.new()
-	aviso.width = 18.0
-	aviso.default_color = Color(0.5, 0.95, 1.0, 0.8)
+	aviso.width = 26.0
+	aviso.default_color = Color(0.5, 0.95, 1.0, 0.9)
+	aviso.material = CanvasItemMaterial.new()
+	(aviso.material as CanvasItemMaterial).blend_mode = CanvasItemMaterial.BLEND_MODE_ADD
 	aviso.z_index = 8
 	fase.add_child(aviso)
 	_lasers.append({"x": x, "t": 0.0, "aviso": aviso, "feixe": null, "brilho": null})
@@ -605,23 +623,45 @@ func _lasers_passo(dt: float) -> void:
 			feixe.material = mat
 			feixe.z_index = 9
 			fase.add_child(feixe)
-			var brilho := Line2D.new()
-			brilho.default_color = Color(0.5, 0.95, 1.0, 0.9)
-			brilho.z_index = 10
-			fase.add_child(brilho)
+			var luz := Node2D.new()                       # brilho: camadas somadas (aditivo)
+			luz.z_index = 10
+			luz.material = CanvasItemMaterial.new()
+			(luz.material as CanvasItemMaterial).blend_mode = CanvasItemMaterial.BLEND_MODE_ADD
+			fase.add_child(luz)
+			for c in [[520.0, Color(0.2, 0.6, 1.0, 0.18)], [300.0, Color(0.3, 0.8, 1.0, 0.3)], [140.0, Color(0.6, 0.95, 1.0, 0.55)], [50.0, Color(1, 1, 1, 0.95)]]:
+				var ln := Line2D.new()
+				ln.width = c[0]
+				ln.default_color = c[1]
+				ln.begin_cap_mode = Line2D.LINE_CAP_ROUND
+				ln.end_cap_mode = Line2D.LINE_CAP_ROUND
+				ln.use_parent_material = true
+				luz.add_child(ln)
+			for onde in 2:                                   # bolas de luz nos olhos e no chão
+				var g := Sprite2D.new()
+				g.texture = _brilho_tex()
+				g.scale = Vector2.ONE * (5.0 if onde == 0 else 9.0)
+				g.use_parent_material = true
+				luz.add_child(g)
 			l["feixe"] = feixe
-			l["brilho"] = brilho
+			l["brilho"] = luz
+			fase._clarao(Color(0.6, 0.95, 1.0), 0.35)
 			Audio.tocar("metal", 1.0, 0.0)
 			Audio.tocar("impacto_forte", 0.7)
 			_tremor = 0.25
 			fase.pecas.poeira(ate, 1.4)
 		var feixe: Polygon2D = l["feixe"]
-		var brilho: Line2D = l["brilho"]
+		var brilho: Node2D = l["brilho"]
 		var lado := (ate - de).orthogonal().normalized()
 		var k := 1.0 - absf((t - LASER_AVISO) / LASER_FOGO * 2.0 - 1.0) * 0.5     # engrossa e afina
 		feixe.polygon = PackedVector2Array([de + lado * 70.0 * k, ate + lado * 240.0 * k, ate - lado * 240.0 * k, de - lado * 70.0 * k])
-		brilho.points = PackedVector2Array([de, ate])
-		brilho.width = 40.0 * k
+		var tremida := 0.85 + 0.15 * sin(t * 90.0)
+		for c in brilho.get_children():
+			if c is Line2D:
+				(c as Line2D).points = PackedVector2Array([de, ate])
+				(c as Line2D).modulate.a = k * tremida
+			else:
+				(c as Sprite2D).global_position = de if c.get_index() == 4 else ate
+				(c as Sprite2D).modulate.a = k * tremida
 		_laser_acerta(de, ate)
 		if t >= LASER_AVISO + LASER_FOGO:
 			feixe.queue_free()
