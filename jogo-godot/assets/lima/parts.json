@@ -3,7 +3,9 @@
  "src_w": 1312,
  "src_h": 1199,
  "ordem": [
+  "gbraco2",
   "veiculo",
+  "gbraco",
   "tronco",
   "coxa",
   "canela",
@@ -41,15 +43,39 @@
    "w": 326,
    "h": 358
   },
+  "gbraco": {
+   "x": 830,
+   "y": 600,
+   "w": 367,
+   "h": 579
+  },
   "veiculo": {
    "x": 111,
    "y": 390,
    "w": 1108,
    "h": 793
+  },
+  "gbraco2": {
+   "x": 725,
+   "y": 600,
+   "w": 367,
+   "h": 579
   }
+ },
+ "bracos_veiculo": {
+  "gbraco": [
+   905,
+   640
+  ],
+  "gbraco2": [
+   800,
+   640
+  ]
  },
  "corpo_de": {
   "veiculo": "chassi",
+  "gbraco": "braco_veiculo",
+  "gbraco2": "braco_veiculo",
   "cabeca": "cabeca",
   "tronco": "tronco",
   "braco": "braco",

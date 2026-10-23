@@ -81,7 +81,10 @@ def rodar(nome, cfg):
             own = np.isin(lab, [i + 1 for i in range(n) if tam[i] > 3000])
         cor = full[..., :3].astype(float)
         a = np.where(own, full[..., 3], 0)
-        buraco = poly(W, H, cfg['resto_fundo']) & ~own
+        buraco = np.zeros((H, W), bool)
+        for pol in cfg['resto_fundo']:
+            buraco |= poly(W, H, pol)
+        buraco &= ~own
         base = np.array(cfg.get('resto_cor', (45, 38, 35)), float)   # cor do pelo, com textura leve
         ruido = ndimage.gaussian_filter(np.random.default_rng(1).normal(0, 14, (H, W)), 3)
         cor[buraco] = np.clip(base + ruido[buraco][:, None], 0, 255)
@@ -95,6 +98,9 @@ def rodar(nome, cfg):
         img.putalpha(a)
         img.save(os.path.join(out_dir, copia + '.png'))
         pecas[copia] = dict(pecas[de])
+        dx, dy = cfg.get('copias_desloc', {}).get(copia, (0, 0))     # braço de trás um pouco atrás
+        pecas[copia]['x'] += dx
+        pecas[copia]['y'] += dy
     meta = {'nome': nome, 'src_w': W, 'src_h': H, 'ordem': cfg['ordem_desenho'], 'pecas': pecas}
     meta.update(cfg['fisica'])
     json.dump(meta, open(os.path.join(out_dir, 'parts.json'), 'w'), indent=1)
@@ -171,8 +177,10 @@ VINI = {
 }
 
 LIMA = {
-    'ordem_recorte': ['cabeca', 'braco', 'canela', 'coxa', 'tronco'],
+    'ordem_recorte': ['cabeca', 'braco', 'canela', 'coxa', 'tronco', 'gbraco'],
     'partes': {
+        'gbraco': [(830, 620), (960, 600), (1010, 760), (1070, 850), (1100, 880), (1150, 960), (1200, 1100), (1200, 1178),
+                   (1005, 1178), (1020, 1080), (950, 1010), (900, 980), (860, 900), (830, 760)],
         'cabeca': [(550, 10), (825, 10), (825, 250), (740, 264), (690, 252), (620, 215), (552, 160)],
         'braco': [(600, 330), (700, 318), (790, 465), (862, 468), (862, 532), (812, 562), (760, 525), (690, 472), (600, 432)],
         'canela': [(600, 655), (765, 655), (748, 760), (683, 858), (722, 900), (722, 995), (505, 995), (505, 905), (560, 828), (600, 752)],
@@ -180,12 +188,16 @@ LIMA = {
         'tronco': [(450, 195), (722, 195), (795, 330), (805, 500), (765, 540), (478, 562), (450, 400)],
     },
     'resto': 'veiculo',
-    'resto_fundo': [(462, 618), (520, 598), (600, 580), (700, 556), (780, 528), (840, 500), (875, 488), (875, 1010), (462, 1010)],
+    'resto_fundo': [[(462, 618), (520, 598), (600, 580), (700, 556), (780, 528), (840, 500), (875, 488), (875, 1010), (462, 1010)],
+                    [(840, 640), (950, 620), (1000, 760), (1060, 860), (1080, 1000), (1020, 1060), (950, 1000), (880, 960), (850, 860)]],
+    'copias': {'gbraco2': 'gbraco'},
+    'copias_desloc': {'gbraco2': (-105, 0)},
     'resto_cor': (42, 35, 32),
     'tapar': {'tronco': [(600, 330), (700, 318), (790, 462), (790, 520), (700, 530), (600, 520)]},
-    'ordem_desenho': ['veiculo', 'tronco', 'coxa', 'canela', 'braco', 'cabeca'],
+    'ordem_desenho': ['gbraco2', 'veiculo', 'gbraco', 'tronco', 'coxa', 'canela', 'braco', 'cabeca'],
     'fisica': {
-        'corpo_de': {'veiculo': 'chassi', 'cabeca': 'cabeca', 'tronco': 'tronco', 'braco': 'braco', 'coxa': 'coxa', 'canela': 'canela'},
+        'bracos_veiculo': {'gbraco': [905, 640], 'gbraco2': [800, 640]},
+        'corpo_de': {'veiculo': 'chassi', 'gbraco': 'braco_veiculo', 'gbraco2': 'braco_veiculo', 'cabeca': 'cabeca', 'tronco': 'tronco', 'braco': 'braco', 'coxa': 'coxa', 'canela': 'canela'},
         'piloto': ['tronco', 'cabeca', 'braco', 'coxa', 'canela'],
         'rodas': [{'corpo': 'roda0', 'c': [235.0, 1120.0], 'r': 70, 'massa': 2.5, 'motriz': True},
                   {'corpo': 'roda1', 'c': [1100.0, 1120.0], 'r': 70, 'massa': 2.5, 'motriz': False}],

@@ -56,6 +56,9 @@ var _mira: Node2D
 var _lado := 1.0                        # pra onde está indo (mira do pulo)
 var _trote: Array = []                  # sprites do gorila + boneco que sobem e descem no passo
 const MEGA := 3300.0
+var _bracos_vei: Array = []             # braços do gorila: levantam no pulo
+var _no_pulo := false
+var _pulo_t := 0.0
 var _baloes: Node2D
 var membros: Dictionary = {}            # corpo -> Node2D articulado (montado: animado por molas)
 var _mola: Dictionary = {}              # corpo -> [ângulo, velocidade]
@@ -232,11 +235,24 @@ func _montar() -> void:
 	habilidade = Game.HABILIDADES.get(personagem, "")
 	if habilidade == "turbo" and ch.has("poly"):
 		_montar_turbo(ch)
+	for k in _pecas_do("braco_veiculo"):            # braço do gorila: gira no ombro
+		var piv := v2(D["bracos_veiculo"][k])
+		var n := Node2D.new()
+		n.position = piv - origem
+		n.z_index = D["ordem"].find(k)
+		chassi.add_child(n)
+		var sp := _sprite(k)
+		sp.position = centro_peca(k) - piv
+		sp.z_index = 0
+		if k.ends_with("2"):
+			sp.modulate = Color(0.62, 0.62, 0.62)
+		n.add_child(sp)
+		_bracos_vei.append(n)
 	boneco = Node2D.new()
 	chassi.add_child(boneco)
 	if ch.get("trote", false):
 		for c in chassi.get_children():
-			if c is Sprite2D or c == boneco:
+			if c is Sprite2D or c == boneco or c in _bracos_vei:
 				_trote.append([c, (c as Node2D).position])
 	var sensor := Area2D.new()
 	sensor.collision_layer = 0
@@ -323,6 +339,12 @@ func _animar(delta: float) -> void:
 		var pulo := absf(sin(roda_motriz.rotation * 0.9)) * 28.0 * amp
 		for t in _trote:
 			(t[0] as Node2D).position = (t[1] as Vector2) + Vector2(0, -pulo)
+	if _bracos_vei.size() > 0:                      # pulo: braços pra cima; no chão: balançam no passo
+		var amp2 := clampf(absf(chassi.linear_velocity.x) / 500.0, 0.0, 1.0)
+		for i in _bracos_vei.size():
+			var alvo := (-2.3 - 0.25 * i) if _no_pulo else 0.18 * sin(roda_motriz.rotation * 0.9 + PI * i) * amp2
+			var n: Node2D = _bracos_vei[i]
+			n.rotation = lerp_angle(n.rotation, alvo, 0.25 if _no_pulo else 0.15)
 	if D["chassi"].get("andar", false):            # Vini: passo de verdade, perna da frente e de trás alternando
 		var passo := roda_motriz.rotation * 1.1
 		var amp := clampf(absf(chassi.linear_velocity.x) / 400.0, 0.0, 1.0)
@@ -492,6 +514,8 @@ func _especial(ch: Dictionary, delta: float) -> void:
 					_mira.visible = false
 				if _no_chao():
 					_usar(4.0)
+					_no_pulo = true
+					_pulo_t = 0.0
 					var v0 := _vel_pulo()
 					for rb in [chassi] + rodas:
 						(rb as RigidBody2D).linear_velocity = v0
@@ -501,6 +525,11 @@ func _especial(ch: Dictionary, delta: float) -> void:
 			if _dash_t > 0.0:
 				_dash_t -= delta
 				_rastro(Color(1.0, 0.7, 0.3, 0.5), 0.05)
+			if _no_pulo:
+				_pulo_t += delta
+				if _pulo_t > 0.4 and _no_chao():          # caiu: fumaceira
+					_no_pulo = false
+					_fumaca_pouso()
 		"dash":                            # Vini: arrancada muito rápida pra frente, com rastro
 			if apertou and recarga <= 0.0:
 				_usar(0.8)
@@ -681,6 +710,14 @@ func pronto() -> float:
 	if habilidade == "mega_pulo" and _mirando:
 		return 1.0
 	return 1.0 - recarga / maxf(recarga_total, 0.001)
+
+func _fumaca_pouso() -> void:
+	var m := get_parent()
+	if m and m.get("pecas"):
+		for r in rodas:
+			m.pecas.poeira((r as Node2D).global_position + Vector2(0, 60), 3.2)
+		m.pecas.poeira(chassi.global_position + Vector2(0, 300), 3.6)
+	Audio.tocar("impacto_forte", 1.0)
 
 func _vel_pulo() -> Vector2:
 	return Vector2(cos(_mira_ang) * _lado, -sin(_mira_ang)) * MEGA
