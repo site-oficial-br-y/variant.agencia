@@ -459,7 +459,7 @@ func _especial(ch: Dictionary, delta: float) -> void:
 					_estourar_baloes()
 		"rapido":                          # Caio: 8 s com tudo mais rápido (andar, frear e girar)
 			if apertou and recarga <= 0.0 and _rapido_t <= 0.0:
-				_usar(18.0)
+				_usar(10.0)
 				_rapido_t = 8.0
 				Audio.tocar("turbo", 1.0, 0.0)
 			if _rapido_t > 0.0:
@@ -981,7 +981,7 @@ func _dirigir() -> void:
 	var equilibra: bool = ch["auto_equilibrio"]
 	var mono: bool = ch.get("monociclo", false)
 	var dir := Input.get_axis("brake", "accelerate")
-	var rapido := 1.8 if _rapido_t > 0.0 else 1.0
+	var rapido := 2.6 if _rapido_t > 0.0 else 1.0
 	var preciso: bool = ch.get("preciso", false)
 	if preciso and dir == 0.0 and _dash_t <= 0.0 and _no_chao():   # Vini: soltou, para firme (menos no meio do dash)
 		for rb in [chassi] + rodas:
