@@ -983,9 +983,9 @@ func _dirigir() -> void:
 	var dir := Input.get_axis("brake", "accelerate")
 	var rapido := 2.6 if _rapido_t > 0.0 else 1.0
 	var preciso: bool = ch.get("preciso", false)
-	if preciso and dir == 0.0 and _dash_t <= 0.0 and _no_chao():   # Vini: soltou, para firme (menos no meio do dash)
+	if preciso and dir == 0.0 and _dash_t <= 0.0 and _no_chao():   # Vini, Périne, Erick: soltou, para firme (menos no meio do dash)
 		for rb in [chassi] + rodas:
-			(rb as RigidBody2D).linear_velocity.x = lerpf((rb as RigidBody2D).linear_velocity.x, 0.0, 0.06)
+			(rb as RigidBody2D).linear_velocity.x = lerpf((rb as RigidBody2D).linear_velocity.x, 0.0, 0.035 if ch.get("monociclo", false) else 0.06)
 	if dir != 0.0 and chassi.linear_velocity.length() < ch["vmax"] * velocidade * rapido:
 		var forca := massa_total * aceleracao * (0.8 if _sem_perna() else 1.0) * rapido * (1.5 if preciso else 1.0)   # sem perna, pedala/empurra pior
 		if preciso and signf(chassi.linear_velocity.x) != signf(dir):
@@ -1000,7 +1000,7 @@ func _dirigir() -> void:
 	var lean := Input.get_axis("lean_back", "lean_fwd")
 	if mono:        # meio estável: tomba devagar e balança sozinho; o jogador corrige com os botões
 		_balanco_mono += delta_fisica * (0.9 + 0.4 * sin(_balanco_mono * 0.37))
-		var empurrao := sin(_balanco_mono * 1.3) * mono_balanco                # desequilíbrio que pede correção
+		var empurrao := sin(_balanco_mono * 1.3) * mono_balanco * (0.5 if ch.get("preciso", false) else 1.0)   # desequilíbrio que pede correção
 		chassi.apply_torque(inercia_chassi * (lean * equilibrio_mono * (0.6 if _sem_perna() else 1.0) * (0.6 if _sem_braco() else 1.0)
 			- chassi.rotation * mono_rigidez - chassi.angular_velocity * mono_amortece + empurrao))
 	elif equilibra:   # girar muda o ângulo-alvo; o equilíbrio nunca desliga (desligar fazia tombar)
