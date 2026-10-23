@@ -49,6 +49,7 @@ func _ready() -> void:
 	_gira.add_child(txt)
 	_gira.visible = false
 	add_child(_gira)
+	_chave_secreta()
 	for acao in ACOES:
 		if not InputMap.has_action(acao):
 			InputMap.add_action(acao)
@@ -69,7 +70,20 @@ func recorde(f: int) -> float:
 
 ## Vini só libera depois de vencer a fase 5 (Péce e Cepé)
 func vini_liberado() -> bool:
-	return recorde(5) < INF
+	var cfg := ConfigFile.new()
+	cfg.load(ARQ_PROGRESSO)
+	return recorde(5) < INF or bool(cfg.get_value("extra", "vini", false))
+
+## link secreto (?chave=cepe-vini): libera o Vini só no navegador de quem abriu por ele
+func _chave_secreta() -> void:
+	if not OS.has_feature("web"):
+		return
+	var busca := str(JavaScriptBridge.eval("window.location.search", true))
+	if "chave=cepe-vini" in busca:
+		var cfg := ConfigFile.new()
+		cfg.load(ARQ_PROGRESSO)
+		cfg.set_value("extra", "vini", true)
+		cfg.save(ARQ_PROGRESSO)
 
 func registrar_vitoria(f: int, tempo: float) -> bool:
 	var cfg := ConfigFile.new()
