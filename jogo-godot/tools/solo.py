@@ -47,8 +47,10 @@ def rodar(nome, cfg):
             img = Image.fromarray(np.dstack([full[..., :3], np.where(disco, full[..., 3], 0)]).astype(np.uint8), 'RGBA')
             pecas[r['peca']] = salvar(img, r['peca'], out_dir)
             livre &= ~disco
+    dono_de = {}
     for parte in cfg['ordem_recorte']:
         own = poly(W, H, cfg['partes'][parte]) & livre
+        dono_de[parte] = own.copy()
         livre &= ~own
         cor = full[..., :3].astype(float)
         a = np.where(own, full[..., 3], 0)
@@ -75,6 +77,8 @@ def rodar(nome, cfg):
         print(f'  {parte:8s} {pecas[parte]}')
     if 'resto' in cfg:                                   # veículo = o que sobrou (gorila); atrás do piloto é preenchido
         own = livre & (full[..., 3] > 0)
+        for nome_p, pol in cfg.get('resto_manter', {}).items():   # ombro/quadril ficam no corpo (sem buraco quando a pata mexe)
+            own |= poly(W, H, pol) & dono_de[nome_p] & (full[..., 3] > 0)
         lab, n = ndimage.label(own)                          # só o pedaço grande (some farelo do piloto)
         if n > 1:
             tam = ndimage.sum(own, lab, range(1, n + 1))
@@ -85,9 +89,15 @@ def rodar(nome, cfg):
         for pol in cfg['resto_fundo']:
             buraco |= poly(W, H, pol)
         buraco &= ~own
-        base = np.array(cfg.get('resto_cor', (45, 38, 35)), float)   # cor do pelo, com textura leve
-        ruido = ndimage.gaussian_filter(np.random.default_rng(1).normal(0, 14, (H, W)), 3)
-        cor[buraco] = np.clip(base + ruido[buraco][:, None], 0, 255)
+        pelo = own & (full[..., :3].max(2) < 110)                 # copia o pelo vizinho (espelhado pra dentro do buraco)
+        _, (iy, ix) = ndimage.distance_transform_edt(~pelo, return_indices=True)
+        dy = iy - np.mgrid[0:H, 0:W][0]
+        dx = ix - np.mgrid[0:H, 0:W][1]
+        ry = np.clip(iy + dy, 0, H - 1)
+        rx = np.clip(ix + dx, 0, W - 1)
+        espelho = np.where(pelo[ry, rx][..., None], full[..., :3][ry, rx], full[..., :3][iy, ix]).astype(float)
+        base = np.array(cfg.get('resto_cor', (45, 38, 35)), float)
+        cor[buraco] = np.clip(espelho[buraco] * 0.7 + base * 0.3, 0, 255)
         a = np.where(buraco, 255, a)
         img = Image.fromarray(np.dstack([cor.clip(0, 255), a]).astype(np.uint8), 'RGBA')
         pecas[cfg['resto']] = salvar(img, cfg['resto'], out_dir)
@@ -177,8 +187,11 @@ VINI = {
 }
 
 LIMA = {
-    'ordem_recorte': ['cabeca', 'braco', 'canela', 'coxa', 'tronco', 'gbraco'],
+    'ordem_recorte': ['cabeca', 'braco', 'canela', 'coxa', 'tronco', 'gbraco', 'gperna', 'gperna2'],
     'partes': {
+        'gperna': [(150, 920), (230, 868), (330, 848), (402, 900), (402, 962), (335, 1000), (322, 1060), (315, 1182),
+                   (95, 1182), (92, 1100), (110, 1000)],
+        'gperna2': [(398, 962), (560, 940), (645, 1000), (652, 1182), (398, 1182), (392, 1060)],
         'gbraco': [(830, 620), (960, 600), (1010, 760), (1070, 850), (1100, 880), (1150, 960), (1200, 1100), (1200, 1178),
                    (1005, 1178), (1020, 1080), (950, 1010), (900, 980), (860, 900), (830, 760)],
         'cabeca': [(550, 10), (825, 10), (825, 250), (740, 264), (690, 252), (620, 215), (552, 160)],
@@ -189,15 +202,21 @@ LIMA = {
     },
     'resto': 'veiculo',
     'resto_fundo': [[(462, 618), (520, 598), (600, 580), (700, 556), (780, 528), (840, 500), (875, 488), (875, 1010), (462, 1010)],
-                    [(840, 640), (950, 620), (1000, 760), (1060, 860), (1080, 1000), (1020, 1060), (950, 1000), (880, 960), (850, 860)]],
+                    ],
+    'resto_manter': {'gbraco': [(820, 590), (1015, 590), (1050, 830), (830, 830)],
+                     'gperna': [(190, 850), (410, 850), (410, 965), (190, 965)],
+                     'gperna2': [(390, 935), (655, 935), (655, 1015), (390, 1015)]},
     'copias': {'gbraco2': 'gbraco'},
     'copias_desloc': {'gbraco2': (-105, 0)},
     'resto_cor': (42, 35, 32),
     'tapar': {'tronco': [(600, 330), (700, 318), (790, 462), (790, 520), (700, 530), (600, 520)]},
-    'ordem_desenho': ['gbraco2', 'veiculo', 'gbraco', 'tronco', 'coxa', 'canela', 'braco', 'cabeca'],
+    'ordem_desenho': ['gperna2', 'gbraco2', 'veiculo', 'gperna', 'gbraco', 'tronco', 'coxa', 'canela', 'braco', 'cabeca'],
     'fisica': {
-        'bracos_veiculo': {'gbraco': [905, 640], 'gbraco2': [800, 640]},
-        'corpo_de': {'veiculo': 'chassi', 'gbraco': 'braco_veiculo', 'gbraco2': 'braco_veiculo', 'cabeca': 'cabeca', 'tronco': 'tronco', 'braco': 'braco', 'coxa': 'coxa', 'canela': 'canela'},
+        'bracos_veiculo': {'gbraco': [905, 640], 'gbraco2': [800, 640], 'gperna': [330, 880], 'gperna2': [520, 960]},
+        'fases_veiculo': {'gbraco': 0.0, 'gperna2': 0.0, 'gbraco2': 3.14159, 'gperna': 3.14159},
+        'pernas_veiculo': ['gperna', 'gperna2'],
+        'corpo_de': {'veiculo': 'chassi', 'gbraco': 'braco_veiculo', 'gbraco2': 'braco_veiculo',
+                     'gperna': 'braco_veiculo', 'gperna2': 'braco_veiculo', 'cabeca': 'cabeca', 'tronco': 'tronco', 'braco': 'braco', 'coxa': 'coxa', 'canela': 'canela'},
         'piloto': ['tronco', 'cabeca', 'braco', 'coxa', 'canela'],
         'rodas': [{'corpo': 'roda0', 'c': [235.0, 1120.0], 'r': 70, 'massa': 2.5, 'motriz': True},
                   {'corpo': 'roda1', 'c': [1100.0, 1120.0], 'r': 70, 'massa': 2.5, 'motriz': False}],

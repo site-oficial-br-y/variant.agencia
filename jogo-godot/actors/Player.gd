@@ -244,8 +244,10 @@ func _montar() -> void:
 		var sp := _sprite(k)
 		sp.position = centro_peca(k) - piv
 		sp.z_index = 0
-		if k.ends_with("2"):
+		if k == "gbraco2":
 			sp.modulate = Color(0.62, 0.62, 0.62)
+		n.set_meta("fase", float(D.get("fases_veiculo", {}).get(k, 0.0)))
+		n.set_meta("perna", k in D.get("pernas_veiculo", []))
 		n.add_child(sp)
 		_bracos_vei.append(n)
 	boneco = Node2D.new()
@@ -334,17 +336,24 @@ func _animar(delta: float) -> void:
 	var solto := clampf(-ax * 0.00008, -0.5, 0.5) + (0.07 + 0.08 * vel) * sin(_t_anim * (3.1 + 4.0 * vel))
 	for c in ["perna", "perna2", "coxa", "canela"]:
 		alvos[c] = [solto * (0.4 if c == "coxa" else 1.0), 22.0, 3.0]
-	if _trote.size() > 0:                           # gorila: sobe e desce a cada passada
-		var amp := clampf(absf(chassi.linear_velocity.x) / 500.0, 0.0, 1.0)
-		var pulo := absf(sin(roda_motriz.rotation * 0.9)) * 28.0 * amp
+	if _trote.size() > 0:                           # gorila anda de quatro: patas cruzadas no passo, corpo sobe e desce
+		var amp := clampf(absf(chassi.linear_velocity.x) / 400.0, 0.0, 1.0)
+		var passo := roda_motriz.rotation * 0.75
+		var sobe := absf(cos(passo)) * 22.0 * amp
 		for t in _trote:
-			(t[0] as Node2D).position = (t[1] as Vector2) + Vector2(0, -pulo)
-	if _bracos_vei.size() > 0:                      # pulo: braços pra cima; no chão: balançam no passo
-		var amp2 := clampf(absf(chassi.linear_velocity.x) / 500.0, 0.0, 1.0)
-		for i in _bracos_vei.size():
-			var alvo := (-2.3 - 0.25 * i) if _no_pulo else 0.18 * sin(roda_motriz.rotation * 0.9 + PI * i) * amp2
-			var n: Node2D = _bracos_vei[i]
-			n.rotation = lerp_angle(n.rotation, alvo, 0.25 if _no_pulo else 0.15)
+			if not (t[0] in _bracos_vei):
+				(t[0] as Node2D).position = (t[1] as Vector2) + Vector2(0, -sobe)
+		for n in _bracos_vei:
+			var perna: bool = n.get_meta("perna")
+			var f: float = passo + float(n.get_meta("fase"))
+			var alvo := 0.0
+			if _no_pulo:
+				alvo = 0.7 if perna else -2.3             # pulo: pernas esticam pra trás, braços pro alto
+			elif not _no_chao():
+				alvo = 0.25 if perna else -0.4
+			else:
+				alvo = (0.42 if perna else 0.32) * sin(f) * amp
+			n.rotation = lerp_angle(n.rotation, alvo, 0.3 if _no_pulo else 0.35)
 	if D["chassi"].get("andar", false):            # Vini: passo de verdade, perna da frente e de trás alternando
 		var passo := roda_motriz.rotation * 1.1
 		var amp := clampf(absf(chassi.linear_velocity.x) / 400.0, 0.0, 1.0)

@@ -3,8 +3,10 @@
  "src_w": 1312,
  "src_h": 1199,
  "ordem": [
+  "gperna2",
   "gbraco2",
   "veiculo",
+  "gperna",
   "gbraco",
   "tronco",
   "coxa",
@@ -49,11 +51,23 @@
    "w": 367,
    "h": 579
   },
-  "veiculo": {
+  "gperna": {
    "x": 111,
+   "y": 848,
+   "w": 292,
+   "h": 335
+  },
+  "gperna2": {
+   "x": 395,
+   "y": 948,
+   "w": 257,
+   "h": 219
+  },
+  "veiculo": {
+   "x": 190,
    "y": 390,
-   "w": 1108,
-   "h": 793
+   "w": 1029,
+   "h": 778
   },
   "gbraco2": {
    "x": 725,
@@ -70,12 +84,32 @@
   "gbraco2": [
    800,
    640
+  ],
+  "gperna": [
+   330,
+   880
+  ],
+  "gperna2": [
+   520,
+   960
   ]
  },
+ "fases_veiculo": {
+  "gbraco": 0.0,
+  "gperna2": 0.0,
+  "gbraco2": 3.14159,
+  "gperna": 3.14159
+ },
+ "pernas_veiculo": [
+  "gperna",
+  "gperna2"
+ ],
  "corpo_de": {
   "veiculo": "chassi",
   "gbraco": "braco_veiculo",
   "gbraco2": "braco_veiculo",
+  "gperna": "braco_veiculo",
+  "gperna2": "braco_veiculo",
   "cabeca": "cabeca",
   "tronco": "tronco",
   "braco": "braco",
