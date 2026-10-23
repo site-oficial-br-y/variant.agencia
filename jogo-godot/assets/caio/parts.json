@@ -1,0 +1,169 @@
+{
+ "nome": "caio",
+ "src_w": 1024,
+ "src_h": 1536,
+ "ordem": [
+  "roda",
+  "perna",
+  "tronco",
+  "cabeca",
+  "braco"
+ ],
+ "pecas": {
+  "roda": {
+   "x": 398,
+   "y": 1285,
+   "w": 249,
+   "h": 225
+  },
+  "cabeca": {
+   "x": 400,
+   "y": 38,
+   "w": 255,
+   "h": 275
+  },
+  "braco": {
+   "x": 299,
+   "y": 404,
+   "w": 340,
+   "h": 182
+  },
+  "perna": {
+   "x": 395,
+   "y": 736,
+   "w": 255,
+   "h": 565
+  },
+  "tronco": {
+   "x": 298,
+   "y": 280,
+   "w": 404,
+   "h": 474
+  }
+ },
+ "corpo_de": {
+  "roda": "roda0",
+  "cabeca": "cabeca",
+  "tronco": "tronco",
+  "braco": "braco",
+  "perna": "perna"
+ },
+ "piloto": [
+  "tronco",
+  "cabeca",
+  "braco",
+  "perna"
+ ],
+ "rodas": [
+  {
+   "corpo": "roda0",
+   "peca": "roda",
+   "c": [
+    522.0,
+    1396.0
+   ],
+   "r": 124,
+   "massa": 2.0,
+   "motriz": true
+  }
+ ],
+ "chassi": {
+  "massa": 5.0,
+  "auto_equilibrio": true,
+  "vmax": 900.0,
+  "forca": 90000.0,
+  "mastro": {
+   "x": 520.0,
+   "y0": 300.0,
+   "y1": 1396.0,
+   "w": 100.0
+  }
+ },
+ "corpos": {
+  "cabeca": {
+   "massa": 0.8,
+   "forma": [
+    "circ",
+    [
+     530,
+     170
+    ],
+    120
+   ]
+  },
+  "tronco": {
+   "massa": 2.0,
+   "forma": [
+    "caps",
+    [
+     470,
+     360
+    ],
+    [
+     490,
+     700
+    ],
+    110
+   ]
+  },
+  "braco": {
+   "massa": 0.5,
+   "forma": [
+    "caps",
+    [
+     390,
+     440
+    ],
+    [
+     620,
+     560
+    ],
+    40
+   ]
+  },
+  "perna": {
+   "massa": 1.4,
+   "forma": [
+    "caps",
+    [
+     500,
+     770
+    ],
+    [
+     530,
+     1250
+    ],
+    75
+   ]
+  }
+ },
+ "juntas": [
+  {
+   "a": "tronco",
+   "b": "cabeca",
+   "p": [
+    525,
+    290
+   ],
+   "lim": 40
+  },
+  {
+   "a": "tronco",
+   "b": "braco",
+   "p": [
+    400,
+    425
+   ],
+   "lim": 75
+  },
+  {
+   "a": "tronco",
+   "b": "perna",
+   "p": [
+    505,
+    745
+   ],
+   "lim": 55
+  }
+ ]
+}

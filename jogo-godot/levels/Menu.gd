@@ -2,8 +2,8 @@ extends Control
 ## Seleção de personagem no estilo Happy Wheels: rostos em quadros no topo,
 ## o escolhido grande em cima da pedra, ✓ pra confirmar.
 
-const OPCOES := ["segway", "cadeira", "scooter", "monociclo", "gamer", "bicho", "wendell"]
-const SLOTS := 7                    # quadros vazios = personagens que ainda vão vir
+const OPCOES := ["segway", "cadeira", "scooter", "monociclo", "gamer", "bicho", "wendell", "caio", "vini"]
+const SLOTS := 9                    # quadros vazios = personagens que ainda vão vir
 
 var atual := 0
 var preview: TextureRect
@@ -12,6 +12,7 @@ var pedra: TextureRect
 var ok: TextureButton
 var nome: Label
 var nomes_quadro: Array = []
+var trava: Label
 
 func _ready() -> void:
 	Audio.musica_menu(true)
@@ -35,8 +36,8 @@ func _ready() -> void:
 	logo.size = Vector2(250, 136)
 	add_child(logo)
 
-	var lado := 100.0
-	var x0 := cx - (SLOTS * (lado + 12) - 12) / 2.0 + 60
+	var lado := 88.0
+	var x0 := maxf(280.0, cx - (SLOTS * (lado + 12) - 12) / 2.0 + 60)       # depois do logo
 	for i in SLOTS:
 		var q := Panel.new()
 		q.position = Vector2(x0 + i * (lado + 12), 24)
@@ -70,6 +71,9 @@ func _ready() -> void:
 
 	nome = _rotulo("", 76, 16)
 	add_child(nome)
+	trava = _rotulo("VENÇA O PÉCE E O CEPÉ (FASE 5)\nPRA LIBERAR O VINI", 34, 10)
+	trava.add_theme_color_override("font_color", Color(1, 0.85, 0.3))
+	add_child(trava)
 	ok = _botao("confirma", Vector2.ZERO, 140)
 	ok.pressed.connect(_jogar)
 	get_viewport().size_changed.connect(_atualizar)   # tela cheia/girar muda o tamanho
@@ -122,25 +126,37 @@ func _atualizar() -> void:
 		if i < OPCOES.size():
 			var b: TextureButton = q.get_child(0)
 			var nome: String = OPCOES[i] if i == atual else OPCOES[i] + "_cinza"
+			if _trancado(i):
+				nome = OPCOES[i] + "_bloq"
 			b.texture_normal = load("res://assets/ui/rosto_%s.png" % nome)
 	var tex: Texture2D = load("res://assets/menu/%s.png" % OPCOES[atual])
 	preview.texture = tex
+	var preso := _trancado(atual)
+	preview.modulate = Color(0, 0, 0, 0.85) if preso else Color.WHITE
+	ok.visible = not preso
+	trava.visible = preso
 	var h := minf(440.0, 560.0 * tex.get_height() / tex.get_width())     # cabe em 560x440
 	preview.size = Vector2(h * tex.get_width() / tex.get_height(), h)
 	var vp := get_viewport().get_visible_rect().size
 	preview.position = Vector2(vp.x / 2.0 - preview.size.x / 2.0, vp.y - 108 - h)   # em pé na pedra
 	pedra.position = Vector2(vp.x / 2.0 - 300, vp.y - 130)
-	nome.text = Game.NOMES[OPCOES[atual]]
+	nome.text = "???" if preso else Game.NOMES[OPCOES[atual]]
+	trava.size = Vector2(vp.x, 100)
+	trava.position = Vector2(0, vp.y - 110)
 	nome.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
 	nome.size = Vector2(600, 100)
 	nome.position = Vector2(preview.position.x - 620, preview.position.y + h * 0.35)
 	for i in nomes_quadro.size():
 		(nomes_quadro[i] as Label).add_theme_color_override("font_color", Color.WHITE if i == atual else Color(1, 1, 1, 0.5))
+		(nomes_quadro[i] as Label).text = "???" if _trancado(i) else Game.NOMES[OPCOES[i]]
 	ok.position = Vector2(vp.x - 175, vp.y - 165)
-	var lado := 100.0
-	var x0 := vp.x / 2.0 - (SLOTS * (lado + 12) - 12) / 2.0 + 60
+	var lado := 88.0
+	var x0 := maxf(280.0, vp.x / 2.0 - (SLOTS * (lado + 12) - 12) / 2.0 + 60)
 	for i in quadros.size():
 		(quadros[i] as Panel).position = Vector2(x0 + i * (lado + 12), 24)
+
+func _trancado(i: int) -> bool:
+	return OPCOES[i] == "vini" and not Game.vini_liberado()
 
 func _selecionar(i: int) -> void:
 	Audio.tocar("clique")
@@ -148,6 +164,8 @@ func _selecionar(i: int) -> void:
 	_atualizar()
 
 func _jogar() -> void:
+	if _trancado(atual):
+		return
 	Audio.tocar("confirma")
 	Game.personagem = OPCOES[atual]
 	Game.checkpoint_x = -1.0

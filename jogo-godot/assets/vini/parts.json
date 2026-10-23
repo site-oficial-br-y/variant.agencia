@@ -1,0 +1,261 @@
+{
+ "nome": "vini",
+ "src_w": 384,
+ "src_h": 1536,
+ "ordem": [
+  "coxa2",
+  "canela2",
+  "tronco",
+  "coxa",
+  "canela",
+  "braco",
+  "cabeca"
+ ],
+ "pecas": {
+  "cabeca": {
+   "x": 74,
+   "y": 93,
+   "w": 280,
+   "h": 260
+  },
+  "braco": {
+   "x": 62,
+   "y": 385,
+   "w": 189,
+   "h": 601
+  },
+  "tronco": {
+   "x": 10,
+   "y": 330,
+   "w": 299,
+   "h": 705
+  },
+  "coxa": {
+   "x": 87,
+   "y": 988,
+   "w": 180,
+   "h": 198
+  },
+  "canela": {
+   "x": 38,
+   "y": 1185,
+   "w": 295,
+   "h": 274
+  },
+  "coxa2": {
+   "x": 87,
+   "y": 988,
+   "w": 180,
+   "h": 198
+  },
+  "canela2": {
+   "x": 38,
+   "y": 1185,
+   "w": 295,
+   "h": 274
+  }
+ },
+ "corpo_de": {
+  "cabeca": "cabeca",
+  "tronco": "tronco",
+  "braco": "braco",
+  "coxa": "coxa",
+  "canela": "canela",
+  "coxa2": "coxa2",
+  "canela2": "canela2"
+ },
+ "piloto": [
+  "tronco",
+  "cabeca",
+  "braco",
+  "coxa",
+  "canela",
+  "coxa2",
+  "canela2"
+ ],
+ "rodas": [
+  {
+   "corpo": "roda0",
+   "c": [
+    185.0,
+    1350.0
+   ],
+   "r": 100,
+   "massa": 2.0,
+   "motriz": true
+  }
+ ],
+ "chassi": {
+  "massa": 5.0,
+  "auto_equilibrio": true,
+  "andar": true,
+  "preciso": true,
+  "vmax": 950.0,
+  "forca": 90000.0,
+  "mastro": {
+   "x": 185.0,
+   "y0": 300.0,
+   "y1": 1350.0,
+   "w": 90.0
+  }
+ },
+ "corpos": {
+  "cabeca": {
+   "massa": 0.8,
+   "forma": [
+    "circ",
+    [
+     230,
+     225
+    ],
+    115
+   ]
+  },
+  "tronco": {
+   "massa": 2.0,
+   "forma": [
+    "caps",
+    [
+     180,
+     450
+    ],
+    [
+     170,
+     900
+    ],
+    105
+   ]
+  },
+  "braco": {
+   "massa": 0.5,
+   "forma": [
+    "caps",
+    [
+     150,
+     440
+    ],
+    [
+     190,
+     930
+    ],
+    40
+   ]
+  },
+  "coxa": {
+   "massa": 0.9,
+   "forma": [
+    "caps",
+    [
+     180,
+     980
+    ],
+    [
+     170,
+     1170
+    ],
+    65
+   ]
+  },
+  "canela": {
+   "massa": 0.8,
+   "forma": [
+    "caps",
+    [
+     160,
+     1195
+    ],
+    [
+     180,
+     1420
+    ],
+    60
+   ]
+  },
+  "coxa2": {
+   "massa": 0.9,
+   "forma": [
+    "caps",
+    [
+     180,
+     980
+    ],
+    [
+     170,
+     1170
+    ],
+    65
+   ]
+  },
+  "canela2": {
+   "massa": 0.8,
+   "forma": [
+    "caps",
+    [
+     160,
+     1195
+    ],
+    [
+     180,
+     1420
+    ],
+    60
+   ]
+  }
+ },
+ "juntas": [
+  {
+   "a": "tronco",
+   "b": "cabeca",
+   "p": [
+    205,
+    350
+   ],
+   "lim": 40
+  },
+  {
+   "a": "tronco",
+   "b": "braco",
+   "p": [
+    150,
+    420
+   ],
+   "lim": 80
+  },
+  {
+   "a": "tronco",
+   "b": "coxa",
+   "p": [
+    180,
+    960
+   ],
+   "lim": 70
+  },
+  {
+   "a": "coxa",
+   "b": "canela",
+   "p": [
+    170,
+    1180
+   ],
+   "lim": 75
+  },
+  {
+   "a": "tronco",
+   "b": "coxa2",
+   "p": [
+    180,
+    960
+   ],
+   "lim": 70
+  },
+  {
+   "a": "coxa2",
+   "b": "canela2",
+   "p": [
+    170,
+    1180
+   ],
+   "lim": 75
+  }
+ ]
+}

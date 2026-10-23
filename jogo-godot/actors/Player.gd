@@ -47,6 +47,9 @@ var massa_total := 1.0
 var foto: Sprite2D
 var imortal_t := 0.0
 var _baloes_t := 0.0
+var _rapido_t := 0.0                    # Caio: tudo mais rápido
+var _dash_t := 0.0                      # Vini: arrancada
+var _rastro_t := 0.0
 var _baloes: Node2D
 var membros: Dictionary = {}            # corpo -> Node2D articulado (montado: animado por molas)
 var _mola: Dictionary = {}              # corpo -> [ângulo, velocidade]
@@ -305,7 +308,20 @@ func _animar(delta: float) -> void:
 	var solto := clampf(-ax * 0.00008, -0.5, 0.5) + (0.07 + 0.08 * vel) * sin(_t_anim * (3.1 + 4.0 * vel))
 	for c in ["perna", "perna2", "coxa", "canela"]:
 		alvos[c] = [solto * (0.4 if c == "coxa" else 1.0), 22.0, 3.0]
-	if D["chassi"].get("monociclo", false) and membros.has("perna"):
+	if D["chassi"].get("andar", false):            # Vini: passo de verdade, perna da frente e de trás alternando
+		var passo := roda_motriz.rotation * 1.1
+		var amp := clampf(absf(chassi.linear_velocity.x) / 400.0, 0.0, 1.0)
+		for c in ["coxa", "canela", "coxa2", "canela2"]:
+			alvos.erase(c)
+		var lado := {"": 0.0, "2": PI}
+		for k in lado:
+			var f: float = passo + float(lado[k])
+			if membros.has("coxa" + k):
+				(membros["coxa" + k] as Node2D).rotation = lerp_angle((membros["coxa" + k] as Node2D).rotation, -0.55 * sin(f) * amp, 0.4)
+			if membros.has("canela" + k):
+				(membros["canela" + k] as Node2D).rotation = lerp_angle((membros["canela" + k] as Node2D).rotation, 0.75 * maxf(0.0, sin(f + 1.1)) * amp, 0.4)
+		alvos["braco"] = [0.35 * sin(passo) * amp, 60.0, 8.0]
+	elif D["chassi"].get("monociclo", false) and membros.has("perna"):
 		alvos.erase("perna")                       # pedal: segue o giro da roda
 		(membros["perna"] as Node2D).rotation = 0.38 * sin(roda_motriz.rotation)
 	elif D["chassi"]["auto_equilibrio"] and membros.has("perna"):
@@ -441,6 +457,28 @@ func _especial(ch: Dictionary, delta: float) -> void:
 				chassi.apply_torque(inercia_chassi * (-chassi.rotation * 20.0 - chassi.angular_velocity * 6.0))
 				if _baloes_t <= 0.0:
 					_estourar_baloes()
+		"rapido":                          # Caio: 8 s com tudo mais rápido (andar, frear e girar)
+			if apertou and recarga <= 0.0 and _rapido_t <= 0.0:
+				_usar(18.0)
+				_rapido_t = 8.0
+				Audio.tocar("turbo", 1.0, 0.0)
+			if _rapido_t > 0.0:
+				_rapido_t -= delta
+				_rastro(Color(1.0, 0.85, 0.2, 0.45), 0.12)
+		"dash":                            # Vini: arrancada muito rápida pra frente, com rastro
+			if apertou and recarga <= 0.0:
+				_usar(1.6)
+				_dash_t = 0.3
+				var dirx := 1.0 if Input.get_axis("brake", "accelerate") >= 0.0 else -1.0
+				for rb in [chassi] + rodas:
+					var c := rb as RigidBody2D
+					c.linear_velocity = Vector2(dirx * 3400.0, minf(c.linear_velocity.y, 0.0) - 150.0)
+				Audio.tocar("turbo", 1.0, 0.0)
+				Audio.tocar("pulo", 0.6, 0.0)
+				_explosao_dash(dirx)
+			if _dash_t > 0.0:
+				_dash_t -= delta
+				_rastro(Color(0.45, 0.9, 1.0, 0.7), 0.035)
 		"estrela":                         # Wendell: 10 s imortal piscando colorido
 			if apertou and recarga <= 0.0 and imortal_t <= 0.0:
 				_usar(25.0)
@@ -590,7 +628,79 @@ func pronto() -> float:
 		return 1.0
 	if habilidade == "estrela" and imortal_t > 0.0:
 		return 1.0
+	if habilidade == "rapido" and _rapido_t > 0.0:
+		return 1.0
 	return 1.0 - recarga / maxf(recarga_total, 0.001)
+
+## fantasmas do boneco ficando pra trás (rapidez do Caio, dash do Vini)
+func _rastro(cor: Color, intervalo: float) -> void:
+	_rastro_t -= get_physics_process_delta_time()
+	if _rastro_t > 0.0:
+		return
+	_rastro_t = intervalo * Engine.time_scale
+	var f := Node2D.new()
+	f.z_index = 4
+	get_parent().add_child(f)
+	for no in [chassi] + rodas:
+		for c in (no as Node).get_children():
+			if c is Sprite2D and (c as Sprite2D).visible:
+				_copiar_sprite(c, f)
+	if boneco:
+		for s in boneco.find_children("*", "Sprite2D", true, false):
+			_copiar_sprite(s, f)
+	f.modulate = cor
+	var tw := f.create_tween()
+	tw.tween_property(f, "modulate:a", 0.0, 0.3 * Engine.time_scale)
+	tw.tween_callback(f.queue_free)
+
+func _copiar_sprite(s: Sprite2D, dono: Node2D) -> void:
+	var c := Sprite2D.new()
+	c.texture = s.texture
+	c.offset = s.offset
+	c.global_transform = s.global_transform
+	c.z_index = s.z_index
+	dono.add_child(c)
+	c.global_transform = s.global_transform
+
+## estouro de luz azul na arrancada: anel e faíscas
+func _explosao_dash(dirx: float) -> void:
+	var p := CPUParticles2D.new()
+	p.one_shot = true
+	p.amount = 50
+	p.lifetime = 0.35 * Engine.time_scale
+	p.explosiveness = 1.0
+	p.direction = Vector2(-dirx, 0)
+	p.spread = 35.0
+	p.initial_velocity_min = 1200.0
+	p.initial_velocity_max = 3200.0
+	p.gravity = Vector2.ZERO
+	p.scale_amount_min = 12.0
+	p.scale_amount_max = 26.0
+	p.color = Color(0.6, 0.95, 1.0)
+	var m := CanvasItemMaterial.new()
+	m.blend_mode = CanvasItemMaterial.BLEND_MODE_ADD
+	p.material = m
+	p.global_position = chassi.global_position
+	p.z_index = 6
+	get_parent().add_child(p)
+	p.emitting = true
+	var anel := Line2D.new()
+	anel.width = 40.0
+	anel.default_color = Color(0.6, 0.95, 1.0, 0.9)
+	anel.material = m
+	var pts := PackedVector2Array()
+	for k in 33:
+		pts.append(Vector2(260, 0).rotated(TAU * k / 32.0) * Vector2(0.5, 1.0))
+	anel.points = pts
+	anel.global_position = chassi.global_position
+	anel.z_index = 6
+	get_parent().add_child(anel)
+	var tw := anel.create_tween()
+	tw.tween_property(anel, "scale", Vector2(3.0, 1.6), 0.3 * Engine.time_scale)
+	tw.parallel().tween_property(anel, "modulate:a", 0.0, 0.3 * Engine.time_scale)
+	tw.tween_callback(func() -> void:
+		anel.queue_free()
+		p.queue_free())
 
 func _lancar_bomba() -> void:
 	var b := RigidBody2D.new()
@@ -859,8 +969,15 @@ func _dirigir() -> void:
 	var equilibra: bool = ch["auto_equilibrio"]
 	var mono: bool = ch.get("monociclo", false)
 	var dir := Input.get_axis("brake", "accelerate")
-	if dir != 0.0 and chassi.linear_velocity.length() < ch["vmax"] * velocidade:
-		var forca := massa_total * aceleracao * (0.8 if _sem_perna() else 1.0)   # sem perna, pedala/empurra pior
+	var rapido := 1.8 if _rapido_t > 0.0 else 1.0
+	var preciso: bool = ch.get("preciso", false)
+	if preciso and dir == 0.0 and _no_chao():               # Vini: soltou, para firme
+		for rb in [chassi] + rodas:
+			(rb as RigidBody2D).linear_velocity.x = lerpf((rb as RigidBody2D).linear_velocity.x, 0.0, 0.06)
+	if dir != 0.0 and chassi.linear_velocity.length() < ch["vmax"] * velocidade * rapido:
+		var forca := massa_total * aceleracao * (0.8 if _sem_perna() else 1.0) * rapido * (1.5 if preciso else 1.0)   # sem perna, pedala/empurra pior
+		if preciso and signf(chassi.linear_velocity.x) != signf(dir):
+			forca *= 2.0                                           # vira na hora
 		if mono:        # monociclo: pedala perto do eixo; o corpo pende um pouco pra trás ao acelerar
 			chassi.apply_force(Vector2(dir * forca, 0.0), (roda_motriz.global_position - chassi.global_position) * mono_pende)
 		elif equilibra:   # segway: empurra embaixo, o equilíbrio segura
