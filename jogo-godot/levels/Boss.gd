@@ -447,7 +447,7 @@ func _pedras_passo(dt: float) -> void:
 			fase.add_child(r)
 			r.add_to_group("pedra_boss")
 			p["no"] = r
-			p["vy"] = 600.0
+			p["vy"] = 1800.0                                   # mesma queda de antes (física: 600 px/s e g 980, jogo 3x)
 			p["giro"] = randf_range(-3.0, 3.0)
 			p["caindo"] = true
 		var no: Node2D = p["no"]
@@ -457,7 +457,7 @@ func _pedras_passo(dt: float) -> void:
 				_pedras.erase(p)
 			continue
 		if p["caindo"]:
-			p["vy"] += 9000.0 * dt                              # gravidade (segundos reais)
+			p["vy"] += 8820.0 * dt                              # gravidade (segundos reais)
 			no.position.y += float(p["vy"]) * dt
 			no.rotation += float(p["giro"]) * dt
 			_pedra_acerta(no.global_position)
