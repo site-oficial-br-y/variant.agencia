@@ -370,17 +370,55 @@ func _chover(foco: Vector2, vel: Vector2) -> void:
 		var x := foco.x + 1500.0 + i * 1400.0 + randf_range(-300, 300) + vel.x * 0.5
 		_pedras.append({"x": x, "t": 0.0, "no": null, "sombra": _sombra_pedra(x)})
 
-func _sombra_pedra(x: float) -> Polygon2D:
-	var s := Polygon2D.new()
-	var pts := PackedVector2Array()
-	for k in 16:
-		pts.append(Vector2(260, 0).rotated(TAU * k / 16.0) * Vector2(1, 0.2))
-	s.polygon = pts
-	s.color = Color(1, 0.3, 0.1, 0.5)
-	s.global_position = Vector2(x, chao - 6.0)
-	s.z_index = 4
-	fase.add_child(s)
-	return s
+## aviso de onde cai número: coluna de luz amarela do céu até o chão, alvo
+## pulsando no chão e seta "!" em cima. Bem visível mesmo no meio da confusão
+func _sombra_pedra(x: float) -> Node2D:
+	var n := Node2D.new()
+	n.global_position = Vector2(x, chao - 6.0)
+	n.z_index = 4
+	var g := Gradient.new()
+	g.set_color(0, Color(1, 0.85, 0.1, 0.0))
+	g.set_color(1, Color(1, 0.75, 0.1, 0.45))
+	var gt := GradientTexture2D.new()
+	gt.gradient = g
+	gt.fill_from = Vector2(0, 0)
+	gt.fill_to = Vector2(0, 1)
+	gt.width = 4
+	gt.height = 64
+	var coluna := TextureRect.new()
+	coluna.texture = gt
+	coluna.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+	coluna.stretch_mode = TextureRect.STRETCH_SCALE
+	coluna.size = Vector2(420, 3400)
+	coluna.position = Vector2(-210, -3400)
+	n.add_child(coluna)
+	var anel := PackedVector2Array()
+	for k in 28:
+		anel.append(Vector2(300, 0).rotated(TAU * k / 28.0) * Vector2(1, 0.22))
+	var alvo := Polygon2D.new()
+	alvo.polygon = anel
+	alvo.color = Color(1, 0.15, 0.05, 0.75)
+	n.add_child(alvo)
+	var borda := Line2D.new()
+	borda.points = anel + PackedVector2Array([anel[0]])
+	borda.width = 22.0
+	borda.default_color = Color(1, 0.95, 0.3)
+	n.add_child(borda)
+	var seta := Label.new()
+	seta.text = "!"
+	seta.add_theme_font_size_override("font_size", 300)
+	seta.add_theme_color_override("font_color", Color(1, 0.9, 0.2))
+	seta.add_theme_color_override("font_outline_color", Color(0.6, 0.05, 0.0))
+	seta.add_theme_constant_override("outline_size", 50)
+	seta.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	seta.size = Vector2(400, 360)
+	seta.position = Vector2(-200, -760)
+	n.add_child(seta)
+	fase.add_child(n)
+	var tw := n.create_tween().set_loops()
+	tw.tween_property(n, "modulate:a", 0.45, 0.12 * Engine.time_scale)
+	tw.tween_property(n, "modulate:a", 1.0, 0.12 * Engine.time_scale)
+	return n
 
 ## números e sinais: caem sem física (não ficam rolando no caminho). Só matam
 ## enquanto estão caindo; ao bater no chão quicam um pouco e somem
