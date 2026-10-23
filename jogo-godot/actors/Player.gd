@@ -479,6 +479,18 @@ func _especial(ch: Dictionary, delta: float) -> void:
 			if _dash_t > 0.0:
 				_dash_t -= delta
 				_rastro(Color(0.45, 0.9, 1.0, 0.7), 0.035)
+			if segura and not _no_chao():          # segurando no ar: plana (cai devagar e segue pra frente)
+				var frente := signf(chassi.linear_velocity.x) if absf(chassi.linear_velocity.x) > 50.0 else 1.0
+				for rb in [chassi] + rodas:
+					var c := rb as RigidBody2D
+					c.apply_central_force(Vector2(0, -980.0 * 0.75) * c.mass)
+					if c.linear_velocity.y > 260.0:
+						c.linear_velocity.y = lerpf(c.linear_velocity.y, 260.0, 0.2)
+					if absf(c.linear_velocity.x) < 1300.0:
+						c.linear_velocity.x += frente * 1500.0 * delta
+				chassi.apply_torque(inercia_chassi * (-chassi.rotation * 20.0 - chassi.angular_velocity * 6.0))
+				if _dash_t <= 0.0:
+					_rastro(Color(0.6, 0.95, 1.0, 0.35), 0.08)
 		"estrela":                         # Wendell: 10 s imortal piscando colorido
 			if apertou and recarga <= 0.0 and imortal_t <= 0.0:
 				_usar(25.0)
