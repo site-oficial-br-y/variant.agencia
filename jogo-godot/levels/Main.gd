@@ -1189,7 +1189,10 @@ func _atualizar_lab(dt: float) -> void:
 	_passo_ant = fase_passo
 	if _vermelho:
 		_vermelho.color.a = (0.06 + 0.16 * perto) * (0.5 + 0.5 * sin(_boss_t * (6.0 + 8.0 * perto)))
-	if alvo - _boss_x < 250.0:
+	if alvo - _boss_x < 250.0 and player.repelir(player.foco().global_position):
+		_boss_x -= 2500.0                                   # Chefe sem camisa: empurra o Maurício pra trás
+		_boss_vel = 0.0
+	elif alvo - _boss_x < 250.0:
 		_fim(false, "pego")
 		if player.montado:
 			player.soltar_ragdoll.call_deferred(Vector2(1500, -900), false)
@@ -1612,7 +1615,7 @@ func _posicionar_hud() -> void:
 		aviso.size = Vector2(v.x, 160)
 		aviso.position = Vector2(0, v.y * 0.06)
 
-const ICONES := {"baloes": "baloes", "estrela": "estrela", "pulo_duplo": "pula", "salto": "pula", "turbo": "turbo", "bomba": "bomba", "equilibrio": "equilibrio", "arpao": "arpao", "rapido": "rapido", "dash": "dash", "mega_pulo": "mega_pulo"}
+const ICONES := {"baloes": "baloes", "estrela": "estrela", "pulo_duplo": "pula", "salto": "pula", "turbo": "turbo", "bomba": "bomba", "equilibrio": "equilibrio", "arpao": "arpao", "rapido": "rapido", "dash": "dash", "mega_pulo": "mega_pulo", "repele": "repele"}
 
 func _toque_especial() -> TouchScreenButton:
 	_botao_especial = _toque(ICONES.get(Game.HABILIDADES.get(Game.personagem, "salto"), "pula"), Vector2.ZERO, 165, "especial")

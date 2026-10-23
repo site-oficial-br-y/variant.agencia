@@ -84,9 +84,29 @@ func abaixar_chefe(segundos: float) -> void:
 	tw.tween_interval(segundos)
 	tw.tween_property(_chefe, "volume_db", -4.0, 0.4)
 
+## música do especial do Chefe: toca por cima e abaixa a do chefe enquanto dura
+var _ult: AudioStreamPlayer
+func musica_ult(ligada: bool) -> void:
+	if _ult == null:
+		_ult = AudioStreamPlayer.new()
+		_ult.process_mode = Node.PROCESS_MODE_ALWAYS
+		_ult.volume_db = -2.0
+		_ult.stream = load("res://assets/audio/musica/chefe.ogg")
+		add_child(_ult)
+	if ligada:
+		_ult.play()
+		if _chefe and _chefe.playing:
+			_chefe.volume_db = -28.0
+	else:
+		_ult.stop()
+		if _chefe:
+			_chefe.volume_db = -4.0
+
 func parar_chefe() -> void:
 	if _chefe and _chefe.playing:
 		_chefe.stop()
+	if _ult and _ult.playing:
+		_ult.stop()
 
 func motor(ligado: bool, fracao: float = 0.0) -> void:
 	ligado = false                       # ronco contínuo desligado: era o som chato que tocava o tempo todo

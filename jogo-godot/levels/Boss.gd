@@ -348,6 +348,11 @@ func _acertou(b: Node2D, m: Dictionary) -> void:
 	if absf(b.global_position.x - (m["alvo"] as Vector2).x) > 650.0:
 		return
 	(m["hit"] as Area2D).set_deferred("monitoring", false)
+	if pl.repelir(b.global_position):                  # Chefe sem camisa: a mão volta rebatida
+		m["estado"] = "volta"
+		m["t"] = 0.0
+		m["de"] = (m["no"] as Node2D).global_position + Vector2(0, -900)
+		return
 	if String(m.get("golpe", "")).begins_with("agarra"):
 		_agarrar.call_deferred()
 	else:
@@ -460,7 +465,14 @@ func _pedras_passo(dt: float) -> void:
 			p["vy"] += 8820.0 * dt                              # gravidade (segundos reais)
 			no.position.y += float(p["vy"]) * dt
 			no.rotation += float(p["giro"]) * dt
-			_pedra_acerta(no.global_position)
+			if _pedra_acerta(no.global_position):         # rebatido: sai voando pra longe
+				(p["sombra"] as Node).queue_free()
+				_pedras.erase(p)
+				var tw := no.create_tween()
+				tw.tween_property(no, "position", no.position + Vector2(randf_range(1500, 2500), -2500), 0.5 * Engine.time_scale)
+				tw.parallel().tween_property(no, "modulate:a", 0.0, 0.5 * Engine.time_scale)
+				tw.tween_callback(no.queue_free)
+				continue
 			if no.position.y >= chao - 200.0:                   # bateu no chão: quica, para de matar e some
 				no.position.y = chao - 200.0
 				p["caindo"] = false
@@ -474,15 +486,18 @@ func _pedras_passo(dt: float) -> void:
 				tw.tween_callback(no.queue_free)
 				_pedras.erase(p)
 
-func _pedra_acerta(onde: Vector2) -> void:
+func _pedra_acerta(onde: Vector2) -> bool:
 	var pl: Player = fase.player
 	if morto or not fase.ativo or not is_instance_valid(pl) or (pl.imortal_t > 0.0 and pl.montado):
-		return
+		return false
 	var corpos: Array = [pl.chassi] + pl.membros.values() if pl.montado and is_instance_valid(pl.chassi) else pl.corpos.values()
 	for b in corpos:
 		if (b as Node2D).global_position.distance_to(onde) < 260.0:
+			if pl.repelir(onde):
+				return true
 			fase._on_perigo(b, "pedra")
-			return
+			return false
+	return false
 
 # ---------- dano ----------
 func levar_choque() -> void:
@@ -772,5 +787,7 @@ func _laser_acerta(de: Vector2, ate: Vector2) -> void:
 	for b in corpos:
 		var p: Vector2 = (b as Node2D).global_position
 		if p.distance_to(Geometry2D.get_closest_point_to_segment(p, de, ate)) < LASER_LARGURA + 90.0:
+			if pl.repelir(p):
+				return
 			fase._on_perigo(b, "laser")
 			return

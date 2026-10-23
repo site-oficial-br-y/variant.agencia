@@ -9,10 +9,10 @@ var estado: int = Estado.JOGANDO
 var personagem: String = "segway"
 var fase: int = 1
 const FASES := ["FASE 1", "FASE 2", "FASE 3", "FASE 4: LABORATÓRIO", "FASE 5: CHEFÃO", "FASE 6: ATACADÃO"]
-const NOMES := {"segway": "PÉRINE", "cadeira": "GABRIEL", "scooter": "GIAN", "monociclo": "ERICK", "gamer": "GORISCH", "bicho": "BICHO", "wendell": "WENDELL", "caio": "CAIO", "vini": "VINI", "lima": "LIMA"}
+const NOMES := {"segway": "PÉRINE", "cadeira": "GABRIEL", "scooter": "GIAN", "monociclo": "ERICK", "gamer": "GORISCH", "bicho": "BICHO", "wendell": "WENDELL", "caio": "CAIO", "vini": "VINI", "lima": "LIMA", "chefe": "CHEFE"}
 ## habilidade de cada um (botão especial), sempre com limite de uso
 const CHECKPOINTS := false              # sem checkpoint: morreu, volta pro começo da fase
-const HABILIDADES := {"segway": "salto", "cadeira": "turbo", "scooter": "turbo", "monociclo": "pulo_duplo", "gamer": "turbo", "bicho": "baloes", "wendell": "estrela", "caio": "rapido", "vini": "dash", "lima": "mega_pulo"}
+const HABILIDADES := {"segway": "salto", "cadeira": "turbo", "scooter": "turbo", "monociclo": "pulo_duplo", "gamer": "turbo", "bicho": "baloes", "wendell": "estrela", "caio": "rapido", "vini": "dash", "lima": "mega_pulo", "chefe": "repele"}
 const TURBO_INFINITO := ["cadeira"]       # Gabriel: turbo sem combustível
 const BOMBA_EXTRA := ["scooter"]          # Gian: turbo + bomba num segundo botão
 const RITMO := 3.0                   # mundo 3x mais rápido: queda pesada e ritmo de Happy Wheels

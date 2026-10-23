@@ -153,6 +153,10 @@ func _arremessar(pl: Player, desvio := 0.0, mira := 0.85, voo := 1.1) -> void:
 	hit.body_entered.connect(func(b: Node2D) -> void:
 		if o["t"] < o["T"] * 0.55 or not (b.is_in_group("veiculo") or b.is_in_group("piloto")):
 			return
+		if fase.player.repelir(b.global_position):      # Chefe sem camisa: rebate e a coisa some
+			(o["hit"] as Area2D).set_deferred("monitoring", false)
+			(o["no"] as Node2D).modulate.a = 0.3
+			return
 		fase._on_perigo(b, "esmagado"))
 	_voando.append(o)
 	Audio.tocar("pulo", 0.5, 0.2)

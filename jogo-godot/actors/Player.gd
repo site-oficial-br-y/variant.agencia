@@ -58,6 +58,9 @@ var _trote: Array = []                  # sprites do gorila + boneco que sobem e
 const MEGA := 3300.0
 var _bracos_vei: Array = []             # braços do gorila: levantam no pulo
 var _no_pulo := false
+var _repele_t := 0.0                    # Chefe: sem camisa, rebate golpe de chefe (segundos reais)
+var _repele_dano := false
+var _repele_fx := 0.0
 var _pulo_t := 0.0
 var _baloes: Node2D
 var membros: Dictionary = {}            # corpo -> Node2D articulado (montado: animado por molas)
@@ -539,6 +542,21 @@ func _especial(ch: Dictionary, delta: float) -> void:
 				if _pulo_t > 0.4 and _no_chao():          # caiu: fumaceira
 					_no_pulo = false
 					_fumaca_pouso()
+		"repele":                          # Chefe: tira a camisa, 12 s rebatendo golpe de chefe (e tira 1 de vida dele)
+			if apertou and recarga <= 0.0 and _repele_t <= 0.0:
+				_usar(60.0)
+				_repele_t = 12.0
+				_repele_dano = false
+				_vestir(true)
+				Audio.musica_ult(true)
+				Audio.tocar("checkpoint", 1.0, 0.0)
+			if _repele_t > 0.0:
+				_repele_t -= delta / Engine.time_scale
+				_repele_fx -= delta / Engine.time_scale
+				_rastro(Color(1.0, 0.82, 0.3, 0.35), 0.1)
+				if _repele_t <= 0.0:
+					_vestir(false)
+					Audio.musica_ult(false)
 		"dash":                            # Vini: arrancada muito rápida pra frente, com rastro
 			if apertou and recarga <= 0.0:
 				_usar(0.8)
@@ -718,6 +736,8 @@ func pronto() -> float:
 		return 1.0
 	if habilidade == "mega_pulo" and _mirando:
 		return 1.0
+	if habilidade == "repele" and _repele_t > 0.0:
+		return 1.0
 	return 1.0 - recarga / maxf(recarga_total, 0.001)
 
 func _fumaca_pouso() -> void:
@@ -727,6 +747,53 @@ func _fumaca_pouso() -> void:
 			m.pecas.poeira((r as Node2D).global_position + Vector2(0, 60), 3.2)
 		m.pecas.poeira(chassi.global_position + Vector2(0, 300), 3.6)
 	Audio.tocar("impacto_forte", 1.0)
+
+## Chefe: troca a roupa (tronco e braço) pela versão sem camisa e volta
+func _vestir(sem_camisa: bool) -> void:
+	for k in ["tronco", "braco"]:
+		if not sprites.has(k) or not D["pecas"].has(k + "_ult"):
+			continue
+		var s: Sprite2D = sprites[k]
+		if not s.has_meta("base"):
+			s.set_meta("base", s.position)
+		var kk: String = k + "_ult" if sem_camisa else k
+		s.texture = load("res://assets/%s/%s.png" % [personagem, kk])
+		s.position = (s.get_meta("base") as Vector2) + (centro_peca(kk) - centro_peca(k))
+
+## golpe de chefe acertou: com o especial ligado, rebate (anel dourado) e a 1ª vez tira vida do chefe
+func repelir(onde: Vector2) -> bool:
+	if not montado or _repele_t <= 0.0:
+		return false
+	if _repele_fx <= 0.0:
+		_repele_fx = 0.2
+		var anel := Line2D.new()
+		var pts := PackedVector2Array()
+		for k in 33:
+			pts.append(Vector2(220, 0).rotated(TAU * k / 32.0))
+		anel.points = pts
+		anel.width = 46.0
+		anel.default_color = Color(1, 0.85, 0.3, 0.95)
+		var m := CanvasItemMaterial.new()
+		m.blend_mode = CanvasItemMaterial.BLEND_MODE_ADD
+		anel.material = m
+		anel.z_index = 20
+		anel.global_position = onde
+		get_parent().add_child(anel)
+		var tw := anel.create_tween()
+		tw.tween_property(anel, "scale", Vector2.ONE * 4.0, 0.35 * Engine.time_scale)
+		tw.parallel().tween_property(anel, "modulate:a", 0.0, 0.35 * Engine.time_scale)
+		tw.tween_callback(anel.queue_free)
+		Audio.tocar("metal", 1.0)
+	if not _repele_dano:
+		_repele_dano = true
+		var fase := get_parent()
+		var b = fase.get("boss")
+		var v = fase.get("vendedor")
+		if b != null and is_instance_valid(b) and not b.morto:
+			b.levar_choque()
+		elif v != null and is_instance_valid(v) and v.ativo and not v.acabou:
+			v._t += 6.0                                  # vendedor cansa mais rápido
+	return true
 
 func _vel_pulo() -> Vector2:
 	return Vector2(cos(_mira_ang) * _lado, -sin(_mira_ang)) * MEGA
@@ -1180,6 +1247,9 @@ func _angulo_chao_embaixo() -> float:
 
 # ---------- montado -> ragdoll ----------
 func soltar_ragdoll(herda_vel: Vector2, pulo: bool = false) -> void:
+	if _repele_t > 0.0:
+		_repele_t = 0.0
+		Audio.musica_ult(false)
 	_mirando = false
 	if _mira:
 		_mira.queue_free()
@@ -1409,3 +1479,7 @@ func _pedaco(tipo: String, pos: Vector2, vel: Vector2) -> void:
 
 func foco() -> Node2D:
 	return chassi if montado else corpos.get("tronco", chassi)
+
+func _exit_tree() -> void:
+	if _repele_t > 0.0:
+		Audio.musica_ult(false)              # reiniciou com o especial ligado: para a música
