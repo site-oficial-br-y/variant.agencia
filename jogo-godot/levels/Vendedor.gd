@@ -153,9 +153,8 @@ func _arremessar(pl: Player, desvio := 0.0, mira := 0.85, voo := 1.1) -> void:
 	hit.body_entered.connect(func(b: Node2D) -> void:
 		if o["t"] < o["T"] * 0.55 or not (b.is_in_group("veiculo") or b.is_in_group("piloto")):
 			return
-		if fase.player.repelir(b.global_position):      # Chefe sem camisa: rebate e a coisa some
-			(o["hit"] as Area2D).set_deferred("monitoring", false)
-			(o["no"] as Node2D).modulate.a = 0.3
+		if fase.player.repelir(b.global_position):      # Chefe sem camisa: rebate de volta na cara do vendedor
+			_rebater.call_deferred(o)
 			return
 		fase._on_perigo(b, "esmagado"))
 	_voando.append(o)
@@ -250,3 +249,28 @@ func _visual(tipo: String) -> Node2D:
 				P.poligono(r, Color(0.12, 0.12, 0.14), 0, null, 1.0, n)
 			n.set_meta("raio", 950.0)
 	return n
+
+## rebatido pelo Chefe: a coisa volta girando, acerta o vendedor, ele pisca vermelho e cansa mais rápido
+func _rebater(o: Dictionary) -> void:
+	if not _voando.has(o):
+		return
+	_voando.erase(o)
+	(o["hit"] as Area2D).set_deferred("monitoring", false)
+	if is_instance_valid(o["sombra"]):
+		(o["sombra"] as Node).queue_free()
+	var no: Node2D = o["no"]
+	var alvo := global_position + Vector2(-200, -1100)
+	var tw := no.create_tween()
+	tw.tween_property(no, "global_position", alvo, 0.4 * Engine.time_scale).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_IN)
+	tw.parallel().tween_property(no, "rotation", no.rotation + 12.0, 0.4 * Engine.time_scale)
+	tw.tween_callback(func() -> void:
+		if acabou:
+			no.queue_free()
+			return
+		_t += 0.8
+		Audio.tocar("impacto_forte", 1.0)
+		fase.pecas.poeira(alvo, 2.0)
+		corpo.modulate = Color(1, 0.35, 0.35)
+		var tw2 := corpo.create_tween()
+		tw2.tween_property(corpo, "modulate", Color.WHITE, 0.4 * Engine.time_scale)
+		no.queue_free())

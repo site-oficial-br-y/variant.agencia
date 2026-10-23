@@ -792,7 +792,7 @@ func repelir(onde: Vector2) -> bool:
 		if b != null and is_instance_valid(b) and not b.morto:
 			b.levar_choque()
 		elif v != null and is_instance_valid(v) and v.ativo and not v.acabou:
-			v._t += 6.0                                  # vendedor cansa mais rápido
+			v._t += 3.0                                  # vendedor cansa mais rápido
 	return true
 
 func _vel_pulo() -> Vector2:
