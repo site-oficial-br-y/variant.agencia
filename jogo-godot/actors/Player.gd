@@ -50,6 +50,12 @@ var _baloes_t := 0.0
 var _rapido_t := 0.0                    # Caio: tudo mais rápido
 var _dash_t := 0.0                      # Vini: arrancada
 var _rastro_t := 0.0
+var _mirando := false                   # Lima: mirando o mega pulo
+var _mira_ang := 0.7
+var _mira: Node2D
+var _lado := 1.0                        # pra onde está indo (mira do pulo)
+var _trote: Array = []                  # sprites do gorila + boneco que sobem e descem no passo
+const MEGA := 3300.0
 var _baloes: Node2D
 var membros: Dictionary = {}            # corpo -> Node2D articulado (montado: animado por molas)
 var _mola: Dictionary = {}              # corpo -> [ângulo, velocidade]
@@ -228,6 +234,10 @@ func _montar() -> void:
 		_montar_turbo(ch)
 	boneco = Node2D.new()
 	chassi.add_child(boneco)
+	if ch.get("trote", false):
+		for c in chassi.get_children():
+			if c is Sprite2D or c == boneco:
+				_trote.append([c, (c as Node2D).position])
 	var sensor := Area2D.new()
 	sensor.collision_layer = 0
 	sensor.collision_mask = 0b10001           # mundo + perigo pesado (bola de demolição)
@@ -308,6 +318,11 @@ func _animar(delta: float) -> void:
 	var solto := clampf(-ax * 0.00008, -0.5, 0.5) + (0.07 + 0.08 * vel) * sin(_t_anim * (3.1 + 4.0 * vel))
 	for c in ["perna", "perna2", "coxa", "canela"]:
 		alvos[c] = [solto * (0.4 if c == "coxa" else 1.0), 22.0, 3.0]
+	if _trote.size() > 0:                           # gorila: sobe e desce a cada passada
+		var amp := clampf(absf(chassi.linear_velocity.x) / 500.0, 0.0, 1.0)
+		var pulo := absf(sin(roda_motriz.rotation * 0.9)) * 28.0 * amp
+		for t in _trote:
+			(t[0] as Node2D).position = (t[1] as Vector2) + Vector2(0, -pulo)
 	if D["chassi"].get("andar", false):            # Vini: passo de verdade, perna da frente e de trás alternando
 		var passo := roda_motriz.rotation * 1.1
 		var amp := clampf(absf(chassi.linear_velocity.x) / 400.0, 0.0, 1.0)
@@ -465,6 +480,27 @@ func _especial(ch: Dictionary, delta: float) -> void:
 			if _rapido_t > 0.0:
 				_rapido_t -= delta
 				_rastro(Color(1.0, 0.85, 0.2, 0.45), 0.12)
+		"mega_pulo":                       # Lima: segura pra mirar (girar sobe/desce a mira), solta pra pular longe
+			if segura and recarga <= 0.0:
+				_mirando = true
+				var giro := Input.get_axis("lean_fwd", "lean_back")
+				_mira_ang = clampf(_mira_ang + giro * 1.4 * delta / Engine.time_scale, 0.2, 1.45)
+				_desenhar_mira()
+			elif _mirando:
+				_mirando = false
+				if _mira:
+					_mira.visible = false
+				if _no_chao():
+					_usar(4.0)
+					var v0 := _vel_pulo()
+					for rb in [chassi] + rodas:
+						(rb as RigidBody2D).linear_velocity = v0
+					Audio.tocar("pulo", 1.0, 0.0)
+					Audio.tocar("turbo", 0.7, 0.0)
+					_dash_t = 0.5
+			if _dash_t > 0.0:
+				_dash_t -= delta
+				_rastro(Color(1.0, 0.7, 0.3, 0.5), 0.05)
 		"dash":                            # Vini: arrancada muito rápida pra frente, com rastro
 			if apertou and recarga <= 0.0:
 				_usar(0.8)
@@ -642,7 +678,63 @@ func pronto() -> float:
 		return 1.0
 	if habilidade == "rapido" and _rapido_t > 0.0:
 		return 1.0
+	if habilidade == "mega_pulo" and _mirando:
+		return 1.0
 	return 1.0 - recarga / maxf(recarga_total, 0.001)
+
+func _vel_pulo() -> Vector2:
+	return Vector2(cos(_mira_ang) * _lado, -sin(_mira_ang)) * MEGA
+
+## trajetória pontilhada do mega pulo até onde ele cai (com alvo no chão)
+func _desenhar_mira() -> void:
+	if _mira == null:
+		_mira = Node2D.new()
+		_mira.z_index = 20
+		get_parent().add_child(_mira)
+		for i in 34:
+			var b := Polygon2D.new()
+			var pts := PackedVector2Array()
+			for k in 10:
+				pts.append(Vector2(42, 0).rotated(TAU * k / 10.0))
+			b.polygon = pts
+			b.color = Color(1, 0.95, 0.4, 0.95)
+			_mira.add_child(b)
+		var alvo := Line2D.new()
+		var anel := PackedVector2Array()
+		for k in 25:
+			anel.append(Vector2(200, 0).rotated(TAU * k / 24.0) * Vector2(1, 0.3))
+		alvo.points = anel
+		alvo.width = 24.0
+		alvo.default_color = Color(1, 0.75, 0.2)
+		_mira.add_child(alvo)
+	_mira.visible = true
+	var v0 := _vel_pulo()
+	var g := Vector2(0, float(ProjectSettings.get_setting("physics/2d/default_gravity", 980.0)))
+	var p0 := chassi.global_position
+	var ant := p0
+	var espaco := get_world_2d().direct_space_state
+	var fim := -1
+	var alvo_no: Line2D = _mira.get_child(34)
+	alvo_no.visible = false
+	for i in 34:
+		var t := 0.09 * (i + 1)
+		var p := p0 + v0 * t + 0.5 * g * t * t
+		var dot := _mira.get_child(i) as Polygon2D
+		if fim >= 0:
+			dot.visible = false
+			continue
+		var q := PhysicsRayQueryParameters2D.create(ant, p, 0b0001)
+		var r := espaco.intersect_ray(q)
+		if not r.is_empty():
+			fim = i
+			dot.visible = false
+			alvo_no.visible = true
+			alvo_no.global_position = r["position"]
+			continue
+		dot.visible = true
+		dot.global_position = p
+		dot.modulate.a = 1.0 - 0.5 * float(i) / 34.0
+		ant = p
 
 ## fantasmas do boneco ficando pra trás (rapidez do Caio, dash do Vini)
 func _rastro(cor: Color, intervalo: float) -> void:
@@ -997,7 +1089,9 @@ func _dirigir() -> void:
 			chassi.apply_force(Vector2(dir * forca, 0.0), Vector2(0, baixo).rotated(chassi.rotation))
 		else:           # 2 rodas: pelo centro de massa, sem empinar sozinho (empinar é no botão)
 			chassi.apply_central_force(Vector2(dir * forca, 0.0))
-	var lean := Input.get_axis("lean_back", "lean_fwd")
+	if dir != 0.0:
+		_lado = signf(dir)
+	var lean := 0.0 if _mirando else Input.get_axis("lean_back", "lean_fwd")   # mirando, os botões de girar mexem a mira
 	if mono:        # meio estável: tomba devagar e balança sozinho; o jogador corrige com os botões
 		_balanco_mono += delta_fisica * (0.9 + 0.4 * sin(_balanco_mono * 0.37))
 		var empurrao := sin(_balanco_mono * 1.3) * mono_balanco * (0.5 if ch.get("preciso", false) else 1.0)   # desequilíbrio que pede correção
@@ -1040,6 +1134,10 @@ func _angulo_chao_embaixo() -> float:
 
 # ---------- montado -> ragdoll ----------
 func soltar_ragdoll(herda_vel: Vector2, pulo: bool = false) -> void:
+	_mirando = false
+	if _mira:
+		_mira.queue_free()
+		_mira = null
 	if not montado:
 		return
 	montado = false

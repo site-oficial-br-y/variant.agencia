@@ -1612,7 +1612,7 @@ func _posicionar_hud() -> void:
 		aviso.size = Vector2(v.x, 160)
 		aviso.position = Vector2(0, v.y * 0.06)
 
-const ICONES := {"baloes": "baloes", "estrela": "estrela", "pulo_duplo": "pula", "salto": "pula", "turbo": "turbo", "bomba": "bomba", "equilibrio": "equilibrio", "arpao": "arpao", "rapido": "rapido", "dash": "dash"}
+const ICONES := {"baloes": "baloes", "estrela": "estrela", "pulo_duplo": "pula", "salto": "pula", "turbo": "turbo", "bomba": "bomba", "equilibrio": "equilibrio", "arpao": "arpao", "rapido": "rapido", "dash": "dash", "mega_pulo": "mega_pulo"}
 
 func _toque_especial() -> TouchScreenButton:
 	_botao_especial = _toque(ICONES.get(Game.HABILIDADES.get(Game.personagem, "salto"), "pula"), Vector2.ZERO, 165, "especial")

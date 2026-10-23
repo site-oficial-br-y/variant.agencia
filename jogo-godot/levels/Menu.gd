@@ -2,8 +2,8 @@ extends Control
 ## Seleção de personagem no estilo Happy Wheels: rostos em quadros no topo,
 ## o escolhido grande em cima da pedra, ✓ pra confirmar.
 
-const OPCOES := ["segway", "cadeira", "scooter", "monociclo", "gamer", "bicho", "wendell", "caio", "vini"]
-const SLOTS := 9                    # quadros vazios = personagens que ainda vão vir
+const OPCOES := ["segway", "cadeira", "scooter", "monociclo", "gamer", "bicho", "wendell", "caio", "lima", "vini"]
+const SLOTS := 10                    # quadros vazios = personagens que ainda vão vir
 
 var atual := 0
 var preview: TextureRect
@@ -36,7 +36,7 @@ func _ready() -> void:
 	logo.size = Vector2(250, 136)
 	add_child(logo)
 
-	var lado := 88.0
+	var lado := 80.0
 	var x0 := maxf(280.0, cx - (SLOTS * (lado + 12) - 12) / 2.0 + 60)       # depois do logo
 	for i in SLOTS:
 		var q := Panel.new()
@@ -150,7 +150,7 @@ func _atualizar() -> void:
 		(nomes_quadro[i] as Label).add_theme_color_override("font_color", Color.WHITE if i == atual else Color(1, 1, 1, 0.5))
 		(nomes_quadro[i] as Label).text = "???" if _trancado(i) else Game.NOMES[OPCOES[i]]
 	ok.position = Vector2(vp.x - 175, vp.y - 165)
-	var lado := 88.0
+	var lado := 80.0
 	var x0 := maxf(280.0, vp.x / 2.0 - (SLOTS * (lado + 12) - 12) / 2.0 + 60)
 	for i in quadros.size():
 		(quadros[i] as Panel).position = Vector2(x0 + i * (lado + 12), 24)

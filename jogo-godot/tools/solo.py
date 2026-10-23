@@ -63,9 +63,31 @@ def rodar(nome, cfg):
                 viz = np.stack([ndimage.gaussian_filter(viz[..., c], 3) for c in range(3)], 2)
                 cor[buraco] = viz[buraco]
                 a = np.where(buraco, 255, a)
+        if parte in cfg.get('tapar', {}):              # área atrás de outra peça: cor do vizinho
+            area = poly(W, H, cfg['tapar'][parte]) & ~own & (full[..., 3] > 0)
+            _, (iy, ix) = ndimage.distance_transform_edt(~own, return_indices=True)
+            viz = full[..., :3][iy, ix].astype(float)
+            viz = np.stack([ndimage.gaussian_filter(viz[..., c], 3) for c in range(3)], 2)
+            cor[area] = viz[area]
+            a = np.where(area, 255, a)
         img = Image.fromarray(np.dstack([cor.clip(0, 255), a]).astype(np.uint8), 'RGBA')
         pecas[parte] = salvar(img, parte, out_dir)
         print(f'  {parte:8s} {pecas[parte]}')
+    if 'resto' in cfg:                                   # veículo = o que sobrou (gorila); atrás do piloto é preenchido
+        own = livre & (full[..., 3] > 0)
+        lab, n = ndimage.label(own)                          # só o pedaço grande (some farelo do piloto)
+        if n > 1:
+            tam = ndimage.sum(own, lab, range(1, n + 1))
+            own = np.isin(lab, [i + 1 for i in range(n) if tam[i] > 3000])
+        cor = full[..., :3].astype(float)
+        a = np.where(own, full[..., 3], 0)
+        buraco = poly(W, H, cfg['resto_fundo']) & ~own
+        base = np.array(cfg.get('resto_cor', (45, 38, 35)), float)   # cor do pelo, com textura leve
+        ruido = ndimage.gaussian_filter(np.random.default_rng(1).normal(0, 14, (H, W)), 3)
+        cor[buraco] = np.clip(base + ruido[buraco][:, None], 0, 255)
+        a = np.where(buraco, 255, a)
+        img = Image.fromarray(np.dstack([cor.clip(0, 255), a]).astype(np.uint8), 'RGBA')
+        pecas[cfg['resto']] = salvar(img, cfg['resto'], out_dir)
     for copia, de in cfg.get('copias', {}).items():      # perna de trás: mesma perna, mais escura
         img = Image.open(os.path.join(out_dir, de + '.png'))
         a = img.getchannel('A')
@@ -148,7 +170,44 @@ VINI = {
     },
 }
 
+LIMA = {
+    'ordem_recorte': ['cabeca', 'braco', 'canela', 'coxa', 'tronco'],
+    'partes': {
+        'cabeca': [(550, 10), (825, 10), (825, 250), (740, 264), (690, 252), (620, 215), (552, 160)],
+        'braco': [(600, 330), (700, 318), (790, 465), (862, 468), (862, 532), (812, 562), (760, 525), (690, 472), (600, 432)],
+        'canela': [(600, 655), (765, 655), (748, 760), (683, 858), (722, 900), (722, 995), (505, 995), (505, 905), (560, 828), (600, 752)],
+        'coxa': [(478, 525), (765, 515), (775, 650), (742, 702), (610, 702), (560, 722), (478, 640)],
+        'tronco': [(450, 195), (722, 195), (795, 330), (805, 500), (765, 540), (478, 562), (450, 400)],
+    },
+    'resto': 'veiculo',
+    'resto_fundo': [(462, 618), (520, 598), (600, 580), (700, 556), (780, 528), (840, 500), (875, 488), (875, 1010), (462, 1010)],
+    'resto_cor': (42, 35, 32),
+    'tapar': {'tronco': [(600, 330), (700, 318), (790, 462), (790, 520), (700, 530), (600, 520)]},
+    'ordem_desenho': ['veiculo', 'tronco', 'coxa', 'canela', 'braco', 'cabeca'],
+    'fisica': {
+        'corpo_de': {'veiculo': 'chassi', 'cabeca': 'cabeca', 'tronco': 'tronco', 'braco': 'braco', 'coxa': 'coxa', 'canela': 'canela'},
+        'piloto': ['tronco', 'cabeca', 'braco', 'coxa', 'canela'],
+        'rodas': [{'corpo': 'roda0', 'c': [235.0, 1120.0], 'r': 70, 'massa': 2.5, 'motriz': True},
+                  {'corpo': 'roda1', 'c': [1100.0, 1120.0], 'r': 70, 'massa': 2.5, 'motriz': False}],
+        'chassi': {'massa': 9.0, 'auto_equilibrio': False, 'trote': True, 'vmax': 850.0, 'forca': 0.0,
+                   'poly': [[170, 1030], [330, 640], [600, 580], [880, 430], [1080, 470], [1215, 640], [1190, 760], [1130, 1030]]},
+        'corpos': {
+            'cabeca': {'massa': 0.8, 'forma': ['circ', [700, 140], 115]},
+            'tronco': {'massa': 2.0, 'forma': ['caps', [565, 290], [600, 515], 105]},
+            'braco': {'massa': 0.5, 'forma': ['caps', [645, 365], [840, 500], 42]},
+            'coxa': {'massa': 1.1, 'forma': ['caps', [520, 610], [740, 640], 72]},
+            'canela': {'massa': 1.0, 'forma': ['caps', [690, 690], [620, 945], 60]},
+        },
+        'juntas': [
+            {'a': 'tronco', 'b': 'cabeca', 'p': [680, 252], 'lim': 40},
+            {'a': 'tronco', 'b': 'braco', 'p': [640, 350], 'lim': 80},
+            {'a': 'tronco', 'b': 'coxa', 'p': [530, 590], 'lim': 70},
+            {'a': 'coxa', 'b': 'canela', 'p': [722, 662], 'lim': 75},
+        ],
+    },
+}
+
 if __name__ == '__main__':
     for n in sys.argv[1:]:
         print('==', n)
-        rodar(n, {'caio': CAIO, 'vini': VINI}[n])
+        rodar(n, {'caio': CAIO, 'vini': VINI, 'lima': LIMA}[n])
