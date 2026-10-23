@@ -74,12 +74,12 @@ func vini_liberado() -> bool:
 	cfg.load(ARQ_PROGRESSO)
 	return recorde(5) < INF or bool(cfg.get_value("extra", "vini", false))
 
-## link secreto (?chave=cepe-vini): libera o Vini só no navegador de quem abriu por ele
+## link secreto (?vini=liberado): libera o Vini só no navegador de quem abriu por ele
 func _chave_secreta() -> void:
 	if not OS.has_feature("web"):
 		return
 	var busca := str(JavaScriptBridge.eval("window.location.search", true))
-	if "chave=cepe-vini" in busca:
+	if "chave=cepe-vini" in busca or "vini=liberado" in busca:
 		var cfg := ConfigFile.new()
 		cfg.load(ARQ_PROGRESSO)
 		cfg.set_value("extra", "vini", true)
