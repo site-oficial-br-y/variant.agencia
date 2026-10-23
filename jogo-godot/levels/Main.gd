@@ -788,6 +788,7 @@ func _parede_arena(x: float, y: float) -> void:
 
 ## rodadas: sobrevive X segundos de ataque, aí um botão acende num canto da arena
 func _rodada_boss(dt: float) -> void:
+	_seta_botao()
 	if not is_instance_valid(boss) or boss.morto or not ativo:
 		return
 	if _botao_ativo >= 0:
@@ -859,21 +860,87 @@ func _apertar(b: Dictionary) -> void:
 		return
 	b["ligado"] = false
 	(b["cupula"] as Polygon2D).color = Color(0.3, 0.3, 0.33)
+	if b.has("sinal"):
+		(b["sinal"] as Node).queue_free()
+		b.erase("sinal")
 	(b["luz"] as Polygon2D).color.a = 0.0
 	_raio(b["base"] + Vector2(0, -80), boss.cabeca.global_position)
 	boss.levar_choque()
 	_botao_ativo = -1
 	_rodada_t = maxf(5.0, 9.0 - 1.0 * float(5 - boss.vida))
 
+## botão aceso: verde, com coluna de luz verde, seta pulando e "APERTA!" em cima.
+## Fora da tela, uma seta na borda aponta pra ele (_seta_botao)
 func _ligar_botao(b: Dictionary) -> void:
 	b["ligado"] = true
-	(b["cupula"] as Polygon2D).color = Color(1, 0.15, 0.1)
-	var luz: Polygon2D = b["luz"]
-	luz.color.a = 0.55
-	var tw := luz.create_tween().set_loops(8)
-	tw.tween_property(luz, "modulate:a", 0.2, 0.35)
-	tw.tween_property(luz, "modulate:a", 1.0, 0.35)
+	(b["cupula"] as Polygon2D).color = Color(0.2, 1.0, 0.35)
+	var sinal := Node2D.new()
+	sinal.position = b["base"]
+	sinal.z_index = 6
+	add_child(sinal)
+	var g := Gradient.new()
+	g.set_color(0, Color(0.2, 1.0, 0.35, 0.0))
+	g.set_color(1, Color(0.3, 1.0, 0.45, 0.5))
+	var gt := GradientTexture2D.new()
+	gt.gradient = g
+	gt.fill_from = Vector2(0, 0)
+	gt.fill_to = Vector2(0, 1)
+	gt.width = 4
+	gt.height = 64
+	var coluna := TextureRect.new()
+	coluna.texture = gt
+	coluna.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+	coluna.stretch_mode = TextureRect.STRETCH_SCALE
+	coluna.size = Vector2(460, 3200)
+	coluna.position = Vector2(-230, -3200)
+	sinal.add_child(coluna)
+	var seta := Node2D.new()
+	sinal.add_child(seta)
+	var tri := Polygon2D.new()
+	tri.polygon = PackedVector2Array([Vector2(-170, -150), Vector2(170, -150), Vector2(0, 60)])
+	tri.color = Color(0.25, 1.0, 0.4)
+	seta.add_child(tri)
+	var borda := Line2D.new()
+	borda.points = tri.polygon + PackedVector2Array([tri.polygon[0]])
+	borda.width = 22.0
+	borda.default_color = Color(0.02, 0.25, 0.05)
+	seta.add_child(borda)
+	var txt := Label.new()
+	txt.text = "APERTA!"
+	txt.add_theme_font_size_override("font_size", 170)
+	txt.add_theme_color_override("font_color", Color(0.4, 1.0, 0.5))
+	txt.add_theme_color_override("font_outline_color", Color(0.02, 0.2, 0.05))
+	txt.add_theme_constant_override("outline_size", 36)
+	txt.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	txt.size = Vector2(900, 220)
+	txt.position = Vector2(-450, -460)
+	seta.add_child(txt)
+	seta.position = Vector2(0, -700)
+	var tw := seta.create_tween().set_loops()
+	tw.tween_property(seta, "position:y", -560.0, 0.18 * Engine.time_scale).set_trans(Tween.TRANS_SINE)
+	tw.tween_property(seta, "position:y", -700.0, 0.18 * Engine.time_scale).set_trans(Tween.TRANS_SINE)
+	b["sinal"] = sinal
 	Audio.tocar("checkpoint", 0.8)
+
+var _seta_hud: Label
+func _seta_botao() -> void:
+	if _seta_hud == null:
+		_seta_hud = Label.new()
+		_seta_hud.add_theme_font_size_override("font_size", 46)
+		_seta_hud.add_theme_color_override("font_color", Color(0.4, 1.0, 0.5))
+		_seta_hud.add_theme_color_override("font_outline_color", Color(0.02, 0.2, 0.05))
+		_seta_hud.add_theme_constant_override("outline_size", 12)
+		$HUD.add_child(_seta_hud)
+	if _botao_ativo < 0 or not ativo:
+		_seta_hud.visible = false
+		return
+	var v := get_viewport().get_visible_rect().size
+	var na_tela: Vector2 = get_viewport().get_canvas_transform() * Vector2(float(_botoes_x[_botao_ativo]), CHAO_Y)
+	_seta_hud.visible = na_tela.x < 40.0 or na_tela.x > v.x - 40.0
+	var direita := na_tela.x > v.x / 2.0
+	_seta_hud.text = "BOTÃO >>>" if direita else "<<< BOTÃO"
+	_seta_hud.modulate.a = 0.55 + 0.45 * absf(sin(Time.get_ticks_msec() / 150.0))
+	_seta_hud.position = Vector2(v.x - 330.0 if direita else 30.0, v.y * 0.26)
 
 func _raio(de: Vector2, para: Vector2) -> void:
 	for camada in 2:
