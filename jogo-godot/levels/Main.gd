@@ -869,7 +869,7 @@ func _apertar(b: Dictionary) -> void:
 	_botao_ativo = -1
 	_rodada_t = maxf(5.0, 9.0 - 1.0 * float(5 - boss.vida))
 
-## botão aceso: verde, com coluna de luz verde, seta pulando e "APERTA!" em cima.
+## botão aceso: verde, com coluna de luz verde e seta pulando em cima.
 ## Fora da tela, uma seta na borda aponta pra ele (_seta_botao)
 func _ligar_botao(b: Dictionary) -> void:
 	b["ligado"] = true
@@ -905,16 +905,6 @@ func _ligar_botao(b: Dictionary) -> void:
 	borda.width = 22.0
 	borda.default_color = Color(0.02, 0.25, 0.05)
 	seta.add_child(borda)
-	var txt := Label.new()
-	txt.text = "APERTA!"
-	txt.add_theme_font_size_override("font_size", 170)
-	txt.add_theme_color_override("font_color", Color(0.4, 1.0, 0.5))
-	txt.add_theme_color_override("font_outline_color", Color(0.02, 0.2, 0.05))
-	txt.add_theme_constant_override("outline_size", 36)
-	txt.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	txt.size = Vector2(900, 220)
-	txt.position = Vector2(-450, -460)
-	seta.add_child(txt)
 	seta.position = Vector2(0, -700)
 	var tw := seta.create_tween().set_loops()
 	tw.tween_property(seta, "position:y", -560.0, 0.18 * Engine.time_scale).set_trans(Tween.TRANS_SINE)
