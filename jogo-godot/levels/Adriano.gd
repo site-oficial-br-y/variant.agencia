@@ -229,11 +229,30 @@ func _corpos() -> Array:
 	return pl.corpos.values()
 
 # ---------- pisos ----------
+## piso com lugar seguro de laser ativo não cai
+func _protegido(p: Dictionary) -> bool:
+	var bx: float = (p["base"] as Vector2).x
+	for l in lasers:
+		if l.has("seguro"):
+			var sg: Vector2 = l["seguro"]
+			if sg.y > bx - LARG / 2.0 and sg.x < bx + LARG / 2.0:
+				return true
+	return false
+
+## centro de um piso de pé perto de x (pra pôr o lugar seguro sempre em cima de chão)
+func _piso_seguro(x: float, folga: float) -> float:
+	var ok := pisos.filter(func(p): return p["estado"] == "ok")
+	if ok.is_empty():
+		return x
+	ok.sort_custom(func(a, b): return absf((a["base"] as Vector2).x - x) < absf((b["base"] as Vector2).x - x))
+	var bx: float = (ok[0]["base"] as Vector2).x
+	return clampf(x, bx - LARG / 2.0 + folga, bx + LARG / 2.0 - folga)
+
 func _derrubar() -> void:
 	var fora := pisos.filter(func(p): return p["estado"] != "ok")
 	if fora.size() >= 2:
 		return
-	var livres: Array = pisos.filter(func(p): return p["estado"] == "ok" and _vizinhos_ok(int(p["i"])))
+	var livres: Array = pisos.filter(func(p): return p["estado"] == "ok" and _vizinhos_ok(int(p["i"])) and not _protegido(p))
 	if livres.size() <= 1:
 		return
 	var escolha: Dictionary = livres[randi() % livres.size()]
@@ -374,7 +393,7 @@ func _coluna(x: float) -> void:
 	x = clampf(x, x0 + 300.0, x0 + ALTURAS.size() * (LARG + VAO) - 300.0)
 	var aviso := _linha(14.0, Color(1, 0.2, 0.15, 0.9), 8)
 	aviso.points = PackedVector2Array([Vector2(x, chao - 4500.0), Vector2(x, chao + 2000.0)])
-	var feixe := _feixe(280.0, 9)
+	var feixe := _feixe(400.0, 9)
 	_pts_feixe(feixe, aviso.points, 0.0)
 	var alvo := _bola_luz(Vector2(x, chao - 70.0), 5.0)
 	alvo.modulate.a = 0.0
@@ -388,13 +407,14 @@ func _cortina() -> void:
 		return
 	var p: Dictionary = ok[randi() % ok.size()]
 	var gx: float = (p["base"] as Vector2).x
-	var nos: Array = [_feixe(200.0, 9), _feixe(200.0, 9), _bola_luz(Vector2.ZERO, 5.0), _bola_luz(Vector2.ZERO, 5.0)]
+	var nos: Array = [_feixe(320.0, 9), _feixe(320.0, 9), _bola_luz(Vector2.ZERO, 5.0), _bola_luz(Vector2.ZERO, 5.0)]
 	for k in [2, 3]:
 		(nos[k] as Node2D).modulate.a = 0.0
 	var marca := _linha(LARG * 0.8, Color(0.3, 1.0, 0.4, 0.0), 3)    # vão (seguro) marcado de verde
-	marca.points = PackedVector2Array([Vector2(gx, chao - 2600.0), Vector2(gx, chao + 100.0)])
+	marca.points = PackedVector2Array([Vector2(gx, chao - 6000.0), Vector2(gx, chao)])
 	nos.append(marca)
-	lasers.append({"tipo": "cortina", "gx": gx, "meio": LARG * 0.42, "t": 0.0, "y": chao - 4200.0, "nos": nos})
+	lasers.append({"tipo": "cortina", "gx": gx, "meio": LARG * 0.42, "t": 0.0, "y": chao - 4200.0, "nos": nos,
+		"seguro": Vector2(gx - LARG * 0.42, gx + LARG * 0.42)})
 	Audio.tocar("turbo", 0.6, 0.0)
 
 ## padrões de vários feixes (grade e X): lista de segmentos; aviso fino piscando, depois todos acendem juntos
@@ -405,14 +425,14 @@ func _multi(tipo: String, segs: Array, seguro: Vector2) -> void:
 		av.points = PackedVector2Array([sg[0], sg[1]])
 		nos.append(av)
 	for sg in segs:
-		var f := _feixe(170.0, 9)
+		var f := _feixe(300.0, 9)
 		_pts_feixe(f, PackedVector2Array([sg[0], sg[1]]), 0.0)
 		nos.append(f)
-	var marca := _linha(seguro.y - seguro.x, Color(0.3, 1.0, 0.4, 0.0), 3)     # lugar seguro em verde
+	var marca := _linha(seguro.y - seguro.x, Color(0.3, 1.0, 0.4, 0.0), 3)     # lugar seguro em verde, do chão ao céu
 	var cx := (seguro.x + seguro.y) / 2.0
-	marca.points = PackedVector2Array([Vector2(cx, chao - 1400.0), Vector2(cx, chao + 100.0)])
+	marca.points = PackedVector2Array([Vector2(cx, chao - 6000.0), Vector2(cx, chao)])
 	nos.append(marca)
-	lasers.append({"tipo": tipo, "t": 0.0, "segs": segs, "nos": nos})
+	lasers.append({"tipo": tipo, "t": 0.0, "segs": segs, "nos": nos, "seguro": seguro})
 	Audio.tocar("turbo", 0.7, 0.0)
 
 func _arena_x1() -> float:
@@ -420,19 +440,22 @@ func _arena_x1() -> float:
 
 ## grade: colunas a cada 520 px na arena toda, menos um vão perto de você
 func _grade() -> void:
-	var ax := clampf(_alvo_x() + randf_range(-900, 900), x0 + 600.0, _arena_x1() - 600.0)
+	var ax := _piso_seguro(_alvo_x() + randf_range(-900, 900), 350.0)
 	var segs: Array = []
-	var x := x0 + 260.0
-	while x < _arena_x1() - 100.0:
-		if absf(x - ax) > 420.0:
-			segs.append([Vector2(x, chao - 4500.0), Vector2(x, chao + 2000.0)])
-		x += 520.0
+	var x := ax + 600.0
+	while x < _arena_x1() + 100.0:
+		segs.append([Vector2(x, chao - 4500.0), Vector2(x, chao + 2000.0)])
+		x += 560.0
+	x = ax - 600.0
+	while x > x0 - 100.0:
+		segs.append([Vector2(x, chao - 4500.0), Vector2(x, chao + 2000.0)])
+		x -= 560.0
 	_multi("grade", segs, Vector2(ax - 300.0, ax + 300.0))
 
 ## X: diagonais cruzando que batem no chão a cada 2000 px; o meio entre dois pontos é seguro
 func _xis() -> void:
-	var ax := _alvo_x()
-	var fase_x := ax - 1000.0 + randf_range(-600, 600)          # um ponto seguro sempre a <~1600 de você
+	var seg_mid0 := _piso_seguro(_alvo_x() + randf_range(-600, 600), 350.0)   # lugar seguro em cima de um piso
+	var fase_x := seg_mid0 - 1000.0
 	var segs: Array = []
 	var px: float = fase_x - 2000.0 * ceil((fase_x - x0 + 1500.0) / 2000.0)
 	while px < _arena_x1() + 1500.0:
@@ -440,7 +463,7 @@ func _xis() -> void:
 			segs.append([Vector2(px, chao), Vector2(px + d * 4500.0, chao - 4500.0)])
 		px += 2000.0
 	var seg_mid := fase_x + 1000.0
-	_multi("xis", segs, Vector2(seg_mid - 350.0, seg_mid + 350.0))
+	_multi("xis", segs, Vector2(seg_mid - 300.0, seg_mid + 300.0))
 
 func _apagar_laser(l: Dictionary) -> void:
 	for n in l["nos"]:
@@ -463,7 +486,7 @@ func _passo_laser(l: Dictionary, dt: float) -> void:
 			for k in n:
 				(nos[k] as Line2D).visible = vis
 				(nos[k] as Line2D).width = 8.0 + 16.0 * t / 1.4
-			marca.default_color.a = 0.3 if vis else 0.12
+			marca.default_color.a = 0.5 if vis else 0.28
 			return
 		if t - dt < 1.4:
 			Audio.tocar("metal", 1.0, 0.0)
@@ -473,7 +496,7 @@ func _passo_laser(l: Dictionary, dt: float) -> void:
 			(nos[k] as Line2D).visible = false
 			var sg: Array = l["segs"][k]
 			_pts_feixe(nos[n + k], PackedVector2Array([sg[0], sg[1]]), f)
-		marca.default_color.a = 0.15
+		marca.default_color.a = 0.35
 		if f > 0.5:
 			_acerta_segs(l["segs"])
 		if t >= 2.0:
@@ -492,7 +515,7 @@ func _passo_laser(l: Dictionary, dt: float) -> void:
 		aviso.visible = false
 		var f := minf(1.0, (t - 1.2) / 0.06) * minf(1.0, (1.7 - t) / 0.15)
 		_pts_feixe(nos[1], aviso.points, f)
-		(nos[1] as Line2D).width = 280.0 * (0.9 + 0.1 * sin(t * 70.0))
+		(nos[1] as Line2D).width = 400.0 * (0.9 + 0.1 * sin(t * 70.0))
 		alvo.modulate.a = f
 		alvo.scale = Vector2.ONE * (5.0 + 0.8 * sin(t * 50.0))
 		if f > 0.5:
@@ -505,9 +528,9 @@ func _passo_laser(l: Dictionary, dt: float) -> void:
 	var gx: float = l["gx"]
 	var meio: float = l["meio"]
 	if t < 1.3:                                          # aviso: vão verde piscando
-		marca.default_color.a = 0.35 if fmod(t, 0.2) < 0.12 else 0.12
+		marca.default_color.a = 0.5 if fmod(t, 0.2) < 0.12 else 0.28
 		return
-	marca.default_color.a = 0.2
+	marca.default_color.a = 0.35
 	l["y"] = float(l["y"]) + 2400.0 * dt
 	var y: float = l["y"]
 	var esq := x0 - 300.0
@@ -536,20 +559,20 @@ func _acerta_segs(segs: Array) -> void:
 	for b in _corpos():
 		var p: Vector2 = (b as Node2D).global_position
 		for sg in segs:
-			if p.distance_to(Geometry2D.get_closest_point_to_segment(p, sg[0], sg[1])) < 130.0:
+			if p.distance_to(Geometry2D.get_closest_point_to_segment(p, sg[0], sg[1])) < 170.0:
 				_morre(b)
 				return
 
 func _acerta_coluna(x: float) -> void:
 	for b in _corpos():
-		if absf((b as Node2D).global_position.x - x) < 170.0:
+		if absf((b as Node2D).global_position.x - x) < 220.0:
 			_morre(b)
 			return
 
 func _acerta_cortina(y: float, gx: float, meio: float) -> void:
 	for b in _corpos():
 		var p: Vector2 = (b as Node2D).global_position
-		if absf(p.y - y) < 80.0 and absf(p.x - gx) > meio:
+		if absf(p.y - y) < 140.0 and absf(p.x - gx) > meio:
 			_morre(b)
 			return
 
