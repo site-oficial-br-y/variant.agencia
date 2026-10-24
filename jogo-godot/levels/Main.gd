@@ -2014,7 +2014,7 @@ func _captura(nome: String) -> void:
 	print("SHOT ", nome)
 
 func _exit_tree() -> void:
-	if Online.ativo:                          # saiu da luta online: fecha a sala
+	if Online.ativo and not _recomecando:     # saiu da luta online: fecha a sala
 		Online.sair()
 	Audio.motor(false)                        # sair da fase cala o motor
 	Engine.time_scale = 1.0
@@ -2335,10 +2335,7 @@ func _process_online(delta: float) -> void:
 			Audio.parar_chefe()
 			aviso.text = "O TIME TODO MORREU!"
 			Audio.tocar("morte")
-			if painel:
-				painel.get_node("proxima").visible = false
-				painel.visible = true
-				_posicionar_hud.call_deferred()
+			_fim_online()
 		elif _renasce_t <= 0.0:
 			_renasce_t = -1.0
 			_renascer()
@@ -2432,6 +2429,13 @@ func _online_msg(e: String, d: Dictionary, de: String) -> void:
 				var c: Label = _botoes[i]["contador"]
 				if is_instance_valid(c):
 					c.text = str(d.get("t", ""))
+		"denovo":                                    # alguém quer continuar com a equipe
+			if Online.host:
+				_querem_de_novo[de] = true
+				_atualizar_fim_online()
+		"comecar":                                   # quem criou a sala recomeçou a luta
+			if not Online.host and Online.id in (d.get("ids", []) as Array):
+				_recomecar(d.get("ids", []))
 		"ch":                                        # choque confirmado: todo mundo aplica
 			if not Online.host:
 				var i := int(d.get("i", -1))
@@ -2503,3 +2507,87 @@ func _conferir_botao(b: Dictionary) -> void:
 	if vivos.size() > 0 and feitos >= vivos.size():
 		Online.enviar("ch", {"i": i})
 		_apertar(b, true)
+
+## fim online (time todo morreu): continuar com a equipe ou voltar pro lobby
+var _recomecando := false
+var _querem_de_novo: Dictionary = {}
+var _painel_on: Control
+var _info_fim: Label
+var _b_denovo: Button
+
+func _fim_online() -> void:
+	if painel:
+		painel.visible = false
+	_querem_de_novo.clear()
+	_painel_on = Control.new()
+	_painel_on.set_anchors_preset(Control.PRESET_FULL_RECT)
+	$HUD.add_child(_painel_on)
+	$HUD.move_child(_painel_on, aviso.get_index())     # escurece o jogo, título por cima
+	var escuro := ColorRect.new()
+	escuro.color = Color(0, 0, 0, 0.6)
+	escuro.set_anchors_preset(Control.PRESET_FULL_RECT)
+	_painel_on.add_child(escuro)
+	if is_instance_valid(boss):
+		for n in [boss._barra, boss._barra_fundo, boss._rotulo]:
+			if n:
+				(n as CanvasItem).visible = false
+	var v := get_viewport().get_visible_rect().size
+	_b_denovo = _botao_fim("CONTINUAR COM A EQUIPE", Vector2(v.x / 2.0 - 440, v.y * 0.55), Color(0.4, 1, 0.5))
+	_b_denovo.pressed.connect(func() -> void:
+		Audio.tocar("confirma")
+		if Online.host:
+			_querem_de_novo[Online.id] = true
+			var ids: Array = _querem_de_novo.keys()
+			Online.enviar("comecar", {"ids": ids})
+			_recomecar(ids)
+		else:
+			Online.enviar("denovo", {})
+			_b_denovo.disabled = true
+			_info_fim.text = "Esperando quem criou a sala recomeçar...")
+	var b_lobby := _botao_fim("VOLTAR PRO LOBBY", Vector2(v.x / 2.0 + 40, v.y * 0.55), Color(1, 0.8, 0.3))
+	b_lobby.pressed.connect(func() -> void:
+		Audio.tocar("clique")
+		Online.sair()
+		get_tree().change_scene_to_file("res://levels/Menu.tscn"))
+	_info_fim = Label.new()
+	_info_fim.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	_info_fim.add_theme_font_size_override("font_size", 26)
+	_info_fim.add_theme_color_override("font_outline_color", Color.BLACK)
+	_info_fim.add_theme_constant_override("outline_size", 8)
+	_info_fim.size = Vector2(v.x, 40)
+	_info_fim.position = Vector2(0, v.y * 0.55 + 110)
+	_painel_on.add_child(_info_fim)
+	_atualizar_fim_online()
+
+func _botao_fim(texto: String, pos: Vector2, cor: Color) -> Button:
+	var b := Button.new()
+	b.text = texto
+	b.focus_mode = Control.FOCUS_NONE
+	b.add_theme_font_size_override("font_size", 30)
+	b.custom_minimum_size = Vector2(400, 84)
+	var st := StyleBoxFlat.new()
+	st.bg_color = Color(0.08, 0.05, 0.15, 0.9)
+	st.set_corner_radius_all(16)
+	st.set_border_width_all(4)
+	st.border_color = cor
+	for k in ["normal", "hover", "pressed", "disabled"]:
+		b.add_theme_stylebox_override(k, st)
+	b.position = pos
+	_painel_on.add_child(b)
+	return b
+
+func _atualizar_fim_online() -> void:
+	if _info_fim == null or not is_instance_valid(_info_fim):
+		return
+	if Online.host:
+		var n := _querem_de_novo.size()
+		_info_fim.text = ("%d da equipe quer%s continuar. Aperta CONTINUAR pra recomeçar com quem quiser." % [n, "" if n == 1 else "em"]) if n > 0 else "Aperta CONTINUAR pra recomeçar a luta com a equipe."
+	elif not _b_denovo.disabled:
+		_info_fim.text = "Aperta CONTINUAR e espera quem criou a sala recomeçar."
+
+## recomeça a luta online com essas pessoas (sem fechar a sala)
+func _recomecar(ids: Array) -> void:
+	_recomecando = true
+	Game.online_n = clampi(ids.size(), 1, Online.MAX_JOGADORES)
+	Game.checkpoint_x = -1.0
+	get_tree().change_scene_to_file("res://levels/Main.tscn")
