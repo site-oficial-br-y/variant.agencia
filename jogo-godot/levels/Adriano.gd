@@ -35,8 +35,6 @@ var _camada_fundo: CanvasLayer
 var _camada_boss: CanvasLayer
 var _boss: Node2D
 var _corpo: Sprite2D
-var _mao_e: Sprite2D
-var _mao_d: Sprite2D
 var _barra: ColorRect
 var _barra_fundo: ColorRect
 var _rotulo: Label
@@ -127,13 +125,8 @@ func comecar() -> void:
 	fase.add_child(_camada_boss)
 	_boss = Node2D.new()
 	_camada_boss.add_child(_boss)
-	_corpo = Sprite2D.new()
-	_mao_e = Sprite2D.new()
-	_mao_d = Sprite2D.new()
-	for s in [_corpo, _mao_e, _mao_d]:
-		_boss.add_child(s)
-	_mao_e.offset = Vector2(-280, 23.5)                    # gira pelo pulso
-	_mao_d.offset = Vector2(280, 23.5)
+	_corpo = Sprite2D.new()                              # corpo inteiro caindo (imagem completa)
+	_boss.add_child(_corpo)
 	_trocar_estagio()
 	var hud: CanvasLayer = fase.get_node("HUD")
 	_barra_fundo = ColorRect.new()
@@ -156,25 +149,22 @@ func _trocar_estagio() -> void:
 	if e == _estagio:
 		return
 	_estagio = e
-	_corpo.texture = load("res://assets/adriano/e%d_corpo.png" % e)
-	_mao_e.texture = load("res://assets/adriano/e%d_mao_e.png" % e)
-	_mao_d.texture = load("res://assets/adriano/e%d_mao_d.png" % e)
+	_corpo.texture = load("res://assets/adriano/q%d.png" % e)
 
 func _posicionar(dt: float) -> void:
 	var v := fase.get_viewport().get_visible_rect().size
-	var esc := minf(v.x * 0.62 / 1880.0, v.y * 0.5 / 837.0)
+	var esc := minf(v.x * 0.5 / 1536.0, v.y * 0.62 / 1024.0)
 	var bob := sin(_t * 1.3) * 12.0
 	var tremor := Vector2(randf_range(-1, 1), randf_range(-1, 1)) * 18.0 * _tremor
-	_boss.position = Vector2(v.x / 2.0, v.y * 0.06 + 418.0 * esc + bob) + tremor
+	_boss.position = Vector2(v.x / 2.0, v.y * 0.04 + 512.0 * esc + bob) + tremor
 	if morto:
 		_boss.position.y -= minf(1.0, _fim_t / 2.0) * v.y * 1.3      # derrotado: fica pra trás (sobe na tela)
 		_boss.rotation = _fim_t * 0.4
 	_boss.scale = Vector2.ONE * esc * (1.0 + 0.012 * sin(_t * 2.1))
-	_corpo.position = Vector2.ZERO
-	_mao_e.position = Vector2(-300, 51.5) + Vector2(sin(_t * 2.2) * 26.0, cos(_t * 1.7) * 22.0)
-	_mao_d.position = Vector2(300, 51.5) + Vector2(sin(_t * 1.9 + 1.0) * 26.0, cos(_t * 2.3 + 2.0) * 22.0)
-	_mao_e.rotation = sin(_t * 2.0) * 0.09
-	_mao_d.rotation = -sin(_t * 2.4 + 0.7) * 0.09
+	_corpo.position = Vector2(sin(_t * 0.9) * 30.0, 0)
+	if not morto:
+		_boss.rotation = sin(_t * 1.1) * 0.06            # balança caindo
+	_corpo.skew = sin(_t * 2.3) * 0.03
 	_tremor = maxf(0.0, _tremor - dt * 2.0)
 	_barra_fundo.position = Vector2(v.x / 2.0 - 310, 112)
 	_barra.position = _barra_fundo.position + Vector2(10, 8)
@@ -296,6 +286,71 @@ func _mover_piso(p: Dictionary, dt: float) -> void:
 				av.color = Color(1, 0.1, 0.1, 0.0)
 
 # ---------- lasers ----------
+var _tex_feixe: Texture2D
+var _tex_brilho: Texture2D
+func _feixe_tex() -> Texture2D:                      # corte do feixe: borda some, miolo branco
+	if _tex_feixe == null:
+		var g := Gradient.new()
+		g.offsets = PackedFloat32Array([0.0, 0.28, 0.43, 0.5, 0.57, 0.72, 1.0])
+		g.colors = PackedColorArray([Color(1, 0.05, 0.05, 0.0), Color(1, 0.1, 0.1, 0.55), Color(1, 0.55, 0.5, 1.0),
+			Color(1, 1, 1, 1), Color(1, 0.55, 0.5, 1.0), Color(1, 0.1, 0.1, 0.55), Color(1, 0.05, 0.05, 0.0)])
+		var t := GradientTexture2D.new()
+		t.gradient = g
+		t.fill_from = Vector2(0, 0)
+		t.fill_to = Vector2(0, 1)
+		t.width = 4
+		t.height = 128
+		_tex_feixe = t
+	return _tex_feixe
+
+func _brilho_tex() -> Texture2D:                     # bola de luz (ponta do laser)
+	if _tex_brilho == null:
+		var g := Gradient.new()
+		g.set_color(0, Color(1, 1, 1, 1))
+		g.add_point(0.25, Color(1, 0.4, 0.35, 0.85))
+		g.set_color(g.get_point_count() - 1, Color(1, 0.05, 0.05, 0.0))
+		var t := GradientTexture2D.new()
+		t.gradient = g
+		t.fill = GradientTexture2D.FILL_RADIAL
+		t.fill_from = Vector2(0.5, 0.5)
+		t.fill_to = Vector2(1.0, 0.5)
+		_tex_brilho = t
+	return _tex_brilho
+
+## feixe de luz: linha com textura de brilho (aditiva) + halo largo por trás
+func _feixe(larg: float, z: int) -> Line2D:
+	var halo := _linha(larg * 2.6, Color(1, 0.15, 0.1, 0.25), z)
+	halo.texture = _feixe_tex()
+	halo.texture_mode = Line2D.LINE_TEXTURE_STRETCH
+	var l := _linha(larg, Color.WHITE, z)
+	l.texture = _feixe_tex()
+	l.texture_mode = Line2D.LINE_TEXTURE_STRETCH
+	l.set_meta("halo", halo)
+	return l
+
+func _pts_feixe(l: Line2D, pts: PackedVector2Array, a: float) -> void:
+	l.points = pts
+	l.modulate.a = a
+	var h: Line2D = l.get_meta("halo")
+	h.points = pts
+	h.modulate.a = a * (0.85 + 0.15 * sin(_t * 60.0))
+
+func _soltar_feixe(l: Line2D) -> void:
+	(l.get_meta("halo") as Node).queue_free()
+	l.queue_free()
+
+func _bola_luz(pos: Vector2, tam: float) -> Sprite2D:
+	var s := Sprite2D.new()
+	s.texture = _brilho_tex()
+	s.scale = Vector2.ONE * tam
+	s.z_index = 10
+	var m := CanvasItemMaterial.new()
+	m.blend_mode = CanvasItemMaterial.BLEND_MODE_ADD
+	s.material = m
+	s.position = pos
+	fase.add_child(s)
+	return s
+
 func _linha(larg: float, cor: Color, z: int) -> Line2D:
 	var l := Line2D.new()
 	l.width = larg
@@ -307,16 +362,16 @@ func _linha(larg: float, cor: Color, z: int) -> Line2D:
 	fase.add_child(l)
 	return l
 
-## coluna: linha fina piscando onde vai sair, depois um feixe vertical grosso
+## coluna: linha fina piscando onde vai sair, depois um feixe vertical de luz
 func _coluna(x: float) -> void:
 	x = clampf(x, x0 + 300.0, x0 + ALTURAS.size() * (LARG + VAO) - 300.0)
-	var aviso := _linha(26.0, Color(1, 0.15, 0.15, 0.8), 8)
+	var aviso := _linha(14.0, Color(1, 0.2, 0.15, 0.9), 8)
 	aviso.points = PackedVector2Array([Vector2(x, chao - 4500.0), Vector2(x, chao + 2000.0)])
-	var feixe := _linha(260.0, Color(1, 0.1, 0.1, 0.0), 9)
-	feixe.points = aviso.points
-	var miolo := _linha(70.0, Color(1, 0.85, 0.85, 0.0), 10)
-	miolo.points = aviso.points
-	lasers.append({"tipo": "coluna", "x": x, "t": 0.0, "nos": [aviso, feixe, miolo]})
+	var feixe := _feixe(280.0, 9)
+	_pts_feixe(feixe, aviso.points, 0.0)
+	var alvo := _bola_luz(Vector2(x, chao - 70.0), 5.0)
+	alvo.modulate.a = 0.0
+	lasers.append({"tipo": "coluna", "x": x, "t": 0.0, "nos": [aviso, feixe, alvo]})
 	Audio.tocar("turbo", 0.4, 0.0)
 
 ## cortina: feixe deitado que desce a arena inteira, com um vão verde em cima de um piso
@@ -326,14 +381,22 @@ func _cortina() -> void:
 		return
 	var p: Dictionary = ok[randi() % ok.size()]
 	var gx: float = (p["base"] as Vector2).x
-	var nos: Array = []
-	for k in 4:
-		nos.append(_linha(70.0 if k < 2 else 20.0, Color(1, 0.12, 0.12, 0.9) if k < 2 else Color(1, 0.9, 0.9, 1.0), 9))
+	var nos: Array = [_feixe(200.0, 9), _feixe(200.0, 9), _bola_luz(Vector2.ZERO, 5.0), _bola_luz(Vector2.ZERO, 5.0)]
+	for k in [2, 3]:
+		(nos[k] as Node2D).modulate.a = 0.0
 	var marca := _linha(LARG * 0.8, Color(0.3, 1.0, 0.4, 0.0), 3)    # vão (seguro) marcado de verde
 	marca.points = PackedVector2Array([Vector2(gx, chao - 2600.0), Vector2(gx, chao + 100.0)])
 	nos.append(marca)
 	lasers.append({"tipo": "cortina", "gx": gx, "meio": LARG * 0.42, "t": 0.0, "y": chao - 4200.0, "nos": nos})
 	Audio.tocar("turbo", 0.6, 0.0)
+
+func _apagar_laser(l: Dictionary) -> void:
+	for n in l["nos"]:
+		if n is Line2D and (n as Line2D).has_meta("halo"):
+			_soltar_feixe(n)
+		else:
+			(n as Node).queue_free()
+	lasers.erase(l)
 
 func _passo_laser(l: Dictionary, dt: float) -> void:
 	l["t"] += dt
@@ -341,19 +404,24 @@ func _passo_laser(l: Dictionary, dt: float) -> void:
 	var nos: Array = l["nos"]
 	if l["tipo"] == "coluna":
 		var aviso: Line2D = nos[0]
+		var alvo: Sprite2D = nos[2]
 		if t < 1.2:
 			aviso.visible = fmod(t, 0.14) < 0.09
+			aviso.width = 8.0 + 20.0 * t / 1.2
+			alvo.modulate.a = 0.35 if aviso.visible else 0.1
 			return
+		if aviso.visible:
+			Audio.tocar("metal", 0.6, 0.0)
 		aviso.visible = false
 		var f := minf(1.0, (t - 1.2) / 0.06) * minf(1.0, (1.7 - t) / 0.15)
-		(nos[1] as Line2D).default_color.a = 0.8 * f
-		(nos[2] as Line2D).default_color.a = 1.0 * f
+		_pts_feixe(nos[1], aviso.points, f)
+		(nos[1] as Line2D).width = 280.0 * (0.9 + 0.1 * sin(t * 70.0))
+		alvo.modulate.a = f
+		alvo.scale = Vector2.ONE * (5.0 + 0.8 * sin(t * 50.0))
 		if f > 0.5:
 			_acerta_coluna(float(l["x"]))
 		if t >= 1.7:
-			for n in nos:
-				(n as Node).queue_free()
-			lasers.erase(l)
+			_apagar_laser(l)
 		return
 	# cortina
 	var marca: Line2D = nos[4]
@@ -367,16 +435,17 @@ func _passo_laser(l: Dictionary, dt: float) -> void:
 	var y: float = l["y"]
 	var esq := x0 - 300.0
 	var dir := x0 + ALTURAS.size() * (LARG + VAO) + 300.0
-	for k in 2:
-		(nos[k * 2] as Line2D).points = PackedVector2Array([Vector2(esq, y), Vector2(gx - meio, y)]) if k == 0 else PackedVector2Array([Vector2(gx + meio, y), Vector2(dir, y)])
-		(nos[k * 2 + 1] as Line2D).points = (nos[k * 2] as Line2D).points
-	(nos[1] as Line2D).points = (nos[0] as Line2D).points
-	(nos[3] as Line2D).points = (nos[2] as Line2D).points
+	var f := minf(1.0, (t - 1.3) / 0.1)
+	_pts_feixe(nos[0], PackedVector2Array([Vector2(esq, y), Vector2(gx - meio, y)]), f)
+	_pts_feixe(nos[1], PackedVector2Array([Vector2(gx + meio, y), Vector2(dir, y)]), f)
+	(nos[2] as Node2D).position = Vector2(gx - meio, y)    # pontas acesas na beira do vão
+	(nos[3] as Node2D).position = Vector2(gx + meio, y)
+	for k in [2, 3]:
+		(nos[k] as Node2D).modulate.a = f
+		(nos[k] as Node2D).scale = Vector2.ONE * (5.0 + 0.8 * sin(t * 45.0 + k))
 	_acerta_cortina(y, gx, meio)
 	if y > chao + 1800.0:
-		for n in nos:
-			(n as Node).queue_free()
-		lasers.erase(l)
+		_apagar_laser(l)
 
 func _morre(b: Node2D) -> void:
 	var pl: Player = fase.player
@@ -508,10 +577,8 @@ func levar_choque(de_tela := Vector2(-1, -1)) -> void:
 		morto = true
 		_rotulo.text = "ADRIANO DERROTADO!"
 		_rotulo.add_theme_color_override("font_color", Color(0.5, 1, 0.5))
-		for l in lasers:
-			for n in l["nos"]:
-				(n as Node).queue_free()
-		lasers.clear()
+		for l in lasers.duplicate():
+			_apagar_laser(l)
 		for p in pisos:
 			if p["estado"] == "aviso":
 				p["estado"] = "ok"

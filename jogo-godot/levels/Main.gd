@@ -2181,7 +2181,7 @@ func _iniciar_queda7() -> void:
 	tw.tween_property(preto, "color:a", 1.0, 0.25)
 	tw.tween_callback(func() -> void: get_tree().paused = true)
 	tw.tween_property(txt, "modulate:a", 1.0, 0.4)
-	tw.tween_interval(2.6)
+	tw.tween_interval(4.6)
 	tw.tween_callback(func() -> void:
 		get_tree().paused = false
 		var ini := adriano.piso_inicial()
