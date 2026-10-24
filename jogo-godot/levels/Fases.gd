@@ -4,21 +4,39 @@ extends Control
 var cartoes: Array = []
 var titulo: Label
 var voltar: Button
+var logo: TextureRect
 
 func _ready() -> void:
 	Audio.musica_menu(true)
 	set_anchors_preset(Control.PRESET_FULL_RECT)
-	var fundo := TextureRect.new()
-	fundo.texture = load("res://assets/ui/fundo.png")
+	var fundo := TextureRect.new()                   # mesmo fundo do lobby (arena roxa + névoa)
+	fundo.texture = load("res://assets/ui/lobby.jpg")
 	fundo.set_anchors_preset(Control.PRESET_FULL_RECT)
 	fundo.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
 	fundo.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_COVERED
 	add_child(fundo)
+	var nevoa := ColorRect.new()
+	nevoa.set_anchors_preset(Control.PRESET_FULL_RECT)
+	nevoa.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	var mat := ShaderMaterial.new()
+	mat.shader = load("res://assets/ui/nevoa.gdshader")
+	nevoa.material = mat
+	add_child(nevoa)
+	logo = TextureRect.new()
+	logo.texture = load("res://assets/ui/logo_roxo.png")
+	logo.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+	logo.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+	logo.position = Vector2(22, 14)
+	logo.size = Vector2(270, 145)
+	add_child(logo)
 	titulo = Label.new()
-	titulo.text = "ESCOLHE A FASE"
-	titulo.add_theme_font_size_override("font_size", 60)
-	titulo.add_theme_color_override("font_outline_color", Color.BLACK)
-	titulo.add_theme_constant_override("outline_size", 12)
+	titulo.text = "ESCOLHER FASE"
+	titulo.add_theme_font_size_override("font_size", 64)
+	titulo.add_theme_color_override("font_outline_color", Color(0.25, 0.08, 0.5))
+	titulo.add_theme_constant_override("outline_size", 16)
+	titulo.add_theme_color_override("font_shadow_color", Color(0.55, 0.3, 1.0, 0.8))
+	titulo.add_theme_constant_override("shadow_offset_x", 0)
+	titulo.add_theme_constant_override("shadow_offset_y", 6)
 	add_child(titulo)
 	for i in Game.FASES.size():
 		cartoes.append(_cartao(i + 1))
@@ -26,6 +44,18 @@ func _ready() -> void:
 	voltar.text = "‹ VOLTAR"
 	voltar.focus_mode = Control.FOCUS_NONE
 	voltar.add_theme_font_size_override("font_size", 30)
+	var sv := StyleBoxFlat.new()
+	sv.bg_color = Color(0.09, 0.05, 0.18, 0.85)
+	sv.set_corner_radius_all(14)
+	sv.set_border_width_all(3)
+	sv.border_color = Color(0.6, 0.38, 1.0)
+	sv.content_margin_left = 22
+	sv.content_margin_right = 22
+	sv.content_margin_top = 8
+	sv.content_margin_bottom = 8
+	voltar.add_theme_stylebox_override("normal", sv)
+	voltar.add_theme_stylebox_override("hover", sv)
+	voltar.add_theme_stylebox_override("pressed", sv)
 	voltar.pressed.connect(func() -> void:
 		Audio.tocar("clique")
 		get_tree().change_scene_to_file("res://levels/Menu.tscn"))
@@ -43,14 +73,18 @@ func _cartao(n: int) -> Button:
 	b.focus_mode = Control.FOCUS_NONE
 	b.custom_minimum_size = Vector2(196, 250)
 	var st := StyleBoxFlat.new()
-	st.bg_color = Color(1, 1, 1, 0.1)
+	st.bg_color = Color(0.09, 0.05, 0.18, 0.85)
 	st.set_corner_radius_all(18)
-	st.set_border_width_all(4)
-	st.border_color = Color(1, 1, 1, 0.55)
+	st.set_border_width_all(3)
+	st.border_color = Color(0.6, 0.38, 1.0)
+	st.shadow_color = Color(0.6, 0.38, 1.0, 0.35)
+	st.shadow_size = 10
 	b.add_theme_stylebox_override("normal", st)
 	var st2 := st.duplicate() as StyleBoxFlat
-	st2.border_color = Color(1, 0.85, 0.3)
-	st2.bg_color = Color(1, 1, 1, 0.2)
+	st2.border_color = Color(1, 0.8, 0.25)
+	st2.bg_color = Color(0.3, 0.17, 0.6, 0.85)
+	st2.shadow_color = Color(1, 0.75, 0.2, 0.55)
+	st2.shadow_size = 14
 	b.add_theme_stylebox_override("hover", st2)
 	b.add_theme_stylebox_override("pressed", st2)
 	var mini := TextureRect.new()
@@ -70,7 +104,7 @@ func _cartao(n: int) -> Button:
 	var rec := Label.new()
 	var r := Game.recorde(n)
 	rec.text = ("✓ melhor: %.1f s" % r) if r < INF else "ainda não terminou"
-	rec.add_theme_color_override("font_color", Color(0.5, 1, 0.55) if r < INF else Color(1, 1, 1, 0.55))
+	rec.add_theme_color_override("font_color", Color(0.5, 1, 0.55) if r < INF else Color(0.8, 0.72, 0.95, 0.7))
 	rec.position = Vector2(10, 190)
 	rec.add_theme_font_size_override("font_size", 15)
 	rec.mouse_filter = Control.MOUSE_FILTER_IGNORE
@@ -85,7 +119,7 @@ func _cartao(n: int) -> Button:
 
 func _layout() -> void:
 	var v := get_viewport().get_visible_rect().size
-	titulo.position = Vector2((v.x - titulo.get_minimum_size().x) / 2.0, 40)
+	titulo.position = Vector2((v.x - titulo.get_minimum_size().x) / 2.0, 150)
 	var larg := 196.0
 	var esp := 10.0
 	var total := cartoes.size() * larg + (cartoes.size() - 1) * esp
