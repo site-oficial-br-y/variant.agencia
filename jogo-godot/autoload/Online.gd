@@ -17,6 +17,7 @@ var id := ""
 var sala := ""
 var host := false
 var ativo := false                   # dentro de uma partida online
+var rodada := 0                      # cada recomeço da luta (evita recomeçar duas vezes)
 var conectado := false
 var jogadores: Dictionary = {}       # id -> {"nome", "p", "t", "host"}
 var _topico := ""

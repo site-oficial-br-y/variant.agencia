@@ -131,13 +131,15 @@ func _comecar() -> void:
 	if not Online.host or not Online.conectado:
 		return
 	var ids := [Online.id] + Online.jogadores.keys()
-	Online.enviar("comecar", {"ids": ids})
+	Online.rodada = 1
+	Online.enviar("comecar", {"ids": ids, "r": 1})
 	_ir(ids)
 
 func _recebeu(e: String, d: Dictionary, _de: String) -> void:
 	if e == "comecar" and not Online.host:
 		var ids: Array = d.get("ids", [])
 		if Online.id in ids:
+			Online.rodada = int(d.get("r", 1))
 			_ir(ids)
 
 func _ir(ids: Array) -> void:

@@ -2280,6 +2280,11 @@ func _reiniciar() -> void:
 	get_tree().reload_current_scene()
 
 func _iniciar_online() -> void:
+	if Online.host and Online.rodada > 1:            # recomeço: reenvia o aviso (celular pode perder uma mensagem)
+		var ids: Array = Game.get_meta("ids_online", [])
+		for k in 4:
+			get_tree().create_timer((0.5 + k * 1.0) * Engine.time_scale, true).timeout.connect(func() -> void:
+				Online.enviar("comecar", {"ids": ids, "r": Online.rodada}))
 	Online.recebeu.connect(_online_msg)
 	Online.caiu.connect(func() -> void: _mensagem("CONEXÃO CAIU!", Color(1, 0.4, 0.3)))
 	_rotulo_online = Label.new()
@@ -2434,7 +2439,8 @@ func _online_msg(e: String, d: Dictionary, de: String) -> void:
 				_querem_de_novo[de] = true
 				_atualizar_fim_online()
 		"comecar":                                   # quem criou a sala recomeçou a luta
-			if not Online.host and Online.id in (d.get("ids", []) as Array):
+			if not Online.host and Online.id in (d.get("ids", []) as Array) and int(d.get("r", 0)) > Online.rodada:
+				Online.rodada = int(d.get("r", 0))
 				_recomecar(d.get("ids", []))
 		"ch":                                        # choque confirmado: todo mundo aplica
 			if not Online.host:
@@ -2518,7 +2524,6 @@ var _b_denovo: Button
 func _fim_online() -> void:
 	if painel:
 		painel.visible = false
-	_querem_de_novo.clear()
 	_painel_on = Control.new()
 	_painel_on.set_anchors_preset(Control.PRESET_FULL_RECT)
 	$HUD.add_child(_painel_on)
@@ -2536,9 +2541,10 @@ func _fim_online() -> void:
 	_b_denovo.pressed.connect(func() -> void:
 		Audio.tocar("confirma")
 		if Online.host:
-			_querem_de_novo[Online.id] = true
-			var ids: Array = _querem_de_novo.keys()
-			Online.enviar("comecar", {"ids": ids})
+			var ids: Array = [Online.id] + Online.jogadores.keys()    # todo mundo que ainda está na sala
+			Online.rodada += 1
+			Game.set_meta("ids_online", ids)
+			Online.enviar("comecar", {"ids": ids, "r": Online.rodada})
 			_recomecar(ids)
 		else:
 			Online.enviar("denovo", {})
@@ -2581,7 +2587,7 @@ func _atualizar_fim_online() -> void:
 		return
 	if Online.host:
 		var n := _querem_de_novo.size()
-		_info_fim.text = ("%d da equipe quer%s continuar. Aperta CONTINUAR pra recomeçar com quem quiser." % [n, "" if n == 1 else "em"]) if n > 0 else "Aperta CONTINUAR pra recomeçar a luta com a equipe."
+		_info_fim.text = ("%d da equipe quer%s continuar. " % [n, "" if n == 1 else "em"] if n > 0 else "") + "CONTINUAR recomeça com todo mundo que ainda está na sala."
 	elif not _b_denovo.disabled:
 		_info_fim.text = "Aperta CONTINUAR e espera quem criou a sala recomeçar."
 
