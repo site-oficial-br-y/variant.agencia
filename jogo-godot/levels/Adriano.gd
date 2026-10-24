@@ -12,7 +12,8 @@ signal derrotado
 const VIDA_MAX := 6
 const LARG := 1700.0                    # largura de cada piso
 const VAO := 50.0
-const ESP := 140.0                      # espessura do piso
+const ESP := 140.0
+const XIS_S := 4400.0                    # distância entre os pontos onde o X bate no chão                      # espessura do piso
 const ALTURAS := [0.0, 0.0, 0.0, 0.0, 0.0, 0.0]   # mesma altura: roda pequena não trava em degrau
 var fase: Node2D
 var chao := 1000.0
@@ -440,30 +441,46 @@ func _arena_x1() -> float:
 
 ## grade: colunas a cada 520 px na arena toda, menos um vão perto de você
 func _grade() -> void:
-	var ax := _piso_seguro(_alvo_x() + randf_range(-900, 900), 350.0)
+	var meia := _meia_largura() + 260.0                 # vão cabe o veículo inteiro (+ folga)
+	var ax := _piso_seguro(_alvo_x() + randf_range(-900, 900), minf(meia - 220.0, LARG / 2.0 - 50.0))
 	var segs: Array = []
-	var x := ax + 600.0
+	var x := ax + meia
 	while x < _arena_x1() + 100.0:
 		segs.append([Vector2(x, chao - 4500.0), Vector2(x, chao + 2000.0)])
 		x += 560.0
-	x = ax - 600.0
+	x = ax - meia
 	while x > x0 - 100.0:
 		segs.append([Vector2(x, chao - 4500.0), Vector2(x, chao + 2000.0)])
 		x -= 560.0
-	_multi("grade", segs, Vector2(ax - 300.0, ax + 300.0))
+	_multi("grade", segs, Vector2(ax - meia + 200.0, ax + meia - 200.0))
+
+## meia largura do veículo (do centro até a roda/peça mais longe), pra lugar seguro caber qualquer boneco
+func _meia_largura() -> float:
+	var pl: Player = fase.player
+	if not is_instance_valid(pl) or not is_instance_valid(pl.chassi):
+		return 500.0
+	var cx := pl.chassi.global_position.x
+	var m := 300.0
+	for b in _corpos():
+		m = maxf(m, absf((b as Node2D).global_position.x - cx))
+	for r in pl.rodas:
+		m = maxf(m, absf((r as Node2D).global_position.x - cx) + 150.0)
+	return m
 
 ## X: diagonais cruzando que batem no chão a cada 2000 px; o meio entre dois pontos é seguro
 func _xis() -> void:
-	var seg_mid0 := _piso_seguro(_alvo_x() + randf_range(-600, 600), 350.0)   # lugar seguro em cima de um piso
-	var fase_x := seg_mid0 - 1000.0
+	# diagonais a 45° batendo no chão a cada XIS_S: no meio entre dois pontos o cruzamento fica a XIS_S/2
+	# de altura, acima até do boneco mais alto (gorila, Périne)
+	var mid := _piso_seguro(_alvo_x() + randf_range(-500, 500), 350.0)   # lugar seguro em cima de um piso
 	var segs: Array = []
-	var px: float = fase_x - 2000.0 * ceil((fase_x - x0 + 1500.0) / 2000.0)
-	while px < _arena_x1() + 1500.0:
+	var px: float = mid - XIS_S / 2.0
+	while px > x0 - XIS_S:
+		px -= XIS_S
+	while px < _arena_x1() + XIS_S:
 		for d in [-1.0, 1.0]:
-			segs.append([Vector2(px, chao), Vector2(px + d * 4500.0, chao - 4500.0)])
-		px += 2000.0
-	var seg_mid := fase_x + 1000.0
-	_multi("xis", segs, Vector2(seg_mid - 300.0, seg_mid + 300.0))
+			segs.append([Vector2(px, chao), Vector2(px + d * 6000.0, chao - 6000.0)])
+		px += XIS_S
+	_multi("xis", segs, Vector2(mid - 300.0, mid + 300.0))
 
 func _apagar_laser(l: Dictionary) -> void:
 	for n in l["nos"]:
