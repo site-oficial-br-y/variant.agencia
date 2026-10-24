@@ -26,6 +26,23 @@ const OURO := Color(1.0, 0.8, 0.25)
 
 var atual := 0
 var fundo: TextureRect
+var nevoa: ColorRect
+const NEVOA := """shader_type canvas_item;
+render_mode blend_add;
+float h(vec2 p) { return fract(sin(dot(p, vec2(127.1, 311.7))) * 43758.5453); }
+float ruido(vec2 p) {
+	vec2 i = floor(p); vec2 f = fract(p); f = f * f * (3.0 - 2.0 * f);
+	return mix(mix(h(i), h(i + vec2(1, 0)), f.x), mix(h(i + vec2(0, 1)), h(i + vec2(1, 1)), f.x), f.y);
+}
+float fbm(vec2 p) { float v = 0.0; float a = 0.5; for (int k = 0; k < 5; k++) { v += a * ruido(p); p *= 2.03; a *= 0.5; } return v; }
+void fragment() {
+	vec2 uv = UV * vec2(3.0, 1.6);
+	float t = TIME * 0.06;
+	float n = fbm(uv + vec2(t, t * 0.3)) * 0.6 + fbm(uv * 1.7 - vec2(t * 1.4, -t * 0.2)) * 0.4;
+	float baixo = smoothstep(0.25, 0.85, UV.y);          // mais névoa embaixo, perto do pedestal
+	float a = smoothstep(0.45, 0.85, n) * baixo * 0.32;
+	COLOR = vec4(vec3(0.55, 0.3, 1.0) * a, a);
+}"""
 var logo: TextureRect
 var titulo_lista: Label
 var quadros: Array = []
@@ -56,6 +73,14 @@ func _ready() -> void:
 	fundo.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
 	fundo.stretch_mode = TextureRect.STRETCH_SCALE
 	add_child(fundo)
+	nevoa = ColorRect.new()                          # névoa roxa se mexendo devagar por cima do fundo
+	nevoa.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	var mat := ShaderMaterial.new()
+	var sh := Shader.new()
+	sh.code = NEVOA
+	mat.shader = sh
+	nevoa.material = mat
+	add_child(nevoa)
 	logo = TextureRect.new()
 	logo.texture = load("res://assets/ui/logo_roxo.png")
 	logo.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
@@ -244,6 +269,8 @@ func _atualizar() -> void:
 	var off := (vp - Vector2(tw, th) * esc) / 2.0
 	fundo.position = off
 	fundo.size = Vector2(tw, th) * esc
+	nevoa.position = Vector2.ZERO
+	nevoa.size = vp
 	var pedestal_y := off.y + 0.775 * th * esc
 	logo.position = Vector2(22, 14)
 	logo.size = Vector2(270, 145)
@@ -275,9 +302,11 @@ func _atualizar() -> void:
 	var preso := _trancado(atual)
 	var tex2: Texture2D = load("res://assets/menu/%s.png" % p)
 	preview.texture = tex2
-	var h := minf(vp.y * 0.56, 560.0 * tex2.get_height() / tex2.get_width())
+	var h := minf(minf(vp.y * 0.74, pedestal_y - 165.0), minf(vp.x * 0.45, 640.0) * tex2.get_height() / tex2.get_width())
 	preview.size = Vector2(h * tex2.get_width() / tex2.get_height(), h)
-	preview.position = Vector2(vp.x / 2.0 - preview.size.x / 2.0, pedestal_y - h + 6)
+	var limite := 46.0 + minf(360.0, vp.x * 0.27) + 16.0     # não entra embaixo da caixa do especial
+	var cx := maxf(vp.x / 2.0, limite + preview.size.x / 2.0)
+	preview.position = Vector2(cx - preview.size.x / 2.0, pedestal_y - h + 6)
 	preview.modulate = Color(0, 0, 0, 0.9) if preso else Color.WHITE
 	# nome e título
 	var info: Array = INFO[p]
@@ -289,7 +318,7 @@ func _atualizar() -> void:
 	subtitulo.size = Vector2(nome.size.x, 40)
 	subtitulo.position = nome.position + Vector2(0, 128)
 	# especial
-	caixa_esp.size = Vector2(minf(410.0, vp.x * 0.3), 160)
+	caixa_esp.size = Vector2(minf(360.0, vp.x * 0.27), 170)
 	caixa_esp.position = Vector2(46, vp.y * 0.30 + 190)
 	esp_nome.size.x = caixa_esp.size.x - 150
 	esp_desc.size.x = caixa_esp.size.x - 150
