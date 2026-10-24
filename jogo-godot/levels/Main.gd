@@ -1520,7 +1520,7 @@ func _fim(ganhou: bool, motivo: String) -> void:
 		perdeu.emit(motivo)
 	aviso.visible = true
 	if painel:
-		painel.get_node("proxima").visible = ganhou and Game.fase < Game.FASES.size()
+		painel.get_node("proxima").visible = ganhou and Game.proxima_fase(Game.fase) > 0
 		painel.visible = true
 		_posicionar_hud.call_deferred()
 
@@ -1621,7 +1621,7 @@ func _acao_fim(acao: String) -> void:
 	Audio.tocar("clique")
 	match acao:
 		"proxima":
-			Game.fase = mini(Game.fase + 1, Game.FASES.size())
+			Game.fase = maxi(1, Game.proxima_fase(Game.fase))
 			Game.checkpoint_x = -1.0
 			get_tree().reload_current_scene()
 		"denovo":

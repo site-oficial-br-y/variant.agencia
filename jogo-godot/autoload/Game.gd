@@ -8,7 +8,17 @@ enum Estado { JOGANDO, MORTO, VITORIA }
 var estado: int = Estado.JOGANDO
 var personagem: String = "segway"
 var fase: int = 1
-const FASES := ["FASE 1", "FASE 2", "FASE 3", "FASE 4: LABORATÓRIO", "FASE 5: CHEFÃO", "FASE 6: ATACADÃO", "FASE 7: ESCOLA"]
+const FASES := ["", "", "", "LABORATÓRIO", "CHEFÃO", "ATACADÃO", "ESCOLA"]   # nome de cada fase pelo número interno
+## ordem em que aparecem pro jogador (o número interno não muda: recordes e o Vini continuam valendo)
+const ORDEM := [1, 2, 3, 4, 6, 7, 5]
+
+func nome_fase(id: int) -> String:
+	var n: String = FASES[id - 1]
+	return "FASE %d" % (ORDEM.find(id) + 1) + (": " + n if n != "" else "")
+
+func proxima_fase(id: int) -> int:
+	var i := ORDEM.find(id)
+	return ORDEM[i + 1] if i >= 0 and i < ORDEM.size() - 1 else -1
 const NOMES := {"segway": "PÉRINE", "cadeira": "GABRIEL", "scooter": "GIAN", "monociclo": "ERICK", "gamer": "GORISCH", "bicho": "BICHO", "wendell": "WENDELL", "caio": "CAIO", "vini": "VINI", "lima": "LIMA", "chefe": "CHEFE"}
 ## habilidade de cada um (botão especial), sempre com limite de uso
 const CHECKPOINTS := false              # sem checkpoint: morreu, volta pro começo da fase
@@ -16,7 +26,7 @@ const HABILIDADES := {"segway": "salto", "cadeira": "turbo", "scooter": "turbo",
 const TURBO_INFINITO := ["cadeira"]       # Gabriel: turbo sem combustível
 const BOMBA_EXTRA := ["scooter"]          # Gian: turbo + bomba num segundo botão
 const NITRO_EXTRA := ["chefe"]           # Vitinho: nitro de fogo azul no segundo botão (C/B)
-const VERSAO := "v24.10-F"            # aparece no canto do lobby (pra conferir se atualizou)
+const VERSAO := "v24.10-G"            # aparece no canto do lobby (pra conferir se atualizou)
 const RITMO := 3.0                   # mundo 3x mais rápido: queda pesada e ritmo de Happy Wheels
 const ARQ_PROGRESSO := "user://progresso.cfg"
 var checkpoint_x: float = -1.0       # -1 = começa do início; sobrevive ao reinício (R)

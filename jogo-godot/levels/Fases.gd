@@ -38,8 +38,8 @@ func _ready() -> void:
 	titulo.add_theme_constant_override("shadow_offset_x", 0)
 	titulo.add_theme_constant_override("shadow_offset_y", 6)
 	add_child(titulo)
-	for i in Game.FASES.size():
-		cartoes.append(_cartao(i + 1))
+	for id in Game.ORDEM:
+		cartoes.append(_cartao(id))
 	voltar = Button.new()
 	voltar.text = "‹ VOLTAR"
 	voltar.focus_mode = Control.FOCUS_NONE
@@ -96,7 +96,7 @@ func _cartao(n: int) -> Button:
 	mini.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	b.add_child(mini)
 	var nome := Label.new()
-	nome.text = Game.FASES[n - 1]
+	nome.text = Game.nome_fase(n)
 	nome.position = Vector2(10, 118)
 	nome.add_theme_font_size_override("font_size", 17)
 	nome.mouse_filter = Control.MOUSE_FILTER_IGNORE

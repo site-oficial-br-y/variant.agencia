@@ -189,7 +189,7 @@ func _ready() -> void:
 	jogar = _rotulo("JOGAR", 46, 12, Color.WHITE)
 	jogar.add_theme_color_override("font_outline_color", Color(0.3, 0.1, 0.6))
 	add_child(jogar)
-	trava = _rotulo("VENÇA O PÉCE (FASE 5) PRA LIBERAR", 26, 8, OURO)
+	trava = _rotulo("VENÇA O PÉCE (FASE 7) PRA LIBERAR", 26, 8, OURO)
 	add_child(trava)
 
 	var ver := _rotulo(Game.VERSAO, 16, 4, Color(1, 1, 1, 0.55))
