@@ -62,7 +62,7 @@ func _ready() -> void:
 		get_tree().change_scene_to_file("res://levels/Menu.tscn"))
 	add_child(voltar)
 	online = Button.new()
-	online.text = "CHEFÃO EM GRUPO (ONLINE)"
+	online.text = "PÉCE EM GRUPO (ONLINE)"
 	online.focus_mode = Control.FOCUS_NONE
 	online.add_theme_font_size_override("font_size", 30)
 	var so := sv.duplicate() as StyleBoxFlat

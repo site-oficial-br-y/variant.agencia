@@ -28,7 +28,7 @@ func _ready() -> void:
 	mat.shader = load("res://assets/ui/nevoa.gdshader")
 	nevoa.material = mat
 	add_child(nevoa)
-	titulo = _rotulo("CHEFÃO EM GRUPO", 64, 16)
+	titulo = _rotulo("PÉCE EM GRUPO", 64, 16)
 	info = _rotulo("Cria uma sala e passa o código, ou entra com o código de um amigo.", 26, 8)
 	codigo_lbl = _rotulo("", 120, 20)
 	codigo_lbl.add_theme_color_override("font_color", Color(1, 0.85, 0.3))
