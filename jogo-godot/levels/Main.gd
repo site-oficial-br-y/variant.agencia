@@ -813,6 +813,10 @@ func _rodada_boss(dt: float) -> void:
 		return
 	if _botao_ativo >= 0:
 		var b: Dictionary = _botoes[_botao_ativo]
+		if Online.ativo and Online.host and b["ligado"] and not (b.get("quem", {}) as Dictionary).is_empty():
+			_conferir_botao(b)
+			if not b["ligado"]:
+				return
 		for c in (b["area"] as Area2D).get_overlapping_bodies():
 			if c.is_in_group("veiculo") or c.is_in_group("piloto"):
 				_apertar(b)
@@ -882,13 +886,16 @@ func _botao_choque(base: Vector2) -> Dictionary:
 func _apertar(b: Dictionary, remoto := false) -> void:
 	if not b["ligado"] or not is_instance_valid(boss):
 		return
-	if Online.ativo and not Online.host and not remoto:     # online: avisa quem criou a sala, ele confirma
-		if not b.get("pedido", false):
+	if Online.ativo and not remoto:              # online: TODO MUNDO vivo tem que apertar
+		if _morto_online:
+			return
+		if Online.host:
+			_registrar_aperto(b, Online.id)
+		elif not b.get("pedido", false):
 			b["pedido"] = true
 			Online.enviar("ap", {"i": _botoes.find(b)})
+			_mensagem("APERTOU! FALTA O TIME", Color(0.5, 1, 0.6))
 		return
-	if Online.ativo and Online.host:
-		Online.enviar("ch", {"i": _botoes.find(b)})
 	b["ligado"] = false
 	(b["cupula"] as Polygon2D).color = Color(0.3, 0.3, 0.33)
 	if b.has("sinal"):
@@ -941,6 +948,20 @@ func _ligar_botao(b: Dictionary) -> void:
 	tw.tween_property(seta, "position:y", -560.0, 0.18 * Engine.time_scale).set_trans(Tween.TRANS_SINE)
 	tw.tween_property(seta, "position:y", -700.0, 0.18 * Engine.time_scale).set_trans(Tween.TRANS_SINE)
 	b["sinal"] = sinal
+	b["quem"] = {}
+	b.erase("pedido")
+	if Online.ativo:                                  # contador de quem já apertou
+		var cont := Label.new()
+		cont.add_theme_font_size_override("font_size", 170)
+		cont.add_theme_color_override("font_color", Color(0.5, 1, 0.6))
+		cont.add_theme_color_override("font_outline_color", Color(0.02, 0.2, 0.05))
+		cont.add_theme_constant_override("outline_size", 34)
+		cont.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+		cont.size = Vector2(1000, 220)
+		cont.position = Vector2(-500, -1250)
+		cont.text = "0/%d" % maxi(1, _vivos_online().size())
+		sinal.add_child(cont)
+		b["contador"] = cont
 	Audio.tocar("checkpoint", 0.8)
 
 var _seta_hud: Label
@@ -2276,7 +2297,15 @@ func _process_online(delta: float) -> void:
 		_envio_t = 0.1
 		var f := player.foco()
 		var v: Vector2 = player.chassi.linear_velocity if player.montado else Vector2.ZERO
-		Online.enviar("p", {"x": int(f.global_position.x), "y": int(f.global_position.y), "r": snappedf(player.chassi.rotation, 0.01),
+		var pe := f.global_position                     # manda o ponto do chão (embaixo das rodas)
+		if player.montado and player.rodas.size() > 0:
+			var baixo := -INF
+			for rd in player.rodas:
+				var cs := (rd as Node).get_child(0) as CollisionShape2D
+				var raio: float = (cs.shape as CircleShape2D).radius if cs and cs.shape is CircleShape2D else 0.0
+				baixo = maxf(baixo, (rd as Node2D).global_position.y + raio)
+			pe = Vector2(player.chassi.global_position.x, baixo)
+		Online.enviar("p", {"x": int(pe.x), "y": int(pe.y), "r": snappedf(player.chassi.rotation, 0.01),
 			"vx": int(v.x), "vy": int(v.y), "v": not _morto_online and player.montado, "pers": Game.personagem,
 			"nome": Game.NOMES.get(Game.personagem, "?")})
 	var agora := Time.get_ticks_msec()
@@ -2322,8 +2351,15 @@ func _fantasma(de: String, d: Dictionary) -> void:
 		var pers := str(d.get("pers", "segway"))
 		if ResourceLoader.exists("res://assets/menu/%s.png" % pers):
 			s.texture = load("res://assets/menu/%s.png" % pers)
-			s.scale = Vector2.ONE * 1300.0 / float(s.texture.get_height())
-		s.position = Vector2(0, -150)
+			var alt := 1300.0                             # altura real do boneco (arte do parts.json)
+			var f := FileAccess.open("res://assets/%s/parts.json" % pers, FileAccess.READ)
+			if f:
+				var pj = JSON.parse_string(f.get_as_text())
+				if typeof(pj) == TYPE_DICTIONARY and pj.has("src_h"):
+					alt = float(pj["src_h"]) * 0.95
+			s.scale = Vector2.ONE * alt / float(s.texture.get_height())
+			s.centered = false                            # pé (embaixo do desenho) no ponto recebido
+			s.offset = Vector2(-s.texture.get_width() / 2.0, -s.texture.get_height())
 		no.add_child(s)
 		var l := Label.new()
 		l.text = str(d.get("nome", "?"))
@@ -2333,7 +2369,8 @@ func _fantasma(de: String, d: Dictionary) -> void:
 		l.add_theme_constant_override("outline_size", 24)
 		l.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 		l.size = Vector2(1200, 160)
-		l.position = Vector2(-600, -1100)
+		var topo := (s.texture.get_height() * s.scale.y) if s.texture else 1300.0
+		l.position = Vector2(-600, -topo - 200.0)
 		no.add_child(l)
 		add_child(no)
 		var p0 := Vector2(float(d.get("x", 0)), float(d.get("y", 0)))
@@ -2384,11 +2421,17 @@ func _online_msg(e: String, d: Dictionary, de: String) -> void:
 					(_botoes[i] as Dictionary).erase("pedido")
 					_ligar_botao(_botoes[i])
 					_mensagem("BOTÃO LIGADO! VAI LÁ!", Color(1, 0.9, 0.3))
-		"ap":                                        # alguém apertou: quem criou a sala confirma pra todos
+		"ap":                                        # alguém apertou: quem criou a sala conta
 			if Online.host:
 				var i := int(d.get("i", -1))
 				if i >= 0 and i < _botoes.size():
-					_apertar(_botoes[i])
+					_registrar_aperto(_botoes[i], de)
+		"apc":                                       # placar de quem já apertou
+			var i := int(d.get("i", -1))
+			if i >= 0 and i < _botoes.size() and (_botoes[i] as Dictionary).has("contador"):
+				var c: Label = _botoes[i]["contador"]
+				if is_instance_valid(c):
+					c.text = str(d.get("t", ""))
 		"ch":                                        # choque confirmado: todo mundo aplica
 			if not Online.host:
 				var i := int(d.get("i", -1))
@@ -2422,3 +2465,41 @@ func _renascer() -> void:
 		velho.queue_free()
 	Audio.tocar("checkpoint", 1.0)
 	_mensagem("VOLTOU!", Color(0.5, 1, 0.5))
+
+## ids dos jogadores vivos agora (eu + quem mandou estado vivo há pouco)
+func _vivos_online() -> Array:
+	var v: Array = []
+	if not _morto_online:
+		v.append(Online.id)
+	for k in _fantasmas:
+		var g: Dictionary = _fantasmas[k]
+		if g["vivo"] and Time.get_ticks_msec() - int(g["visto"]) < 2500:
+			v.append(k)
+	return v
+
+## quem criou a sala conta os apertos; quando todos os vivos apertaram, o choque sai pra todos
+func _registrar_aperto(b: Dictionary, quem: String) -> void:
+	if not b["ligado"]:
+		return
+	var q: Dictionary = b.get("quem", {})
+	if not q.has(quem):
+		q[quem] = true
+		b["quem"] = q
+		Audio.tocar("clique", 1.0)
+	_conferir_botao(b)
+
+func _conferir_botao(b: Dictionary) -> void:
+	var vivos := _vivos_online()
+	var q: Dictionary = b.get("quem", {})
+	var feitos := 0
+	for k in vivos:
+		if q.has(k):
+			feitos += 1
+	var i := _botoes.find(b)
+	var txt := "%d/%d" % [feitos, maxi(1, vivos.size())]
+	if b.has("contador") and (b["contador"] as Label).text != txt:
+		(b["contador"] as Label).text = txt
+		Online.enviar("apc", {"i": i, "t": txt})
+	if vivos.size() > 0 and feitos >= vivos.size():
+		Online.enviar("ch", {"i": i})
+		_apertar(b, true)
