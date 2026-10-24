@@ -34,7 +34,7 @@ func _ready() -> void:
 	codigo_lbl.add_theme_color_override("font_color", Color(1, 0.85, 0.3))
 	lista = _rotulo("", 30, 8)
 	campo = LineEdit.new()
-	campo.placeholder_text = "CÓDIGO"
+	campo.placeholder_text = "TOQUE AQUI"
 	campo.max_length = 4
 	campo.alignment = HORIZONTAL_ALIGNMENT_CENTER
 	campo.add_theme_font_size_override("font_size", 48)
@@ -43,6 +43,9 @@ func _ready() -> void:
 		var c := campo.caret_column
 		campo.text = t.to_upper()
 		campo.caret_column = c)
+	campo.gui_input.connect(func(ev: InputEvent) -> void:     # celular: abre o teclado do navegador
+		if OS.has_feature("web") and ((ev is InputEventMouseButton and ev.pressed) or (ev is InputEventScreenTouch and ev.pressed)):
+			_pedir_codigo())
 	add_child(campo)
 	b_criar = _botao("CRIAR SALA", _criar)
 	b_entrar = _botao("ENTRAR", _entrar)
@@ -103,7 +106,20 @@ func _criar() -> void:
 	info.text = "Conectando..."
 	_atualizar()
 
+## janela nativa do navegador pra digitar: sempre abre o teclado do celular
+func _pedir_codigo() -> void:
+	var r = JavaScriptBridge.eval("(window.prompt('Código da sala (4 letras):', '') || '')", true)
+	var t := str(r).strip_edges().to_upper().left(4)
+	if t != "":
+		campo.text = t
+		campo.release_focus()
+		if t.length() == 4:
+			_entrar()
+
 func _entrar() -> void:
+	if campo.text.strip_edges().length() != 4 and OS.has_feature("web"):
+		_pedir_codigo()
+		return
 	if campo.text.strip_edges().length() != 4:
 		info.text = "O código tem 4 letras."
 		return
