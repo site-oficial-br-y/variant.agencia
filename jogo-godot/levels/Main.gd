@@ -60,10 +60,31 @@ func _ready() -> void:
 		Game.checkpoint_x = (cps[cps.size() - 1] as Vector2).x
 		Game.checkpoint_chao = (cps[cps.size() - 1] as Vector2).y
 
+	_criar_jogador(SPAWN_X, CHAO_Y)
+	sangue = Sangue.new()
+	sangue.escala = 3.2
+	add_child(sangue)
+	player.sangue = sangue
+	camera = FollowCamera.new()
+	camera.zoom = Vector2(0.26, 0.26)         # câmera perto como no gênero: boneco ~metade da tela
+	camera.offset = Vector2(800, -150)
+	add_child(camera)
+	camera.alvo = player.foco()
+	_construir_hud()
+	if Online.ativo:
+		_iniciar_online()
+	_pos_jogador()
+
+func _criar_jogador(x: float, y: float) -> void:
 	player = Player.new()
 	player.personagem = Game.personagem
-	player.chao_y = CHAO_Y
-	player.spawn_x = SPAWN_X
+	player.chao_y = y
+	player.spawn_x = x
+	player.morreu.connect(_on_morreu)
+	player.bateu_chao.connect(func(pos: Vector2, forca: float) -> void: pecas.poeira(pos, forca))
+	player.explodir_cb = func(pos: Vector2, raio: float, dv: float) -> void: mec.explosao(pos, raio, dv)
+
+func _pos_jogador() -> void:
 	for a in OS.get_cmdline_user_args():
 		if a.begins_with("queda="):                    # teste: nasce lá no alto e despenca
 			player.chao_y = CHAO_Y - float(a.substr(6))
@@ -73,21 +94,8 @@ func _ready() -> void:
 		player.spawn_x = Game.checkpoint_x
 		player.chao_y = Game.checkpoint_chao
 	add_child(player)
-	sangue = Sangue.new()
-	sangue.escala = 3.2
-	add_child(sangue)
-	player.sangue = sangue
-	player.morreu.connect(_on_morreu)
-	player.bateu_chao.connect(func(pos: Vector2, forca: float) -> void: pecas.poeira(pos, forca))
-	player.explodir_cb = func(pos: Vector2, raio: float, dv: float) -> void: mec.explosao(pos, raio, dv)
-
-	camera = FollowCamera.new()
-	camera.zoom = Vector2(0.26, 0.26)         # câmera perto como no gênero: boneco ~metade da tela
-	camera.offset = Vector2(800, -150)
-	add_child(camera)
+	move_child(player, sangue.get_index())
 	camera.alvo = player.foco()
-
-	_construir_hud()
 
 	if "teste_queda" in OS.get_cmdline_user_args():
 		_teste_queda()
@@ -111,6 +119,8 @@ func _ready() -> void:
 
 
 func _process(delta: float) -> void:
+	if Online.ativo:
+		_process_online(delta)
 	for p in _pendulos:
 		var bola: Node2D = p["bola"]
 		var gancho: Vector2 = bola.global_position + (p["ancora"] - bola.global_position).normalized() * float(p["raio"]) * 0.95
@@ -808,12 +818,16 @@ func _rodada_boss(dt: float) -> void:
 				_apertar(b)
 				break
 		return
+	if Online.ativo and not Online.host:                   # online: botão acende quando quem criou a sala manda
+		return
 	_rodada_t -= dt / Engine.time_scale
 	if _rodada_t > 0.0:
 		return
-	_botao_ativo = 5 - boss.vida                            # próximo da lista
+	_botao_ativo = (boss.vida_max - boss.vida) % _botoes.size()   # próximo da lista
 	_ligar_botao(_botoes[_botao_ativo])
 	_mensagem("BOTÃO LIGADO! VAI LÁ!", Color(1, 0.9, 0.3))
+	if Online.ativo:
+		Online.enviar("bt", {"i": _botao_ativo})
 
 ## clarão rápido na tela inteira (laser, explosão de chefe)
 func _clarao(cor: Color, forca: float) -> void:
@@ -865,9 +879,16 @@ func _botao_choque(base: Vector2) -> Dictionary:
 	b["area"] = a
 	return b
 
-func _apertar(b: Dictionary) -> void:
+func _apertar(b: Dictionary, remoto := false) -> void:
 	if not b["ligado"] or not is_instance_valid(boss):
 		return
+	if Online.ativo and not Online.host and not remoto:     # online: avisa quem criou a sala, ele confirma
+		if not b.get("pedido", false):
+			b["pedido"] = true
+			Online.enviar("ap", {"i": _botoes.find(b)})
+		return
+	if Online.ativo and Online.host:
+		Online.enviar("ch", {"i": _botoes.find(b)})
 	b["ligado"] = false
 	(b["cupula"] as Polygon2D).color = Color(0.3, 0.3, 0.33)
 	if b.has("sinal"):
@@ -877,7 +898,7 @@ func _apertar(b: Dictionary) -> void:
 	_raio(b["base"] + Vector2(0, -80), boss.cabeca.global_position)
 	boss.levar_choque()
 	_botao_ativo = -1
-	_rodada_t = maxf(5.0, 9.0 - 1.0 * float(5 - boss.vida))
+	_rodada_t = maxf(5.0, 9.0 - 1.0 * float(boss.vida_max - boss.vida) * 5.0 / float(boss.vida_max))
 
 ## botão aceso: verde, com coluna de luz verde e seta pulando em cima.
 ## Fora da tela, uma seta na borda aponta pra ele (_seta_botao)
@@ -1498,6 +1519,9 @@ func _on_checkpoint(b: Node2D, ck: Vector2) -> void:
 func _fim(ganhou: bool, motivo: String) -> void:
 	if not ativo or _queda7:                     # caindo do terraço pra luta: ninguém morre
 		return
+	if Online.ativo and not ganhou:              # online: renasce enquanto alguém do time estiver vivo
+		_morte_online(motivo)
+		return
 	ativo = false
 	Audio.parar_chefe()
 	if ganhou:
@@ -1545,7 +1569,7 @@ func _botao(texto: String, pos: Vector2, tam: Vector2, acao: String) -> Button:
 	$HUD.add_child(b)
 	b.pressed.connect(func(): Audio.tocar("clique"))
 	if acao == "reset":
-		b.pressed.connect(func(): get_tree().reload_current_scene())
+		b.pressed.connect(func(): _reiniciar())
 	elif acao == "menu":
 		b.pressed.connect(func(): get_tree().change_scene_to_file("res://levels/Menu.tscn"))
 	return b
@@ -1623,9 +1647,9 @@ func _acao_fim(acao: String) -> void:
 		"proxima":
 			Game.fase = maxi(1, Game.proxima_fase(Game.fase))
 			Game.checkpoint_x = -1.0
-			get_tree().reload_current_scene()
+			_reiniciar()
 		"denovo":
-			get_tree().reload_current_scene()
+			_reiniciar()
 		"fases":
 			Game.checkpoint_x = -1.0
 			get_tree().change_scene_to_file("res://levels/Fases.tscn")
@@ -1969,6 +1993,8 @@ func _captura(nome: String) -> void:
 	print("SHOT ", nome)
 
 func _exit_tree() -> void:
+	if Online.ativo:                          # saiu da luta online: fecha a sala
+		Online.sair()
 	Audio.motor(false)                        # sair da fase cala o motor
 	Engine.time_scale = 1.0
 
@@ -2213,3 +2239,186 @@ func _inicio_7() -> void:
 		tw.tween_interval(0.3)
 		tw.tween_property(preto, "color:a", 0.0, 1.2)
 		tw.tween_callback(cena.queue_free)
+
+# ---------- ONLINE: Chefão em grupo ----------
+## cada um manda o próprio boneco ~10x/s; os outros aparecem como "fantasma" (sem
+## colisão). Quem criou a sala comanda o chefe (ataques, números, lasers, botões);
+## qualquer um aperta botão. Morreu: renasce em 6 s se alguém do time estiver vivo.
+const RENASCE := 6.0
+var _fantasmas: Dictionary = {}          # id -> {no, de, para, t, rot, vivo, visto}
+var _envio_t := 0.0
+var _morto_online := false
+var _renasce_t := -1.0
+var _rotulo_online: Label
+
+func _reiniciar() -> void:
+	if Online.ativo:                          # online: volta pra sala (o chefe é de todo mundo)
+		Online.sair()
+		get_tree().change_scene_to_file("res://levels/Sala.tscn")
+		return
+	get_tree().reload_current_scene()
+
+func _iniciar_online() -> void:
+	Online.recebeu.connect(_online_msg)
+	Online.caiu.connect(func() -> void: _mensagem("CONEXÃO CAIU!", Color(1, 0.4, 0.3)))
+	_rotulo_online = Label.new()
+	_rotulo_online.add_theme_font_size_override("font_size", 22)
+	_rotulo_online.add_theme_color_override("font_color", Color(1, 0.85, 0.3))
+	_rotulo_online.add_theme_color_override("font_outline_color", Color.BLACK)
+	_rotulo_online.add_theme_constant_override("outline_size", 6)
+	_rotulo_online.position = Vector2(24, 165)
+	$HUD.add_child(_rotulo_online)
+
+func _process_online(delta: float) -> void:
+	var dt := delta / Engine.time_scale
+	_envio_t -= dt
+	if _envio_t <= 0.0 and is_instance_valid(player) and is_instance_valid(player.chassi):
+		_envio_t = 0.1
+		var f := player.foco()
+		var v: Vector2 = player.chassi.linear_velocity if player.montado else Vector2.ZERO
+		Online.enviar("p", {"x": int(f.global_position.x), "y": int(f.global_position.y), "r": snappedf(player.chassi.rotation, 0.01),
+			"vx": int(v.x), "vy": int(v.y), "v": not _morto_online and player.montado, "pers": Game.personagem,
+			"nome": Game.NOMES.get(Game.personagem, "?")})
+	var agora := Time.get_ticks_msec()
+	var vivos := 0
+	for k in _fantasmas.keys():
+		var g: Dictionary = _fantasmas[k]
+		if agora - int(g["visto"]) > 6000 or not Online.jogadores.has(k):   # saiu da sala
+			(g["no"] as Node).queue_free()
+			_fantasmas.erase(k)
+			continue
+		g["t"] = minf(1.0, float(g["t"]) + dt / 0.1)
+		var no: Node2D = g["no"]
+		no.global_position = (g["de"] as Vector2).lerp(g["para"], g["t"])
+		no.rotation = lerp_angle(no.rotation, float(g["rot"]), 0.3)
+		no.modulate = Color(1, 1, 1, 0.8) if g["vivo"] else Color(0.4, 0.4, 0.45, 0.35)
+		if g["vivo"]:
+			vivos += 1
+	if _rotulo_online:
+		_rotulo_online.text = "ONLINE · SALA %s · %d jogadores · %d vivos" % [Online.sala, Game.online_n, vivos + (0 if _morto_online else 1)]
+	if _renasce_t >= 0.0:
+		_renasce_t -= dt
+		aviso.text = "MORREU!\nrenasce em %d s" % ceili(_renasce_t)
+		if vivos == 0:                                    # todo mundo morto: acabou
+			_renasce_t = -1.0
+			_morto_online = false
+			ativo = false
+			Audio.parar_chefe()
+			aviso.text = "O TIME TODO MORREU!"
+			Audio.tocar("morte")
+			if painel:
+				painel.get_node("proxima").visible = false
+				painel.visible = true
+				_posicionar_hud.call_deferred()
+		elif _renasce_t <= 0.0:
+			_renasce_t = -1.0
+			_renascer()
+
+func _fantasma(de: String, d: Dictionary) -> void:
+	if not _fantasmas.has(de):
+		var no := Node2D.new()
+		no.z_index = 3
+		var s := Sprite2D.new()
+		var pers := str(d.get("pers", "segway"))
+		if ResourceLoader.exists("res://assets/menu/%s.png" % pers):
+			s.texture = load("res://assets/menu/%s.png" % pers)
+			s.scale = Vector2.ONE * 1300.0 / float(s.texture.get_height())
+		s.position = Vector2(0, -150)
+		no.add_child(s)
+		var l := Label.new()
+		l.text = str(d.get("nome", "?"))
+		l.add_theme_font_size_override("font_size", 130)
+		l.add_theme_color_override("font_color", Color(0.6, 0.9, 1.0))
+		l.add_theme_color_override("font_outline_color", Color.BLACK)
+		l.add_theme_constant_override("outline_size", 24)
+		l.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+		l.size = Vector2(1200, 160)
+		l.position = Vector2(-600, -1100)
+		no.add_child(l)
+		add_child(no)
+		var p0 := Vector2(float(d.get("x", 0)), float(d.get("y", 0)))
+		no.global_position = p0
+		_fantasmas[de] = {"no": no, "de": p0, "para": p0, "t": 1.0, "rot": 0.0, "vivo": true, "visto": 0, "vel": Vector2.ZERO}
+	var g: Dictionary = _fantasmas[de]
+	g["de"] = (g["no"] as Node2D).global_position
+	g["para"] = Vector2(float(d.get("x", 0)), float(d.get("y", 0)))
+	g["t"] = 0.0
+	g["rot"] = float(d.get("r", 0.0))
+	g["vivo"] = bool(d.get("v", true))
+	g["vel"] = Vector2(float(d.get("vx", 0)), float(d.get("vy", 0)))
+	g["visto"] = Time.get_ticks_msec()
+
+## chefe (quem criou a sala) mira num jogador vivo sorteado: [posição, velocidade]
+func alvo_online() -> Array:
+	var c: Array = []
+	if not _morto_online and is_instance_valid(player) and is_instance_valid(player.chassi) and player.montado:
+		c.append([player.foco().global_position, player.chassi.linear_velocity])
+	for k in _fantasmas:
+		var g: Dictionary = _fantasmas[k]
+		if g["vivo"] and Time.get_ticks_msec() - int(g["visto"]) < 1500:
+			c.append([g["para"], g["vel"]])
+	if c.is_empty():
+		return []
+	return c[randi() % c.size()]
+
+func _online_msg(e: String, d: Dictionary, de: String) -> void:
+	match e:
+		"p":
+			_fantasma(de, d)
+		"atk":
+			if is_instance_valid(boss) and not Online.host:
+				var i := int(d.get("i", 0))
+				if i < boss.maos.size():
+					boss._iniciar(boss.maos[i], str(d.get("s", "tapa_sobe")), Vector2(float(d.get("x", 0)), 0), true)
+		"pd":
+			if is_instance_valid(boss) and not Online.host:
+				boss.soltar_pedra(float(d.get("x", 0)), true)
+		"lz":
+			if is_instance_valid(boss) and not Online.host:
+				boss._laser(float(d.get("x", 0)), true)
+		"bt":                                        # quem criou a sala acendeu um botão
+			if not Online.host:
+				var i := int(d.get("i", 0))
+				if i >= 0 and i < _botoes.size():
+					_botao_ativo = i
+					(_botoes[i] as Dictionary).erase("pedido")
+					_ligar_botao(_botoes[i])
+					_mensagem("BOTÃO LIGADO! VAI LÁ!", Color(1, 0.9, 0.3))
+		"ap":                                        # alguém apertou: quem criou a sala confirma pra todos
+			if Online.host:
+				var i := int(d.get("i", -1))
+				if i >= 0 and i < _botoes.size():
+					_apertar(_botoes[i])
+		"ch":                                        # choque confirmado: todo mundo aplica
+			if not Online.host:
+				var i := int(d.get("i", -1))
+				if i >= 0 and i < _botoes.size():
+					(_botoes[i] as Dictionary)["ligado"] = true
+					_apertar(_botoes[i], true)
+
+func _morte_online(motivo: String) -> void:
+	if _morto_online:
+		return
+	_morto_online = true
+	_renasce_t = RENASCE
+	aviso.text = {"esmagado": "ESMAGADO!", "agarrado": "TE PEGOU!", "laser": "DESINTEGRADO!", "pedra": "ESMAGADO!"}.get(motivo, "MORREU!")
+	aviso.add_theme_color_override("font_color", Color(1, 0.35, 0.3))
+	aviso.visible = true
+	Audio.tocar("morte")
+	_envio_t = 0.0
+
+func _renascer() -> void:
+	_morto_online = false
+	aviso.visible = false
+	var velho := player
+	_criar_jogador(ARENA_X0 + 1600.0, CHAO_Y)
+	player.fundo_y = morte_y - 300.0
+	player.sangue = sangue
+	add_child(player)
+	move_child(player, sangue.get_index())
+	camera.alvo = player.foco()
+	_caiu_em = -1.0
+	if is_instance_valid(velho):
+		velho.queue_free()
+	Audio.tocar("checkpoint", 1.0)
+	_mensagem("VOLTOU!", Color(0.5, 1, 0.5))

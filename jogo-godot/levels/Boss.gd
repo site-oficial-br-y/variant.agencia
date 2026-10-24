@@ -17,6 +17,10 @@ const VIDA_MAX := 5
 const ALCANCE := 650.0                   # raio da marca vermelha no chão = área que mata
 var fase: Node2D                         # Main
 var vida := VIDA_MAX
+var vida_max := VIDA_MAX                 # online: cresce com o número de jogadores
+var espelho := false                     # online, não sou quem criou a sala: só repete os ataques que chegam
+var _escala := 1.0                       # online: ataques mais seguidos com mais gente
+var _extra := 0                          # online: mais números/lasers por vez
 var morto := false
 var chao := 1000.0
 
@@ -107,6 +111,13 @@ func montar(main: Node2D, y_chao: float) -> void:
 		fase.add_child(sb)
 		m["sombra"] = sb
 	_sombra = maos[0]["sombra"]
+	if Online.ativo:                                     # dificuldade proporcional ao número de jogadores
+		var n := clampi(Game.online_n, 1, 4)
+		vida_max = VIDA_MAX + 2 * (n - 1)
+		vida = vida_max
+		_escala = [1.0, 0.75, 0.6, 0.5][n - 1]
+		_extra = n - 1
+		espelho = not Online.host
 	_hud.call_deferred()
 
 func _parte(nome: String, p: Dictionary, centro: Vector2) -> Sprite2D:
@@ -142,7 +153,7 @@ func _posicionar_barra() -> void:
 	var v := get_viewport().get_visible_rect().size
 	_barra_fundo.position = Vector2(v.x / 2.0 - 310, 112)
 	_barra.position = _barra_fundo.position + Vector2(10, 8)
-	_barra.size.x = 600.0 * float(vida) / VIDA_MAX
+	_barra.size.x = 600.0 * float(vida) / vida_max
 	_rotulo.position = _barra_fundo.position + Vector2(0, -38)
 
 # ---------- passo ----------
@@ -157,6 +168,7 @@ func atualizar(delta: float) -> void:
 		return
 	var foco := pl.foco().global_position
 	var vel := pl.chassi.linear_velocity if pl.montado else Vector2.ZERO
+	var meu_foco := foco
 	# acompanha o jogador pelo fundo (um pouco à frente), balançando o corpo
 	var alvo_x: float = fase.camera.global_position.x + 1300.0      # centro da tela (a câmera olha à frente)
 	global_position.x = lerpf(global_position.x, alvo_x, clampf(dt * 9.0, 0.0, 1.0))
@@ -174,34 +186,53 @@ func atualizar(delta: float) -> void:
 		_mover_mao(m, dt, foco, vel)
 	_pedras_passo(dt)
 	_lasers_passo(dt)
-	if morto or not fase.ativo:
+	if morto or (not fase.ativo and not Online.ativo):
 		return
 	_grito_t -= dt
 	if _grito_t <= 0.0:
 		_grito_t = 10.0
 		Audio.tocar("pece_grito", 1.0, 0.0)
 		Audio.abaixar_chefe(2.3)
+	if espelho:                                             # online: os ataques vêm de quem criou a sala
+		return
+	if Online.ativo:                                        # mira num jogador sorteado (vivo)
+		var alvo: Array = fase.alvo_online()
+		if alvo.is_empty():
+			return
+		foco = alvo[0]
+		vel = alvo[1]
 	_chuva_t -= dt
 	if _chuva_t <= 0.0:                                     # vai derrubando números e sinais
 		_chuva_t = randf_range(2.5, 3.5) if segunda else randf_range(3.5, 5.0)
-		for i in (3 if segunda else 2):
+		_chuva_t *= _escala
+		for i in (3 if segunda else 2) + _extra:
+			if Online.ativo and i > 0:                          # online: espalha entre os jogadores
+				var a2: Array = fase.alvo_online()
+				if not a2.is_empty():
+					foco = a2[0]
+					vel = a2[1]
 			var x := foco.x + vel.x * 0.4 + randf_range(900.0, 4200.0) * (1.0 if randf() < 0.75 else -0.5)
-			_pedras.append({"x": x, "t": 0.0, "no": null, "sombra": _sombra_pedra(x)})
+			soltar_pedra(x)
 	if segunda:
 		_laser_t -= dt
 		if _laser_t <= 0.0:
-			_laser_t = randf_range(2.0, 3.0) if vida > 2 else randf_range(1.4, 2.2)
+			_laser_t = (randf_range(2.0, 3.0) if vida > 2 else randf_range(1.4, 2.2)) * _escala
 			_laser(foco.x + vel.x * Engine.time_scale * 0.7)
-			if vida <= 2 and randf() < 0.5:                      # no fim, dois de uma vez
+			if (vida <= 2 or _extra > 0) and randf() < 0.5:      # no fim, dois de uma vez
 				_laser(foco.x + randf_range(1800.0, 3000.0) * (1.0 if randf() < 0.5 else -1.0))
+			for k in _extra - 1:                                # online com 3+: mais um laser em alguém
+				var a3: Array = fase.alvo_online()
+				if not a3.is_empty():
+					_laser((a3[0] as Vector2).x + (a3[1] as Vector2).x * Engine.time_scale * 0.7)
 	_prox_ataque -= dt
 	if _prox_ataque <= 0.0:
 		_atacar(foco, vel)
 
 func _intervalo() -> float:
+	var nivel := float(vida_max - vida) * 5.0 / float(vida_max)
 	if segunda:
-		return maxf(0.7, 1.9 - 0.25 * float(VIDA_MAX - vida))
-	return maxf(0.9, 2.6 - 0.35 * float(VIDA_MAX - vida))       # fica mais agressivo a cada choque
+		return maxf(0.7, 1.9 - 0.25 * nivel) * _escala
+	return maxf(0.9, 2.6 - 0.35 * nivel) * _escala       # fica mais agressivo a cada choque
 
 func _livre() -> Array:
 	return maos.filter(func(m): return m["estado"] == "repouso")
@@ -224,11 +255,18 @@ func _atacar(foco: Vector2, vel: Vector2) -> void:
 		"entulho":
 			_iniciar(m, "soco_sobe", foco + Vector2(5200, 0))
 	_prox_ataque = _intervalo()
-	if (vida <= 2 or segunda) and livres.size() == 2 and randf() < 0.5:     # combo: as duas mãos
+	if (vida <= 2 or segunda or _extra > 0) and livres.size() == 2 and randf() < (0.5 + 0.15 * _extra):     # combo: as duas mãos
 		var outra: Dictionary = livres[1] if livres[0] == m else livres[0]
+		if Online.ativo:                                         # online: a outra mão vai em outro jogador
+			var a4: Array = fase.alvo_online()
+			if not a4.is_empty():
+				foco = a4[0]
+				vel = a4[1]
 		_iniciar(outra, "tapa_sobe", foco + Vector2(vel.x * Engine.time_scale * 1.6, 0))
 
-func _iniciar(m: Dictionary, estado: String, alvo: Vector2) -> void:
+func _iniciar(m: Dictionary, estado: String, alvo: Vector2, remoto := false) -> void:
+	if Online.ativo and Online.host and not remoto:
+		Online.enviar("atk", {"i": m["i"], "s": estado, "x": alvo.x})
 	m["golpe"] = estado
 	m["estado"] = estado
 	m["t"] = 0.0
@@ -250,7 +288,8 @@ func _mover_mao(m: Dictionary, dt: float, foco: Vector2, vel: Vector2) -> void:
 			no.rotation = lerp_angle(no.rotation, 0.0, dt * 5.0)
 			no.z_index = -3
 		"tapa_sobe":                    # vai pra cima do alvo (segue o jogador um pouco)
-			m["alvo"].x = lerpf(alvo.x, foco.x + vel.x * Engine.time_scale * 0.8, dt * 2.0)
+			if not Online.ativo:                                  # online: alvo fixo (igual em todas as telas)
+				m["alvo"].x = lerpf(alvo.x, foco.x + vel.x * Engine.time_scale * 0.8, dt * 2.0)
 			no.global_position = (m["de"] as Vector2).lerp(acima, smoothstep(0.0, 1.0, t / 0.55))
 			no.z_index = 6
 			_mostrar_sombra(alvo.x, t / 0.55 * 0.5)
@@ -310,7 +349,8 @@ func _mover_mao(m: Dictionary, dt: float, foco: Vector2, vel: Vector2) -> void:
 			no.global_position = (m["de"] as Vector2).lerp(Vector2(alvo.x, chao - 420.0), minf(1.0, t / 0.12))
 			if t >= 0.12:
 				_impacto(Vector2(alvo.x, chao), 0.8)
-				_chover(foco, vel)
+				if not espelho:
+					_chover(foco, vel)
 				m["estado"] = "segura"
 				m["t"] = 0.0
 		"volta":
@@ -390,10 +430,16 @@ func _agarrar() -> void:
 	Audio.tocar("osso", 1.0)
 	fase._fim(false, "agarrado")
 
+## número/sinal caindo em x (online: quem criou a sala manda pros outros)
+func soltar_pedra(x: float, remoto := false) -> void:
+	if Online.ativo and Online.host and not remoto:
+		Online.enviar("pd", {"x": x})
+	_pedras.append({"x": x, "t": 0.0, "no": null, "sombra": _sombra_pedra(x)})
+
 func _chover(foco: Vector2, vel: Vector2) -> void:
 	for i in 4:
 		var x := foco.x + 1500.0 + i * 1400.0 + randf_range(-300, 300) + vel.x * 0.5
-		_pedras.append({"x": x, "t": 0.0, "no": null, "sombra": _sombra_pedra(x)})
+		soltar_pedra(x)
 
 ## aviso de onde cai número: coluna de luz amarela do céu até o chão, alvo
 ## pulsando no chão e seta "!" em cima. Bem visível mesmo no meio da confusão
@@ -631,7 +677,7 @@ func _transformar() -> void:
 
 func _virar_cepe() -> void:
 	segunda = true
-	vida = VIDA_MAX
+	vida = vida_max
 	_prox_ataque = 2.5
 	_chuva_t = 3.0
 	var mat := ShaderMaterial.new()
@@ -697,7 +743,9 @@ func _olhos() -> Vector2:
 
 ## aviso: faixa vermelha da largura do feixe na mesma diagonal, bordas marcadas,
 ## linha do meio e alvo no chão; pisca cada vez mais rápido até disparar
-func _laser(x: float) -> void:
+func _laser(x: float, remoto := false) -> void:
+	if Online.ativo and Online.host and not remoto:
+		Online.enviar("lz", {"x": x})
 	var aviso := Node2D.new()
 	aviso.z_index = 8
 	var faixa := Polygon2D.new()

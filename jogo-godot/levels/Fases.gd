@@ -5,6 +5,7 @@ var cartoes: Array = []
 var titulo: Label
 var voltar: Button
 var logo: TextureRect
+var online: Button
 
 func _ready() -> void:
 	Audio.musica_menu(true)
@@ -60,6 +61,18 @@ func _ready() -> void:
 		Audio.tocar("clique")
 		get_tree().change_scene_to_file("res://levels/Menu.tscn"))
 	add_child(voltar)
+	online = Button.new()
+	online.text = "CHEFÃO EM GRUPO (ONLINE)"
+	online.focus_mode = Control.FOCUS_NONE
+	online.add_theme_font_size_override("font_size", 30)
+	var so := sv.duplicate() as StyleBoxFlat
+	so.border_color = Color(1, 0.8, 0.25)
+	for k in ["normal", "hover", "pressed"]:
+		online.add_theme_stylebox_override(k, so)
+	online.pressed.connect(func() -> void:
+		Audio.tocar("clique")
+		get_tree().change_scene_to_file("res://levels/Sala.tscn"))
+	add_child(online)
 	get_viewport().size_changed.connect(_layout)
 	_layout()
 	if "screenshot" in OS.get_cmdline_user_args():
@@ -128,3 +141,4 @@ func _layout() -> void:
 		(cartoes[i] as Button).scale = Vector2.ONE * esc
 		(cartoes[i] as Button).position = Vector2((v.x - total) / 2.0 + i * (larg + esp), v.y / 2.0 - 140)
 	voltar.position = Vector2(30, v.y - 90)
+	online.position = Vector2(v.x - online.size.x - 30, v.y - 90)

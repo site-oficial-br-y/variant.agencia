@@ -26,12 +26,13 @@ const HABILIDADES := {"segway": "salto", "cadeira": "turbo", "scooter": "turbo",
 const TURBO_INFINITO := ["cadeira"]       # Gabriel: turbo sem combustível
 const BOMBA_EXTRA := ["scooter"]          # Gian: turbo + bomba num segundo botão
 const NITRO_EXTRA := ["chefe"]           # Vitinho: nitro de fogo azul no segundo botão (C/B)
-const VERSAO := "v24.10-G"            # aparece no canto do lobby (pra conferir se atualizou)
+const VERSAO := "v24.10-H online"            # aparece no canto do lobby (pra conferir se atualizou)
 const RITMO := 3.0                   # mundo 3x mais rápido: queda pesada e ritmo de Happy Wheels
 const ARQ_PROGRESSO := "user://progresso.cfg"
 var checkpoint_x: float = -1.0       # -1 = começa do início; sobrevive ao reinício (R)
 var checkpoint_chao: float = 1000.0
-var queda_fade := false              # fase 7: veio da tela preta do terraço (clareia na luta)
+var queda_fade := false
+var online_n := 1                    # jogadores na luta online (escala a dificuldade)              # fase 7: veio da tela preta do terraço (clareia na luta)
 
 const ACOES := {
 	"accelerate": [KEY_RIGHT, KEY_D],
