@@ -192,6 +192,10 @@ func _ready() -> void:
 	trava = _rotulo("VENÇA O PÉCE (FASE 5) PRA LIBERAR", 26, 8, OURO)
 	add_child(trava)
 
+	var ver := _rotulo(Game.VERSAO, 16, 4, Color(1, 1, 1, 0.55))
+	ver.set_anchors_preset(Control.PRESET_BOTTOM_LEFT)
+	ver.position = Vector2(10, get_viewport().get_visible_rect().size.y - 26)
+	add_child(ver)
 	get_viewport().size_changed.connect(_atualizar)
 	_atualizar()
 
