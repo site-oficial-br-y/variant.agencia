@@ -198,6 +198,9 @@ func atualizar(delta: float) -> void:
 		_derrubar()
 	_prox_laser -= dt
 	var padrao_grande := lasers.any(func(l): return l["tipo"] in ["cortina", "grade", "xis"])
+	var caindo := pisos.any(func(p): return p["estado"] in ["aviso", "caindo"])
+	if _prox_laser <= 0.0 and caindo:                     # piso caindo: espera ele cair antes do próximo laser
+		_prox_laser = 0.3
 	if _prox_laser <= 0.0 and not padrao_grande:          # padrões grandes nunca se misturam (o lugar seguro é seguro)
 		_prox_laser = maxf(1.3, 2.4 - 0.2 * nivel)
 		var sorteio := randf()
@@ -230,6 +233,23 @@ func _corpos() -> Array:
 	return pl.corpos.values()
 
 # ---------- pisos ----------
+## piso não começa a cair enquanto tem coluna de laser acesa/avisando perto dele
+func _coluna_perto(p: Dictionary) -> bool:
+	var bx: float = (p["base"] as Vector2).x
+	for l in lasers:
+		if l["tipo"] == "coluna" and absf(float(l["x"]) - bx) < LARG * 1.6:
+			return true
+	return false
+
+## coluna mira em você, menos quando tem piso caindo perto (aí cai longe: nunca piso caindo + laser no mesmo lugar)
+func _mira_coluna() -> float:
+	var ax := _alvo_x()
+	for p in pisos:
+		if p["estado"] != "ok" and absf((p["base"] as Vector2).x - ax) < LARG * 1.6:
+			var longe := ax + (2600.0 if ax < centro().x else -2600.0)
+			return longe + randf_range(-400, 400)
+	return ax + randf_range(-500, 500)
+
 ## piso com lugar seguro de laser ativo não cai
 func _protegido(p: Dictionary) -> bool:
 	var bx: float = (p["base"] as Vector2).x
@@ -253,7 +273,7 @@ func _derrubar() -> void:
 	var fora := pisos.filter(func(p): return p["estado"] != "ok")
 	if fora.size() >= 2:
 		return
-	var livres: Array = pisos.filter(func(p): return p["estado"] == "ok" and _vizinhos_ok(int(p["i"])) and not _protegido(p))
+	var livres: Array = pisos.filter(func(p): return p["estado"] == "ok" and _vizinhos_ok(int(p["i"])) and not _protegido(p) and not _coluna_perto(p))
 	if livres.size() <= 1:
 		return
 	var escolha: Dictionary = livres[randi() % livres.size()]
@@ -303,12 +323,14 @@ func _mover_piso(p: Dictionary, dt: float) -> void:
 				p["estado"] = "volta"
 				p["t"] = 0.0
 				no.visible = true
+				no.collision_layer = 0                     # subindo: atravessa (não bate em quem está no piso do lado)
 				no.position = base + Vector2(0, 2600)
 		"volta":                                         # volta subindo pro lugar
 			var k: float = minf(1.0, float(p["t"]) / 0.5)
 			no.position = base + Vector2(0, 2600.0 * (1.0 - smoothstep(0.0, 1.0, k)))
 			av.color = Color(0.3, 1.0, 0.4, 0.35 * (1.0 - k))
 			if k >= 1.0:
+				no.collision_layer = 0b01
 				p["estado"] = "ok"
 				av.color = Color(1, 0.1, 0.1, 0.0)
 
@@ -406,16 +428,20 @@ func _cortina() -> void:
 	var ok := pisos.filter(func(p): return p["estado"] == "ok")
 	if ok.is_empty():
 		return
-	var p: Dictionary = ok[randi() % ok.size()]
+	var ax := _alvo_x()
+	ok.sort_custom(func(a, b): return absf((a["base"] as Vector2).x - ax) < absf((b["base"] as Vector2).x - ax))
+	var p: Dictionary = ok[mini(ok.size() - 1, randi() % 2)]     # vão no piso mais perto (ou o segundo)
 	var gx: float = (p["base"] as Vector2).x
+	var meia_c := maxf(LARG * 0.42, _meia_largura() + 450.0)       # vão cabe qualquer veículo com folga
 	var nos: Array = [_feixe(320.0, 9), _feixe(320.0, 9), _bola_luz(Vector2.ZERO, 5.0), _bola_luz(Vector2.ZERO, 5.0)]
 	for k in [2, 3]:
 		(nos[k] as Node2D).modulate.a = 0.0
 	var marca := _linha(LARG * 0.8, Color(0.3, 1.0, 0.4, 0.0), 3)    # vão (seguro) marcado de verde
 	marca.points = PackedVector2Array([Vector2(gx, chao - 6000.0), Vector2(gx, chao)])
 	nos.append(marca)
-	lasers.append({"tipo": "cortina", "gx": gx, "meio": LARG * 0.42, "t": 0.0, "y": chao - 4200.0, "nos": nos,
-		"seguro": Vector2(gx - LARG * 0.42, gx + LARG * 0.42)})
+	marca.width = meia_c * 2.0
+	lasers.append({"tipo": "cortina", "gx": gx, "meio": meia_c, "t": 0.0, "y": chao - 4200.0, "nos": nos,
+		"seguro": Vector2(gx - meia_c, gx + meia_c)})
 	Audio.tocar("turbo", 0.6, 0.0)
 
 ## padrões de vários feixes (grade e X): lista de segmentos; aviso fino piscando, depois todos acendem juntos
@@ -441,7 +467,7 @@ func _arena_x1() -> float:
 
 ## grade: colunas a cada 520 px na arena toda, menos um vão perto de você
 func _grade() -> void:
-	var meia := _meia_largura() + 260.0                 # vão cabe o veículo inteiro (+ folga)
+	var meia := _meia_largura() + 220.0 + 450.0         # vão: veículo inteiro + 450 de folga pra cada lado
 	var ax := _piso_seguro(_alvo_x() + randf_range(-900, 900), minf(meia - 220.0, LARG / 2.0 - 50.0))
 	var segs: Array = []
 	var x := ax + meia
@@ -452,7 +478,7 @@ func _grade() -> void:
 	while x > x0 - 100.0:
 		segs.append([Vector2(x, chao - 4500.0), Vector2(x, chao + 2000.0)])
 		x -= 560.0
-	_multi("grade", segs, Vector2(ax - meia + 200.0, ax + meia - 200.0))
+	_multi("grade", segs, Vector2(ax - meia + 220.0, ax + meia - 220.0))   # verde = onde não tem feixe
 
 ## meia largura do veículo (do centro até a roda/peça mais longe), pra lugar seguro caber qualquer boneco
 func _meia_largura() -> float:
