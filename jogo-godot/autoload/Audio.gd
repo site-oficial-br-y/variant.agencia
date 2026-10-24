@@ -70,6 +70,8 @@ func musica_chefe(nome: String) -> void:
 		_chefe.process_mode = Node.PROCESS_MODE_ALWAYS     # segue tocando na cutscene (jogo pausado)
 		_chefe.volume_db = -4.0
 		add_child(_chefe)
+	if _chefe.playing and _chefe.stream and _chefe.stream.resource_path.ends_with("/%s.ogg" % nome):
+		return                                        # já está tocando: continua (ex.: queda -> luta)
 	var st := load("res://assets/audio/musica/%s.ogg" % nome) as AudioStreamOggVorbis
 	st.loop = true
 	_chefe.stream = st

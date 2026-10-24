@@ -992,6 +992,8 @@ func repelir(onde: Vector2) -> bool:
 		var v = fase.get("vendedor")
 		if b != null and is_instance_valid(b) and not b.morto:
 			b.levar_choque()
+		elif fase.get("adriano") != null and is_instance_valid(fase.get("adriano")) and fase.get("adriano").ativo:
+			fase.get("adriano").levar_choque()
 		elif v != null and is_instance_valid(v) and v.ativo and not v.acabou:
 			v._t += 3.0                                  # vendedor cansa mais rápido
 	return true

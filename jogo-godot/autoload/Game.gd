@@ -8,7 +8,7 @@ enum Estado { JOGANDO, MORTO, VITORIA }
 var estado: int = Estado.JOGANDO
 var personagem: String = "segway"
 var fase: int = 1
-const FASES := ["FASE 1", "FASE 2", "FASE 3", "FASE 4: LABORATÓRIO", "FASE 5: CHEFÃO", "FASE 6: ATACADÃO"]
+const FASES := ["FASE 1", "FASE 2", "FASE 3", "FASE 4: LABORATÓRIO", "FASE 5: CHEFÃO", "FASE 6: ATACADÃO", "FASE 7: ESCOLA"]
 const NOMES := {"segway": "PÉRINE", "cadeira": "GABRIEL", "scooter": "GIAN", "monociclo": "ERICK", "gamer": "GORISCH", "bicho": "BICHO", "wendell": "WENDELL", "caio": "CAIO", "vini": "VINI", "lima": "LIMA", "chefe": "CHEFE"}
 ## habilidade de cada um (botão especial), sempre com limite de uso
 const CHECKPOINTS := false              # sem checkpoint: morreu, volta pro começo da fase
@@ -20,6 +20,7 @@ const RITMO := 3.0                   # mundo 3x mais rápido: queda pesada e rit
 const ARQ_PROGRESSO := "user://progresso.cfg"
 var checkpoint_x: float = -1.0       # -1 = começa do início; sobrevive ao reinício (R)
 var checkpoint_chao: float = 1000.0
+var queda_fade := false              # fase 7: veio da tela preta do terraço (clareia na luta)
 
 const ACOES := {
 	"accelerate": [KEY_RIGHT, KEY_D],

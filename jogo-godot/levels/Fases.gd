@@ -120,9 +120,11 @@ func _cartao(n: int) -> Button:
 func _layout() -> void:
 	var v := get_viewport().get_visible_rect().size
 	titulo.position = Vector2((v.x - titulo.get_minimum_size().x) / 2.0, 150)
-	var larg := 196.0
-	var esp := 10.0
+	var esc := minf(1.0, (v.x - 40.0) / (cartoes.size() * 206.0))   # muitas fases: cartões encolhem pra caber
+	var larg := 196.0 * esc
+	var esp := 10.0 * esc
 	var total := cartoes.size() * larg + (cartoes.size() - 1) * esp
 	for i in cartoes.size():
+		(cartoes[i] as Button).scale = Vector2.ONE * esc
 		(cartoes[i] as Button).position = Vector2((v.x - total) / 2.0 + i * (larg + esp), v.y / 2.0 - 140)
 	voltar.position = Vector2(30, v.y - 90)

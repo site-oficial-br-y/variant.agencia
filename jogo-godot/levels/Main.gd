@@ -47,7 +47,7 @@ func _ready() -> void:
 			Game.fase = int(a.substr(2))
 	Engine.time_scale = Game.RITMO           # física a 180 Hz x 3 = mesmo passo de 1/60 s de jogo
 	RenderingServer.set_default_clear_color(Color(0.33, 0.55, 0.93))
-	tema = ["campo", "obra", "montanha", "lab", "boss", "mercado"][clampi(Game.fase, 1, 6) - 1]
+	tema = ["campo", "obra", "montanha", "lab", "boss", "mercado", "escola"][clampi(Game.fase, 1, 7) - 1]
 	_construir_fundo("hw" if tema == "campo" else tema)
 	_mat = PhysicsMaterial.new()
 	_mat.friction = 1.0
@@ -102,6 +102,8 @@ func _ready() -> void:
 		get_tree().quit()
 	if "sem_hud" in OS.get_cmdline_user_args():      # capturas para miniatura
 		$HUD.visible = false
+	if Game.fase == 7:
+		_inicio_7.call_deferred()
 	if "autoteste" in OS.get_cmdline_user_args():
 		_rodar_teste()
 	elif "screenshot" in OS.get_cmdline_user_args():
@@ -176,6 +178,8 @@ func _physics_process(delta: float) -> void:
 		_atualizar_lab(delta)
 	if Game.fase == 6:
 		_atualizar_mercado(delta)
+	if Game.fase == 7:
+		_atualizar_escola(delta)
 	if boss:
 		boss.atualizar(delta)
 		_rodada_boss(delta)
@@ -196,6 +200,7 @@ func _construir_chao() -> void:
 		4: _fase_4()
 		5: _fase_5()
 		6: _fase_6()
+		7: _fase_7()
 		_: _fase_1()
 
 ## marcos comuns: zona de morte, checkpoints (lista de Vector2: x, chão) e chegada
@@ -1135,7 +1140,7 @@ func _iniciar_alerta() -> void:
 	$HUD.move_child(_vermelho, 0)
 
 ## porta corrediça: sobe e desce num ciclo; aberta ~55% do tempo
-func _porta(base: Vector2, teto: float, periodo: float) -> void:
+func _porta(base: Vector2, teto: float, periodo: float, armario := false) -> void:
 	var alt := base.y - teto
 	var ab := AnimatableBody2D.new()
 	ab.sync_to_physics = false
@@ -1148,6 +1153,12 @@ func _porta(base: Vector2, teto: float, periodo: float) -> void:
 	pecas.poligono(Pecas.retangulo(Vector2.ZERO, Vector2(220, alt)), Color(0.55, 0.6, 0.66), 3, null, 1.0, ab)
 	pecas.poligono(Pecas.retangulo(Vector2(0, alt / 2.0 - 80.0), Vector2(220, 100)), Color.WHITE, 3, pecas.tex("perigo"), 0.8, ab)
 	pecas.poligono(Pecas.retangulo(Vector2(0, -alt * 0.25), Vector2(120, 160)), Color(0.75, 0.9, 1.0, 0.7), 3, null, 1.0, ab)
+	if armario:                                       # porta de armário verde (escola)
+		pecas.poligono(Pecas.retangulo(Vector2.ZERO, Vector2(220, alt)), Color(0.45, 0.72, 0.12), 3, null, 1.0, ab)
+		for k in 6:
+			pecas.poligono(Pecas.retangulo(Vector2(0, -alt / 2.0 + 220 + k * 70), Vector2(120, 14)), Color(0.28, 0.45, 0.08), 3, null, 1.0, ab)
+		pecas.poligono(Pecas.retangulo(Vector2(70, 0), Vector2(26, 90)), Color(0.85, 0.85, 0.85), 3, null, 1.0, ab)
+		pecas.poligono(Pecas.retangulo(Vector2(0, alt / 2.0 - 80.0), Vector2(220, 100)), Color.WHITE, 3, pecas.tex("perigo"), 0.8, ab)
 	ab.position = Vector2(base.x, base.y - alt / 2.0)
 	add_child(ab)
 	pecas.poligono(Pecas.retangulo(Vector2(base.x, teto + 40.0), Vector2(320, 80)), Color(0.25, 0.27, 0.3), 4)
@@ -1156,6 +1167,13 @@ func _porta(base: Vector2, teto: float, periodo: float) -> void:
 		"atraso": _sorteio.randf_range(0.0, periodo), "luz": luz, "meia": alt / 2.0})
 
 func _atualizar_lab(dt: float) -> void:
+	_mover_portas()
+	if _boss == null or not ativo or not is_instance_valid(player):
+		return
+	_atualizar_boss_lab(dt)
+
+## portas que abrem e fecham (laboratório e armários da escola); fechando, esmaga
+func _mover_portas() -> void:
 	for p in _portas:
 		var f := fposmod(_t_fisica + float(p["atraso"]), float(p["T"])) / float(p["T"])
 		var k := 0.0                                  # 0 fechada, 1 aberta
@@ -1173,8 +1191,8 @@ func _atualizar_lab(dt: float) -> void:
 				if absf(bp.x - porta.position.x) < 150.0 and bp.y < baixo + 60.0 and bp.y > baixo - 500.0:
 					_on_perigo(b, "esmagado")
 					break
-	if _boss == null or not ativo or not is_instance_valid(player):
-		return
+
+func _atualizar_boss_lab(dt: float) -> void:
 	_boss_t += dt / Engine.time_scale
 	if _boss_t < 2.5:                                # tempo do aviso antes dele sair correndo
 		return
@@ -1407,6 +1425,8 @@ func _construir_fundo(tema: String) -> void:
 	var camadas: Array = [["nuvem", 0.12, -1300.0, 4.8], ["ui/morros_longe", 0.25, 720.0, 4.1], ["ui/morros_perto", 0.45, 980.0, 4.4]]
 	if tema in ["lab", "boss", "mercado"]:
 		camadas = []
+	if tema == "escola":
+		camadas = [["nuvem", 0.12, -1300.0, 4.8]]
 	if tema in ["campo", "obra", "montanha", "hw"]:
 		camadas = [["nuvem", 0.1, -1500.0, 5.5], ["arte/fundo_%s_longe" % tema, 0.18, 380.0, 3.4],
 			["arte/fundo_%s_meio" % tema, 0.32, 700.0, 3.2], ["arte/fundo_%s_perto" % tema, 0.5, 1000.0, 3.0]]
@@ -1476,7 +1496,7 @@ func _on_checkpoint(b: Node2D, ck: Vector2) -> void:
 		print("[FASE] checkpoint")
 
 func _fim(ganhou: bool, motivo: String) -> void:
-	if not ativo:
+	if not ativo or _queda7:                     # caindo do terraço pra luta: ninguém morre
 		return
 	ativo = false
 	Audio.parar_chefe()
@@ -1951,3 +1971,245 @@ func _captura(nome: String) -> void:
 func _exit_tree() -> void:
 	Audio.motor(false)                        # sair da fase cala o motor
 	Engine.time_scale = 1.0
+
+# ---------- FASE 7: Escola Americana (boss: Adriano) ----------
+## corredor de armários (portas de armário que abrem e fecham, serras, carteiras e
+## minas), depois o terraço com a bola gigante rolando atrás. Pulou do terraço:
+## tela preta "ALGUÉM CAIU DO 5º COM VOCÊ!", salva o checkpoint e começa a queda
+## infinita com o Adriano.
+const ARENA7_X := 150000.0
+var adriano: Adriano
+var _queda7 := false
+var _bola7: AnimatableBody2D
+var _bola7_v := 0.0
+var _bola7_r := 950.0
+var _terraco_y := 1000.0
+var _borda7 := 0.0
+
+func _fase_7() -> void:
+	var y := CHAO_Y
+	pecas.cor_chao = Color(0.42, 0.47, 0.47)
+	_parede_arena(-2700.0, y)
+	var p := _t_plano(Vector2(-2600, y), 3900, false)
+	pecas.placa(Vector2(-900, y), "LARGADA")
+	p = _armarios7(p, 2)
+	p = _t_serras(p)
+	p = _t_plano(p, 500, false)
+	p = _carteiras7(p)
+	p = _t_tnt(p)
+	p = _armarios7(p, 3)
+	p = _t_tnt(p)
+	p = _t_plano(p, 700, false)
+	_corredor7(-6000.0, p.x, y)
+	# terraço: céu aberto, bola gigante atrás e a borda lá na frente
+	var t0 := p.x
+	_terraco_y = p.y
+	p = _t_plano(p, 9000, false)
+	_borda7 = p.x
+	_terraco7(t0, _borda7, _terraco_y)
+	var gat := _area(Vector2(t0 + 600.0, _terraco_y - 700), Vector2(200, 1600))
+	gat.body_entered.connect(func(b: Node2D) -> void:
+		if (b.is_in_group("veiculo") or b.is_in_group("piloto")) and _bola7 == null: _soltar_bola7.call_deferred())
+	var pulo := _area(Vector2(_borda7 + 5000.0, _terraco_y + 1300.0), Vector2(11000, 400))
+	pulo.body_entered.connect(func(b: Node2D) -> void:
+		if b.is_in_group("veiculo") or b.is_in_group("piloto"): _iniciar_queda7.call_deferred())
+	adriano = Adriano.new()
+	add_child(adriano)
+	adriano.montar(self, ARENA7_X, y)
+	adriano.derrotado.connect(func() -> void:
+		_meta_pos = player.foco().global_position
+		_fim(true, "venceu"))
+	_marcos([], Vector2(ARENA7_X + 14000.0, y), y + 5000.0, false)
+
+func _armarios7(p: Vector2, n: int) -> Vector2:
+	var comp := 900.0 + n * 2400.0
+	_t_plano(p, comp, false)
+	for k in n:
+		_porta(Vector2(p.x + 1200.0 + k * 2400.0, p.y), p.y - 2700.0, [3.0, 2.6, 2.8][k % 3], true)
+	return p + Vector2(comp, 0)
+
+## pilhas de carteiras: rampinha, carteira e desce
+func _carteiras7(p: Vector2) -> Vector2:
+	_t_plano(p, 3400, false)
+	for k in 2:
+		var x := p.x + 500.0 + k * 1600.0
+		pecas.rampa(x, x + 600.0, p.y, 260)
+		var sb := StaticBody2D.new()
+		sb.collision_layer = 0b01
+		var cs := CollisionShape2D.new()
+		var r := RectangleShape2D.new()
+		r.size = Vector2(520, 260)
+		cs.shape = r
+		sb.add_child(cs)
+		sb.position = Vector2(x + 860.0, p.y - 130.0)
+		pecas.poligono(Pecas.retangulo(Vector2(0, -110), Vector2(560, 50)), Color(0.62, 0.42, 0.24), 1, null, 1.0, sb)
+		for lx in [-220.0, 220.0]:
+			pecas.poligono(Pecas.retangulo(Vector2(lx, 30), Vector2(30, 220)), Color(0.35, 0.36, 0.4), 1, null, 1.0, sb)
+		pecas.poligono(Pecas.retangulo(Vector2(0, 40), Vector2(440, 26)), Color(0.35, 0.36, 0.4), 1, null, 1.0, sb)
+		add_child(sb)
+	return p + Vector2(3400, 0)
+
+## fundo do corredor: a foto dos armários repetida na altura certa (chão da foto = chão do jogo)
+func _corredor7(xa: float, xb: float, y: float) -> void:
+	var tex: Texture2D = load("res://assets/adriano/corredor.jpg")
+	var esc := 2900.0 / 640.0
+	var larg := tex.get_width() * esc
+	var x := xa
+	while x < xb:
+		var s := Sprite2D.new()
+		s.texture = tex
+		s.centered = false
+		s.scale = Vector2.ONE * esc
+		s.position = Vector2(x, y - 640.0 * esc + 20.0)
+		if x + larg > xb:                             # último pedaço: corta pra não entrar no terraço
+			s.region_enabled = true
+			s.region_rect = Rect2(0, 0, (xb - x) / esc, tex.get_height())
+		s.z_index = -7
+		add_child(s)
+		x += larg - 4.0
+	pecas.placa_perigo(Vector2(xb - 400.0, y))
+
+## terraço: muretinha, caixas d'água, ar-condicionado e antena, céu aberto
+func _terraco7(xa: float, xb: float, y: float) -> void:
+	pecas.poligono(Pecas.retangulo(Vector2((xa + xb) / 2.0, y - 140.0), Vector2(xb - xa, 280)), Color(0.78, 0.74, 0.68), -6)
+	pecas.poligono(Pecas.retangulo(Vector2((xa + xb) / 2.0, y - 290.0), Vector2(xb - xa, 40)), Color(0.6, 0.57, 0.52), -6)
+	var x := xa + 800.0
+	var k := 0
+	while x < xb - 600.0:
+		match k % 3:
+			0:
+				pecas.poligono(Pecas.retangulo(Vector2(x, y - 600.0), Vector2(700, 900)), Color(0.35, 0.45, 0.6), -5)
+				pecas.poligono(Pecas.retangulo(Vector2(x, y - 1080.0), Vector2(760, 60)), Color(0.25, 0.3, 0.4), -5)
+			1:
+				pecas.poligono(Pecas.retangulo(Vector2(x, y - 300.0), Vector2(900, 500)), Color(0.82, 0.83, 0.86), -5)
+				for g in 5:
+					pecas.poligono(Pecas.retangulo(Vector2(x - 300 + g * 150, y - 300.0), Vector2(60, 380)), Color(0.6, 0.62, 0.66), -5)
+			2:
+				pecas.linha(PackedVector2Array([Vector2(x, y - 300.0), Vector2(x, y - 2600.0)]), 30.0, Color(0.4, 0.4, 0.44), -5)
+				for g in 3:
+					pecas.linha(PackedVector2Array([Vector2(x - 300 + g * 60, y - 2200.0 + g * 200), Vector2(x + 300 - g * 60, y - 2200.0 + g * 200)]), 18.0, Color(0.4, 0.4, 0.44), -5)
+		x += 2400.0
+		k += 1
+	# placa do prédio na borda
+	var l := Label.new()
+	l.text = "ESCOLA AMERICANA"
+	l.add_theme_font_size_override("font_size", 260)
+	l.add_theme_color_override("font_color", Color(0.12, 0.2, 0.45))
+	l.add_theme_color_override("font_outline_color", Color.WHITE)
+	l.add_theme_constant_override("outline_size", 30)
+	l.position = Vector2(xb - 3200.0, y - 1500.0)
+	l.z_index = -5
+	add_child(l)
+	pecas.placa_perigo(Vector2(xb - 500.0, y))
+
+## a bola gigante: rola atrás de você no terraço e esmaga
+func _soltar_bola7() -> void:
+	_bola7 = AnimatableBody2D.new()
+	_bola7.sync_to_physics = false
+	_bola7.collision_layer = 0b1000
+	_bola7.collision_mask = 0
+	var cs := CollisionShape2D.new()
+	var c := CircleShape2D.new()
+	c.radius = _bola7_r
+	cs.shape = c
+	_bola7.add_child(cs)
+	var s := Sprite2D.new()
+	s.texture = load("res://assets/adriano/bola.png")
+	s.scale = Vector2.ONE * (_bola7_r * 2.0 / 1073.0)
+	_bola7.add_child(s)
+	_bola7.position = Vector2(player.foco().global_position.x - 3600.0, _terraco_y - _bola7_r)
+	_bola7.z_index = 6
+	add_child(_bola7)
+	var a := Area2D.new()
+	a.collision_layer = 0
+	a.collision_mask = 0b110
+	var ca := CollisionShape2D.new()
+	var cc := CircleShape2D.new()
+	cc.radius = _bola7_r * 0.95
+	ca.shape = cc
+	a.add_child(ca)
+	_bola7.add_child(a)
+	a.body_entered.connect(func(b: Node2D) -> void:
+		if b.is_in_group("veiculo") or b.is_in_group("piloto"): _on_perigo(b, "esmagado"))
+	_bola7_v = 500.0
+	_mensagem("CORRE!!!", Color(1, 0.4, 0.2))
+	Audio.tocar("impacto_forte", 1.0)
+
+func _atualizar_escola(delta: float) -> void:
+	_mover_portas()
+	if is_instance_valid(_bola7):
+		_bola7_v = minf(_bola7_v + 900.0 * delta, 1150.0)
+		_bola7.position.x += _bola7_v * delta
+		_bola7.rotation += _bola7_v * delta / _bola7_r
+		if _bola7.position.x > _borda7 + _bola7_r * 0.6:      # passou da borda: despenca
+			_bola7.position.y += 2500.0 * delta
+			if _bola7.position.y > _terraco_y + 8000.0:
+				_bola7.queue_free()
+				_bola7 = null
+		elif int(_t_fisica * 60.0) % 18 == 0:
+			pecas.poeira(_bola7.position + Vector2(-_bola7_r * 0.5, _bola7_r), 1.2)
+	if adriano:
+		adriano.atualizar(delta)
+
+## pulou do terraço: tela preta com o aviso, música da queda, salva e vai pra luta
+func _iniciar_queda7() -> void:
+	if _queda7 or not ativo:
+		return
+	_queda7 = true
+	Audio.parar_chefe()
+	Audio.musica_chefe("adriano")
+	var cena := CanvasLayer.new()
+	cena.layer = 80
+	cena.process_mode = Node.PROCESS_MODE_ALWAYS
+	add_child(cena)
+	var preto := ColorRect.new()
+	preto.color = Color(0, 0, 0, 0)
+	preto.set_anchors_preset(Control.PRESET_FULL_RECT)
+	cena.add_child(preto)
+	var txt := Label.new()
+	txt.text = "ALGUÉM CAIU DO 5º\nCOM VOCÊ!"
+	txt.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	txt.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	txt.set_anchors_preset(Control.PRESET_FULL_RECT)
+	txt.add_theme_font_size_override("font_size", 84)
+	txt.add_theme_color_override("font_color", Color(1, 0.25, 0.25))
+	txt.add_theme_color_override("font_outline_color", Color.BLACK)
+	txt.add_theme_constant_override("outline_size", 14)
+	txt.modulate.a = 0.0
+	cena.add_child(txt)
+	var tw := cena.create_tween()
+	tw.tween_property(preto, "color:a", 1.0, 0.25)
+	tw.tween_callback(func() -> void: get_tree().paused = true)
+	tw.tween_property(txt, "modulate:a", 1.0, 0.4)
+	tw.tween_interval(2.6)
+	tw.tween_callback(func() -> void:
+		get_tree().paused = false
+		var ini := adriano.piso_inicial()
+		Game.checkpoint_x = ini.x
+		Game.checkpoint_chao = ini.y
+		Game.queda_fade = true
+		get_tree().reload_current_scene.call_deferred())
+
+## começo da fase 7: no corredor toca a música da escola; no checkpoint da queda começa a luta
+func _inicio_7() -> void:
+	if Game.checkpoint_x < ARENA7_X - 1000.0:
+		Audio.musica_chefe("escola")
+		return
+	do_inicio = true
+	camera.zoom = Vector2(0.22, 0.22)
+	adriano.comecar()
+	Audio.musica_chefe("adriano")
+	if Game.queda_fade:                              # veio da tela preta: clareia pra luta
+		Game.queda_fade = false
+		var cena := CanvasLayer.new()
+		cena.layer = 80
+		add_child(cena)
+		var preto := ColorRect.new()
+		preto.color = Color.BLACK
+		preto.set_anchors_preset(Control.PRESET_FULL_RECT)
+		preto.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		cena.add_child(preto)
+		var tw := cena.create_tween()
+		tw.tween_interval(0.3)
+		tw.tween_property(preto, "color:a", 0.0, 1.2)
+		tw.tween_callback(cena.queue_free)
