@@ -196,15 +196,22 @@ func atualizar(delta: float) -> void:
 		_prox_queda = maxf(2.2, 3.6 - 0.25 * nivel)
 		_derrubar()
 	_prox_laser -= dt
-	var tem_cortina := lasers.any(func(l): return l["tipo"] == "cortina")
-	if _prox_laser <= 0.0 and not tem_cortina:            # cortina e coluna nunca juntas (vão seguro é seguro)
-		_prox_laser = maxf(1.5, 2.6 - 0.2 * nivel)
-		if vida <= 4 and randf() < 0.4 and lasers.is_empty():
+	var padrao_grande := lasers.any(func(l): return l["tipo"] in ["cortina", "grade", "xis"])
+	if _prox_laser <= 0.0 and not padrao_grande:          # padrões grandes nunca se misturam (o lugar seguro é seguro)
+		_prox_laser = maxf(1.3, 2.4 - 0.2 * nivel)
+		var sorteio := randf()
+		if lasers.is_empty() and sorteio < 0.3:
+			_grade()                                       # grade de colunas com 1 vão
+			_prox_laser = 0.8
+		elif lasers.is_empty() and vida <= 5 and sorteio < 0.55:
+			_xis()                                         # X cruzados: fica no meio do losango
+			_prox_laser = 0.8
+		elif lasers.is_empty() and vida <= 4 and sorteio < 0.75:
 			_cortina()
 			_prox_laser = 1.0
 		else:
 			_coluna(_alvo_x() + randf_range(-500, 500))
-			if vida <= 2 and randf() < 0.5:
+			if vida <= 3 and randf() < 0.6:
 				_coluna(randf_range(x0 + 400.0, x0 + ALTURAS.size() * (LARG + VAO) - 400.0))
 
 func _alvo_x() -> float:
@@ -272,13 +279,13 @@ func _mover_piso(p: Dictionary, dt: float) -> void:
 				p["t"] = 0.0
 				no.visible = false
 		"fora":
-			if p["t"] >= 2.6:
+			if p["t"] >= 1.0:                                # volta rápido: quem não pula espera pouco
 				p["estado"] = "volta"
 				p["t"] = 0.0
 				no.visible = true
 				no.position = base + Vector2(0, 2600)
 		"volta":                                         # volta subindo pro lugar
-			var k: float = minf(1.0, float(p["t"]) / 0.9)
+			var k: float = minf(1.0, float(p["t"]) / 0.5)
 			no.position = base + Vector2(0, 2600.0 * (1.0 - smoothstep(0.0, 1.0, k)))
 			av.color = Color(0.3, 1.0, 0.4, 0.35 * (1.0 - k))
 			if k >= 1.0:
@@ -390,6 +397,51 @@ func _cortina() -> void:
 	lasers.append({"tipo": "cortina", "gx": gx, "meio": LARG * 0.42, "t": 0.0, "y": chao - 4200.0, "nos": nos})
 	Audio.tocar("turbo", 0.6, 0.0)
 
+## padrões de vários feixes (grade e X): lista de segmentos; aviso fino piscando, depois todos acendem juntos
+func _multi(tipo: String, segs: Array, seguro: Vector2) -> void:
+	var nos: Array = []
+	for sg in segs:
+		var av := _linha(12.0, Color(1, 0.2, 0.15, 0.85), 8)
+		av.points = PackedVector2Array([sg[0], sg[1]])
+		nos.append(av)
+	for sg in segs:
+		var f := _feixe(170.0, 9)
+		_pts_feixe(f, PackedVector2Array([sg[0], sg[1]]), 0.0)
+		nos.append(f)
+	var marca := _linha(seguro.y - seguro.x, Color(0.3, 1.0, 0.4, 0.0), 3)     # lugar seguro em verde
+	var cx := (seguro.x + seguro.y) / 2.0
+	marca.points = PackedVector2Array([Vector2(cx, chao - 1400.0), Vector2(cx, chao + 100.0)])
+	nos.append(marca)
+	lasers.append({"tipo": tipo, "t": 0.0, "segs": segs, "nos": nos})
+	Audio.tocar("turbo", 0.7, 0.0)
+
+func _arena_x1() -> float:
+	return x0 + ALTURAS.size() * (LARG + VAO)
+
+## grade: colunas a cada 520 px na arena toda, menos um vão perto de você
+func _grade() -> void:
+	var ax := clampf(_alvo_x() + randf_range(-900, 900), x0 + 600.0, _arena_x1() - 600.0)
+	var segs: Array = []
+	var x := x0 + 260.0
+	while x < _arena_x1() - 100.0:
+		if absf(x - ax) > 420.0:
+			segs.append([Vector2(x, chao - 4500.0), Vector2(x, chao + 2000.0)])
+		x += 520.0
+	_multi("grade", segs, Vector2(ax - 300.0, ax + 300.0))
+
+## X: diagonais cruzando que batem no chão a cada 2000 px; o meio entre dois pontos é seguro
+func _xis() -> void:
+	var ax := _alvo_x()
+	var fase_x := ax - 1000.0 + randf_range(-600, 600)          # um ponto seguro sempre a <~1600 de você
+	var segs: Array = []
+	var px: float = fase_x - 2000.0 * ceil((fase_x - x0 + 1500.0) / 2000.0)
+	while px < _arena_x1() + 1500.0:
+		for d in [-1.0, 1.0]:
+			segs.append([Vector2(px, chao), Vector2(px + d * 4500.0, chao - 4500.0)])
+		px += 2000.0
+	var seg_mid := fase_x + 1000.0
+	_multi("xis", segs, Vector2(seg_mid - 350.0, seg_mid + 350.0))
+
 func _apagar_laser(l: Dictionary) -> void:
 	for n in l["nos"]:
 		if n is Line2D and (n as Line2D).has_meta("halo"):
@@ -402,6 +454,31 @@ func _passo_laser(l: Dictionary, dt: float) -> void:
 	l["t"] += dt
 	var t: float = l["t"]
 	var nos: Array = l["nos"]
+	if l["tipo"] in ["grade", "xis"]:
+		var n: int = (l["segs"] as Array).size()
+		var marca: Line2D = nos[nos.size() - 1]
+		if t < 1.4:
+			var ritmo := lerpf(0.22, 0.08, t / 1.4)
+			var vis := fmod(t, ritmo) < ritmo * 0.6
+			for k in n:
+				(nos[k] as Line2D).visible = vis
+				(nos[k] as Line2D).width = 8.0 + 16.0 * t / 1.4
+			marca.default_color.a = 0.3 if vis else 0.12
+			return
+		if t - dt < 1.4:
+			Audio.tocar("metal", 1.0, 0.0)
+			Audio.tocar("impacto_forte", 0.6)
+		var f := minf(1.0, (t - 1.4) / 0.06) * minf(1.0, (2.0 - t) / 0.15)
+		for k in n:
+			(nos[k] as Line2D).visible = false
+			var sg: Array = l["segs"][k]
+			_pts_feixe(nos[n + k], PackedVector2Array([sg[0], sg[1]]), f)
+		marca.default_color.a = 0.15
+		if f > 0.5:
+			_acerta_segs(l["segs"])
+		if t >= 2.0:
+			_apagar_laser(l)
+		return
 	if l["tipo"] == "coluna":
 		var aviso: Line2D = nos[0]
 		var alvo: Sprite2D = nos[2]
@@ -454,6 +531,14 @@ func _morre(b: Node2D) -> void:
 	if pl.repelir(b.global_position):
 		return
 	fase._on_perigo(b, "laser")
+
+func _acerta_segs(segs: Array) -> void:
+	for b in _corpos():
+		var p: Vector2 = (b as Node2D).global_position
+		for sg in segs:
+			if p.distance_to(Geometry2D.get_closest_point_to_segment(p, sg[0], sg[1])) < 130.0:
+				_morre(b)
+				return
 
 func _acerta_coluna(x: float) -> void:
 	for b in _corpos():
