@@ -63,6 +63,8 @@ var _repele_t := 0.0                    # Chefe: sem camisa, rebate golpe de che
 var _repele_dano := false
 var _repele_fx := 0.0
 var _aura: Sprite2D
+var _nitro_fogo: CPUParticles2D          # Vitinho: chama azul do nitro
+var nitro := 1.0                         # tanque do nitro 0..1
 var _pulo_t := 0.0
 var _baloes: Node2D
 var membros: Dictionary = {}            # corpo -> Node2D articulado (montado: animado por molas)
@@ -255,6 +257,8 @@ func _montar() -> void:
 		n.set_meta("perna", k in D.get("pernas_veiculo", []))
 		n.add_child(sp)
 		_bracos_vei.append(n)
+	if personagem in Game.NITRO_EXTRA and ch.has("poly"):
+		_montar_nitro(ch)
 	boneco = Node2D.new()
 	chassi.add_child(boneco)
 	if ResourceLoader.exists("res://assets/%s/pulo.png" % personagem):
@@ -640,11 +644,68 @@ func _especial(ch: Dictionary, delta: float) -> void:
 				chassi.apply_torque(inercia_chassi * (-chassi.rotation * 45.0 - chassi.angular_velocity * 10.0))
 		"arpao":
 			_arpoar(apertou, segura, delta)
+	if personagem in Game.NITRO_EXTRA:               # segundo botão: nitro (segura), tanque recarrega solto
+		var liga := Input.is_action_pressed("bomba") and nitro > 0.0
+		_nitro_fogo.emitting = liga
+		if liga:
+			nitro = maxf(0.0, nitro - 0.3 * delta / Engine.time_scale)
+			if chassi.linear_velocity.length() < float(ch["vmax"]) * velocidade * 2.4:
+				chassi.apply_central_force(Vector2.RIGHT.rotated(chassi.rotation) * massa_total * TURBO * 1.35)
+			_som_turbo -= delta
+			if _som_turbo <= 0.0:
+				_som_turbo = 0.7
+				Audio.tocar("turbo", 1.0, 0.0)
+		else:
+			nitro = minf(1.0, nitro + 0.15 * delta / Engine.time_scale)
 	if personagem in Game.BOMBA_EXTRA:               # segundo botão: bomba com recarga própria
 		recarga_bomba = maxf(0.0, recarga_bomba - delta)
 		if Input.is_action_just_pressed("bomba") and recarga_bomba <= 0.0:
 			recarga_bomba = 2.5
 			_lancar_bomba()
+
+## Vitinho: escapamentos na traseira soltando chama azul de nitro
+func _montar_nitro(ch: Dictionary) -> void:
+	var xs: Array = []
+	var ys: Array = []
+	for p in ch["poly"]:
+		xs.append(float(p[0]))
+		ys.append(float(p[1]))
+	_nitro_fogo = CPUParticles2D.new()
+	_nitro_fogo.position = Vector2(xs.min() + 20.0, lerpf(ys.min(), ys.max(), 0.62)) - origem
+	var bola := GradientTexture2D.new()                   # partícula redonda e macia
+	var gb := Gradient.new()
+	gb.set_color(0, Color(1, 1, 1, 1))
+	gb.set_color(1, Color(1, 1, 1, 0))
+	bola.gradient = gb
+	bola.fill = GradientTexture2D.FILL_RADIAL
+	bola.fill_from = Vector2(0.5, 0.5)
+	bola.fill_to = Vector2(1.0, 0.5)
+	bola.width = 64
+	bola.height = 64
+	_nitro_fogo.texture = bola
+	_nitro_fogo.amount = 80
+	_nitro_fogo.lifetime = 0.12 * Engine.time_scale
+	_nitro_fogo.direction = Vector2(-1, 0)
+	_nitro_fogo.spread = 6.0
+	_nitro_fogo.initial_velocity_min = 1400.0
+	_nitro_fogo.initial_velocity_max = 2400.0
+	_nitro_fogo.gravity = Vector2.ZERO
+	_nitro_fogo.scale_amount_min = 2.4
+	_nitro_fogo.scale_amount_max = 4.2
+	var curva := Curve.new()
+	curva.add_point(Vector2(0, 1))
+	curva.add_point(Vector2(1, 0.15))
+	_nitro_fogo.scale_amount_curve = curva
+	var g := Gradient.new()
+	g.set_color(0, Color(0.85, 0.95, 1.0, 0.95))
+	g.add_point(0.15, Color(0.3, 0.65, 1.0, 0.9))
+	g.add_point(0.5, Color(0.1, 0.3, 1.0, 0.6))
+	g.set_color(g.get_point_count() - 1, Color(0.25, 0.1, 0.8, 0.0))
+	_nitro_fogo.color_ramp = g
+	_nitro_fogo.local_coords = true
+	_nitro_fogo.emitting = false
+	_nitro_fogo.z_index = -1
+	chassi.add_child(_nitro_fogo)
 
 ## Bicho: compras soltas no carrinho (maçãs, bananas, laranja): caem quando ele anda torto
 func _encher_cesto() -> void:

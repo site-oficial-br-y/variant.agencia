@@ -1116,7 +1116,7 @@ func _circulo_lab(r: float, c := Vector2.ZERO) -> PackedVector2Array:
 
 func _iniciar_alerta() -> void:
 	_alerta = Label.new()
-	_alerta.text = "⚠ ALERTA ⚠\nVOCÊ ESQUECEU O JALECO!"
+	_alerta.text = "!! ALERTA !!\nVOCÊ ESQUECEU O JALECO!"
 	_alerta.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	_alerta.add_theme_font_size_override("font_size", 64)
 	_alerta.add_theme_color_override("font_color", Color(1, 0.25, 0.2))
@@ -1562,7 +1562,7 @@ func _construir_hud() -> void:
 		[_toque("gas", Vector2.ZERO, 200, "accelerate"), func(v: Vector2) -> Vector2: return Vector2(v.x - 225, v.y - 225)],
 		[_toque_especial(), func(v: Vector2) -> Vector2: return Vector2(v.x - 195, v.y - 410)],
 		[_rotulo_carga(), func(v: Vector2) -> Vector2: return Vector2(v.x - 213, v.y - 452)],
-		[_toque_bomba(), func(v: Vector2) -> Vector2: return Vector2(v.x - 370, v.y - 360) if Game.personagem in Game.BOMBA_EXTRA else Vector2(-9999, 0)],
+		[_toque_bomba(), func(v: Vector2) -> Vector2: return Vector2(v.x - 370, v.y - 360) if (Game.personagem in Game.BOMBA_EXTRA or Game.personagem in Game.NITRO_EXTRA) else Vector2(-9999, 0)],
 		[_botao("R", Vector2.ZERO, Vector2(80, 64), "reset"), func(v: Vector2) -> Vector2: return Vector2(v.x - 96, 14)],
 		[_botao("TROCAR", Vector2.ZERO, Vector2(180, 64), "menu"), func(v: Vector2) -> Vector2: return Vector2(v.x - 290, 14)],
 	]
@@ -1627,7 +1627,7 @@ func _toque_especial() -> TouchScreenButton:
 	return _botao_especial
 
 func _toque_bomba() -> TouchScreenButton:
-	return _toque("bomba", Vector2.ZERO, 130, "bomba")
+	return _toque("nitro" if Game.personagem in Game.NITRO_EXTRA else "bomba", Vector2.ZERO, 130, "bomba")
 
 ## carga da habilidade embaixo do botão: PRONTO, segundos ou % do turbo
 func _rotulo_carga() -> Label:

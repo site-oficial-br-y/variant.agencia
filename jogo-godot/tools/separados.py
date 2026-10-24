@@ -218,9 +218,9 @@ CHEFE = {
         'piloto': ['tronco', 'cabeca', 'braco', 'coxa', 'canela'],
         'rodas': [{'corpo': 'roda0', 'peca': 'roda0', 'c': [283.0, 853.0], 'r': 132, 'massa': 2.5, 'motriz': True},
                   {'corpo': 'roda1', 'peca': 'roda1', 'c': [1148.0, 868.0], 'r': 130, 'massa': 2.0, 'motriz': False}],
-        'chassi': {'massa': 9.0, 'auto_equilibrio': False, 'vmax': 980.0, 'forca': 0.0,
+        'chassi': {'massa': 9.0, 'auto_equilibrio': False, 'vmax': 1300.0, 'forca': 0.0,
                    'poly': [[50, 660], [300, 580], [460, 650], [930, 660], [1100, 650], [1300, 700], [1490, 820],
-                            [1490, 930], [1300, 945], [990, 935], [450, 925], [130, 900], [45, 760]]},
+                            [1490, 850], [1270, 880], [990, 875], [450, 870], [130, 870], [45, 760]]},
         'corpos': {
             'cabeca': {'massa': 0.8, 'forma': ['circ', [540, 190], 140]},
             'tronco': {'massa': 2.0, 'forma': ['caps', [480, 400], [500, 610], 110]},
