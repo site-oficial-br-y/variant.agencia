@@ -286,7 +286,7 @@ func _process(delta: float) -> void:
 	if _fim:
 		queue_redraw()
 		return
-	tempo -= delta
+	tempo -= delta / Engine.time_scale
 	_tremor = maxf(0.0, _tremor - delta)
 	_flash = maxf(0.0, _flash - delta * 2.5)
 	_dano_pop = maxf(0.0, _dano_pop - delta * 3.0)

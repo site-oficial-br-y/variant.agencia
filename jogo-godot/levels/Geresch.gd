@@ -16,7 +16,7 @@ const FORMAS := [[[0, 0], [1, 0]], [[0, 0], [1, 0], [2, 0]], [[0, 0], [1, 0], [0
 	[[0, 0], [0, 1], [1, 1]], [[0, 0], [1, 0], [2, 0], [1, 1]], [[0, 0], [1, 0], [2, 0], [3, 0]],
 	[[0, 0], [0, 1], [0, 2]], [[0, 0], [1, 0], [1, 1], [2, 1]]]
 const DESVIO := [16.0, 14.0, 12.0, 11.0]          # segundos desviando, por fase de raiva
-const JOGO := [26.0, 23.0, 20.0, 18.0]            # segundos de Block Blast
+const JOGO := [30.0, 27.0, 25.0, 22.0]            # segundos de Block Blast
 const RITMO := [1.5, 1.2, 0.95, 0.75]             # intervalo entre peças caindo
 
 var fase: Node2D
