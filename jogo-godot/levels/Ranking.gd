@@ -229,6 +229,7 @@ var _campo_senha: LineEdit
 var _campo_nick: LineEdit
 var _status: Label
 var _ocupado := false
+var _ult_prompt := -10000
 
 func _montar_conta() -> void:
 	for n in conta_vbox.get_children():
@@ -330,10 +331,13 @@ func _campo(dica: String, senha: bool, pergunta: String, maximo: int) -> LineEdi
 	st.content_margin_right = 16
 	c.add_theme_stylebox_override("normal", st)
 	c.add_theme_stylebox_override("focus", st)
-	c.gui_input.connect(func(ev: InputEvent) -> void:      # celular: abre o teclado do navegador
-		if (OS.has_feature("web_android") or OS.has_feature("web_ios")) \
-				and ((ev is InputEventMouseButton and ev.pressed) or (ev is InputEventScreenTouch and ev.pressed)):
-			var r = JavaScriptBridge.eval("(window.prompt(%s, '') || '')" % JSON.stringify(pergunta), true)
+	c.gui_input.connect(func(ev: InputEvent) -> void:      # navegador: janela de digitar (abre o teclado no celular)
+		if OS.has_feature("web") and ((ev is InputEventMouseButton and ev.pressed) or (ev is InputEventScreenTouch and ev.pressed)):
+			c.accept_event()
+			if Time.get_ticks_msec() - _ult_prompt < 500:      # clique chega como toque + mouse
+				return
+			var r = JavaScriptBridge.eval("(window.prompt(%s, %s) ?? '')" % [JSON.stringify(pergunta), JSON.stringify("" if senha else c.text)], true)
+			_ult_prompt = Time.get_ticks_msec()
 			var t := str(r).strip_edges()
 			if t != "":
 				c.text = t.left(c.max_length)
