@@ -2878,11 +2878,8 @@ func _esmagadores8(p: Vector2, n: int) -> Vector2:
 		var alto := baixo - 1400.0
 		ab.position = Vector2(x, alto)
 		add_child(ab)
-		var sombra := Polygon2D.new()
-		sombra.polygon = PackedVector2Array([Vector2(-w * cel / 2.0, -14), Vector2(w * cel / 2.0, -14), Vector2(w * cel / 2.0, 10), Vector2(-w * cel / 2.0, 10)])
-		sombra.color = Color(1, 0.15, 0.2, 0.0)
+		var sombra := Geresch.marcador(w * cel / 2.0)
 		sombra.position = Vector2(x, p.y)
-		sombra.z_index = 4
 		add_child(sombra)
 		var periodo: float = [7.5, 6.6, 8.4][k % 3]       # ~2,2-2,8 s de verdade por ciclo
 		_esmagadores.append({"no": ab, "alto": alto, "baixo": baixo, "meia": h * cel / 2.0, "largura": w * cel / 2.0,
@@ -2898,23 +2895,23 @@ func _mover_esmagadores(_delta: float) -> void:
 		var treme := 0.0
 		# 0-0.5 em cima | 0.5-0.64 tremendo (aviso) | 0.64-0.69 despenca | 0.69-0.8 no chão | 0.8-0.88 sobe rápido | em cima
 		if f < 0.5 or f >= 0.88:
-			sombra.color.a = 0.15
+			sombra.modulate.a = 0.25
 		elif f < 0.64:
 			treme = 14.0
-			sombra.color.a = 0.6 if fmod(f * 40.0, 1.0) < 0.5 else 0.25
+			sombra.modulate.a = 1.0 if fmod(f * 40.0, 1.0) < 0.5 else 0.7
 		elif f < 0.69:
 			var k := (f - 0.64) / 0.05
 			y = lerpf(float(e["alto"]), float(e["baixo"]), k * k)
-			sombra.color.a = 0.7
+			sombra.modulate.a = 1.0
 		elif f < 0.8:
 			y = float(e["baixo"])
-			sombra.color.a = 0.0
+			sombra.modulate.a = 0.0
 			if not e["bateu"]:
 				e["bateu"] = true
 				impacto8(Vector2(no.position.x, float(e["chao"])), 2.2)
 		else:
 			y = lerpf(float(e["baixo"]), float(e["alto"]), smoothstep(0.0, 1.0, (f - 0.8) / 0.08))
-			sombra.color.a = 0.1
+			sombra.modulate.a = 0.2
 		if f < 0.69:
 			e["bateu"] = false
 		no.position = Vector2(no.position.x, y) + Vector2(randf_range(-1, 1) * treme, 0)

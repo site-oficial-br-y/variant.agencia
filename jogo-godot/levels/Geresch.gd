@@ -197,14 +197,44 @@ func _soltar() -> void:
 		solo = (r["position"] as Vector2).y
 	no.position = Vector2(alvo, solo - 4500.0)
 	fase.add_child(no)
-	var sombra := Polygon2D.new()
 	var w := largura * CEL / 2.0
-	sombra.polygon = PackedVector2Array([Vector2(-w, -20), Vector2(w, -20), Vector2(w, 10), Vector2(-w, 10)])
-	sombra.color = Color(cor, 0.0)
+	var sombra := marcador(w)
 	sombra.position = Vector2(alvo, solo)
-	sombra.z_index = 4
 	fase.add_child(sombra)
 	_queda.append({"no": no, "sombra": sombra, "t": 0.0, "vy": 0.0, "w": w, "h": altura * CEL, "x": alvo, "caindo": true, "solo": solo})
+
+## marca vermelha forte no chão + setas apontando pra baixo (alfa controlado por modulate)
+static func marcador(w: float) -> Polygon2D:
+	var verm := Color(1, 0.0, 0.03)
+	var m := Polygon2D.new()
+	var b := w + 60.0
+	m.polygon = PackedVector2Array([Vector2(-b, -60), Vector2(b, -60), Vector2(b, 16), Vector2(-b, 16)])
+	m.color = verm
+	m.z_index = 8
+	m.modulate.a = 0.0
+	var coluna := Polygon2D.new()
+	coluna.polygon = PackedVector2Array([Vector2(-b, -60), Vector2(b, -60), Vector2(b, -1600), Vector2(-b, -1600)])
+	coluna.vertex_colors = PackedColorArray([Color(verm, 0.7), Color(verm, 0.7), Color(verm, 0.0), Color(verm, 0.0)])
+	coluna.show_behind_parent = true
+	m.add_child(coluna)
+	var borda := Line2D.new()
+	borda.points = PackedVector2Array([Vector2(-b, -60), Vector2(b, -60), Vector2(b, 16), Vector2(-b, 16), Vector2(-b, -60)])
+	borda.width = 10.0
+	borda.default_color = Color(1, 0.85, 0.8)
+	m.add_child(borda)
+	var n := maxi(1, int(round(w * 2.0 / 260.0)))
+	for i in n:
+		var sx := -w + (i + 0.5) * (w * 2.0 / n)
+		var pts := PackedVector2Array([Vector2(sx - 85, -300), Vector2(sx + 85, -300), Vector2(sx, -110)])
+		var contorno := Polygon2D.new()
+		contorno.polygon = PackedVector2Array([Vector2(sx - 105, -312), Vector2(sx + 105, -312), Vector2(sx, -92)])
+		contorno.color = Color(1, 0.85, 0.8)
+		m.add_child(contorno)
+		var seta := Polygon2D.new()
+		seta.polygon = pts
+		seta.color = verm
+		m.add_child(seta)
+	return m
 
 func _celula(pai: Node2D, canto: Vector2, cor: Color) -> void:
 	var r := CEL * 0.92
@@ -228,9 +258,9 @@ func _passo_peca(q: Dictionary, dt: float) -> void:
 	if q["caindo"]:
 		var sombra: Polygon2D = q["sombra"]
 		if q["t"] < 0.8:                                # aviso: sombra piscando
-			sombra.color.a = 0.6 if fmod(q["t"], 0.16) < 0.1 else 0.25
+			sombra.modulate.a = 1.0 if fmod(q["t"], 0.16) < 0.1 else 0.7
 			return
-		sombra.color.a = 0.55
+		sombra.modulate.a = 1.0
 		q["vy"] = float(q["vy"]) + 9000.0 * dt
 		no.position.y += float(q["vy"]) * dt
 		_acerta(q)
