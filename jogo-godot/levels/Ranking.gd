@@ -1,6 +1,7 @@
 extends Control
 ## Ranking público: melhores tempos de cada fase (só vitória sozinho, do começo) e quem
-## tem mais tempo de jogo. Do lado, a conta: criar com apelido + senha, entrar ou sair.
+## tem mais tempo de jogo. Do lado, a conta: criar (usuário + senha + nick), entrar,
+## trocar o nick ou sair.
 
 const ROXO := Color(0.6, 0.38, 1.0)
 const ROXO_ESCURO := Color(0.09, 0.05, 0.18, 0.86)
@@ -174,10 +175,10 @@ func _carregar() -> void:
 	for i in lista.size():
 		var d: Dictionary = lista[i]
 		var valor := ("%.1f s" % float(d.get("tempo", 0.0))) if modo == "tempos" else _horas(int(d.get("tempo_jogo", 0)))
-		linhas.add_child(_linha(i, str(d.get("apelido", "?")), valor, str(d.get("personagem", ""))))
+		linhas.add_child(_linha(i, str(d.get("apelido", "?")), valor, str(d.get("personagem", "")), str(d.get("user_id", ""))))
 
-func _linha(i: int, ap: String, valor: String, pers: String) -> Control:
-	var eu := Conta.logado() and ap.to_lower() == Conta.apelido.to_lower()
+func _linha(i: int, ap: String, valor: String, pers: String, uid: String) -> Control:
+	var eu := Conta.logado() and (uid == Conta.user_id if uid != "" else ap.to_lower() == Conta.nick.to_lower())
 	var p := Panel.new()
 	p.mouse_filter = Control.MOUSE_FILTER_IGNORE         # deixa o dedo rolar a lista
 	p.custom_minimum_size = Vector2(0, 58)
@@ -223,8 +224,9 @@ func _horas(s: int) -> String:
 	return "%d s" % s
 
 # ---------- conta ----------
-var _campo_apelido: LineEdit
+var _campo_usuario: LineEdit
 var _campo_senha: LineEdit
+var _campo_nick: LineEdit
 var _status: Label
 var _ocupado := false
 
@@ -235,20 +237,33 @@ func _montar_conta() -> void:
 	t.horizontal_alignment = HORIZONTAL_ALIGNMENT_LEFT
 	conta_vbox.add_child(t)
 	if Conta.logado():
-		var nome := _rotulo(Conta.apelido, 48, 12, Color.WHITE)
+		var nome := _rotulo(Conta.nick, 48, 12, Color.WHITE)
 		nome.horizontal_alignment = HORIZONTAL_ALIGNMENT_LEFT
 		nome.clip_text = true
 		conta_vbox.add_child(nome)
+		conta_vbox.add_child(_texto("usuário pra entrar: " + Conta.usuario))
 		conta_vbox.add_child(_texto("Seus recordes e o seu tempo de jogo entram no ranking sozinhos. Só conta vitória jogando sozinho, do começo da fase."))
+		var linha := HBoxContainer.new()
+		linha.add_theme_constant_override("separation", 12)
+		conta_vbox.add_child(linha)
+		_campo_nick = _campo("NOVO NICK", false, "Novo nick (3 a 16 letras):", 16)
+		_campo_nick.reparent(linha)
+		_campo_nick.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		var b_nick := _botao("TROCAR NICK", OURO, _trocar_nick)
+		b_nick.reparent(linha)
+		b_nick.custom_minimum_size = Vector2(200, 64)
+		_status = _texto("")
+		conta_vbox.add_child(_status)
 		var b := _botao("SAIR DA CONTA", Color(1, 0.45, 0.4), func() -> void:
 			Audio.tocar("clique")
 			await Conta.sair())
 		b.reparent(conta_vbox)
 		b.custom_minimum_size = Vector2(0, 62)
 		return
-	conta_vbox.add_child(_texto("Cria uma conta pra aparecer no ranking. Só precisa de apelido e senha."))
-	_campo_apelido = _campo("APELIDO", false)
-	_campo_senha = _campo("SENHA", true)
+	conta_vbox.add_child(_texto("Cria a conta pra entrar no ranking. No ranking aparece o seu nick, não o usuário."))
+	_campo_usuario = _campo("USUÁRIO (pra entrar)", false, "Usuário pra entrar (3 a 20 letras ou números):", 20)
+	_campo_senha = _campo("SENHA", true, "Senha (mínimo 6):", 64)
+	_campo_nick = _campo("NICK (aparece no ranking)", false, "Nick que aparece no ranking (3 a 16 letras):", 16)
 	var botoes := HBoxContainer.new()
 	botoes.add_theme_constant_override("separation", 12)
 	conta_vbox.add_child(botoes)
@@ -258,7 +273,7 @@ func _montar_conta() -> void:
 		b.reparent(botoes)
 		b.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 		b.custom_minimum_size = Vector2(0, 62)
-	_status = _texto("Se esquecer a senha não tem como recuperar, então anota.")
+	_status = _texto("Pra entrar basta usuário e senha. Senha esquecida não tem volta, então anota.")
 	conta_vbox.add_child(_status)
 
 func _enviar(criar: bool) -> void:
@@ -266,30 +281,45 @@ func _enviar(criar: bool) -> void:
 		return
 	Audio.tocar("clique")
 	if not _ativo:
-		_status.text = "O ranking ainda não foi ativado no servidor. Tenta mais tarde."
-		_status.add_theme_color_override("font_color", Color(1, 0.5, 0.45))
+		_aviso("O ranking ainda não foi ativado no servidor. Tenta mais tarde.", true)
 		return
 	_ocupado = true
-	_status.text = "Criando a conta..." if criar else "Entrando..."
-	_status.add_theme_color_override("font_color", Color(0.9, 0.85, 1.0))
+	_aviso("Criando a conta..." if criar else "Entrando...", false)
 	var erro: String
 	if criar:
-		erro = await Conta.criar(_campo_apelido.text, _campo_senha.text)
+		erro = await Conta.criar(_campo_usuario.text, _campo_senha.text, _campo_nick.text)
 	else:
-		erro = await Conta.entrar(_campo_apelido.text, _campo_senha.text)
+		erro = await Conta.entrar(_campo_usuario.text, _campo_senha.text)
 	_ocupado = false
-	if erro != "" and is_instance_valid(_status):
-		_status.text = erro
-		_status.add_theme_color_override("font_color", Color(1, 0.5, 0.45))
-	elif erro == "":
+	if erro != "":
+		_aviso(erro, true)
+	else:
 		Audio.tocar("confirma")
 
-func _campo(dica: String, senha: bool) -> LineEdit:
+func _trocar_nick() -> void:
+	if _ocupado:
+		return
+	Audio.tocar("clique")
+	_ocupado = true
+	_aviso("Trocando...", false)
+	var erro: String = await Conta.trocar_nick(_campo_nick.text)
+	_ocupado = false
+	if erro != "":
+		_aviso(erro, true)
+	else:
+		Audio.tocar("confirma")
+
+func _aviso(t: String, ruim: bool) -> void:
+	if is_instance_valid(_status):
+		_status.text = t
+		_status.add_theme_color_override("font_color", Color(1, 0.5, 0.45) if ruim else Color(0.9, 0.85, 1.0))
+
+func _campo(dica: String, senha: bool, pergunta: String, maximo: int) -> LineEdit:
 	var c := LineEdit.new()
 	c.placeholder_text = dica
 	c.secret = senha
-	c.max_length = 16 if not senha else 64
-	c.add_theme_font_size_override("font_size", 30)
+	c.max_length = maximo
+	c.add_theme_font_size_override("font_size", 28)
 	c.custom_minimum_size = Vector2(0, 64)
 	var st := StyleBoxFlat.new()
 	st.bg_color = Color(0, 0, 0, 0.45)
@@ -303,7 +333,7 @@ func _campo(dica: String, senha: bool) -> LineEdit:
 	c.gui_input.connect(func(ev: InputEvent) -> void:      # celular: abre o teclado do navegador
 		if (OS.has_feature("web_android") or OS.has_feature("web_ios")) \
 				and ((ev is InputEventMouseButton and ev.pressed) or (ev is InputEventScreenTouch and ev.pressed)):
-			var r = JavaScriptBridge.eval("(window.prompt(%s, '') || '')" % JSON.stringify(("Senha (mínimo 6):" if senha else "Apelido (3 a 16 letras):")), true)
+			var r = JavaScriptBridge.eval("(window.prompt(%s, '') || '')" % JSON.stringify(pergunta), true)
 			var t := str(r).strip_edges()
 			if t != "":
 				c.text = t.left(c.max_length)

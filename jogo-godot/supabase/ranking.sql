@@ -1,4 +1,4 @@
--- Bicho Ehn: contas (apelido + senha), ranking dos melhores tempos e de tempo de jogo.
+-- Bicho Ehn: contas (usuário + senha, com nick público), ranking dos melhores tempos e de tempo de jogo.
 -- Rodar UMA vez no Supabase: SQL Editor > New query > colar tudo > Run.
 -- Pode rodar de novo sem problema (não apaga nada).
 
@@ -113,17 +113,38 @@ begin
   return v_soma;
 end $$;
 
+-- trocar o nick (o que aparece no ranking); o usuário de entrar continua o mesmo
+create or replace function public.bicho_trocar_apelido(p_apelido text)
+returns text language plpgsql security definer set search_path = '' as $$
+declare
+  v_uid uuid := auth.uid();
+  v_apelido text := trim(coalesce(p_apelido, ''));
+begin
+  if v_uid is null then
+    return 'sem_conta';
+  end if;
+  if char_length(v_apelido) not between 3 and 16 then
+    return 'tamanho';
+  end if;
+  update public.bicho_perfis set apelido = v_apelido where id = v_uid;
+  return 'ok';
+exception when unique_violation then
+  return 'existe';
+end $$;
+
 revoke all on function public.bicho_novo_perfil() from public, anon, authenticated;
 revoke all on function public.bicho_registrar_recorde(integer, real, text) from public, anon;
 revoke all on function public.bicho_somar_tempo(integer, text) from public, anon;
 grant execute on function public.bicho_registrar_recorde(integer, real, text) to authenticated;
 grant execute on function public.bicho_somar_tempo(integer, text) to authenticated;
+revoke all on function public.bicho_trocar_apelido(text) from public, anon;
+grant execute on function public.bicho_trocar_apelido(text) to authenticated;
 
 -- o que o jogo lê pra montar o ranking
 create or replace view public.bicho_rank_tempos with (security_invoker = true) as
-  select r.fase, p.apelido, r.tempo, r.personagem, r.quando
+  select r.fase, p.apelido, r.tempo, r.personagem, r.quando, r.user_id
   from public.bicho_recordes r join public.bicho_perfis p on p.id = r.user_id;
 create or replace view public.bicho_rank_jogo with (security_invoker = true) as
-  select p.apelido, p.tempo_jogo, p.personagem
+  select p.apelido, p.tempo_jogo, p.personagem, p.id as user_id
   from public.bicho_perfis p where p.tempo_jogo > 0;
 grant select on public.bicho_rank_tempos, public.bicho_rank_jogo to anon, authenticated;
