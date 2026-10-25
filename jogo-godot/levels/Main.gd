@@ -47,7 +47,7 @@ func _ready() -> void:
 			Game.fase = int(a.substr(2))
 	Engine.time_scale = Game.RITMO           # física a 180 Hz x 3 = mesmo passo de 1/60 s de jogo
 	RenderingServer.set_default_clear_color(Color(0.33, 0.55, 0.93))
-	tema = ["campo", "obra", "montanha", "lab", "boss", "mercado", "escola"][clampi(Game.fase, 1, 7) - 1]
+	tema = ["campo", "obra", "montanha", "lab", "boss", "mercado", "escola", "colorido"][clampi(Game.fase, 1, 8) - 1]
 	_construir_fundo("hw" if tema == "campo" else tema)
 	_mat = PhysicsMaterial.new()
 	_mat.friction = 1.0
@@ -112,6 +112,8 @@ func _pos_jogador() -> void:
 		$HUD.visible = false
 	if Game.fase == 7:
 		_inicio_7.call_deferred()
+	if Game.fase == 8:
+		_inicio_8.call_deferred()
 	if "autoteste" in OS.get_cmdline_user_args():
 		_rodar_teste()
 	elif "screenshot" in OS.get_cmdline_user_args():
@@ -190,6 +192,8 @@ func _physics_process(delta: float) -> void:
 		_atualizar_mercado(delta)
 	if Game.fase == 7:
 		_atualizar_escola(delta)
+	if Game.fase == 8 and geresch:
+		geresch.atualizar(delta)
 	if boss:
 		boss.atualizar(delta)
 		_rodada_boss(delta)
@@ -211,6 +215,7 @@ func _construir_chao() -> void:
 		5: _fase_5()
 		6: _fase_6()
 		7: _fase_7()
+		8: _fase_8()
 		_: _fase_1()
 
 ## marcos comuns: zona de morte, checkpoints (lista de Vector2: x, chão) e chegada
@@ -1450,8 +1455,8 @@ func _construir_fundo(tema: String) -> void:
 	var pb := ParallaxBackground.new()
 	add_child(pb)
 	var grad := Gradient.new()
-	grad.set_color(0, {"mercado": Color(0.9, 0.85, 0.75), "boss": Color(0.01, 0.01, 0.02), "obra": Color(0.36, 0.52, 0.78), "montanha": Color(0.2, 0.38, 0.78)}.get(tema, Color(0.27, 0.47, 0.92)))
-	grad.set_color(1, {"mercado": Color(0.95, 0.9, 0.8), "boss": Color(0.05, 0.03, 0.07), "lab": Color(0.6, 0.65, 0.7), "campo": Color(0.86, 0.93, 0.98), "obra": Color(0.95, 0.85, 0.72), "montanha": Color(0.78, 0.88, 0.98)}.get(tema, Color(0.62, 0.78, 0.98)))
+	grad.set_color(0, {"colorido": Color(0.36, 0.18, 0.6), "mercado": Color(0.9, 0.85, 0.75), "boss": Color(0.01, 0.01, 0.02), "obra": Color(0.36, 0.52, 0.78), "montanha": Color(0.2, 0.38, 0.78)}.get(tema, Color(0.27, 0.47, 0.92)))
+	grad.set_color(1, {"colorido": Color(0.15, 0.5, 0.82), "mercado": Color(0.95, 0.9, 0.8), "boss": Color(0.05, 0.03, 0.07), "lab": Color(0.6, 0.65, 0.7), "campo": Color(0.86, 0.93, 0.98), "obra": Color(0.95, 0.85, 0.72), "montanha": Color(0.78, 0.88, 0.98)}.get(tema, Color(0.62, 0.78, 0.98)))
 	var gt := GradientTexture2D.new()
 	gt.gradient = grad
 	gt.fill_from = Vector2(0, 0)
@@ -1469,6 +1474,8 @@ func _construir_fundo(tema: String) -> void:
 		camadas = []
 	if tema == "escola":
 		camadas = [["nuvem", 0.12, -1300.0, 4.8]]
+	if tema == "colorido":
+		camadas = []
 	if tema in ["campo", "obra", "montanha", "hw"]:
 		camadas = [["nuvem", 0.1, -1500.0, 5.5], ["arte/fundo_%s_longe" % tema, 0.18, 380.0, 3.4],
 			["arte/fundo_%s_meio" % tema, 0.32, 700.0, 3.2], ["arte/fundo_%s_perto" % tema, 0.5, 1000.0, 3.0]]
@@ -2597,3 +2604,171 @@ func _recomecar(ids: Array) -> void:
 	Game.online_n = clampi(ids.size(), 1, Online.MAX_JOGADORES)
 	Game.checkpoint_x = -1.0
 	get_tree().change_scene_to_file("res://levels/Main.tscn")
+
+# ---------- FASE 8: Block Blast (boss: Geresch) ----------
+## fase colorida: blocos de Block Blast como obstáculo (degraus, pontes de peças sobre
+## espinhos), espinhos e minas. No fim toca o vídeo do Geresch levantando da cadeira
+## com a batida da música sincronizada, salva e começa a luta.
+const ARENA8_X := 200000.0
+const ARENA8_LARG := 10000.0
+const MUSICA8_LOOP := 15.28          # onde começa a parte forte (loop da luta)
+const VIDEO8_LEVANTA := 12.0         # segundo do vídeo em que ele levanta
+var geresch: Geresch
+var _cena8 := false
+const CORES8 := [Color(1.0, 0.6, 0.15), Color(0.95, 0.3, 0.42), Color(0.3, 0.82, 0.45), Color(0.18, 0.8, 0.68),
+	Color(0.25, 0.65, 0.98), Color(0.55, 0.45, 0.98), Color(1.0, 0.82, 0.2)]
+
+func _fase_8() -> void:
+	var y := CHAO_Y
+	pecas.cor_chao = Color(0.22, 0.16, 0.4)
+	_parede_arena(-2700.0, y)
+	var p := _t_plano(Vector2(-2600, y), 3900, false)
+	pecas.placa(Vector2(-900, y), "LARGADA")
+	p = _degraus8(p)
+	p = _t_plano(p, 600, false)
+	p = _ponte8(p, 3)
+	p = _t_plano(p, 600, false)
+	p = _t_minas(p)
+	p = _espinhos8(p)
+	p = _degraus8(p)
+	p = _t_plano(p, 500, false)
+	p = _ponte8(p, 4)
+	p = _t_plano(p, 600, false)
+	p = _t_tnt(p)
+	p = _espinhos8(p)
+	p = _t_plano(p, 2500, false)
+	_fundo8(-6000.0, p.x + 3000.0, y)
+	var fim := _area(Vector2(p.x - 800.0, y - 700), Vector2(200, 1600))
+	fim.body_entered.connect(func(b: Node2D) -> void:
+		if b.is_in_group("veiculo") or b.is_in_group("piloto"): _cutscene8.call_deferred())
+	pecas.poligono(Pecas.retangulo(Vector2(p.x - 800.0, y - 1200.0), Vector2(60, 2400)), Color(1, 1, 1, 0.25), -2)
+	# arena da luta (chão reto colorido, paredes nas pontas)
+	pecas.terreno(PackedVector2Array([Vector2(ARENA8_X - 3000.0, y), Vector2(ARENA8_X + ARENA8_LARG + 3000.0, y)]), y + 2600.0, false)
+	_parede_arena(ARENA8_X, y)
+	_parede_arena(ARENA8_X + ARENA8_LARG, y)
+	_fundo8(ARENA8_X - 3000.0, ARENA8_X + ARENA8_LARG + 3000.0, y)
+	geresch = Geresch.new()
+	add_child(geresch)
+	geresch.montar(self, ARENA8_X, ARENA8_X + ARENA8_LARG, y)
+	geresch.derrotado.connect(func() -> void:
+		_meta_pos = player.foco().global_position
+		_fim(true, "venceu"))
+	_marcos([], Vector2(ARENA8_X + ARENA8_LARG, y), y + 3000.0, false)
+
+## bloco de Block Blast sólido: w x h células (base em `chao`, x = canto esquerdo)
+func _bloco8(x: float, chao: float, w: int, h: int, cel := 240.0) -> void:
+	var sb := StaticBody2D.new()
+	sb.collision_layer = 0b01
+	var cs := CollisionShape2D.new()
+	var r := RectangleShape2D.new()
+	r.size = Vector2(w * cel, h * cel)
+	cs.shape = r
+	sb.add_child(cs)
+	sb.position = Vector2(x + w * cel / 2.0, chao - h * cel / 2.0)
+	var cor: Color = CORES8[_sorteio.randi() % CORES8.size()]
+	for i in w:
+		for j in h:
+			_celula8(sb, Vector2(-w * cel / 2.0 + i * cel, -h * cel / 2.0 + j * cel), cel, cor)
+	add_child(sb)
+
+func _celula8(pai: Node, canto: Vector2, cel: float, cor: Color, z := 1) -> void:
+	var r := cel * 0.94
+	var o := canto + Vector2(cel * 0.03, cel * 0.03)
+	pecas.poligono(PackedVector2Array([o, o + Vector2(r, 0), o + Vector2(r, r), o + Vector2(0, r)]), cor.darkened(0.22), z, null, 1.0, pai)
+	pecas.poligono(PackedVector2Array([o, o + Vector2(r, 0), o + Vector2(r, r * 0.86), o + Vector2(0, r * 0.86)]), cor, z, null, 1.0, pai)
+	pecas.poligono(PackedVector2Array([o + Vector2(r * 0.18, r * 0.1), o + Vector2(r * 0.82, r * 0.1), o + Vector2(r * 0.82, r * 0.2), o + Vector2(r * 0.18, r * 0.2)]), Color(1, 1, 1, 0.5), z, null, 1.0, pai)
+
+## degraus de blocos: rampa, sobe 1 bloco, anda por cima, desce em rampa
+func _degraus8(p: Vector2) -> Vector2:
+	_t_plano(p, 4200, false)
+	pecas.rampa(p.x + 300, p.x + 1000, p.y, 240)
+	_bloco8(p.x + 1000, p.y, 4, 1)
+	pecas.rampa(p.x + 1300, p.x + 1960, p.y - 240, 240)     # rampa em cima do 1º bloco até o 2º
+	_bloco8(p.x + 1960, p.y, 3, 2)
+	var desce := PackedVector2Array([Vector2(p.x + 2680, p.y - 460), Vector2(p.x + 3500, p.y)])
+	pecas.terreno(PackedVector2Array([desce[0], desce[1]]), p.y + 10.0, false)
+	return p + Vector2(4200, 0)
+
+## ponte de peças sobre fosso de espinhos (peças flutuando com pequenos vãos)
+func _ponte8(p: Vector2, n: int) -> Vector2:
+	pecas.rampa(p.x - 700, p.x - 100, p.y, 200)
+	var comp := 300.0 + n * 960.0
+	_fosso(p.x, p.x + comp, p.y)
+	for k in n:                                       # vão de 80 entre as peças: dá a sensação de ponte sem travar roda
+		_bloco8(p.x + 150.0 + k * 960.0, p.y + 120.0, 4, 1, 220.0)
+	return _t_plano(p + Vector2(comp, 0), 400, false)
+
+## espinhos com rampinha de pulo antes (dá pra passar com todos)
+func _espinhos8(p: Vector2) -> Vector2:
+	_t_plano(p, 2600, false)
+	pecas.rampa(p.x + 400, p.x + 1000, p.y, 230)
+	pecas.espinhos(p.x + 1060, p.x + 1380, p.y, 150.0)
+	pecas.placa_perigo(p + Vector2(200, 0))
+	return p + Vector2(2600, 0)
+
+## fundo colorido: blocos de Block Blast flutuando em várias distâncias
+func _fundo8(xa: float, xb: float, y: float) -> void:
+	var x := xa
+	while x < xb:
+		var cor: Color = CORES8[_sorteio.randi() % CORES8.size()]
+		var cel := _sorteio.randf_range(140.0, 260.0)
+		var forma: Array = Geresch.FORMAS[_sorteio.randi() % Geresch.FORMAS.size()]
+		var base := Vector2(x, y - _sorteio.randf_range(1200.0, 3600.0))
+		for c in forma:
+			_celula8(self, base + Vector2(int(c[0]), int(c[1])) * cel, cel, Color(cor, 0.55), -8)
+		x += _sorteio.randf_range(900.0, 1700.0)
+
+## fim da parte normal: vídeo do Geresch levantando, música sincronizada, salva e luta
+func _cutscene8() -> void:
+	if _cena8 or not ativo:
+		return
+	_cena8 = true
+	_queda7 = true                                # ninguém morre durante o vídeo
+	var cena := CanvasLayer.new()
+	cena.layer = 80
+	cena.process_mode = Node.PROCESS_MODE_ALWAYS
+	add_child(cena)
+	var preto := ColorRect.new()
+	preto.color = Color.BLACK
+	preto.set_anchors_preset(Control.PRESET_FULL_RECT)
+	cena.add_child(preto)
+	var video := VideoStreamPlayer.new()
+	video.stream = load("res://assets/geresch/intro.ogv")
+	video.expand = true
+	video.set_anchors_preset(Control.PRESET_FULL_RECT)
+	video.process_mode = Node.PROCESS_MODE_ALWAYS
+	video.volume_db = -80.0
+	cena.add_child(video)
+	get_tree().paused = true
+	Engine.time_scale = 1.0                       # o vídeo anda em tempo normal
+	Audio.parar_chefe()
+	Audio.musica_chefe("geresch", MUSICA8_LOOP - VIDEO8_LEVANTA, MUSICA8_LOOP)   # batida cai quando ele levanta
+	video.play()
+	var ir := func() -> void:
+		get_tree().paused = false
+		Game.checkpoint_x = ARENA8_X + 1600.0
+		Game.checkpoint_chao = CHAO_Y
+		Game.queda_fade = true
+		get_tree().reload_current_scene.call_deferred()
+	video.finished.connect(ir, CONNECT_ONE_SHOT)
+
+## começo da fase 8: no checkpoint da arena começa a luta (música já tocando)
+func _inicio_8() -> void:
+	if Game.checkpoint_x < ARENA8_X - 1000.0:
+		return
+	do_inicio = true
+	Audio.musica_chefe("geresch", MUSICA8_LOOP, MUSICA8_LOOP)
+	geresch.comecar()
+	if Game.queda_fade:
+		Game.queda_fade = false
+		var cena := CanvasLayer.new()
+		cena.layer = 80
+		add_child(cena)
+		var preto := ColorRect.new()
+		preto.color = Color.BLACK
+		preto.set_anchors_preset(Control.PRESET_FULL_RECT)
+		preto.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		cena.add_child(preto)
+		var tw := cena.create_tween()
+		tw.tween_property(preto, "color:a", 0.0, 0.5)
+		tw.tween_callback(cena.queue_free)

@@ -64,7 +64,7 @@ func musica_menu(ligada: bool) -> void:
 
 ## música de chefe (pece, cepe, vendedor): loop até a fase acabar
 var _chefe: AudioStreamPlayer
-func musica_chefe(nome: String) -> void:
+func musica_chefe(nome: String, inicio := 0.0, loop_desde := 0.0) -> void:
 	if _chefe == null:
 		_chefe = AudioStreamPlayer.new()
 		_chefe.process_mode = Node.PROCESS_MODE_ALWAYS     # segue tocando na cutscene (jogo pausado)
@@ -74,8 +74,9 @@ func musica_chefe(nome: String) -> void:
 		return                                        # já está tocando: continua (ex.: queda -> luta)
 	var st := load("res://assets/audio/musica/%s.ogg" % nome) as AudioStreamOggVorbis
 	st.loop = true
+	st.loop_offset = loop_desde                       # repete a partir daqui (ex.: parte forte)
 	_chefe.stream = st
-	_chefe.play()
+	_chefe.play(inicio)
 
 ## abaixa a música do chefe por um instante (grito do Péce por cima)
 func abaixar_chefe(segundos: float) -> void:
