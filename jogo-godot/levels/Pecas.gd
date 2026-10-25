@@ -27,6 +27,7 @@ var chao_tex := "terra"          # material do terreno da fase (terra, concreto,
 var topo_tex := "grama"          # faixa do topo (grama, asfalto, grama_alpina)
 var contorno_chao := CONTORNO_TERRA
 var pistoes: Array = []
+var borda_neon := Color(0, 0, 0, 0)  # fase 8: linha neon brilhando em cima do chão
 var cor_chao := VINHO            # cor do bloco de chão (mercado/laboratório usam piso cinza)
 var y_max := 0.0                 # fundo mais baixo construído (para a zona de morte)
 var ao_explodir: Callable        # (pos, raio) -> a fase reage (jogador se machuca, plataforma quebra)
@@ -133,7 +134,18 @@ func terreno(bruto: PackedVector2Array, fundo_y: float, grama := true) -> Packed
 	sb.add_child(col)
 	raiz.add_child(sb)
 	poligono(pts, cor_chao, 0, null, 1.0, sb)
-	if grama:
+	if borda_neon.a > 0.0:
+		var em := PackedVector2Array()
+		for q in sup:
+			em.append(q + Vector2(0, 14))
+		var halo := linha(em, 90.0, Color(borda_neon, 0.18), 3, sb)
+		halo.joint_mode = Line2D.LINE_JOINT_ROUND
+		linha(em, 30.0, borda_neon, 3, sb)
+		var miolo := PackedVector2Array()
+		for q in sup:
+			miolo.append(q + Vector2(0, 8))
+		linha(miolo, 9.0, Color(1, 0.9, 1, 0.9), 3, sb)
+	if grama and borda_neon.a <= 0.0:
 		var topo := PackedVector2Array()
 		for q in sup:
 			topo.append(q + Vector2(0, 32))

@@ -33,6 +33,7 @@ var _prox := 1.0
 var _queda: Array = []
 var _camada: CanvasLayer
 var _img: Sprite2D
+var _halo: Sprite2D
 var _estagio := -1
 var _barra: ColorRect
 var _barra_fundo: ColorRect
@@ -61,6 +62,21 @@ func comecar() -> void:
 	_camada = CanvasLayer.new()
 	_camada.layer = -50
 	fase.add_child(_camada)
+	_halo = Sprite2D.new()                               # luz do celular atrás dele
+	var g := Gradient.new()
+	g.set_color(0, Color(1.0, 0.45, 0.85, 0.55))
+	g.add_point(0.45, Color(0.5, 0.35, 1.0, 0.22))
+	g.set_color(g.get_point_count() - 1, Color(0.3, 0.3, 1.0, 0.0))
+	var gt := GradientTexture2D.new()
+	gt.gradient = g
+	gt.fill = GradientTexture2D.FILL_RADIAL
+	gt.fill_from = Vector2(0.5, 0.5)
+	gt.fill_to = Vector2(1.0, 0.5)
+	_halo.texture = gt
+	var add := CanvasItemMaterial.new()
+	add.blend_mode = CanvasItemMaterial.BLEND_MODE_ADD
+	_halo.material = add
+	_camada.add_child(_halo)
 	_img = Sprite2D.new()
 	_camada.add_child(_img)
 	_trocar_imagem()
@@ -96,10 +112,14 @@ func atualizar(delta: float) -> void:
 	var dt := _real(delta)
 	_t += dt
 	var v := fase.get_viewport().get_visible_rect().size
-	var esc := v.y * 0.78 / 1560.0
+	var esc := v.y * 0.7 / 1560.0
 	var treme := (2.0 + 6.0 * _estagio) if _estagio >= 2 else 0.0
-	_img.position = Vector2(v.x * 0.74, v.y * 0.5 + sin(_t * 1.4) * 6.0) + Vector2(randf_range(-1, 1), randf_range(-1, 1)) * treme
+	_img.position = Vector2(v.x * 0.74, v.y * 0.57 + sin(_t * 1.4) * 6.0) + Vector2(randf_range(-1, 1), randf_range(-1, 1)) * treme
 	_img.scale = Vector2.ONE * esc
+	_halo.position = _img.position + Vector2(0, -v.y * 0.12)
+	var pulso := 1.0 + 0.06 * sin(_t * 2.2) + 0.1 * float(_estagio)
+	_halo.scale = Vector2.ONE * v.y * 1.25 / 64.0 * pulso
+	_halo.modulate = Color(1, 1, 1, 0.9) if _estagio < 2 else Color(1, 0.55, 0.55, 1.0)
 	if morto:
 		_fim_t += dt
 		_img.modulate.a = maxf(0.0, 1.0 - _fim_t / 1.5)
@@ -229,12 +249,18 @@ func _abrir_jogo() -> void:
 	fase.add_child(cena)
 	var bb: Control = load("res://levels/BlockBlast.gd").new()
 	bb.duracao = JOGO[_estagio]
+	bb.avatar = load("res://assets/geresch/e%d.png" % _estagio)
+	bb.estagio = _estagio
 	bb.modulate.a = 0.0
 	cena.add_child(bb)
 	_jogo = bb
 	fase.get_tree().paused = true
-	var tw := bb.create_tween()
-	tw.tween_property(bb, "modulate:a", 1.0, 0.35)
+	var v := fase.get_viewport().get_visible_rect().size
+	bb.pivot_offset = v / 2.0                            # "entra no celular": cresce do meio
+	bb.scale = Vector2.ONE * 0.6
+	var tw := bb.create_tween().set_parallel()
+	tw.tween_property(bb, "modulate:a", 1.0, 0.3)
+	tw.tween_property(bb, "scale", Vector2.ONE, 0.45).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
 	bb.acabou.connect(func(d: int) -> void:
 		var tw2 := bb.create_tween()
 		tw2.tween_interval(0.6)

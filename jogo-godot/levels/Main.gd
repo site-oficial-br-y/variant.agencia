@@ -194,6 +194,8 @@ func _physics_process(delta: float) -> void:
 		_atualizar_escola(delta)
 	if Game.fase == 8 and geresch:
 		geresch.atualizar(delta)
+		if _palco8 and not _palco8.get("camera"):
+			_palco8.set("camera", camera)
 	if boss:
 		boss.atualizar(delta)
 		_rodada_boss(delta)
@@ -807,7 +809,13 @@ func _parede_arena(x: float, y: float) -> void:
 	cs.shape = r
 	cs.position = Vector2(0, -13000)
 	sb.add_child(cs)
-	pecas.poligono(Pecas.retangulo(Vector2.ZERO, Vector2(400, 4000)), Color(0.4, 0.42, 0.46), 3, null, 1.0, sb)
+	if Game.fase == 8:                                  # parede neon (combina com o palco)
+		pecas.poligono(Pecas.retangulo(Vector2.ZERO, Vector2(400, 4000)), Color(0.1, 0.07, 0.2), 3, null, 1.0, sb)
+		for dx in [-200.0, 200.0]:
+			pecas.linha(PackedVector2Array([Vector2(dx, -2000), Vector2(dx, 2000)]), 60.0, Color(1, 0.35, 0.8, 0.2), 3, sb)
+			pecas.linha(PackedVector2Array([Vector2(dx, -2000), Vector2(dx, 2000)]), 18.0, Color(1, 0.45, 0.85), 3, sb)
+	else:
+		pecas.poligono(Pecas.retangulo(Vector2.ZERO, Vector2(400, 4000)), Color(0.4, 0.42, 0.46), 3, null, 1.0, sb)
 	sb.position = Vector2(x, y - 2000.0)
 	add_child(sb)
 
@@ -2614,14 +2622,22 @@ const ARENA8_LARG := 10000.0
 const MUSICA8_LOOP := 15.28          # onde começa a parte forte (loop da luta)
 const VIDEO8_LEVANTA := 12.0         # segundo do vídeo em que ele levanta
 var geresch: Geresch
+var _palco8: Control
 var _cena8 := false
 const CORES8 := [Color(1.0, 0.6, 0.15), Color(0.95, 0.3, 0.42), Color(0.3, 0.82, 0.45), Color(0.18, 0.8, 0.68),
 	Color(0.25, 0.65, 0.98), Color(0.55, 0.45, 0.98), Color(1.0, 0.82, 0.2)]
 
 func _fase_8() -> void:
 	var y := CHAO_Y
-	pecas.cor_chao = Color(0.22, 0.16, 0.4)
+	pecas.cor_chao = Color(0.1, 0.07, 0.2)
+	pecas.borda_neon = Color(1.0, 0.35, 0.8)
 	_parede_arena(-2700.0, y)
+	var palco := CanvasLayer.new()                     # fundo vivo (holofotes, peças flutuando, faíscas)
+	palco.layer = -70
+	add_child(palco)
+	var pc: Control = load("res://levels/Palco8.gd").new()
+	palco.add_child(pc)
+	_palco8 = pc
 	var p := _t_plano(Vector2(-2600, y), 3900, false)
 	pecas.placa(Vector2(-900, y), "LARGADA")
 	p = _degraus8(p)
@@ -2637,7 +2653,6 @@ func _fase_8() -> void:
 	p = _t_tnt(p)
 	p = _espinhos8(p)
 	p = _t_plano(p, 2500, false)
-	_fundo8(-6000.0, p.x + 3000.0, y)
 	var fim := _area(Vector2(p.x - 800.0, y - 700), Vector2(200, 1600))
 	fim.body_entered.connect(func(b: Node2D) -> void:
 		if b.is_in_group("veiculo") or b.is_in_group("piloto"): _cutscene8.call_deferred())
@@ -2646,7 +2661,7 @@ func _fase_8() -> void:
 	pecas.terreno(PackedVector2Array([Vector2(ARENA8_X - 3000.0, y), Vector2(ARENA8_X + ARENA8_LARG + 3000.0, y)]), y + 2600.0, false)
 	_parede_arena(ARENA8_X, y)
 	_parede_arena(ARENA8_X + ARENA8_LARG, y)
-	_fundo8(ARENA8_X - 3000.0, ARENA8_X + ARENA8_LARG + 3000.0, y)
+	_chao_grade8(ARENA8_X, ARENA8_X + ARENA8_LARG, y)
 	geresch = Geresch.new()
 	add_child(geresch)
 	geresch.montar(self, ARENA8_X, ARENA8_X + ARENA8_LARG, y)
@@ -2705,6 +2720,20 @@ func _espinhos8(p: Vector2) -> Vector2:
 	pecas.espinhos(p.x + 1060, p.x + 1380, p.y, 150.0)
 	pecas.placa_perigo(p + Vector2(200, 0))
 	return p + Vector2(2600, 0)
+
+## chão da arena: grade neon em perspectiva (linhas abrindo pra frente)
+func _chao_grade8(xa: float, xb: float, y: float) -> void:
+	var cor := Color(0.95, 0.35, 0.85, 0.35)
+	var x := xa
+	while x <= xb:
+		pecas.linha(PackedVector2Array([Vector2(x, y + 20), Vector2(x + (x - (xa + xb) / 2.0) * 0.35, y + 1400)]), 10.0, cor, 1)
+		x += 500.0
+	var dy := 70.0
+	var yy := y + 90.0
+	while yy < y + 1400:
+		pecas.linha(PackedVector2Array([Vector2(xa - 600, yy), Vector2(xb + 600, yy)]), 8.0, Color(cor, cor.a * (1.0 - (yy - y) / 1600.0)), 1)
+		yy += dy
+		dy *= 1.35
 
 ## fundo colorido: blocos de Block Blast flutuando em várias distâncias
 func _fundo8(xa: float, xb: float, y: float) -> void:
