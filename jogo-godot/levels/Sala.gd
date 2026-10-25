@@ -64,6 +64,11 @@ func _ready() -> void:
 			campo.text = a.substr(5)
 			if "host" in OS.get_cmdline_user_args():
 				Online.entrar(campo.text, true)
+				if "auto" in OS.get_cmdline_user_args():      # teste: começa sozinho quando alguém entrar
+					while Online.jogadores.is_empty() or not Online.conectado:
+						await get_tree().create_timer(0.5).timeout
+					_comecar()
+					return
 			else:
 				_entrar()
 			_atualizar()

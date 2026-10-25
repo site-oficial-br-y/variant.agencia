@@ -798,7 +798,16 @@ func _fase_5() -> void:
 	add_child(boss)
 	boss.global_position = Vector2(1200, y - 690.0)
 	boss.montar(self, y)
+	if "matar_chefe" in OS.get_cmdline_user_args():      # teste: chefe cai sozinho em 4 s (quem criou a sala)
+		get_tree().create_timer(4.0 * Engine.time_scale).timeout.connect(func() -> void:
+			if Online.host or not Online.ativo:
+				boss.vida = 1
+				boss.segunda = true
+				boss.levar_choque())
 	boss.derrotado.connect(func() -> void:
+		if Online.ativo:                                  # online: o time todo vence junto, na mesma hora
+			_vitoria_online()
+			return
 		_mensagem("O PORTÃO ABRIU! CORRE!", Color(0.5, 1, 0.5))
 		var tw := _portao.create_tween()
 		tw.tween_property(_portao, "position:y", _portao.position.y - 3700.0, 1.2)
@@ -1565,6 +1574,7 @@ func _fim(ganhou: bool, motivo: String) -> void:
 	ativo = false
 	Audio.parar_chefe()
 	if ganhou:
+		_esconder_barras_chefe()
 		var novo := do_inicio and Game.registrar_vitoria(Game.fase, tempo)
 		aviso.text = "CHEGOU!\n%.1f s%s" % [tempo, "  NOVO RECORDE!" if novo else ""]
 		aviso.add_theme_color_override("font_color", Color(0.45, 1, 0.5))
@@ -2354,6 +2364,7 @@ func _process_online(delta: float) -> void:
 		if g["vivo"]:
 			vivos += 1
 	if _rotulo_online:
+		_rotulo_online.visible = not aviso.visible
 		_rotulo_online.text = "ONLINE · SALA %s · %d jogadores · %d vivos" % [Online.sala, Game.online_n, vivos + (0 if _morto_online else 1)]
 	if _renasce_t >= 0.0:
 		_renasce_t -= dt
@@ -2467,6 +2478,9 @@ func _online_msg(e: String, d: Dictionary, de: String) -> void:
 			if not Online.host and Online.id in (d.get("ids", []) as Array) and int(d.get("r", 0)) > Online.rodada:
 				Online.rodada = int(d.get("r", 0))
 				_recomecar(d.get("ids", []))
+		"vit":                                       # quem criou a sala derrotou o chefe: o time venceu
+			if not Online.host and int(d.get("r", 0)) == Online.rodada:
+				_vitoria_online()
 		"ch":                                        # choque confirmado: todo mundo aplica
 			if not Online.host:
 				var i := int(d.get("i", -1))
@@ -2539,14 +2553,47 @@ func _conferir_botao(b: Dictionary) -> void:
 		Online.enviar("ch", {"i": i})
 		_apertar(b, true)
 
-## fim online (time todo morreu): continuar com a equipe ou voltar pro lobby
+## online: chefe derrotado = todo mundo vence junto (quem criou a sala confirma pros outros)
+func _vitoria_online() -> void:
+	if Online.host:
+		for k in 4:
+			get_tree().create_timer((0.05 + k * 0.6) * Engine.time_scale, true).timeout.connect(func() -> void:
+				Online.enviar("vit", {"r": Online.rodada}))
+	if not ativo:
+		return
+	ativo = false
+	_renasce_t = -1.0
+	_morto_online = false
+	Audio.parar_chefe()
+	Audio.motor(false)
+	Audio.tocar("vitoria")
+	Game.registrar_vitoria(Game.fase, tempo)
+	Game.checkpoint_x = -1.0
+	aviso.text = "O TIME VENCEU!\n%.1f s" % tempo
+	aviso.add_theme_color_override("font_color", Color(0.45, 1, 0.5))
+	aviso.visible = true
+	if is_instance_valid(player):
+		pecas.festa(player.foco().global_position + Vector2(900, 0), player.foco().global_position)
+	print("[FASE] time venceu %.2f" % tempo)
+	_fim_online(true)
+	venceu.emit(tempo)
+
+## esconde barra de vida e nome do chefe (tela de fim fica limpa)
+func _esconder_barras_chefe() -> void:
+	for c in [boss, adriano, geresch]:
+		if is_instance_valid(c):
+			for n in [c._barra, c._barra_fundo, c._rotulo]:
+				if n:
+					(n as CanvasItem).visible = false
+
+## fim online (time todo morreu ou venceu): jogar de novo com a equipe ou voltar pro lobby
 var _recomecando := false
 var _querem_de_novo: Dictionary = {}
 var _painel_on: Control
 var _info_fim: Label
 var _b_denovo: Button
 
-func _fim_online() -> void:
+func _fim_online(ganhou := false) -> void:
 	if painel:
 		painel.visible = false
 	_painel_on = Control.new()
@@ -2557,12 +2604,11 @@ func _fim_online() -> void:
 	escuro.color = Color(0, 0, 0, 0.6)
 	escuro.set_anchors_preset(Control.PRESET_FULL_RECT)
 	_painel_on.add_child(escuro)
-	if is_instance_valid(boss):
-		for n in [boss._barra, boss._barra_fundo, boss._rotulo]:
-			if n:
-				(n as CanvasItem).visible = false
+	_esconder_barras_chefe()
+	if _rotulo_online:
+		_rotulo_online.visible = false
 	var v := get_viewport().get_visible_rect().size
-	_b_denovo = _botao_fim("CONTINUAR COM A EQUIPE", Vector2(v.x / 2.0 - 440, v.y * 0.55), Color(0.4, 1, 0.5))
+	_b_denovo = _botao_fim("JOGAR DE NOVO" if ganhou else "CONTINUAR COM A EQUIPE", Vector2(v.x / 2.0 - 440, v.y * 0.55), Color(0.4, 1, 0.5))
 	_b_denovo.pressed.connect(func() -> void:
 		Audio.tocar("confirma")
 		if Online.host:
@@ -2612,9 +2658,9 @@ func _atualizar_fim_online() -> void:
 		return
 	if Online.host:
 		var n := _querem_de_novo.size()
-		_info_fim.text = ("%d da equipe quer%s continuar. " % [n, "" if n == 1 else "em"] if n > 0 else "") + "CONTINUAR recomeça com todo mundo que ainda está na sala."
+		_info_fim.text = ("%d da equipe quer%s jogar de novo. " % [n, "" if n == 1 else "em"] if n > 0 else "") + "Recomeça com todo mundo que ainda está na sala."
 	elif not _b_denovo.disabled:
-		_info_fim.text = "Aperta CONTINUAR e espera quem criou a sala recomeçar."
+		_info_fim.text = "Aperta pra jogar de novo e espera quem criou a sala recomeçar."
 
 ## recomeça a luta online com essas pessoas (sem fechar a sala)
 func _recomecar(ids: Array) -> void:
