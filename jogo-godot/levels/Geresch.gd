@@ -106,6 +106,18 @@ func _trocar_imagem() -> void:
 	if e > 0 and _rotulo:
 		fase._mensagem(["", "O GERESCH TÁ FICANDO SÉRIO...", "O GERESCH TÁ BRAVO!", "O GERESCH TÁ FURIOSO!!!"][e], Color(1, 0.35, 0.35))
 
+## fase normal (antes da luta): peças caindo de tempo em tempo na frente de quem anda
+func chuva(delta: float, intervalo: float) -> void:
+	var dt := _real(delta)
+	for q in _queda.duplicate():
+		_passo_peca(q, dt)
+	if intervalo <= 0.0 or not fase.ativo:
+		return
+	_prox -= dt
+	if _prox <= 0.0:
+		_prox = intervalo * randf_range(0.8, 1.2)
+		_soltar()
+
 func atualizar(delta: float) -> void:
 	if not ativo:
 		return
@@ -168,22 +180,31 @@ func _soltar() -> void:
 		altura = maxi(altura, int(c[1]) + 1)
 	var vx: float = pl.chassi.linear_velocity.x if pl.montado else 0.0
 	var alvo := pl.foco().global_position.x + vx * Engine.time_scale * 0.5 + randf_range(-900, 900)
-	alvo = clampf(alvo, x0 + 400.0 + largura * CEL / 2.0, x1 - 400.0 - largura * CEL / 2.0)
+	if ativo:
+		alvo = clampf(alvo, x0 + 400.0 + largura * CEL / 2.0, x1 - 400.0 - largura * CEL / 2.0)
+	else:                                                # fase normal: cai na frente de quem vem
+		alvo = pl.foco().global_position.x + vx * Engine.time_scale * 0.45 + randf_range(200, 1400)
 	var cor: Color = CORES[randi() % CORES.size()]
 	var no := Node2D.new()
 	no.z_index = 6
 	for c in forma:
 		_celula(no, Vector2((int(c[0]) - largura / 2.0) * CEL, (int(c[1]) - altura) * CEL), cor)
-	no.position = Vector2(alvo, chao - 4500.0)
+	var solo := chao
+	if not ativo:                                        # fase normal: acha o chão de verdade embaixo
+		var r := fase.get_world_2d().direct_space_state.intersect_ray(PhysicsRayQueryParameters2D.create(Vector2(alvo, chao - 3000.0), Vector2(alvo, chao + 3000.0), 0b0001))
+		if r.is_empty():
+			return
+		solo = (r["position"] as Vector2).y
+	no.position = Vector2(alvo, solo - 4500.0)
 	fase.add_child(no)
 	var sombra := Polygon2D.new()
 	var w := largura * CEL / 2.0
 	sombra.polygon = PackedVector2Array([Vector2(-w, -20), Vector2(w, -20), Vector2(w, 10), Vector2(-w, 10)])
 	sombra.color = Color(cor, 0.0)
-	sombra.position = Vector2(alvo, chao)
+	sombra.position = Vector2(alvo, solo)
 	sombra.z_index = 4
 	fase.add_child(sombra)
-	_queda.append({"no": no, "sombra": sombra, "t": 0.0, "vy": 0.0, "w": w, "h": altura * CEL, "x": alvo, "caindo": true})
+	_queda.append({"no": no, "sombra": sombra, "t": 0.0, "vy": 0.0, "w": w, "h": altura * CEL, "x": alvo, "caindo": true, "solo": solo})
 
 func _celula(pai: Node2D, canto: Vector2, cor: Color) -> void:
 	var r := CEL * 0.92
@@ -213,13 +234,12 @@ func _passo_peca(q: Dictionary, dt: float) -> void:
 		q["vy"] = float(q["vy"]) + 9000.0 * dt
 		no.position.y += float(q["vy"]) * dt
 		_acerta(q)
-		if no.position.y >= chao:
-			no.position.y = chao
+		if no.position.y >= float(q["solo"]):
+			no.position.y = float(q["solo"])
 			q["caindo"] = false
 			q["t"] = 0.0
 			sombra.queue_free()
-			fase.pecas.poeira(Vector2(no.position.x, chao), 1.2)
-			Audio.tocar("caixa", 0.9)
+			fase.impacto8(Vector2(no.position.x, float(q["solo"])), float(q["w"]) / CEL)
 	elif q["t"] > 0.25:                                 # no chão: some (não fica no caminho)
 		no.modulate.a = maxf(0.0, 1.0 - (float(q["t"]) - 0.25) / 0.4)
 		if q["t"] > 0.65:

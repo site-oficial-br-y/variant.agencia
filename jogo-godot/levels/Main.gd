@@ -194,6 +194,10 @@ func _physics_process(delta: float) -> void:
 		_atualizar_escola(delta)
 	if Game.fase == 8 and geresch:
 		geresch.atualizar(delta)
+		_mover_esmagadores(delta)
+		if not geresch.ativo:                          # fase normal: peças caindo em você
+			var px := player.foco().global_position.x if is_instance_valid(player) and is_instance_valid(player.chassi) else 0.0
+			geresch.chuva(delta, 2.4 if px > 1500.0 and px < _chuva8_x1 and not _cena8 else 0.0)
 		if _palco8 and not _palco8.get("camera"):
 			_palco8.set("camera", camera)
 	if boss:
@@ -2623,6 +2627,8 @@ const MUSICA8_LOOP := 15.28          # onde começa a parte forte (loop da luta)
 const VIDEO8_LEVANTA := 12.0         # segundo do vídeo em que ele levanta
 var geresch: Geresch
 var _palco8: Control
+var _chuva8_x1 := 0.0
+var _esmagadores: Array = []
 var _cena8 := false
 const CORES8 := [Color(1.0, 0.6, 0.15), Color(0.95, 0.3, 0.42), Color(0.3, 0.82, 0.45), Color(0.18, 0.8, 0.68),
 	Color(0.25, 0.65, 0.98), Color(0.55, 0.45, 0.98), Color(1.0, 0.82, 0.2)]
@@ -2644,15 +2650,18 @@ func _fase_8() -> void:
 	p = _t_plano(p, 600, false)
 	p = _ponte8(p, 3)
 	p = _t_plano(p, 600, false)
+	p = _esmagadores8(p, 2)
 	p = _t_minas(p)
 	p = _espinhos8(p)
 	p = _degraus8(p)
-	p = _t_plano(p, 500, false)
+	p = _esmagadores8(p, 3)
 	p = _ponte8(p, 4)
 	p = _t_plano(p, 600, false)
 	p = _t_tnt(p)
+	p = _esmagadores8(p, 3)
 	p = _espinhos8(p)
 	p = _t_plano(p, 2500, false)
+	_chuva8_x1 = p.x - 3500.0
 	var fim := _area(Vector2(p.x - 800.0, y - 700), Vector2(200, 1600))
 	fim.body_entered.connect(func(b: Node2D) -> void:
 		if b.is_in_group("veiculo") or b.is_in_group("piloto"): _cutscene8.call_deferred())
@@ -2801,3 +2810,121 @@ func _inicio_8() -> void:
 		var tw := cena.create_tween()
 		tw.tween_property(preto, "color:a", 0.0, 0.5)
 		tw.tween_callback(cena.queue_free)
+
+## impacto de bloco caindo: tela treme, poeira dos dois lados, cubinhos voando e pancada
+func impacto8(onde: Vector2, forca: float) -> void:
+	var f := clampf(forca, 0.6, 3.0)
+	var perto := 1.0
+	if is_instance_valid(player) and is_instance_valid(player.chassi):
+		perto = clampf(1.0 - absf(player.chassi.global_position.x - onde.x) / 6000.0, 0.15, 1.0)
+	pecas.poeira(onde + Vector2(-200 * f, -10), 1.0 + 0.5 * f)
+	pecas.poeira(onde + Vector2(200 * f, -10), 1.0 + 0.5 * f)
+	var cub := CPUParticles2D.new()
+	cub.one_shot = true
+	cub.explosiveness = 1.0
+	cub.amount = int(10 + 6 * f)
+	cub.lifetime = 0.55 * Engine.time_scale
+	cub.direction = Vector2(0, -1)
+	cub.spread = 75.0
+	cub.initial_velocity_min = 900.0
+	cub.initial_velocity_max = 2400.0
+	cub.gravity = Vector2(0, 5000)
+	cub.scale_amount_min = 20.0
+	cub.scale_amount_max = 45.0
+	cub.angular_velocity_min = -500.0
+	cub.angular_velocity_max = 500.0
+	cub.color = CORES8[randi() % CORES8.size()]
+	cub.global_position = onde
+	cub.z_index = 7
+	add_child(cub)
+	cub.emitting = true
+	get_tree().create_timer(1.5 * Engine.time_scale).timeout.connect(cub.queue_free)
+	var base := Vector2(800, -150)
+	var tw := camera.create_tween()
+	for k in 6:
+		tw.tween_property(camera, "offset", base + Vector2(randf_range(-1, 1), randf_range(-1, 1)) * 90.0 * f * perto * (1.0 - k / 6.0), 0.035 * Engine.time_scale)
+	tw.tween_property(camera, "offset", base, 0.035 * Engine.time_scale)
+	Audio.tocar("impacto_forte", clampf(0.5 + 0.25 * f, 0.0, 1.0) * perto, 0.1)
+	Audio.tocar("caixa", 0.8 * perto)
+
+## esmagadores: blocos de Block Blast que sobem, tremem, despencam e sobem de novo
+func _esmagadores8(p: Vector2, n: int) -> Vector2:
+	var comp := 1000.0 + n * 2700.0                    # espaço entre eles cabe até o carrinho do Bicho
+	_t_plano(p, comp, false)
+	for k in n:
+		var x := p.x + 1300.0 + k * 2700.0
+		var cel := 230.0
+		var w := 3
+		var h := 3
+		var ab := AnimatableBody2D.new()
+		ab.sync_to_physics = false
+		ab.collision_layer = 0b01
+		var cs := CollisionShape2D.new()
+		var r := RectangleShape2D.new()
+		r.size = Vector2(w * cel, h * cel)
+		cs.shape = r
+		ab.add_child(cs)
+		var cor: Color = CORES8[(k + n) % CORES8.size()]
+		for i in w:
+			for j in h:
+				_celula8(ab, Vector2(-w * cel / 2.0 + i * cel, -h * cel / 2.0 + j * cel), cel, cor, 3)
+		for lado in [-1.0, 1.0]:                          # carinha brava: olho e sobrancelha
+			var cxo: float = lado * 150.0
+			pecas.poligono(Pecas.retangulo(Vector2(cxo, 20), Vector2(70, 90)), Color(0.08, 0.04, 0.12), 4, null, 1.0, ab)
+			pecas.poligono(Pecas.retangulo(Vector2(cxo + lado * -12, 6), Vector2(22, 26)), Color(1, 1, 1, 0.9), 4, null, 1.0, ab)
+			pecas.linha(PackedVector2Array([Vector2(cxo - lado * 70, -80), Vector2(cxo + lado * 70, -40)]), 30.0, Color(0.08, 0.04, 0.12), 4, ab)
+		pecas.linha(PackedVector2Array([Vector2(-70, 140), Vector2(0, 115), Vector2(70, 140)]), 22.0, Color(0.08, 0.04, 0.12), 4, ab)
+		var baixo := p.y - h * cel / 2.0
+		var alto := baixo - 1400.0
+		ab.position = Vector2(x, alto)
+		add_child(ab)
+		var sombra := Polygon2D.new()
+		sombra.polygon = PackedVector2Array([Vector2(-w * cel / 2.0, -14), Vector2(w * cel / 2.0, -14), Vector2(w * cel / 2.0, 10), Vector2(-w * cel / 2.0, 10)])
+		sombra.color = Color(1, 0.15, 0.2, 0.0)
+		sombra.position = Vector2(x, p.y)
+		sombra.z_index = 4
+		add_child(sombra)
+		var periodo: float = [7.5, 6.6, 8.4][k % 3]       # ~2,2-2,8 s de verdade por ciclo
+		_esmagadores.append({"no": ab, "alto": alto, "baixo": baixo, "meia": h * cel / 2.0, "largura": w * cel / 2.0,
+			"T": periodo, "atraso": _sorteio.randf_range(0.0, periodo), "chao": p.y, "sombra": sombra, "bateu": false})
+	return p + Vector2(comp, 0)
+
+func _mover_esmagadores(_delta: float) -> void:
+	for e in _esmagadores:
+		var f := fposmod(_t_fisica + float(e["atraso"]), float(e["T"])) / float(e["T"])
+		var no: AnimatableBody2D = e["no"]
+		var sombra: Polygon2D = e["sombra"]
+		var y := float(e["alto"])
+		var treme := 0.0
+		# 0-0.5 em cima | 0.5-0.64 tremendo (aviso) | 0.64-0.69 despenca | 0.69-0.8 no chão | 0.8-0.88 sobe rápido | em cima
+		if f < 0.5 or f >= 0.88:
+			sombra.color.a = 0.15
+		elif f < 0.64:
+			treme = 14.0
+			sombra.color.a = 0.6 if fmod(f * 40.0, 1.0) < 0.5 else 0.25
+		elif f < 0.69:
+			var k := (f - 0.64) / 0.05
+			y = lerpf(float(e["alto"]), float(e["baixo"]), k * k)
+			sombra.color.a = 0.7
+		elif f < 0.8:
+			y = float(e["baixo"])
+			sombra.color.a = 0.0
+			if not e["bateu"]:
+				e["bateu"] = true
+				impacto8(Vector2(no.position.x, float(e["chao"])), 2.2)
+		else:
+			y = lerpf(float(e["baixo"]), float(e["alto"]), smoothstep(0.0, 1.0, (f - 0.8) / 0.08))
+			sombra.color.a = 0.1
+		if f < 0.69:
+			e["bateu"] = false
+		no.position = Vector2(no.position.x, y) + Vector2(randf_range(-1, 1) * treme, 0)
+		if f >= 0.64 and f < 0.71 and ativo and is_instance_valid(player):      # descendo: esmaga quem está embaixo
+			var fundo := y + float(e["meia"])
+			var alvos: Array = [player.chassi] + player.membros.values() if player.montado else player.corpos.values()
+			for b in alvos:
+				var bp: Vector2 = (b as Node2D).global_position
+				if absf(bp.x - no.position.x) < float(e["largura"]) - 40.0 and bp.y < fundo + 80.0 and bp.y > fundo - 700.0:
+					if player.repelir(bp):
+						break
+					_on_perigo(b, "esmagado")
+					break

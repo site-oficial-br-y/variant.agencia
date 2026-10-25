@@ -19,18 +19,13 @@ void fragment() {
 	col += vec3(0.75, 0.16, 0.55) * 0.55 * blob(pu, vec2(fract(0.22 + 0.1 * sin(t * 1.3)), 0.28 + 0.08 * cos(t)), 0.75);
 	col += vec3(0.12, 0.5, 0.95) * 0.45 * blob(pu, vec2(fract(0.78 + 0.1 * cos(t * 0.9)), 0.7 + 0.1 * sin(t * 1.1)), 0.7);
 	col += vec3(0.55, 0.25, 0.95) * 0.35 * blob(pu, vec2(fract(0.5 + 0.25 * sin(t * 0.6 + 2.0)), 0.1 + 0.06 * sin(t * 1.7)), 0.55);
-	// feixes de luz vindo de cima
-	for (int k = 0; k < 4; k++) {
+	// dois feixes de luz vindo de cima (barato)
+	for (int k = 0; k < 2; k++) {
 		float fk = float(k);
-		float x0 = fract(0.15 + fk * 0.27 + desloc * 0.4);
-		float ang = 0.35 * sin(TIME * 0.25 + fk * 1.7);
-		float d = abs((uv.x - x0) - (uv.y) * ang);
-		float largura = 0.04 + 0.08 * uv.y;
-		col += vec3(0.85, 0.55, 1.0) * 0.07 * feixes * smoothstep(largura, 0.0, d) * (1.0 - uv.y * 0.6);
+		float x0 = fract(0.25 + fk * 0.45 + desloc * 0.4);
+		float d = abs((uv.x - x0) - uv.y * 0.3 * sin(TIME * 0.25 + fk * 1.7));
+		col += vec3(0.85, 0.55, 1.0) * 0.07 * feixes * smoothstep(0.05 + 0.08 * uv.y, 0.0, d) * (1.0 - uv.y * 0.6);
 	}
-	// grão sutil + vinheta
-	float g = fract(sin(dot(floor(FRAGCOORD.xy / 2.0), vec2(12.9898, 78.233))) * 43758.5453);
-	col += (g - 0.5) * 0.018;
 	vec2 v = (uv - 0.5) * vec2(1.0, 1.15);
 	col *= 1.0 - 0.55 * dot(v, v);
 	COLOR = vec4(col, 1.0);

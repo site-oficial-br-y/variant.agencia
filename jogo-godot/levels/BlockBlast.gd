@@ -45,6 +45,10 @@ var _cel := 60.0
 var _origem := Vector2.ZERO
 var _slots: Array = []
 var _fundo: ColorRect
+var _toque := false                  # último input foi dedo (true) ou mouse (false)
+var _segurando := false              # botão/dedo apertado
+var _inicio := Vector2.ZERO          # onde apertou (clique curto = pegar e clicar no lugar)
+var _ignorar_soltar := false         # soltar do clique que colocou a peça (não é outro clique)
 
 func _ready() -> void:
 	process_mode = Node.PROCESS_MODE_ALWAYS
@@ -122,7 +126,9 @@ func _tam(forma: Array) -> Vector2i:
 
 func _canto_arrasto() -> Vector2:
 	var t := _tam(pecas[_arrasta]["forma"])
-	return _ponteiro - Vector2(t.x * _cel / 2.0, t.y * _cel + _cel * 0.7)
+	if _toque:                                              # dedo: peça acima do dedo pra dar pra ver
+		return _ponteiro - Vector2(t.x * _cel / 2.0, t.y * _cel + _cel * 0.7)
+	return _ponteiro - Vector2(t.x, t.y) * _cel / 2.0      # mouse: centrada no cursor
 
 func _celula_alvo() -> Vector2i:
 	var c := (_canto_arrasto() - _origem) / _cel
@@ -151,40 +157,68 @@ func _completaria(forma: Array, g: Vector2i) -> Array:
 			cs.append(x)
 	return [ls, cs]
 
+## dois jeitos: arrastar e soltar, ou clicar na peça e depois clicar no lugar. Aceita
+## mouse e toque (o navegador manda os dois pra cada clique: o repetido é ignorado)
 func _gui_input(ev: InputEvent) -> void:
 	if _fim:
 		return
 	var pos := Vector2.ZERO
 	var apertou := false
 	var soltou := false
-	if ev is InputEventMouseButton and ev.button_index == MOUSE_BUTTON_LEFT:
+	if ev is InputEventMouseButton:
+		if ev.button_index != MOUSE_BUTTON_LEFT:
+			return
 		pos = ev.position
 		apertou = ev.pressed
 		soltou = not ev.pressed
+		if ev.device == InputEvent.DEVICE_ID_EMULATION:      # veio de um dedo
+			_toque = true
+		elif apertou:
+			_toque = false
 	elif ev is InputEventScreenTouch:
 		pos = ev.position
 		apertou = ev.pressed
 		soltou = not ev.pressed
+		if ev.device != InputEvent.DEVICE_ID_EMULATION and apertou:   # dedo de verdade
+			_toque = true
 	elif ev is InputEventMouseMotion or ev is InputEventScreenDrag:
 		pos = ev.position
 	else:
 		return
-	_ponteiro = pos
-	if apertou and _arrasta < 0:
-		for i in 3:
-			if pecas[i] != null and (_slots[i] as Rect2).grow(_cel * 0.3).has_point(pos):
-				_arrasta = i
-				var t := _tam(pecas[i]["forma"])
-				_arrasta_pos = (_slots[i] as Rect2).get_center() - Vector2(t.x, t.y) * _cel * 0.3
-				Audio.tocar("clique", 0.6)
-	elif soltou and _arrasta >= 0:
-		var g := _celula_alvo()
-		if _cabe(pecas[_arrasta]["forma"], g.x, g.y):
-			_colocar(_arrasta, g)
+	if not soltou:                                        # soltar às vezes chega com posição velha: usa o último movimento
+		_ponteiro = pos
+	if apertou and not _segurando:
+		_segurando = true
+		_inicio = pos
+		if _arrasta >= 0:                                    # já tinha peça na mão: clique no lugar
+			_soltar_peca()
+			_segurando = false
+			_ignorar_soltar = true
 		else:
-			Audio.tocar("impacto_leve", 0.4)
-		_arrasta = -1
+			for i in 3:
+				if pecas[i] != null and (_slots[i] as Rect2).grow(_cel * 0.3).has_point(pos):
+					_arrasta = i
+					_arrasta_pos = _canto_arrasto()
+					Audio.tocar("clique", 0.6)
+	elif soltou:
+		if _ignorar_soltar:
+			_ignorar_soltar = false
+		elif _segurando:
+			_segurando = false
+			if _arrasta >= 0 and _ponteiro.distance_to(_inicio) > _cel * 0.4:   # arrastou: solta aqui
+				_soltar_peca()
+			# clique curto na peça: continua na mão até clicar no lugar
 	accept_event()
+
+func _soltar_peca() -> void:
+	var g := _celula_alvo()
+	if _cabe(pecas[_arrasta]["forma"], g.x, g.y):
+		_colocar(_arrasta, g)
+		_arrasta = -1
+	elif (_slots[_arrasta] as Rect2).grow(_cel * 0.3).has_point(_ponteiro) or not Rect2(_origem, Vector2(N, N) * _cel).grow(_cel).has_point(_ponteiro):
+		_arrasta = -1                                         # largou fora: devolve pra bandeja
+	else:
+		Audio.tocar("impacto_leve", 0.4)
 
 func _colocar(i: int, g: Vector2i) -> void:
 	var p: Dictionary = pecas[i]
