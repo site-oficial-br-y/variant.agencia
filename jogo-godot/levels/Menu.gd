@@ -46,6 +46,8 @@ var ok_anel: Panel
 var jogar: Label
 var trava: Label
 var _t := 0.0
+var _rank: Button
+var _vol: Volume
 
 func _ready() -> void:
 	Audio.musica_menu(true)
@@ -196,11 +198,20 @@ func _ready() -> void:
 	ver.set_anchors_preset(Control.PRESET_BOTTOM_LEFT)
 	ver.position = Vector2(10, get_viewport().get_visible_rect().size.y - 26)
 	add_child(ver)
-	var vol := Volume.new()
-	vol.abre_direita = true
-	vol.position = Vector2(30, get_viewport().get_visible_rect().size.y - 112)
-	add_child(vol)
-	get_viewport().size_changed.connect(func() -> void: vol.position = Vector2(30, get_viewport().get_visible_rect().size.y - 112))
+	_rank = Button.new()                             # antes do volume: a barrinha dele abre por cima
+	_rank.text = "RANKING"
+	_rank.focus_mode = Control.FOCUS_NONE
+	_rank.add_theme_font_size_override("font_size", 28)
+	for k in ["normal", "hover", "pressed"]:
+		_rank.add_theme_stylebox_override(k, _caixa(OURO, 14))
+	_rank.size = Vector2(190, 64)
+	_rank.pressed.connect(func() -> void:
+		Audio.tocar("clique")
+		get_tree().change_scene_to_file("res://levels/Ranking.tscn"))
+	add_child(_rank)
+	_vol = Volume.new()
+	_vol.abre_direita = true
+	add_child(_vol)
 	get_viewport().size_changed.connect(_atualizar)
 	_atualizar()
 
@@ -340,6 +351,9 @@ func _atualizar() -> void:
 	trava.visible = preso
 	trava.size = Vector2(420, 70)
 	trava.position = Vector2(vp.x - 440, vp.y - 170)
+	if _vol:
+		_vol.position = Vector2(30, vp.y - 112)
+		_rank.position = Vector2(122, vp.y - 112)
 
 func _trancado(i: int) -> bool:
 	return OPCOES[i] == "vini" and not Game.vini_liberado()

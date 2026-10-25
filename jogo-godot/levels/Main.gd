@@ -1576,6 +1576,8 @@ func _fim(ganhou: bool, motivo: String) -> void:
 	if ganhou:
 		_esconder_barras_chefe()
 		var novo := do_inicio and Game.registrar_vitoria(Game.fase, tempo)
+		if do_inicio and not Online.ativo:            # ranking público (se tiver conta)
+			Conta.enviar_recorde(Game.fase, tempo, Game.personagem)
 		aviso.text = "CHEGOU!\n%.1f s%s" % [tempo, "  NOVO RECORDE!" if novo else ""]
 		aviso.add_theme_color_override("font_color", Color(0.45, 1, 0.5))
 		Game.checkpoint_x = -1.0
