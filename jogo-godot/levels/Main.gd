@@ -1649,6 +1649,7 @@ func _construir_hud() -> void:
 		[_toque_bomba(), func(v: Vector2) -> Vector2: return Vector2(v.x - 370, v.y - 360) if (Game.personagem in Game.BOMBA_EXTRA or Game.personagem in Game.NITRO_EXTRA) else Vector2(-9999, 0)],
 		[_botao("R", Vector2.ZERO, Vector2(80, 64), "reset"), func(v: Vector2) -> Vector2: return Vector2(v.x - 96, 14)],
 		[_botao("TROCAR", Vector2.ZERO, Vector2(180, 64), "menu"), func(v: Vector2) -> Vector2: return Vector2(v.x - 290, 14)],
+		[_volume(cl), func(v: Vector2) -> Vector2: return Vector2(v.x - 386, 14)],
 	]
 	var vp := get_viewport().get_visible_rect().size
 	aviso = Label.new()
@@ -1680,6 +1681,11 @@ func _construir_hud() -> void:
 	_hud.append([painel, func(v: Vector2) -> Vector2: return Vector2((v.x - painel.size.x) / 2.0, v.y * 0.06 + 175.0)])
 	get_viewport().size_changed.connect(_posicionar_hud)
 	_posicionar_hud()
+
+func _volume(cl: CanvasLayer) -> Volume:
+	var vol := Volume.new()
+	cl.add_child(vol)
+	return vol
 
 func _acao_fim(acao: String) -> void:
 	Audio.tocar("clique")

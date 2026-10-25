@@ -196,6 +196,11 @@ func _ready() -> void:
 	ver.set_anchors_preset(Control.PRESET_BOTTOM_LEFT)
 	ver.position = Vector2(10, get_viewport().get_visible_rect().size.y - 26)
 	add_child(ver)
+	var vol := Volume.new()
+	vol.abre_direita = true
+	vol.position = Vector2(30, get_viewport().get_visible_rect().size.y - 112)
+	add_child(vol)
+	get_viewport().size_changed.connect(func() -> void: vol.position = Vector2(30, get_viewport().get_visible_rect().size.y - 112))
 	get_viewport().size_changed.connect(_atualizar)
 	_atualizar()
 

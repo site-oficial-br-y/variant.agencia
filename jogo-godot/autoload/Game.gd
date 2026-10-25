@@ -26,7 +26,7 @@ const HABILIDADES := {"segway": "salto", "cadeira": "turbo", "scooter": "turbo",
 const TURBO_INFINITO := ["cadeira"]       # Gabriel: turbo sem combustível
 const BOMBA_EXTRA := ["scooter"]          # Gian: turbo + bomba num segundo botão
 const NITRO_EXTRA := ["chefe"]           # Vitinho: nitro de fogo azul no segundo botão (C/B)
-const VERSAO := "v25.10-E"            # aparece no canto do lobby (pra conferir se atualizou)
+const VERSAO := "v25.10-F"            # aparece no canto do lobby (pra conferir se atualizou)
 const RITMO := 3.0                   # mundo 3x mais rápido: queda pesada e ritmo de Happy Wheels
 const ARQ_PROGRESSO := "user://progresso.cfg"
 var checkpoint_x: float = -1.0       # -1 = começa do início; sobrevive ao reinício (R)
@@ -48,6 +48,7 @@ const ACOES := {
 var _gira: CanvasLayer
 
 func _ready() -> void:
+	set_volume(volume())
 	_gira = CanvasLayer.new()
 	_gira.layer = 100
 	var fundo := ColorRect.new()
@@ -81,6 +82,21 @@ func recorde(f: int) -> float:
 	var cfg := ConfigFile.new()
 	cfg.load(ARQ_PROGRESSO)
 	return float(cfg.get_value("recorde", str(f), INF))
+
+## volume geral (0 a 1), salvo no progresso
+func volume() -> float:
+	var cfg := ConfigFile.new()
+	cfg.load(ARQ_PROGRESSO)
+	return float(cfg.get_value("config", "volume", 1.0))
+
+func set_volume(v: float) -> void:
+	AudioServer.set_bus_volume_db(0, linear_to_db(maxf(v, 0.001)))
+	AudioServer.set_bus_mute(0, v <= 0.001)
+	var cfg := ConfigFile.new()
+	cfg.load(ARQ_PROGRESSO)
+	if float(cfg.get_value("config", "volume", 1.0)) != v:
+		cfg.set_value("config", "volume", v)
+		cfg.save(ARQ_PROGRESSO)
 
 ## Vini libera pra quem vence a fase 5 (Péce e Cepé) ou abriu o link secreto do dono
 func vini_liberado() -> bool:
