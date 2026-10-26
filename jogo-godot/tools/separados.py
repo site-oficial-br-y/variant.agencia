@@ -102,7 +102,10 @@ def rodar(nome, cfg, skin=''):
     for copia, de in cfg.get('copias', {}).items():
         img = Image.open(os.path.join(out_dir, de + '.png'))
         a = img.getchannel('A')
-        img = ImageEnhance.Brightness(img.convert('RGB')).enhance(0.62).convert('RGBA')
+        img = ImageEnhance.Brightness(img.convert('RGB')).enhance(cfg.get('escurecer', 0.62)).convert('RGBA')
+        if cfg.get('escurecer_quente'):                  # dourado escurecido sem puxar pro verde
+            img = Image.merge('RGBA', [c.point(lambda v, k=k: min(255, int(v * k))) for c, k in
+                                       zip(img.split()[:3], (1.08, 0.95, 0.75))] + [img.split()[3]])
         img.putalpha(a)
         img.save(os.path.join(out_dir, copia + '.png'))
         pecas[copia] = dict(pecas[de])
@@ -257,6 +260,10 @@ if __name__ == '__main__':
         cfg = dict({'lima': LIMA, 'chefe': CHEFE}[n])
         if (n, skin) == ('lima', 'dourado'):
             cfg['pelo_todo'] = True
+            cfg['escurecer'] = 0.72
+            cfg['escurecer_quente'] = True
+            cfg['partes'] = dict(cfg['partes'])
+            cfg['partes']['gperna2'] = [(470, 880), (705, 880), (735, 1000), (735, 1182), (470, 1182), (452, 1000)]   # sem pedaço da barriga
         if (n, skin) == ('chefe', 'creta'):
             cfg = CHEFE_CRETA
         rodar(n, cfg, skin)
