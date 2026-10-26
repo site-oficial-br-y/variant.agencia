@@ -475,14 +475,15 @@ def monociclo_folhas_regras(c):
     assento = c.poly([(402, 638), (500, 645), (562, 660), (562, 702), (402, 702)])
     canote = c.poly([(484, 690), (550, 690), (562, 800), (592, 830), (596, 990), (556, 1002), (544, 870), (500, 860)])
     garfo_baixo = c.poly([(545, 1000), (596, 1000), (596, 1112), (545, 1112)])
-    perna = coxa | canela | traseira
+    perna = (coxa | canela | traseira) & ~(c.disco(RODA, RR + 12) & ~c.pele)   # aro da roda não vai na perna
     return [
         ('cabeca', (c.ys < 200) | ((c.ys < 262) & (c.xs > 585))),
         ('braco', braco),
         ('perna', perna),
-        ('quadro', (canote | assento) & ~perna),
+        ('perna', c.pele & (c.ys > 940) & ~c.disco(RODA, 40)),   # pé descalço inteiro (não vai pra roda)
+        ('quadro', (canote | assento) & ~perna & ~c.pele),
         ('quadro', garfo_baixo & c.cinza(40) & (c.mx > 60)),
-        ('roda', c.disco(RODA, RR + 12)),
+        ('roda', c.disco(RODA, RR + 12) & ~c.pele),
         ('tronco', c.ys < 720),
         ('perna', np.ones_like(c.pele)),
     ]
