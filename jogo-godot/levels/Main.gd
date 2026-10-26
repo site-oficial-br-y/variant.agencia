@@ -1576,8 +1576,8 @@ func _fim(ganhou: bool, motivo: String) -> void:
 	if ganhou:
 		_esconder_barras_chefe()
 		var novo := do_inicio and Game.registrar_vitoria(Game.fase, tempo)
-		if do_inicio and not Online.ativo:            # ranking público (se tiver conta)
-			Conta.enviar_recorde(Game.fase, tempo, Game.personagem)
+		if not Online.ativo:                          # ranking público (se tiver conta)
+			_mandar_ranking()
 		aviso.text = "CHEGOU!\n%.1f s%s" % [tempo, "  NOVO RECORDE!" if novo else ""]
 		aviso.add_theme_color_override("font_color", Color(0.45, 1, 0.5))
 		Game.checkpoint_x = -1.0
@@ -1599,6 +1599,38 @@ func _fim(ganhou: bool, motivo: String) -> void:
 		painel.get_node("proxima").visible = ganhou and Game.proxima_fase(Game.fase) > 0
 		painel.visible = true
 		_posicionar_hud.call_deferred()
+
+## manda o tempo pro ranking e mostra embaixo dos botões se foi
+func _mandar_ranking() -> void:
+	var l := Label.new()
+	l.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	l.add_theme_font_size_override("font_size", 28)
+	l.add_theme_color_override("font_outline_color", Color.BLACK)
+	l.add_theme_constant_override("outline_size", 8)
+	var v := get_viewport().get_visible_rect().size
+	l.size = Vector2(v.x, 40)
+	l.position = Vector2(0, v.y * 0.06 + 280.0)
+	$HUD.add_child(l)
+	var cinza := Color(0.85, 0.85, 0.9)
+	if not do_inicio:
+		l.text = "Ranking: só vale começando a fase do início."
+		l.add_theme_color_override("font_color", cinza)
+		return
+	if not Conta.logado():
+		l.text = "Cria uma conta no RANKING (menu) pra esse tempo aparecer lá."
+		l.add_theme_color_override("font_color", cinza)
+		return
+	l.text = "Mandando pro ranking..."
+	l.add_theme_color_override("font_color", cinza)
+	var cod := await Conta.enviar_recorde(Game.fase, tempo, Game.personagem)
+	if not is_instance_valid(l):
+		return
+	if cod == 200:
+		l.text = "Tempo enviado pro ranking!"
+		l.add_theme_color_override("font_color", Color(0.45, 1, 0.5))
+	else:
+		l.text = {-1: "Ranking: você saiu da conta.", -2: "Ranking: o servidor recusou esse tempo.", 0: "Ranking: sem conexão, não deu pra mandar."}.get(cod, "Ranking: erro %d ao mandar o tempo." % cod)
+		l.add_theme_color_override("font_color", Color(1, 0.55, 0.45))
 
 # ---------- HUD ----------
 func _estilo_botao() -> StyleBoxFlat:

@@ -160,12 +160,19 @@ func _entrou() -> void:
 		if t < INF:
 			enviar_recorde(f, t, "")
 
-## vitória sozinho, do começo da fase: o servidor só guarda se for melhor
-func enviar_recorde(fase: int, tempo: float, personagem: String) -> void:
+## vitória sozinho, do começo da fase: o servidor só guarda se for melhor.
+## Devolve o código http (200 = foi), -1 sem conta, -2 servidor recusou o tempo.
+func enviar_recorde(fase: int, tempo: float, personagem: String) -> int:
 	if not logado():
-		return
-	await _pedir(HTTPClient.METHOD_POST, "/rest/v1/rpc/bicho_registrar_recorde",
-		{"p_fase": fase, "p_tempo": snappedf(tempo, 0.01), "p_personagem": personagem if personagem != "" else null}, true)
+		return -1
+	var corpo := {"p_fase": fase, "p_tempo": snappedf(tempo, 0.01), "p_personagem": personagem if personagem != "" else null}
+	var r := await _pedir(HTTPClient.METHOD_POST, "/rest/v1/rpc/bicho_registrar_recorde", corpo, true)
+	if int(r[0]) == 0 or int(r[0]) >= 500:           # falhou: tenta de novo daqui a pouco
+		await get_tree().create_timer(3.0, true, false, true).timeout
+		r = await _pedir(HTTPClient.METHOD_POST, "/rest/v1/rpc/bicho_registrar_recorde", corpo, true)
+	if int(r[0]) == 200 and r[1] != true:
+		return -2
+	return int(r[0])
 
 ## [código http, lista]; código 0 = sem conexão
 func ranking_fase(fase: int) -> Array:
