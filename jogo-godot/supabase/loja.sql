@@ -19,7 +19,8 @@ insert into public.bicho_itens (item, personagem, nome, raridade, preco, ativo, 
   ('cadeira_zumbi', 'cadeira', 'Zumbi', 'comum', 5.90, true, 2),
   ('caio_santos', 'caio', 'Santos', 'epico', 9.90, true, 3),
   ('chefe_creta', 'chefe', 'Creta', 'epico', 9.90, true, 4),
-  ('lima_dourado', 'lima', 'Gorila Dourado', 'lendario', 19.90, true, 5)
+  ('lima_dourado', 'lima', 'Gorila Dourado', 'lendario', 19.90, true, 5),
+  ('segway_demonio', 'segway', 'Demônio', 'epico', 9.90, true, 6)
 on conflict (item) do update set personagem = excluded.personagem, nome = excluded.nome,
   raridade = excluded.raridade, preco = excluded.preco, ordem = excluded.ordem;
 

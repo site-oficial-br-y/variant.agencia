@@ -27,7 +27,7 @@ const TURBO_INFINITO := ["cadeira", "gamer"]   # Gabriel e Gorisch: turbo sem co
 const BOMBA_EXTRA := ["scooter"]          # Gian: turbo + bomba num segundo botão
 const NITRO_EXTRA := ["chefe"]           # Vitinho: nitro de fogo azul no segundo botão (C/B)
 const ULT_DASH := ["gamer"]              # Gorisch: ult no segundo botão (impulso + dash vermelho)
-const VERSAO := "v2.0.5"            # aparece no canto do lobby (pra conferir se atualizou)
+const VERSAO := "v2.0.6"            # aparece no canto do lobby (pra conferir se atualizou)
 const RITMO := 3.0                   # mundo 3x mais rápido: queda pesada e ritmo de Happy Wheels
 const ARQ_PROGRESSO := "user://progresso.cfg"
 var checkpoint_x: float = -1.0       # -1 = começa do início; sobrevive ao reinício (R)
@@ -82,6 +82,7 @@ func _process(_d: float) -> void:
 ## estes são só pra mostrar enquanto a loja carrega
 const SKINS := {
 	"monociclo_folhas": {"pers": "monociclo", "nome": "Folhas", "raridade": "comum", "preco": 5.90},
+	"segway_demonio": {"pers": "segway", "nome": "Demônio", "raridade": "epico", "preco": 9.90},
 	"cadeira_zumbi": {"pers": "cadeira", "nome": "Zumbi", "raridade": "comum", "preco": 5.90},
 	"caio_santos": {"pers": "caio", "nome": "Santos", "raridade": "epico", "preco": 9.90},
 	"chefe_creta": {"pers": "chefe", "nome": "Creta", "raridade": "epico", "preco": 9.90},

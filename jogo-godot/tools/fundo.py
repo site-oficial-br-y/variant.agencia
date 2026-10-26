@@ -11,10 +11,12 @@ from scipy import ndimage
 LIMIAR = 4           # o fundo das artes é preto puro (0-2); cabelo escuro fica acima disso
 
 
-def tirar_fundo(img):
+def tirar_fundo(img, branco=False):
     a = np.asarray(img.convert('RGB')).astype(np.int16)
     brilho = a.max(axis=2)
-    escuro = brilho <= LIMIAR
+    if branco:                                  # fundo branco: inverte e usa a mesma conta
+        brilho = 255 - a.min(axis=2)
+    escuro = brilho <= (LIMIAR + 10 if branco else LIMIAR)
     rot, _ = ndimage.label(escuro)
     borda = np.unique(np.concatenate([rot[0], rot[-1], rot[:, 0], rot[:, -1]]))
     fundo = np.isin(rot, borda[borda > 0])
@@ -30,4 +32,4 @@ def tirar_fundo(img):
 
 
 if __name__ == '__main__':
-    tirar_fundo(Image.open(sys.argv[1])).save(sys.argv[2])
+    tirar_fundo(Image.open(sys.argv[1]), '--branco' in sys.argv).save(sys.argv[2])
