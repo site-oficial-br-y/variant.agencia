@@ -37,6 +37,7 @@ var _rotulo: Label
 var _tremor := 0.0
 var _dano_t := 0.0
 var segunda := false                     # virou Cepé
+var transformando := false               # animação do Péce virando Cepé (choque não conta)
 var _grito_t := 10.0
 var _chuva_t := 4.0
 var _musica := false
@@ -567,7 +568,7 @@ func _pedra_acerta(onde: Vector2) -> bool:
 
 # ---------- dano ----------
 func levar_choque() -> void:
-	if morto:
+	if morto or transformando:
 		return
 	vida -= 1
 	_dano_t = 0.8
@@ -601,6 +602,7 @@ func levar_choque() -> void:
 const NEGATIVO := "shader_type canvas_item;\nvoid fragment() { COLOR.rgb = vec3(1.0) - COLOR.rgb; }"
 
 func _transformar() -> void:
+	transformando = true
 	vida = 0
 	_dano_t = 0.0
 	for m in maos:
@@ -676,6 +678,7 @@ func _transformar() -> void:
 		cena.queue_free())
 
 func _virar_cepe() -> void:
+	transformando = false
 	segunda = true
 	vida = vida_max
 	_prox_ataque = 2.5

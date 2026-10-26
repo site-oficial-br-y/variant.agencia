@@ -939,6 +939,8 @@ func _apertar(b: Dictionary, remoto := false) -> void:
 ## Fora da tela, uma seta na borda aponta pra ele (_seta_botao)
 func _ligar_botao(b: Dictionary) -> void:
 	b["ligado"] = true
+	b.erase("quem")                              # botão acendendo de novo: ninguém apertou ainda
+	b.erase("pedido")
 	(b["cupula"] as Polygon2D).color = Color(0.2, 1.0, 0.35)
 	var sinal := Node2D.new()
 	sinal.position = b["base"]
@@ -2595,6 +2597,8 @@ func _process_online(delta: float) -> void:
 	if _rotulo_online:
 		_rotulo_online.visible = not aviso.visible
 		if Game.fase == 5:
+			if Online.host and ativo:
+				_mandar_vida_chefe(dt)
 			_rotulo_online.text = "ONLINE · SALA %s · %d jogadores · %d vivos" % [Online.sala, Game.online_n, vivos + (0 if _morto_online else 1)]
 		else:
 			_rotulo_online.text = "CORRIDA · SALA %s · %d jogadores" % [Online.sala, Game.online_n]
@@ -2735,6 +2739,10 @@ func _online_msg(e: String, d: Dictionary, de: String) -> void:
 				if i >= 0 and i < _botoes.size():
 					(_botoes[i] as Dictionary)["ligado"] = true
 					_apertar(_botoes[i], true)
+				_sinc_chefe(d)
+		"hp":                                        # vida do chefe segundo quem criou a sala
+			if not Online.host and int(d.get("r", 0)) == Online.rodada:
+				_sinc_chefe(d)
 
 func _morte_online(motivo: String) -> void:
 	if _morto_online:
@@ -2762,6 +2770,37 @@ func _renascer() -> void:
 		velho.queue_free()
 	Audio.tocar("checkpoint", 1.0)
 	_mensagem("VOLTOU!", Color(0.5, 1, 0.5))
+
+## vida do chefe: quem criou a sala manda, os outros corrigem (mensagem perdida não deixa vida diferente)
+var _hp_t := 0.0
+
+func _estado_chefe(d: Dictionary) -> Dictionary:
+	d["r"] = Online.rodada
+	d["v"] = boss.vida
+	d["s"] = boss.segunda or boss.transformando
+	d["m"] = boss.morto
+	return d
+
+func _mandar_vida_chefe(dt: float) -> void:
+	_hp_t -= dt
+	if _hp_t > 0.0 or not is_instance_valid(boss):
+		return
+	_hp_t = 1.5
+	Online.enviar("hp", _estado_chefe({}))
+
+func _sinc_chefe(d: Dictionary) -> void:
+	if not is_instance_valid(boss) or not d.has("v") or boss.morto or boss.transformando:
+		return
+	var s := bool(d.get("s", false))
+	if bool(d.get("m", false)) and boss.segunda:     # líder já matou o Cepé
+		boss.vida = 1
+		boss.levar_choque()
+	elif s and not boss.segunda:                     # líder já virou Cepé: transforma aqui também
+		boss.vida = 1
+		boss.levar_choque()
+	elif s == boss.segunda and boss.vida != int(d["v"]):
+		boss.vida = int(d["v"])
+		boss._posicionar_barra()
 
 ## ids dos jogadores vivos agora (eu + quem mandou estado vivo há pouco)
 func _vivos_online() -> Array:
@@ -2798,8 +2837,8 @@ func _conferir_botao(b: Dictionary) -> void:
 		(b["contador"] as Label).text = txt
 		Online.enviar("apc", {"i": i, "t": txt})
 	if vivos.size() > 0 and feitos >= vivos.size():
-		Online.enviar("ch", {"i": i})
 		_apertar(b, true)
+		Online.enviar("ch", _estado_chefe({"i": i}))
 
 ## online: chefe derrotado = todo mundo vence junto (quem criou a sala confirma pros outros)
 func _vitoria_online() -> void:
