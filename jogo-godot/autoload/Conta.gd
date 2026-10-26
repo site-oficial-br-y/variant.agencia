@@ -247,6 +247,7 @@ func _pedir(metodo: int, caminho: String, corpo = null, com_conta := false) -> A
 			return [401, null]
 	var h := HTTPRequest.new()
 	h.timeout = 15.0
+	h.accept_gzip = false                            # no navegador a resposta já chega descompactada
 	add_child(h)
 	var cab := PackedStringArray(["apikey: " + Online.CHAVE, "Authorization: Bearer " + tk, "Content-Type: application/json"])
 	if h.request(url + caminho, cab, metodo, "" if corpo == null else JSON.stringify(corpo)) != OK:
