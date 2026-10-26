@@ -23,11 +23,11 @@ const NOMES := {"segway": "PÉRINE", "cadeira": "GABRIEL", "scooter": "GIAN", "m
 ## habilidade de cada um (botão especial), sempre com limite de uso
 const CHECKPOINTS := false              # sem checkpoint: morreu, volta pro começo da fase
 const HABILIDADES := {"segway": "salto", "cadeira": "turbo", "scooter": "turbo", "monociclo": "pulo_duplo", "gamer": "turbo", "bicho": "baloes", "wendell": "estrela", "caio": "rapido", "vini": "dash", "lima": "mega_pulo", "chefe": "repele"}
-const TURBO_INFINITO := ["cadeira"]       # Gabriel: turbo sem combustível
+const TURBO_INFINITO := ["cadeira", "gamer"]   # Gabriel e Gorisch: turbo sem combustível
 const BOMBA_EXTRA := ["scooter"]          # Gian: turbo + bomba num segundo botão
 const NITRO_EXTRA := ["chefe"]           # Vitinho: nitro de fogo azul no segundo botão (C/B)
 const ULT_DASH := ["gamer"]              # Gorisch: ult no segundo botão (impulso + dash vermelho)
-const VERSAO := "v2.0.2"            # aparece no canto do lobby (pra conferir se atualizou)
+const VERSAO := "v2.0.3"            # aparece no canto do lobby (pra conferir se atualizou)
 const RITMO := 3.0                   # mundo 3x mais rápido: queda pesada e ritmo de Happy Wheels
 const ARQ_PROGRESSO := "user://progresso.cfg"
 var checkpoint_x: float = -1.0       # -1 = começa do início; sobrevive ao reinício (R)

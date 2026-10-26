@@ -687,25 +687,30 @@ func _ult_gorisch(ch: Dictionary, dt: float) -> void:
 			_dash_ult = 0.0
 			_mostrar_ult(true)
 			Audio.tocar("pulo", 0.7, 0.0)
-			_dash_vermelho()
 		return
 	ult_t -= dt
 	_dash_ult = maxf(0.0, _dash_ult - dt)
-	if chassi.linear_velocity.length() < float(ch["vmax"]) * velocidade * 2.6:
-		chassi.apply_central_force(Vector2.RIGHT.rotated(chassi.rotation) * massa_total * TURBO * 1.6)
+	var dir := Input.get_axis("brake", "accelerate")
+	if dir != 0.0 and chassi.linear_velocity.length() < float(ch["vmax"]) * velocidade * 2.0:   # impulso só acelerando
+		chassi.apply_central_force(Vector2.RIGHT.rotated(chassi.rotation) * signf(dir) * massa_total * TURBO * 1.2)
+	# firme: não capota (amortece o giro e não deixa passar de ~35°), mas acompanha a rampa
+	var excesso := signf(chassi.rotation) * maxf(0.0, absf(chassi.rotation) - 0.6)
+	chassi.apply_torque(inercia_chassi * (-chassi.angular_velocity * 7.0 - excesso * 60.0))
 	_rastro(Color(1.0, 0.22, 0.18, 0.55), 0.05)
 	if aperta and _dash_ult <= 0.0:
-		_dash_ult = 0.6
+		_dash_ult = 0.7
 		_dash_vermelho()
 	if ult_t <= 0.0:
 		recarga_ult = ULT_RECARGA
 		_mostrar_ult(false)
 
+## dash vermelho: arrancada curta na direção em que ele está (segue a rampa)
 func _dash_vermelho() -> void:
 	var dirx := 1.0 if Input.get_axis("brake", "accelerate") >= 0.0 else -1.0
+	var frente := Vector2.RIGHT.rotated(chassi.rotation) * dirx
 	for rb in [chassi] + rodas:
 		var c := rb as RigidBody2D
-		c.linear_velocity = Vector2(dirx * 3000.0, minf(c.linear_velocity.y, 0.0) - 100.0)
+		c.linear_velocity = frente * 2000.0 + Vector2(0, minf(c.linear_velocity.y, 0.0) * 0.3)
 	Audio.tocar("turbo", 1.0, 0.0)
 	_explosao_dash(dirx, Color(1.0, 0.25, 0.2))
 
