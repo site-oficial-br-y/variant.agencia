@@ -1802,7 +1802,7 @@ func _rotulo_ult() -> Label:
 func _atualizar_carga() -> void:
 	if _carga_ult and is_instance_valid(player) and Game.personagem in Game.ULT_DASH:
 		if player.ult_t > 0.0:
-			_carga_ult.text = "ULT! DASH"
+			_carga_ult.text = "ULT!"
 			_carga_ult.add_theme_color_override("font_color", Color(1, 0.35, 0.3))
 		elif player.recarga_ult > 0.0:
 			_carga_ult.text = "ULT %d s" % ceili(player.recarga_ult)

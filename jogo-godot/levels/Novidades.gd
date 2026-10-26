@@ -5,7 +5,7 @@ extends Control
 const VERSAO := "2.0"
 const ITENS := [
 	["LOJA DE SKINS", "Erick Folhas, Gabriel Zumbi, Caio Santos, Vitinho no Creta e o lendário Lima Gorila Dourado.", Color(1.0, 0.78, 0.2)],
-	["GORISCH NOVO", "Farda militar e ult nova no segundo botão: impulso de velocidade e dash vermelho. Turbo agora é infinito.", Color(1.0, 0.35, 0.3)],
+	["GORISCH NOVO", "Farda militar e ult nova no segundo botão: fica muito mais rápido, com rastro vermelho. Turbo agora é infinito.", Color(1.0, 0.35, 0.3)],
 	["MINHA CONTA", "Troca o nick, escolhe a skin de cada personagem e acompanha seus pedidos.", Color(0.6, 0.38, 1.0)],
 	["ONLINE EM TODAS AS FASES", "Sala com líder: ele escolhe a fase, todo mundo dá PRONTO. Corrida com pódio no fim.", Color(0.4, 1.0, 0.5)],
 	["RANKING PÚBLICO", "Melhores tempos de cada fase e quem tem mais tempo de jogo.", Color(0.45, 0.8, 1.0)],

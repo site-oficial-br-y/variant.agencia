@@ -83,12 +83,10 @@ var recarga := 0.0
 var recarga_total := 1.0
 var combustivel := 1.0
 var recarga_bomba := 0.0
-const ULT_DURA := 6.0                    # Gorisch: segundos de ult (de verdade)
-const ULT_RECARGA := 25.0
-var ult_t := 0.0                         # ult ativa: impulso de velocidade, rastro e dash vermelhos
+const ULT_DURA := 8.0 / 3.0              # Gorisch: igual à rapidez do Caio (8 s de jogo, mundo 3x)
+const ULT_RECARGA := 2.0 / 3.0           # e a mesma recarga depois que acaba
+var ult_t := 0.0                         # ult ativa: tudo mais rápido, rastro vermelho
 var recarga_ult := 0.0
-var _dash_ult := 0.0                     # espera entre um dash e outro na ult
-var _ult_img: Sprite2D                   # pose dele voando na cadeira durante a ult
 var pulos := 2
 var _espera_chao := 0.0
 var _equilibrio_t := 0.0
@@ -678,59 +676,20 @@ func _especial(ch: Dictionary, delta: float) -> void:
 
 ## Gorisch: segundo botão liga a ult (impulso de velocidade + pose voando). Na ult, o botão
 ## de novo dá dash vermelho. Depois recarrega; o turbo de porcentagem continua no especial.
-func _ult_gorisch(ch: Dictionary, dt: float) -> void:
+func _ult_gorisch(_ch: Dictionary, dt: float) -> void:
 	var aperta := Input.is_action_just_pressed("bomba")
 	if ult_t <= 0.0:
 		recarga_ult = maxf(0.0, recarga_ult - dt)
 		if aperta and recarga_ult <= 0.0:
 			ult_t = ULT_DURA
-			_dash_ult = 0.0
-			_mostrar_ult(true)
-			Audio.tocar("pulo", 0.7, 0.0)
+			Audio.tocar("turbo", 1.0, 0.0)
 		return
 	ult_t -= dt
-	_dash_ult = maxf(0.0, _dash_ult - dt)
-	var dir := Input.get_axis("brake", "accelerate")
-	if dir != 0.0 and chassi.linear_velocity.length() < float(ch["vmax"]) * velocidade * 2.0:   # impulso só acelerando
-		chassi.apply_central_force(Vector2.RIGHT.rotated(chassi.rotation) * signf(dir) * massa_total * TURBO * 1.2)
-	# firme: não capota (amortece o giro e não deixa passar de ~35°), mas acompanha a rampa
-	var excesso := signf(chassi.rotation) * maxf(0.0, absf(chassi.rotation) - 0.6)
-	chassi.apply_torque(inercia_chassi * (-chassi.angular_velocity * 7.0 - excesso * 60.0))
-	_rastro(Color(1.0, 0.22, 0.18, 0.55), 0.05)
-	if aperta and _dash_ult <= 0.0:
-		_dash_ult = 0.7
-		_dash_vermelho()
+	_rapido_t = ult_t                            # mesma rapidez do Caio (andar, frear e girar)
+	_rastro(Color(1.6, 0.15, 0.1, 0.6), 0.12)
 	if ult_t <= 0.0:
+		_rapido_t = 0.0
 		recarga_ult = ULT_RECARGA
-		_mostrar_ult(false)
-
-## dash vermelho: arrancada curta na direção em que ele está (segue a rampa)
-func _dash_vermelho() -> void:
-	var dirx := 1.0 if Input.get_axis("brake", "accelerate") >= 0.0 else -1.0
-	var frente := Vector2.RIGHT.rotated(chassi.rotation) * dirx
-	for rb in [chassi] + rodas:
-		var c := rb as RigidBody2D
-		c.linear_velocity = frente * 2000.0 + Vector2(0, minf(c.linear_velocity.y, 0.0) * 0.3)
-	Audio.tocar("turbo", 1.0, 0.0)
-	_explosao_dash(dirx, Color(1.0, 0.25, 0.2))
-
-func _mostrar_ult(sim: bool) -> void:
-	if sim and not is_instance_valid(_ult_img) and ResourceLoader.exists("res://assets/%s/ult.png" % _pasta()):
-		_ult_img = Sprite2D.new()
-		_ult_img.texture = load("res://assets/%s/ult.png" % _pasta())
-		_ult_img.position = Vector2(D["src_w"], D["src_h"]) / 2.0 - origem
-		_ult_img.z_index = 5
-		chassi.add_child(_ult_img)
-	if is_instance_valid(_ult_img):
-		_ult_img.visible = sim
-	boneco.visible = not sim
-	for c in chassi.get_children():
-		if c is Sprite2D and c != _ult_img and c != foto:
-			(c as Sprite2D).visible = not sim
-	for r in rodas:
-		for c in (r as Node).get_children():
-			if c is Sprite2D:
-				(c as Sprite2D).visible = not sim
 
 ## Vitinho: escapamentos na traseira soltando chama azul de nitro
 func _montar_nitro(ch: Dictionary) -> void:
@@ -1529,10 +1488,10 @@ func soltar_ragdoll(herda_vel: Vector2, pulo: bool = false) -> void:
 		_mira = null
 	if not montado:
 		return
-	if ult_t > 0.0:                          # caiu no meio da ult: volta o visual normal
+	if ult_t > 0.0:                          # caiu no meio da ult
 		ult_t = 0.0
+		_rapido_t = 0.0
 		recarga_ult = ULT_RECARGA
-		_mostrar_ult(false)
 	montado = false
 	if is_instance_valid(_baloes):
 		_estourar_baloes()

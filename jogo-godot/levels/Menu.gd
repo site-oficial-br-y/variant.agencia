@@ -10,7 +10,7 @@ const INFO := {
 	"cadeira": ["TURBINADO", "TURBO INFINITO", "Jato na cadeira que nunca acaba.", [3, 4, 2]],
 	"scooter": ["PIROTÉCNICO", "TURBO + BOMBA", "Turbo pra acelerar e bomba no outro botão.", [3, 4, 3]],
 	"monociclo": ["MALABARISTA", "PULO DUPLO", "Pula no chão e pula de novo no ar.", [2, 3, 2]],
-	"gamer": ["SOLDADO GAMER", "TURBO + ULT", "Turbo infinito. No outro botão, a ult: impulso firme e dash vermelho.", [3, 4, 2]],
+	"gamer": ["SOLDADO GAMER", "TURBO + ULT", "Turbo infinito. No outro botão, a ult: fica muito mais rápido, com rastro vermelho.", [3, 4, 2]],
 	"bicho": ["COMPRADOR", "BALÕES", "Três balões nas costas: plana por 10 segundos.", [3, 2, 2]],
 	"wendell": ["MOTOQUEIRO", "ESTRELA", "Fica imortal por 10 segundos, igual ao Mário.", [3, 4, 3]],
 	"caio": ["EQUILIBRISTA", "RAPIDEZ", "Fica muito mais rápido por 8 segundos.", [2, 4, 2]],
