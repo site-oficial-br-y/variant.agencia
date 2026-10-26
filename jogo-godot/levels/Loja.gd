@@ -150,23 +150,34 @@ func _cartao(d: Dictionary) -> Control:
 		img.modulate = Color(0, 0, 0, 0.85)       # ainda sem arte: silhueta
 	v.add_child(img)
 	v.add_child(_rotulo(str(d["nome"]).to_upper(), 30, 8, Color.WHITE))
+	if Conta.logado() and Conta.tem(item) and Game.skin_de(pers) == item:
+		st.border_color = VERDE
+		v.add_child(_rotulo("USANDO", 20, 6, VERDE))
 	v.add_child(_rotulo(str(Game.NOMES.get(pers, pers)), 22, 6, Color(0.85, 0.8, 0.95)))
 	var preco := _rotulo("R$ " + ("%.2f" % float(d["preco"])).replace(".", ","), 30, 8, OURO)
 	v.add_child(preco)
 	var texto := "COMPRAR"
 	var cor := VERDE
 	var ativo := a_venda
-	if Conta.logado() and Conta.tem(item):
-		texto = "JÁ É SEU"
-		cor = ROXO
-		ativo = false
+	var dono := Conta.logado() and Conta.tem(item) and pronta
+	if dono:                                    # já é seu: a loja vira inventário (usar/tirar)
+		var usando := Game.skin_de(pers) == item
+		texto = "TIRAR" if usando else "USAR"
+		cor = Color(1, 0.45, 0.4) if usando else VERDE
+		ativo = true
 	elif not a_venda:
 		texto = "EM BREVE"
 		cor = Color(0.6, 0.6, 0.65)
 	elif _pendentes.has(item):
 		texto = "VER PIX"
 		cor = OURO
-	var b := _botao(texto, cor, func() -> void: _comprar(d))
+	var b := _botao(texto, cor, func() -> void:
+		if dono:
+			Audio.tocar("confirma")
+			Game.equipar(pers, "" if Game.skin_de(pers) == item else item)
+			_montar()
+		else:
+			_comprar(d))
 	b.disabled = not ativo
 	b.custom_minimum_size = Vector2(0, 56)
 	v.add_child(b)
