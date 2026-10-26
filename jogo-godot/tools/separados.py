@@ -35,16 +35,18 @@ def recortar(img, own, nome, out_dir, tapar=None, livre_total=None):
     return salvar(out, nome, out_dir)
 
 
-def rodar(nome, cfg):
-    full = carregar(f'{nome}_full.png')
+def rodar(nome, cfg, skin=''):
+    base = f'{nome}_{skin}' if skin else nome           # skin: mesma divisão, artes da skin
+    arte = lambda arq: arq.replace(nome + '_', base + '_', 1) if skin else arq
+    full = carregar(f'{base}_full.png')
     H, W = full.shape[:2]
-    piloto = carregar(cfg['img_piloto'])
-    veic = carregar(cfg['img_veiculo'])
+    piloto = carregar(arte(cfg['img_piloto']))
+    veic = carregar(arte(cfg['img_veiculo']))
     if cfg.get('alinhar_veiculo'):
         veic = alinhar(full, veic)
     if cfg.get('alinhar_piloto'):
         piloto = alinhar(full, piloto)
-    out_dir = os.path.join(AQUI, '..', 'assets', nome)
+    out_dir = os.path.join(AQUI, '..', 'assets', base)
     os.makedirs(out_dir, exist_ok=True)
     for f in os.listdir(out_dir):
         if f.endswith(('.png', '.json', '.import')):
@@ -88,7 +90,7 @@ def rodar(nome, cfg):
         for pol in cfg['fundo_corpo']:
             buraco |= poly(W, H, pol)
         buraco &= ~corpo
-        pelo = corpo & (veic[..., :3].max(2) < 110)
+        pelo = corpo if cfg.get('pelo_todo') else corpo & (veic[..., :3].max(2) < 110)   # gorila dourado: pelo é claro
         _, (iy, ix) = ndimage.distance_transform_edt(~pelo, return_indices=True)
         ry = np.clip(2 * iy - yy, 0, H - 1)
         rx = np.clip(2 * ix - xx, 0, W - 1)
@@ -109,7 +111,7 @@ def rodar(nome, cfg):
         pecas[copia]['y'] += dy
     if 'ult' in cfg:                                        # visual da habilidade (ex.: sem camisa)
         u = cfg['ult']
-        img = alinhar(piloto, carregar(u['img']))
+        img = alinhar(piloto, carregar(arte(u['img'])))
         livre_u = img[..., 3] > 0
         for parte in u['ordem']:
             own = poly(W, H, u['partes'][parte]) & livre_u
@@ -237,7 +239,24 @@ CHEFE = {
     },
 }
 
+# Vitinho no Creta: mesmo corpo (artes encaixadas no lugar do da Ferrari por tools/chefe_creta.py),
+# carro com outras rodas, porta e formato
+CHEFE_CRETA = json.loads(json.dumps(CHEFE))
+CHEFE_CRETA['alinhar_veiculo'] = False                 # já vem encaixado
+CHEFE_CRETA['frente_veiculo'] = {'porta': [(380, 640), (640, 660), (1000, 700), (1010, 830), (380, 830)]}
+CHEFE_CRETA['fisica']['rodas'] = [
+    {'corpo': 'roda0', 'peca': 'roda0', 'c': [335.0, 830.0], 'r': 107, 'massa': 2.5, 'motriz': True},
+    {'corpo': 'roda1', 'peca': 'roda1', 'c': [1157.0, 845.0], 'r': 108, 'massa': 2.0, 'motriz': False}]
+CHEFE_CRETA['fisica']['chassi']['poly'] = [[130, 700], [210, 600], [380, 600], [480, 640], [930, 680], [1150, 640],
+    [1350, 660], [1480, 720], [1480, 850], [1270, 880], [990, 880], [450, 880], [140, 860], [125, 760]]
+
 if __name__ == '__main__':
-    for n in sys.argv[1:]:
-        print('==', n)
-        rodar(n, {'lima': LIMA, 'chefe': CHEFE}[n])
+    for arg in sys.argv[1:]:
+        n, _, skin = arg.partition(':')
+        print('==', arg)
+        cfg = dict({'lima': LIMA, 'chefe': CHEFE}[n])
+        if (n, skin) == ('lima', 'dourado'):
+            cfg['pelo_todo'] = True
+        if (n, skin) == ('chefe', 'creta'):
+            cfg = CHEFE_CRETA
+        rodar(n, cfg, skin)

@@ -1,0 +1,300 @@
+{
+ "nome": "lima",
+ "src_w": 1312,
+ "src_h": 1199,
+ "ordem": [
+  "gperna2",
+  "gbraco2",
+  "veiculo",
+  "gperna",
+  "gbraco",
+  "tronco",
+  "coxa",
+  "canela",
+  "braco",
+  "cabeca"
+ ],
+ "pecas": {
+  "cabeca": {
+   "x": 554,
+   "y": 19,
+   "w": 260,
+   "h": 243
+  },
+  "braco": {
+   "x": 600,
+   "y": 318,
+   "w": 272,
+   "h": 246
+  },
+  "canela": {
+   "x": 509,
+   "y": 655,
+   "w": 267,
+   "h": 337
+  },
+  "coxa": {
+   "x": 470,
+   "y": 507,
+   "w": 321,
+   "h": 203
+  },
+  "tronco": {
+   "x": 455,
+   "y": 192,
+   "w": 336,
+   "h": 357
+  },
+  "gbraco": {
+   "x": 830,
+   "y": 600,
+   "w": 368,
+   "h": 579
+  },
+  "gperna": {
+   "x": 108,
+   "y": 800,
+   "w": 313,
+   "h": 382
+  },
+  "gperna2": {
+   "x": 392,
+   "y": 880,
+   "w": 344,
+   "h": 288
+  },
+  "veiculo": {
+   "x": 163,
+   "y": 382,
+   "w": 1057,
+   "h": 777
+  },
+  "gbraco2": {
+   "x": 725,
+   "y": 600,
+   "w": 368,
+   "h": 579
+  }
+ },
+ "bracos_veiculo": {
+  "gbraco": [
+   905,
+   640
+  ],
+  "gbraco2": [
+   800,
+   640
+  ],
+  "gperna": [
+   340,
+   860
+  ],
+  "gperna2": [
+   520,
+   930
+  ]
+ },
+ "fases_veiculo": {
+  "gbraco": 0.0,
+  "gperna2": 0.0,
+  "gbraco2": 3.14159,
+  "gperna": 3.14159
+ },
+ "pernas_veiculo": [
+  "gperna",
+  "gperna2"
+ ],
+ "corpo_de": {
+  "veiculo": "chassi",
+  "gbraco": "braco_veiculo",
+  "gbraco2": "braco_veiculo",
+  "gperna": "braco_veiculo",
+  "gperna2": "braco_veiculo",
+  "cabeca": "cabeca",
+  "tronco": "tronco",
+  "braco": "braco",
+  "coxa": "coxa",
+  "canela": "canela"
+ },
+ "piloto": [
+  "tronco",
+  "cabeca",
+  "braco",
+  "coxa",
+  "canela"
+ ],
+ "rodas": [
+  {
+   "corpo": "roda0",
+   "c": [
+    235.0,
+    1120.0
+   ],
+   "r": 70,
+   "massa": 2.5,
+   "motriz": true
+  },
+  {
+   "corpo": "roda1",
+   "c": [
+    1100.0,
+    1120.0
+   ],
+   "r": 70,
+   "massa": 2.5,
+   "motriz": false
+  }
+ ],
+ "chassi": {
+  "massa": 9.0,
+  "auto_equilibrio": false,
+  "trote": true,
+  "vmax": 850.0,
+  "forca": 0.0,
+  "poly": [
+   [
+    170,
+    1030
+   ],
+   [
+    330,
+    640
+   ],
+   [
+    600,
+    580
+   ],
+   [
+    880,
+    430
+   ],
+   [
+    1080,
+    470
+   ],
+   [
+    1215,
+    640
+   ],
+   [
+    1190,
+    760
+   ],
+   [
+    1130,
+    1030
+   ]
+  ]
+ },
+ "corpos": {
+  "cabeca": {
+   "massa": 0.8,
+   "forma": [
+    "circ",
+    [
+     700,
+     140
+    ],
+    115
+   ]
+  },
+  "tronco": {
+   "massa": 2.0,
+   "forma": [
+    "caps",
+    [
+     565,
+     290
+    ],
+    [
+     600,
+     515
+    ],
+    105
+   ]
+  },
+  "braco": {
+   "massa": 0.5,
+   "forma": [
+    "caps",
+    [
+     645,
+     365
+    ],
+    [
+     840,
+     500
+    ],
+    42
+   ]
+  },
+  "coxa": {
+   "massa": 1.1,
+   "forma": [
+    "caps",
+    [
+     520,
+     610
+    ],
+    [
+     740,
+     640
+    ],
+    72
+   ]
+  },
+  "canela": {
+   "massa": 1.0,
+   "forma": [
+    "caps",
+    [
+     690,
+     690
+    ],
+    [
+     620,
+     945
+    ],
+    60
+   ]
+  }
+ },
+ "juntas": [
+  {
+   "a": "tronco",
+   "b": "cabeca",
+   "p": [
+    680,
+    252
+   ],
+   "lim": 40
+  },
+  {
+   "a": "tronco",
+   "b": "braco",
+   "p": [
+    640,
+    350
+   ],
+   "lim": 80
+  },
+  {
+   "a": "tronco",
+   "b": "coxa",
+   "p": [
+    530,
+    590
+   ],
+   "lim": 70
+  },
+  {
+   "a": "coxa",
+   "b": "canela",
+   "p": [
+    722,
+    662
+   ],
+   "lim": 75
+  }
+ ]
+}
