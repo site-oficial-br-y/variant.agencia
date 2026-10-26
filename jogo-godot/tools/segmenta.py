@@ -490,7 +490,8 @@ def monociclo_folhas_regras(c):
 
 
 MONOCICLO_FOLHAS = dict(MONOCICLO)
-MONOCICLO_FOLHAS.update({'regras': monociclo_folhas_regras, 'fonte_casca': {'tronco': 'pele', 'perna': 'pele'}})
+MONOCICLO_FOLHAS.update({'regras': monociclo_folhas_regras, 'fonte_casca': {'tronco': 'pele', 'perna': 'pele'},
+                         'cascas': {k: v for k, v in MONOCICLO['cascas'].items() if k != 'quadro'}})   # garfo sem preenchimento (manchava de pele)
 def cadeira_zumbi_regras(c):
     """Gabriel zumbi: pele verde, então a mão sai por polígono (o resto é a divisão normal)."""
     mao = c.poly([(495, 488), (600, 498), (672, 535), (676, 604), (620, 622), (540, 604), (495, 562)])
