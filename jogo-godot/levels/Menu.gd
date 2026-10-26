@@ -10,7 +10,7 @@ const INFO := {
 	"cadeira": ["TURBINADO", "TURBO INFINITO", "Jato na cadeira que nunca acaba.", [3, 4, 2]],
 	"scooter": ["PIROTÉCNICO", "TURBO + BOMBA", "Turbo pra acelerar e bomba no outro botão.", [3, 4, 3]],
 	"monociclo": ["MALABARISTA", "PULO DUPLO", "Pula no chão e pula de novo no ar.", [2, 3, 2]],
-	"gamer": ["GAMER", "TURBO", "Cadeira gamer com jato nas costas.", [3, 3, 2]],
+	"gamer": ["SOLDADO GAMER", "TURBO + ULT", "Turbo no especial. No outro botão, a ult: impulso e dash vermelho.", [3, 4, 2]],
 	"bicho": ["COMPRADOR", "BALÕES", "Três balões nas costas: plana por 10 segundos.", [3, 2, 2]],
 	"wendell": ["MOTOQUEIRO", "ESTRELA", "Fica imortal por 10 segundos, igual ao Mário.", [3, 4, 3]],
 	"caio": ["EQUILIBRISTA", "RAPIDEZ", "Fica muito mais rápido por 8 segundos.", [2, 4, 2]],
@@ -46,7 +46,7 @@ var ok_anel: Panel
 var jogar: Label
 var trava: Label
 var _t := 0.0
-var _rank: Button
+var _atalhos: Array = []              # LOJA, MINHA CONTA, RANKING (coluna acima do JOGAR)
 var _vol: Volume
 
 func _ready() -> void:
@@ -198,21 +198,26 @@ func _ready() -> void:
 	ver.set_anchors_preset(Control.PRESET_BOTTOM_LEFT)
 	ver.position = Vector2(10, get_viewport().get_visible_rect().size.y - 26)
 	add_child(ver)
-	_rank = Button.new()                             # antes do volume: a barrinha dele abre por cima
-	_rank.text = "RANKING"
-	_rank.focus_mode = Control.FOCUS_NONE
-	_rank.add_theme_font_size_override("font_size", 28)
-	for k in ["normal", "hover", "pressed"]:
-		_rank.add_theme_stylebox_override(k, _caixa(OURO, 14))
-	_rank.size = Vector2(190, 64)
-	_rank.pressed.connect(func() -> void:
-		Audio.tocar("clique")
-		get_tree().change_scene_to_file("res://levels/Ranking.tscn"))
-	add_child(_rank)
+	for a in [["LOJA", OURO, "Loja"], ["MINHA CONTA", ROXO, "MinhaConta"], ["RANKING", ROXO, "Ranking"]]:
+		var b := Button.new()
+		b.text = a[0]
+		b.focus_mode = Control.FOCUS_NONE
+		b.add_theme_font_size_override("font_size", 26)
+		for k in ["normal", "hover", "pressed"]:
+			b.add_theme_stylebox_override(k, _caixa(a[1], 14))
+		b.size = Vector2(230, 58)
+		var cena: String = a[2]
+		b.pressed.connect(func() -> void:
+			Audio.tocar("clique")
+			get_tree().change_scene_to_file("res://levels/%s.tscn" % cena))
+		add_child(b)
+		_atalhos.append(b)
 	_vol = Volume.new()
 	_vol.abre_direita = true
 	add_child(_vol)
 	get_viewport().size_changed.connect(_atualizar)
+	if not "screenshot" in OS.get_cmdline_user_args() and not load("res://levels/Novidades.gd").ja_viu():
+		add_child(load("res://levels/Novidades.gd").new())     # aviso da atualização, por cima do lobby
 	_atualizar()
 
 	if "screenshot" in OS.get_cmdline_user_args():
@@ -288,7 +293,8 @@ func _atualizar() -> void:
 		q.size = Vector2(lado, lado)
 		q.add_theme_stylebox_override("panel", _estilo_quadro(i == atual))
 		var b: TextureButton = q.get_child(0)
-		var tex: String = OPCOES[i] if i == atual else OPCOES[i] + "_cinza"
+		var pasta := Game.pasta(OPCOES[i])               # skin equipada aparece no rosto e no pedestal
+		var tex: String = pasta if i == atual else pasta + "_cinza"
 		if _trancado(i):
 			tex = OPCOES[i] + "_bloq"
 		b.texture_normal = load("res://assets/ui/rosto_%s.png" % tex)
@@ -302,7 +308,7 @@ func _atualizar() -> void:
 	# personagem no pedestal
 	var p: String = OPCOES[atual]
 	var preso := _trancado(atual)
-	var tex2: Texture2D = load("res://assets/menu/%s.png" % p)
+	var tex2: Texture2D = load("res://assets/menu/%s.png" % Game.pasta(p))
 	preview.texture = tex2
 	var h := minf(minf(vp.y * 0.74, pedestal_y - 165.0), minf(vp.x * 0.45, 640.0) * tex2.get_height() / tex2.get_width())
 	preview.size = Vector2(h * tex2.get_width() / tex2.get_height(), h)
@@ -353,7 +359,8 @@ func _atualizar() -> void:
 	trava.position = Vector2(vp.x - 440, vp.y - 170)
 	if _vol:
 		_vol.position = Vector2(30, vp.y - 112)
-		_rank.position = Vector2(122, vp.y - 112)
+		for i in _atalhos.size():
+			(_atalhos[i] as Button).position = Vector2(vp.x - 255, 172 + i * 70)
 
 func _trancado(i: int) -> bool:
 	return OPCOES[i] == "vini" and not Game.vini_liberado()

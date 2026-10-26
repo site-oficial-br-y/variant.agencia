@@ -79,7 +79,11 @@ body {
 		<link id="-gd-engine-icon" rel="icon" type="image/png" href="index.icon.png" />
 <link rel="apple-touch-icon" href="index.apple-touch-icon.png"/>
 <script>document.addEventListener('pointerdown',function(){var d=document.documentElement;if(!document.fullscreenElement&&d.requestFullscreen){d.requestFullscreen().then(function(){if(screen.orientation&&screen.orientation.lock){screen.orientation.lock('landscape').catch(function(){})}}).catch(function(){})}},true)</script>
-	</head>
+	<link rel="manifest" href="manifest.webmanifest">
+<meta name="theme-color" content="#12092a">
+<script src="qrcode.js"></script>
+<script>if ("serviceWorker" in navigator) navigator.serviceWorker.register("sw.js");</script>
+</head>
 	<body>
 		<canvas id="canvas">
 			Your browser does not support the canvas tag.
@@ -97,7 +101,7 @@ body {
 
 		<script src="index.js"></script>
 		<script>
-const GODOT_CONFIG = {"args":[],"canvasResizePolicy":2,"ensureCrossOriginIsolationHeaders":true,"executable":"index","mainPack":"index.pck?v=1793028841","experimentalVK":false,"fileSizes":{"index.pck":44697344,"index.wasm":35376909},"focusCanvas":true,"gdextensionLibs":[]};
+const GODOT_CONFIG = {"args":[],"canvasResizePolicy":2,"ensureCrossOriginIsolationHeaders":true,"executable":"index","mainPack":"index.pck?v=1793031071","experimentalVK":false,"fileSizes":{"index.pck":49999808,"index.wasm":35376909},"focusCanvas":true,"gdextensionLibs":[]};
 const GODOT_THREADS_ENABLED = false;
 const engine = new Engine(GODOT_CONFIG);
 

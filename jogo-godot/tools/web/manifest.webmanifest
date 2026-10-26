@@ -1,0 +1,16 @@
+{
+  "name": "Bicho Ehn",
+  "short_name": "Bicho Ehn",
+  "description": "Jogo de física estilo Happy Wheels.",
+  "start_url": "./",
+  "scope": "./",
+  "display": "fullscreen",
+  "orientation": "landscape",
+  "background_color": "#12092a",
+  "theme_color": "#12092a",
+  "icons": [
+    {"src": "icon192.png", "sizes": "192x192", "type": "image/png"},
+    {"src": "icon512.png", "sizes": "512x512", "type": "image/png"},
+    {"src": "iconmaskable.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable"}
+  ]
+}

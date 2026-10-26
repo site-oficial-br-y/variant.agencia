@@ -26,7 +26,8 @@ const HABILIDADES := {"segway": "salto", "cadeira": "turbo", "scooter": "turbo",
 const TURBO_INFINITO := ["cadeira"]       # Gabriel: turbo sem combustível
 const BOMBA_EXTRA := ["scooter"]          # Gian: turbo + bomba num segundo botão
 const NITRO_EXTRA := ["chefe"]           # Vitinho: nitro de fogo azul no segundo botão (C/B)
-const VERSAO := "v25.10-N"            # aparece no canto do lobby (pra conferir se atualizou)
+const ULT_DASH := ["gamer"]              # Gorisch: ult no segundo botão (impulso + dash vermelho)
+const VERSAO := "v2.0"            # aparece no canto do lobby (pra conferir se atualizou)
 const RITMO := 3.0                   # mundo 3x mais rápido: queda pesada e ritmo de Happy Wheels
 const ARQ_PROGRESSO := "user://progresso.cfg"
 var checkpoint_x: float = -1.0       # -1 = começa do início; sobrevive ao reinício (R)
@@ -76,6 +77,35 @@ func _ready() -> void:
 func _process(_d: float) -> void:
 	var t := DisplayServer.window_get_size()
 	_gira.visible = t.y > t.x          # celular em pé
+
+## skins à venda: o id é a pasta da arte (assets/<id>). Preço e raridade valem os do servidor;
+## estes são só pra mostrar enquanto a loja carrega
+const SKINS := {
+	"monociclo_folhas": {"pers": "monociclo", "nome": "Folhas", "raridade": "comum", "preco": 5.90},
+	"cadeira_zumbi": {"pers": "cadeira", "nome": "Zumbi", "raridade": "comum", "preco": 5.90},
+	"caio_santos": {"pers": "caio", "nome": "Santos", "raridade": "epico", "preco": 9.90},
+	"chefe_creta": {"pers": "chefe", "nome": "Creta", "raridade": "epico", "preco": 9.90},
+	"lima_dourado": {"pers": "lima", "nome": "Gorila Dourado", "raridade": "lendario", "preco": 19.90},
+}
+
+## skin equipada desse personagem ("" = visual normal)
+func skin_de(pers: String) -> String:
+	var cfg := ConfigFile.new()
+	cfg.load(ARQ_PROGRESSO)
+	return str(cfg.get_value("skins", pers, ""))
+
+func equipar(pers: String, item: String) -> void:
+	var cfg := ConfigFile.new()
+	cfg.load(ARQ_PROGRESSO)
+	cfg.set_value("skins", pers, item)
+	cfg.save(ARQ_PROGRESSO)
+
+## pasta de arte que esse personagem usa agora (skin equipada e comprada, ou a normal)
+func pasta(pers: String) -> String:
+	var it := skin_de(pers)
+	if it != "" and Conta.tem(it) and FileAccess.file_exists("res://assets/%s/parts.json" % it):
+		return it
+	return pers
 
 ## recorde (s) de uma fase; INF se nunca concluiu
 func recorde(f: int) -> float:

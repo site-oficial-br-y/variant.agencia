@@ -1,7 +1,6 @@
 extends Control
 ## Ranking público: melhores tempos de cada fase (só vitória sozinho, do começo) e quem
-## tem mais tempo de jogo. Do lado, a conta: criar (usuário + senha + nick), entrar,
-## trocar o nick ou sair.
+## tem mais tempo de jogo. A conta fica na tela Minha conta.
 
 const ROXO := Color(0.6, 0.38, 1.0)
 const ROXO_ESCURO := Color(0.09, 0.05, 0.18, 0.86)
@@ -22,13 +21,11 @@ var caixa_lista: Panel
 var rolagem: ScrollContainer
 var linhas: VBoxContainer
 var aviso_lista: Label
-var caixa_conta: Panel
-var conta_vbox: VBoxContainer
+var b_conta: Button
 
 var modo := "tempos"
 var fase_i := 0                       # índice em Game.ORDEM
 var _pedido := 0                      # descarta resposta velha quando troca de aba rápido
-var _ativo := false                   # servidor respondeu o ranking: dá pra criar conta
 
 func _ready() -> void:
 	Audio.musica_menu(true)
@@ -68,20 +65,13 @@ func _ready() -> void:
 	aviso_lista = _rotulo("", 28, 8, Color(0.9, 0.85, 1.0))
 	aviso_lista.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	caixa_lista.add_child(aviso_lista)
-	caixa_conta = Panel.new()
-	caixa_conta.add_theme_stylebox_override("panel", _caixa(ROXO, 18))
-	add_child(caixa_conta)
-	conta_vbox = VBoxContainer.new()
-	conta_vbox.add_theme_constant_override("separation", 12)
-	caixa_conta.add_child(conta_vbox)
+	b_conta = _botao("MINHA CONTA", ROXO, func() -> void: get_tree().change_scene_to_file("res://levels/MinhaConta.tscn"))
 	Conta.mudou.connect(_conta_mudou)
 	get_viewport().size_changed.connect(_layout)
-	_montar_conta()
 	_layout()
 	_carregar()
 
 func _conta_mudou() -> void:
-	_montar_conta()
 	_carregar()
 
 func _layout() -> void:
@@ -96,7 +86,9 @@ func _layout() -> void:
 	b_voltar.size = Vector2(170, 60)
 	titulo.position = Vector2(214, 8)
 	titulo.size = Vector2(500, 80)
-	var larg_lista := floorf(v.x * 0.6) - 36.0
+	var larg_lista := v.x - 48.0
+	b_conta.size = Vector2(230, 60)
+	b_conta.position = Vector2(v.x - 254, 22)
 	b_tempos.position = Vector2(24, 100)
 	b_tempos.size = Vector2((larg_lista - 12.0) / 2.0, 58)
 	b_jogo.position = Vector2(36 + b_tempos.size.x, 100)
@@ -121,10 +113,6 @@ func _layout() -> void:
 	linhas.custom_minimum_size = Vector2(rolagem.size.x - 16, 0)
 	aviso_lista.position = Vector2(30, 30)
 	aviso_lista.size = Vector2(caixa_lista.size.x - 60, caixa_lista.size.y - 60)
-	caixa_conta.position = Vector2(24 + larg_lista + 24, 100)
-	caixa_conta.size = Vector2(v.x - caixa_conta.position.x - 24, v.y - 122)
-	conta_vbox.position = Vector2(26, 22)
-	conta_vbox.size = caixa_conta.size - Vector2(52, 44)
 	(b_tempos.get_theme_stylebox("normal") as StyleBoxFlat).bg_color = Color(0.35, 0.22, 0.05, 0.92) if modo == "tempos" else ROXO_ESCURO
 	(b_jogo.get_theme_stylebox("normal") as StyleBoxFlat).bg_color = Color(0.35, 0.22, 0.05, 0.92) if modo == "jogo" else ROXO_ESCURO
 	nome_fase.text = Game.nome_fase(Game.ORDEM[fase_i])
@@ -158,8 +146,6 @@ func _carregar() -> void:
 	if meu != _pedido or not is_inside_tree():
 		return
 	var cod := int(r[0])
-	if cod != 0:
-		_ativo = cod >= 200 and cod < 300
 	if cod == 0:
 		aviso_lista.text = "Sem conexão. Volta e tenta de novo."
 		return
@@ -222,128 +208,6 @@ func _horas(s: int) -> String:
 	if s >= 60:
 		return "%d min" % (s / 60)
 	return "%d s" % s
-
-# ---------- conta ----------
-var _campo_usuario: LineEdit
-var _campo_senha: LineEdit
-var _campo_nick: LineEdit
-var _status: Label
-var _ocupado := false
-var _ult_prompt := -10000
-
-func _montar_conta() -> void:
-	for n in conta_vbox.get_children():
-		n.queue_free()
-	var t := _rotulo("SUA CONTA", 34, 10, OURO)
-	t.horizontal_alignment = HORIZONTAL_ALIGNMENT_LEFT
-	conta_vbox.add_child(t)
-	if Conta.logado():
-		var nome := _rotulo(Conta.nick, 48, 12, Color.WHITE)
-		nome.horizontal_alignment = HORIZONTAL_ALIGNMENT_LEFT
-		nome.clip_text = true
-		conta_vbox.add_child(nome)
-		conta_vbox.add_child(_texto("usuário pra entrar: " + Conta.usuario))
-		conta_vbox.add_child(_texto("Seus recordes e o seu tempo de jogo entram no ranking sozinhos. Só conta vitória jogando sozinho, do começo da fase."))
-		var linha := HBoxContainer.new()
-		linha.add_theme_constant_override("separation", 12)
-		conta_vbox.add_child(linha)
-		_campo_nick = _campo("NOVO NICK", false, "Novo nick (3 a 16 letras):", 16)
-		_campo_nick.reparent(linha)
-		_campo_nick.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-		var b_nick := _botao("TROCAR NICK", OURO, _trocar_nick)
-		b_nick.reparent(linha)
-		b_nick.custom_minimum_size = Vector2(200, 64)
-		_status = _texto("")
-		conta_vbox.add_child(_status)
-		var b := _botao("SAIR DA CONTA", Color(1, 0.45, 0.4), func() -> void:
-			Audio.tocar("clique")
-			await Conta.sair())
-		b.reparent(conta_vbox)
-		b.custom_minimum_size = Vector2(0, 62)
-		return
-	conta_vbox.add_child(_texto("Cria a conta pra entrar no ranking. No ranking aparece o seu nick, não o usuário."))
-	_campo_usuario = _campo("USUÁRIO (pra entrar)", false, "Usuário pra entrar (3 a 20 letras ou números):", 20)
-	_campo_senha = _campo("SENHA", true, "Senha (mínimo 6):", 64)
-	_campo_nick = _campo("NICK (aparece no ranking)", false, "Nick que aparece no ranking (3 a 16 letras):", 16)
-	var botoes := HBoxContainer.new()
-	botoes.add_theme_constant_override("separation", 12)
-	conta_vbox.add_child(botoes)
-	var b_criar := _botao("CRIAR CONTA", VERDE, func() -> void: _enviar(true))
-	var b_entrar := _botao("ENTRAR", ROXO, func() -> void: _enviar(false))
-	for b in [b_criar, b_entrar]:
-		b.reparent(botoes)
-		b.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-		b.custom_minimum_size = Vector2(0, 62)
-	_status = _texto("Pra entrar basta usuário e senha. Senha esquecida não tem volta, então anota.")
-	conta_vbox.add_child(_status)
-
-func _enviar(criar: bool) -> void:
-	if _ocupado:
-		return
-	Audio.tocar("clique")
-	if not _ativo:
-		_aviso("O ranking ainda não foi ativado no servidor. Tenta mais tarde.", true)
-		return
-	_ocupado = true
-	_aviso("Criando a conta..." if criar else "Entrando...", false)
-	var erro: String
-	if criar:
-		erro = await Conta.criar(_campo_usuario.text, _campo_senha.text, _campo_nick.text)
-	else:
-		erro = await Conta.entrar(_campo_usuario.text, _campo_senha.text)
-	_ocupado = false
-	if erro != "":
-		_aviso(erro, true)
-	else:
-		Audio.tocar("confirma")
-
-func _trocar_nick() -> void:
-	if _ocupado:
-		return
-	Audio.tocar("clique")
-	_ocupado = true
-	_aviso("Trocando...", false)
-	var erro: String = await Conta.trocar_nick(_campo_nick.text)
-	_ocupado = false
-	if erro != "":
-		_aviso(erro, true)
-	else:
-		Audio.tocar("confirma")
-
-func _aviso(t: String, ruim: bool) -> void:
-	if is_instance_valid(_status):
-		_status.text = t
-		_status.add_theme_color_override("font_color", Color(1, 0.5, 0.45) if ruim else Color(0.9, 0.85, 1.0))
-
-func _campo(dica: String, senha: bool, pergunta: String, maximo: int) -> LineEdit:
-	var c := LineEdit.new()
-	c.placeholder_text = dica
-	c.secret = senha
-	c.max_length = maximo
-	c.add_theme_font_size_override("font_size", 28)
-	c.custom_minimum_size = Vector2(0, 64)
-	var st := StyleBoxFlat.new()
-	st.bg_color = Color(0, 0, 0, 0.45)
-	st.set_corner_radius_all(12)
-	st.set_border_width_all(2)
-	st.border_color = Color(1, 1, 1, 0.35)
-	st.content_margin_left = 16
-	st.content_margin_right = 16
-	c.add_theme_stylebox_override("normal", st)
-	c.add_theme_stylebox_override("focus", st)
-	c.gui_input.connect(func(ev: InputEvent) -> void:      # navegador: janela de digitar (abre o teclado no celular)
-		if OS.has_feature("web") and ((ev is InputEventMouseButton and ev.pressed) or (ev is InputEventScreenTouch and ev.pressed)):
-			c.accept_event()
-			if Time.get_ticks_msec() - _ult_prompt < 500:      # clique chega como toque + mouse
-				return
-			var r = JavaScriptBridge.eval("(window.prompt(%s, %s) ?? '')" % [JSON.stringify(pergunta), JSON.stringify("" if senha else c.text)], true)
-			_ult_prompt = Time.get_ticks_msec()
-			var t := str(r).strip_edges()
-			if t != "":
-				c.text = t.left(c.max_length)
-			c.release_focus())
-	conta_vbox.add_child(c)
-	return c
 
 func _texto(t: String) -> Label:
 	var l := _rotulo(t, 22, 6, Color(0.9, 0.85, 1.0))

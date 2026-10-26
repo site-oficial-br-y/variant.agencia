@@ -1,0 +1,180 @@
+{
+ "nome": "monociclo",
+ "src_w": 1164,
+ "src_h": 1351,
+ "ordem": [
+  "roda",
+  "quadro",
+  "tronco",
+  "perna",
+  "cabeca",
+  "braco"
+ ],
+ "pecas": {
+  "roda": {
+   "x": 364,
+   "y": 885,
+   "w": 411,
+   "h": 423
+  },
+  "quadro": {
+   "x": 402,
+   "y": 638,
+   "w": 195,
+   "h": 475
+  },
+  "tronco": {
+   "x": 346,
+   "y": 200,
+   "w": 400,
+   "h": 486
+  },
+  "perna": {
+   "x": 455,
+   "y": 600,
+   "w": 322,
+   "h": 519
+  },
+  "cabeca": {
+   "x": 503,
+   "y": 27,
+   "w": 252,
+   "h": 235
+  },
+  "braco": {
+   "x": 504,
+   "y": 295,
+   "w": 187,
+   "h": 418
+  }
+ },
+ "corpo_de": {
+  "roda": "roda0",
+  "quadro": "chassi",
+  "cabeca": "cabeca",
+  "tronco": "tronco",
+  "braco": "braco",
+  "perna": "perna"
+ },
+ "piloto": [
+  "tronco",
+  "cabeca",
+  "braco",
+  "perna"
+ ],
+ "rodas": [
+  {
+   "corpo": "roda0",
+   "c": [
+    568.0,
+    1098.0
+   ],
+   "r": 203,
+   "massa": 2.0,
+   "motriz": true
+  }
+ ],
+ "chassi": {
+  "massa": 5.0,
+  "auto_equilibrio": false,
+  "monociclo": true,
+  "vmax": 820.0,
+  "forca": 0.0,
+  "mastro": {
+   "x": 540.0,
+   "y0": 640.0,
+   "y1": 1098.0,
+   "w": 90.0
+  }
+ },
+ "corpos": {
+  "cabeca": {
+   "massa": 0.8,
+   "forma": [
+    "circ",
+    [
+     632,
+     132
+    ],
+    112
+   ]
+  },
+  "tronco": {
+   "massa": 2.0,
+   "forma": [
+    "caps",
+    [
+     500,
+     290
+    ],
+    [
+     480,
+     600
+    ],
+    120
+   ]
+  },
+  "braco": {
+   "massa": 0.5,
+   "forma": [
+    "caps",
+    [
+     545,
+     335
+    ],
+    [
+     640,
+     670
+    ],
+    42
+   ]
+  },
+  "perna": {
+   "massa": 1.4,
+   "forma": [
+    "caps",
+    [
+     485,
+     625
+    ],
+    [
+     625,
+     1050
+    ],
+    66
+   ]
+  }
+ },
+ "juntas": [
+  {
+   "a": "tronco",
+   "b": "cabeca",
+   "p": [
+    600,
+    252
+   ],
+   "lim": 40,
+   "teste": 25
+  },
+  {
+   "a": "tronco",
+   "b": "braco",
+   "p": [
+    545,
+    325
+   ],
+   "lim": 80,
+   "teste": -45
+  },
+  {
+   "a": "tronco",
+   "b": "perna",
+   "p": [
+    483,
+    617
+   ],
+   "lim": 70,
+   "teste": 30
+  }
+ ]
+}

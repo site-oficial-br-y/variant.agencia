@@ -16,6 +16,8 @@ var user_id := ""
 var _access := ""
 var _refresh := ""
 var _expira := 0.0
+var inventario: Array = []            # skins compradas (fica salvo: funciona sem internet)
+var admin := false                    # dono do jogo: confirma os pedidos e tem todas as skins
 var _jogo := 0.0                      # segundos jogados ainda não enviados
 var _envio_t := ENVIO_JOGO
 
@@ -33,6 +35,10 @@ func _ready() -> void:
 	_access = str(cfg.get_value("conta", "access", ""))
 	_refresh = str(cfg.get_value("conta", "refresh", ""))
 	_expira = float(cfg.get_value("conta", "expira", 0.0))
+	inventario = cfg.get_value("conta", "inventario", [])
+	admin = bool(cfg.get_value("conta", "admin", false))
+	if logado():
+		carregar_inventario.call_deferred()
 
 func logado() -> bool:
 	return _refresh != ""
@@ -148,6 +154,8 @@ func _limpar() -> void:
 	_refresh = ""
 	_expira = 0.0
 	_jogo = 0.0
+	inventario = []
+	admin = false
 	_salvar()
 	mudou.emit()
 
@@ -155,10 +163,52 @@ func _entrou() -> void:
 	_salvar()
 	_envio_t = ENVIO_JOGO
 	mudou.emit()
+	carregar_inventario()
 	for f in range(1, 9):                            # recordes feitos antes de ter conta também valem
 		var t := Game.recorde(f)
 		if t < INF:
 			enviar_recorde(f, t, "")
+
+# ---------- loja e inventário ----------
+func tem(item: String) -> bool:
+	return admin or item in inventario
+
+## atualiza as skins compradas (e se é o dono) a partir do servidor
+func carregar_inventario() -> void:
+	if not logado():
+		return
+	var r := await _pedir(HTTPClient.METHOD_GET, "/rest/v1/bicho_inventario?select=item", null, true)
+	if int(r[0]) == 200 and typeof(r[1]) == TYPE_ARRAY:
+		inventario = (r[1] as Array).map(func(d): return str(d.get("item", "")))
+	var a := await _pedir(HTTPClient.METHOD_POST, "/rest/v1/rpc/bicho_sou_admin", {}, true)
+	if int(a[0]) == 200:
+		admin = a[1] == true
+	_salvar()
+	mudou.emit()
+
+## [código, lista de itens à venda]
+func itens_loja() -> Array:
+	return await _pedir(HTTPClient.METHOD_GET, "/rest/v1/bicho_itens?select=item,personagem,nome,raridade,preco,ativo&order=ordem")
+
+## pedido novo (ou o que já está em aberto): {"codigo", "valor", "item"} ou {"erro"}
+func criar_pedido(item: String) -> Dictionary:
+	var r := await _pedir(HTTPClient.METHOD_POST, "/rest/v1/rpc/bicho_criar_pedido", {"p_item": item}, true)
+	if int(r[0]) == 0:
+		return {"erro": "conexao"}
+	if int(r[0]) != 200 or typeof(r[1]) != TYPE_DICTIONARY:
+		return {"erro": "servidor"}
+	return r[1]
+
+func meus_pedidos() -> Array:
+	return await _pedir(HTTPClient.METHOD_GET, "/rest/v1/bicho_pedidos?select=codigo,item,valor,status,criado_em&order=criado_em.desc&limit=20", null, true)
+
+## só o dono
+func pedidos_abertos() -> Array:
+	return await _pedir(HTTPClient.METHOD_POST, "/rest/v1/rpc/bicho_pedidos_abertos", {}, true)
+
+func resolver_pedido(codigo: String, pago: bool) -> String:
+	var r := await _pedir(HTTPClient.METHOD_POST, "/rest/v1/rpc/bicho_resolver_pedido", {"p_codigo": codigo, "p_pago": pago}, true)
+	return str(r[1]) if int(r[0]) == 200 else "erro"
 
 ## vitória sozinho, do começo da fase: o servidor só guarda se for melhor.
 ## Devolve o código http (200 = foi), -1 sem conta, -2 servidor recusou o tempo.
@@ -202,6 +252,8 @@ func _salvar() -> void:
 	cfg.set_value("conta", "access", _access)
 	cfg.set_value("conta", "refresh", _refresh)
 	cfg.set_value("conta", "expira", _expira)
+	cfg.set_value("conta", "inventario", inventario)
+	cfg.set_value("conta", "admin", admin)
 	cfg.save(Game.ARQ_PROGRESSO)
 
 ## token válido (renova se estiver pra vencer); "" se a conta caiu

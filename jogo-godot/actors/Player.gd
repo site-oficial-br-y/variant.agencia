@@ -9,6 +9,7 @@ signal morreu
 signal bateu_chao(pos: Vector2, forca: float)
 
 @export var personagem: String = "segway"
+var pasta := ""                         # skin: pasta de arte (assets/<pasta>); vazio = a do personagem
 @export var chao_y: float = 1000.0
 var fundo_y := INF                 # abaixo disso o veículo caiu num buraco (a fase define)
 @export var spawn_x: float = 600.0
@@ -82,6 +83,12 @@ var recarga := 0.0
 var recarga_total := 1.0
 var combustivel := 1.0
 var recarga_bomba := 0.0
+const ULT_DURA := 6.0                    # Gorisch: segundos de ult (de verdade)
+const ULT_RECARGA := 25.0
+var ult_t := 0.0                         # ult ativa: impulso de velocidade, rastro e dash vermelhos
+var recarga_ult := 0.0
+var _dash_ult := 0.0                     # espera entre um dash e outro na ult
+var _ult_img: Sprite2D                   # pose dele voando na cadeira durante a ult
 var pulos := 2
 var _espera_chao := 0.0
 var _equilibrio_t := 0.0
@@ -99,8 +106,12 @@ var morto := false
 var sangue: Sangue
 var _mat: PhysicsMaterial
 
+
+func _pasta() -> String:
+	return pasta if pasta != "" else personagem
+
 func _ready() -> void:
-	var f := FileAccess.open("res://assets/%s/parts.json" % personagem, FileAccess.READ)
+	var f := FileAccess.open("res://assets/%s/parts.json" % _pasta(), FileAccess.READ)
 	D = JSON.parse_string(f.get_as_text())
 	_mat = PhysicsMaterial.new()
 	_mat.friction = 1.0
@@ -117,7 +128,7 @@ func centro_peca(k: String) -> Vector2:
 
 func _sprite(k: String) -> Sprite2D:
 	var s := Sprite2D.new()
-	s.texture = load("res://assets/%s/%s.png" % [personagem, k])
+	s.texture = load("res://assets/%s/%s.png" % [_pasta(), k])
 	s.z_index = D["ordem"].find(k)
 	return s
 
@@ -261,9 +272,9 @@ func _montar() -> void:
 		_montar_nitro(ch)
 	boneco = Node2D.new()
 	chassi.add_child(boneco)
-	if ResourceLoader.exists("res://assets/%s/pulo.png" % personagem):
+	if ResourceLoader.exists("res://assets/%s/pulo.png" % _pasta()):
 		_pulo_img = Sprite2D.new()
-		_pulo_img.texture = load("res://assets/%s/pulo.png" % personagem)
+		_pulo_img.texture = load("res://assets/%s/pulo.png" % _pasta())
 		_pulo_img.offset = Vector2(6, -0.5)
 		_pulo_img.position = Vector2(610, 800) - origem
 		_pulo_img.rotation = deg_to_rad(20.0)
@@ -280,7 +291,7 @@ func _montar() -> void:
 	_montar_membros()
 	if D.has("montado_img"):                 # usa a foto inteira enquanto está montado
 		foto = Sprite2D.new()
-		foto.texture = load("res://assets/%s/%s.png" % [personagem, D["montado_img"]])
+		foto.texture = load("res://assets/%s/%s.png" % [_pasta(), D["montado_img"]])
 		foto.position = Vector2(D["src_w"], D["src_h"]) / 2.0 - origem
 		foto.z_index = 5
 		chassi.add_child(foto)
@@ -657,11 +668,64 @@ func _especial(ch: Dictionary, delta: float) -> void:
 				Audio.tocar("turbo", 1.0, 0.0)
 		else:
 			nitro = minf(1.0, nitro + 0.15 * delta / Engine.time_scale)
+	if personagem in Game.ULT_DASH:
+		_ult_gorisch(ch, delta / Engine.time_scale)
 	if personagem in Game.BOMBA_EXTRA:               # segundo botão: bomba com recarga própria
 		recarga_bomba = maxf(0.0, recarga_bomba - delta)
 		if Input.is_action_just_pressed("bomba") and recarga_bomba <= 0.0:
 			recarga_bomba = 2.5
 			_lancar_bomba()
+
+## Gorisch: segundo botão liga a ult (impulso de velocidade + pose voando). Na ult, o botão
+## de novo dá dash vermelho. Depois recarrega; o turbo de porcentagem continua no especial.
+func _ult_gorisch(ch: Dictionary, dt: float) -> void:
+	var aperta := Input.is_action_just_pressed("bomba")
+	if ult_t <= 0.0:
+		recarga_ult = maxf(0.0, recarga_ult - dt)
+		if aperta and recarga_ult <= 0.0:
+			ult_t = ULT_DURA
+			_dash_ult = 0.0
+			_mostrar_ult(true)
+			Audio.tocar("pulo", 0.7, 0.0)
+			_dash_vermelho()
+		return
+	ult_t -= dt
+	_dash_ult = maxf(0.0, _dash_ult - dt)
+	if chassi.linear_velocity.length() < float(ch["vmax"]) * velocidade * 2.6:
+		chassi.apply_central_force(Vector2.RIGHT.rotated(chassi.rotation) * massa_total * TURBO * 1.6)
+	_rastro(Color(1.0, 0.22, 0.18, 0.55), 0.05)
+	if aperta and _dash_ult <= 0.0:
+		_dash_ult = 0.6
+		_dash_vermelho()
+	if ult_t <= 0.0:
+		recarga_ult = ULT_RECARGA
+		_mostrar_ult(false)
+
+func _dash_vermelho() -> void:
+	var dirx := 1.0 if Input.get_axis("brake", "accelerate") >= 0.0 else -1.0
+	for rb in [chassi] + rodas:
+		var c := rb as RigidBody2D
+		c.linear_velocity = Vector2(dirx * 3000.0, minf(c.linear_velocity.y, 0.0) - 100.0)
+	Audio.tocar("turbo", 1.0, 0.0)
+	_explosao_dash(dirx, Color(1.0, 0.25, 0.2))
+
+func _mostrar_ult(sim: bool) -> void:
+	if sim and not is_instance_valid(_ult_img) and ResourceLoader.exists("res://assets/%s/ult.png" % _pasta()):
+		_ult_img = Sprite2D.new()
+		_ult_img.texture = load("res://assets/%s/ult.png" % _pasta())
+		_ult_img.position = Vector2(D["src_w"], D["src_h"]) / 2.0 - origem
+		_ult_img.z_index = 5
+		chassi.add_child(_ult_img)
+	if is_instance_valid(_ult_img):
+		_ult_img.visible = sim
+	boneco.visible = not sim
+	for c in chassi.get_children():
+		if c is Sprite2D and c != _ult_img and c != foto:
+			(c as Sprite2D).visible = not sim
+	for r in rodas:
+		for c in (r as Node).get_children():
+			if c is Sprite2D:
+				(c as Sprite2D).visible = not sim
 
 ## Vitinho: escapamentos na traseira soltando chama azul de nitro
 func _montar_nitro(ch: Dictionary) -> void:
@@ -975,7 +1039,7 @@ func _vestir(sem_camisa: bool) -> void:
 		if not s.has_meta("base"):
 			s.set_meta("base", s.position)
 		var kk: String = k + "_ult" if sem_camisa else k
-		s.texture = load("res://assets/%s/%s.png" % [personagem, kk])
+		s.texture = load("res://assets/%s/%s.png" % [_pasta(), kk])
 		s.position = (s.get_meta("base") as Vector2) + (centro_peca(kk) - centro_peca(k))
 
 ## golpe de chefe acertou: com o especial ligado, rebate (anel dourado) e a 1ª vez tira vida do chefe
@@ -1065,7 +1129,7 @@ func _rastro(cor: Color, intervalo: float) -> void:
 		for c in (no as Node).get_children():
 			if c is Sprite2D and (c as Sprite2D).visible:
 				_copiar_sprite(c, f)
-	if boneco:
+	if boneco and boneco.visible:
 		for s in boneco.find_children("*", "Sprite2D", true, false):
 			_copiar_sprite(s, f)
 	f.modulate = cor
@@ -1083,7 +1147,7 @@ func _copiar_sprite(s: Sprite2D, dono: Node2D) -> void:
 	c.global_transform = s.global_transform
 
 ## estouro de luz azul na arrancada: anel e faíscas
-func _explosao_dash(dirx: float) -> void:
+func _explosao_dash(dirx: float, cor := Color(0.6, 0.95, 1.0)) -> void:
 	var p := CPUParticles2D.new()
 	p.one_shot = true
 	p.amount = 50
@@ -1096,7 +1160,7 @@ func _explosao_dash(dirx: float) -> void:
 	p.gravity = Vector2.ZERO
 	p.scale_amount_min = 12.0
 	p.scale_amount_max = 26.0
-	p.color = Color(0.6, 0.95, 1.0)
+	p.color = cor
 	var m := CanvasItemMaterial.new()
 	m.blend_mode = CanvasItemMaterial.BLEND_MODE_ADD
 	p.material = m
@@ -1106,7 +1170,7 @@ func _explosao_dash(dirx: float) -> void:
 	p.emitting = true
 	var anel := Line2D.new()
 	anel.width = 40.0
-	anel.default_color = Color(0.6, 0.95, 1.0, 0.9)
+	anel.default_color = Color(cor, 0.9)
 	anel.material = m
 	var pts := PackedVector2Array()
 	for k in 33:
@@ -1460,6 +1524,10 @@ func soltar_ragdoll(herda_vel: Vector2, pulo: bool = false) -> void:
 		_mira = null
 	if not montado:
 		return
+	if ult_t > 0.0:                          # caiu no meio da ult: volta o visual normal
+		ult_t = 0.0
+		recarga_ult = ULT_RECARGA
+		_mostrar_ult(false)
 	montado = false
 	if is_instance_valid(_baloes):
 		_estourar_baloes()

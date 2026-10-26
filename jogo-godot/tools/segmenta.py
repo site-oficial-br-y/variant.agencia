@@ -134,7 +134,7 @@ def roda_radial(ctx, c, r, visivel):
     return cor, a
 
 
-def rodar(cfg_nome, cfg):
+def rodar(cfg_nome, cfg, saida=None):
     ctx = Ctx(carregar(cfg.get('fonte', cfg_nome)))
     H, W = ctx.H, ctx.W
     opaco = ctx.alpha > 8
@@ -167,7 +167,7 @@ def rodar(cfg_nome, cfg):
                     L[ilha] = np.bincount(viz).argmax(); mudou += 1
         if not mudou: break
 
-    out_dir = os.path.join(AQUI, '..', 'assets', cfg_nome)
+    out_dir = os.path.join(AQUI, '..', 'assets', saida or cfg_nome)
     os.makedirs(out_dir, exist_ok=True)
     manter = cfg.get('manter_pecas', [])             # peças de outra passada (ex.: a cadeira)
     velho = json.load(open(os.path.join(out_dir, 'parts.json'))) if manter else None
@@ -206,6 +206,9 @@ def rodar(cfg_nome, cfg):
                     fonte &= ctx.pele
                 elif cfg.get('fonte_casca', {}).get(n) == 'escuro':
                     fonte &= ctx.escuro(90)
+                elif cfg.get('fonte_casca', {}).get(n) == 'verde':       # farda: só o verde-oliva
+                    r_, g_, b_ = ctx.rgb[..., 0], ctx.rgb[..., 1], ctx.rgb[..., 2]
+                    fonte &= (g_ >= r_) & (g_ > b_ + 10) & (ctx.mx > 40)
                 sm = suave(ctx, fonte, cfg.get('sigma', 14))
                 cor[enche] = sm[enche].astype(np.int16)
                 a[enche] = 255
@@ -460,6 +463,46 @@ MONOCICLO = {
 }
 
 
+def monociclo_folhas_regras(c):
+    """Erick de folhas: corpo todo de pele, então braço e perna saem só por polígono."""
+    RODA = (568.0, 1098.0); RR = 203
+    braco = c.poly([(515, 300), (600, 295), (608, 360), (600, 450), (615, 540), (660, 610), (690, 650), (682, 700),
+                    (640, 712), (598, 690), (568, 630), (540, 575), (512, 500), (504, 400)])
+    coxa = c.poly([(455, 600), (560, 620), (700, 650), (775, 710), (778, 760), (720, 790), (600, 760), (520, 735), (465, 705)])
+    canela = c.poly([(690, 740), (780, 750), (762, 830), (700, 990), (725, 1060), (740, 1112), (640, 1118), (598, 1080),
+                     (598, 1000), (650, 900)])
+    traseira = c.poly([(588, 742), (662, 760), (652, 860), (622, 1002), (584, 992), (598, 880)])
+    assento = c.poly([(402, 638), (500, 645), (562, 660), (562, 702), (402, 702)])
+    canote = c.poly([(484, 690), (550, 690), (562, 800), (592, 830), (596, 990), (556, 1002), (544, 870), (500, 860)])
+    garfo_baixo = c.poly([(545, 1000), (596, 1000), (596, 1112), (545, 1112)])
+    perna = coxa | canela | traseira
+    return [
+        ('cabeca', (c.ys < 200) | ((c.ys < 262) & (c.xs > 585))),
+        ('braco', braco),
+        ('perna', perna),
+        ('quadro', (canote | assento) & ~perna),
+        ('quadro', garfo_baixo & c.cinza(40) & (c.mx > 60)),
+        ('roda', c.disco(RODA, RR + 12)),
+        ('tronco', c.ys < 720),
+        ('perna', np.ones_like(c.pele)),
+    ]
+
+
+MONOCICLO_FOLHAS = dict(MONOCICLO)
+MONOCICLO_FOLHAS.update({'regras': monociclo_folhas_regras, 'fonte_casca': {'tronco': 'pele', 'perna': 'pele'}})
+def cadeira_zumbi_regras(c):
+    """Gabriel zumbi: pele verde, então a mão sai por polígono (o resto é a divisão normal)."""
+    mao = c.poly([(495, 488), (600, 498), (672, 535), (676, 604), (620, 622), (540, 604), (495, 562)])
+    return [('braco', mao) if (n == 'braco' and r is not None and n == 'braco' and k == 5) else (n, r)
+            for k, (n, r) in enumerate(cadeira_regras(c))]
+
+
+CADEIRA_ZUMBI = dict(CADEIRA)
+CADEIRA_ZUMBI.update({'regras': cadeira_zumbi_regras, 'fonte_casca': {'tronco': 'escuro', 'coxa': 'escuro'}})
+SKINS = {('monociclo', 'folhas'): MONOCICLO_FOLHAS, ('cadeira', 'zumbi'): CADEIRA_ZUMBI}
+# SKINS do gamer ficam depois do GAMER (abaixo)
+
+
 def gamer_regras(c):
     R0 = (71.0, 1327.0); R1 = (357.0, 1362.0)
     preto_cinza = c.cinza(30) & c.escuro(80)
@@ -490,6 +533,26 @@ def gamer_regras(c):
         ('cadeira', np.ones_like(c.pele)),
     ]
 
+
+
+def gamer_militar_regras(c):
+    """Gorisch de farda: calça comprida, então a coxa sai por polígono em vez da cor da pele."""
+    coxa = c.poly([(555, 830), (790, 820), (800, 1040), (600, 1060), (560, 1000)])
+    coxa_tras = c.poly([(790, 700), (925, 715), (930, 945), (790, 945)])
+    braçadeira = c.poly([(270, 545), (450, 545), (450, 700), (270, 700)])
+    k_vermelho = lambda n, r, c: bool((r & braçadeira).any())       # regra das faixas vermelhas da cadeira
+    saida = []
+    for n, r in gamer_regras(c):
+        if n == 'coxa':
+            saida.append(('coxa', coxa & ~((c.xs >= 790) & (c.ys >= 940))))
+        elif n == 'tronco':
+            saida.append(('perna2', coxa_tras))
+            saida.append((n, r))
+        elif n == 'cadeira' and k_vermelho(n, r, c):
+            saida.append((n, r & ~braçadeira))
+        else:
+            saida.append((n, r))
+    return saida
 
 GAMER = {
     'ordem': ['cadeira', 'roda0', 'roda1', 'perna2', 'tronco', 'apoio', 'coxa', 'canela', 'braco', 'cabeca'],
@@ -570,10 +633,18 @@ GAMER_PILOTO['fisica']['corpos']['canela']['forma'] = ['caps', [660, 1060], [665
 GAMER_PILOTO['fisica']['corpos']['perna2']['forma'] = ['caps', [830, 900], [845, 1110], 72]   # o tênis fica abaixo das rodinhas na arte
 GAMER_PILOTO['fisica']['juntas'][3]['p'] = [680, 1030]
 
+GAMER_MILITAR = dict(GAMER)
+GAMER_MILITAR.update({'regras': gamer_militar_regras, 'fonte_casca': {'cadeira': 'escuro', 'tronco': 'verde', 'cabeca': 'pele'}})
+SKINS[('gamer', 'militar')] = GAMER_MILITAR
+
 if __name__ == '__main__':
     S = '/tmp/claude-0/-home-user-variant-agencia/d602722c-012a-5dc7-9c23-bb5704ae8c56/scratchpad/'
-    for nome in sys.argv[1:]:
-        cfg = {'cadeira': CADEIRA, 'scooter': SCOOTER, 'monociclo': MONOCICLO, 'gamer': GAMER, 'gamer_piloto': GAMER_PILOTO}[nome]
-        cfg['dbg'] = S + f'seg-{nome}.png'
-        print('==', nome)
-        rodar('gamer' if nome == 'gamer_piloto' else nome, cfg)
+    for arg in sys.argv[1:]:
+        nome, _, skin = arg.partition(':')          # nome:skin = mesma divisão, arte da skin
+        cfg = dict(SKINS.get((nome, skin)) or {'cadeira': CADEIRA, 'scooter': SCOOTER, 'monociclo': MONOCICLO, 'gamer': GAMER, 'gamer_piloto': GAMER_PILOTO}[nome])
+        if skin:
+            cfg['fonte'] = f'{nome}_{skin}_full.png'
+        cfg['dbg'] = S + f'seg-{nome}{"_" + skin if skin else ""}.png'
+        print('==', arg)
+        base = 'gamer' if nome == 'gamer_piloto' else nome
+        rodar(base, cfg, f'{base}_{skin}' if skin else None)

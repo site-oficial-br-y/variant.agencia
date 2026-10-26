@@ -78,6 +78,7 @@ func _ready() -> void:
 func _criar_jogador(x: float, y: float) -> void:
 	player = Player.new()
 	player.personagem = Game.personagem
+	player.pasta = Game.pasta(Game.personagem)
 	player.chao_y = y
 	player.spawn_x = x
 	player.morreu.connect(_on_morreu)
@@ -1700,7 +1701,8 @@ func _construir_hud() -> void:
 		[_toque("gas", Vector2.ZERO, 200, "accelerate"), func(v: Vector2) -> Vector2: return Vector2(v.x - 225, v.y - 225)],
 		[_toque_especial(), func(v: Vector2) -> Vector2: return Vector2(v.x - 195, v.y - 410)],
 		[_rotulo_carga(), func(v: Vector2) -> Vector2: return Vector2(v.x - 213, v.y - 452)],
-		[_toque_bomba(), func(v: Vector2) -> Vector2: return Vector2(v.x - 370, v.y - 360) if (Game.personagem in Game.BOMBA_EXTRA or Game.personagem in Game.NITRO_EXTRA) else Vector2(-9999, 0)],
+		[_rotulo_ult(), func(v: Vector2) -> Vector2: return Vector2(v.x - 405, v.y - 400) if Game.personagem in Game.ULT_DASH else Vector2(-9999, 0)],
+		[_toque_bomba(), func(v: Vector2) -> Vector2: return Vector2(v.x - 370, v.y - 360) if (Game.personagem in Game.BOMBA_EXTRA or Game.personagem in Game.NITRO_EXTRA or Game.personagem in Game.ULT_DASH) else Vector2(-9999, 0)],
 		[_botao("R", Vector2.ZERO, Vector2(80, 64), "reset"), func(v: Vector2) -> Vector2: return Vector2(v.x - 96, 14)],
 		[_botao("TROCAR", Vector2.ZERO, Vector2(180, 64), "menu"), func(v: Vector2) -> Vector2: return Vector2(v.x - 290, 14)],
 		[_volume(cl), func(v: Vector2) -> Vector2: return Vector2(v.x - 386, 14)],
@@ -1771,7 +1773,8 @@ func _toque_especial() -> TouchScreenButton:
 	return _botao_especial
 
 func _toque_bomba() -> TouchScreenButton:
-	return _toque("nitro" if Game.personagem in Game.NITRO_EXTRA else "bomba", Vector2.ZERO, 130, "bomba")
+	var icone := "nitro" if Game.personagem in Game.NITRO_EXTRA else ("dash" if Game.personagem in Game.ULT_DASH else "bomba")
+	return _toque(icone, Vector2.ZERO, 130, "bomba")
 
 ## carga da habilidade embaixo do botão: PRONTO, segundos ou % do turbo
 func _rotulo_carga() -> Label:
@@ -1784,7 +1787,29 @@ func _rotulo_carga() -> Label:
 	$HUD.add_child(_carga)
 	return _carga
 
+## Gorisch: estado da ult em cima do segundo botão
+var _carga_ult: Label
+func _rotulo_ult() -> Label:
+	_carga_ult = Label.new()
+	_carga_ult.custom_minimum_size = Vector2(200, 40)
+	_carga_ult.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	_carga_ult.add_theme_font_size_override("font_size", 24)
+	_carga_ult.add_theme_color_override("font_outline_color", Color.BLACK)
+	_carga_ult.add_theme_constant_override("outline_size", 8)
+	$HUD.add_child(_carga_ult)
+	return _carga_ult
+
 func _atualizar_carga() -> void:
+	if _carga_ult and is_instance_valid(player) and Game.personagem in Game.ULT_DASH:
+		if player.ult_t > 0.0:
+			_carga_ult.text = "ULT! DASH"
+			_carga_ult.add_theme_color_override("font_color", Color(1, 0.35, 0.3))
+		elif player.recarga_ult > 0.0:
+			_carga_ult.text = "ULT %d s" % ceili(player.recarga_ult)
+			_carga_ult.add_theme_color_override("font_color", Color(0.85, 0.85, 0.9))
+		else:
+			_carga_ult.text = "ULT PRONTA"
+			_carga_ult.add_theme_color_override("font_color", Color(1, 0.45, 0.35))
 	if not _carga or not is_instance_valid(player) or not player.montado:
 		return
 	var f := player.pronto()
@@ -2577,7 +2602,7 @@ func _process_online(delta: float) -> void:
 				baixo = maxf(baixo, (rd as Node2D).global_position.y + raio)
 			pe = Vector2(player.chassi.global_position.x, baixo)
 		Online.enviar("p", {"x": int(pe.x), "y": int(pe.y), "r": snappedf(player.chassi.rotation, 0.01),
-			"vx": int(v.x), "vy": int(v.y), "v": not _morto_online and player.montado, "pers": Game.personagem,
+			"vx": int(v.x), "vy": int(v.y), "v": not _morto_online and player.montado, "pers": Game.pasta(Game.personagem),
 			"nome": Online.meu_nome()})
 	var agora := Time.get_ticks_msec()
 	var vivos := 0

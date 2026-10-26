@@ -29,10 +29,11 @@ def salvar(img, nome, out_dir):
     return {'x': bb[0], 'y': bb[1], 'w': img.width, 'h': img.height}
 
 
-def rodar(nome, cfg):
-    full = np.asarray(Image.open(os.path.join(FONTE, f'{nome}_full.png')).convert('RGBA'))
+def rodar(nome, cfg, skin=''):
+    base = f'{nome}_{skin}' if skin else nome         # skin: mesma divisão, arte da skin
+    full = np.asarray(Image.open(os.path.join(FONTE, f'{base}_full.png')).convert('RGBA'))
     H, W = full.shape[:2]
-    out_dir = os.path.join(AQUI, '..', 'assets', nome)
+    out_dir = os.path.join(AQUI, '..', 'assets', base)
     os.makedirs(out_dir, exist_ok=True)
     for f in os.listdir(out_dir):
         if f.endswith(('.png', '.json', '.import')):
@@ -240,6 +241,7 @@ LIMA = {
 }
 
 if __name__ == '__main__':
-    for n in sys.argv[1:]:
-        print('==', n)
-        rodar(n, {'caio': CAIO, 'vini': VINI, 'lima': LIMA}[n])
+    for arg in sys.argv[1:]:
+        n, _, skin = arg.partition(':')
+        print('==', arg)
+        rodar(n, {'caio': CAIO, 'vini': VINI, 'lima': LIMA}[n], skin)
