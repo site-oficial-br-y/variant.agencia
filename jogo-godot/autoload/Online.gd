@@ -19,7 +19,11 @@ var host := false
 var ativo := false                   # dentro de uma partida online
 var rodada := 0                      # cada recomeço da luta (evita recomeçar duas vezes)
 var conectado := false
-var jogadores: Dictionary = {}       # id -> {"nome", "p", "t", "host"}
+var jogadores: Dictionary = {}       # id -> {"nome", "p", "t", "host", "pronto", "fase"}
+var pronto := false                  # sala: deu PRONTO
+var fase_sala := 1                   # sala: fase que o líder escolheu
+## partida em andamento (sobrevive ao recarregar a fase): r, fase, ids, largou, inicio_ms, chegadas {id: tempo}, primeiro_ms
+var corrida: Dictionary = {}
 var _topico := ""
 var _ref := 0
 var _hb := 0.0
@@ -63,6 +67,8 @@ func sair() -> void:
 	conectado = false
 	ativo = false
 	sala = ""
+	pronto = false
+	corrida = {}
 	jogadores.clear()
 
 func _mandar(evento_phx: String, payload: Dictionary) -> void:
@@ -77,6 +83,17 @@ func enviar(evento: String, dados: Dictionary) -> void:
 	d["e"] = evento
 	d["de"] = id
 	_mandar("broadcast", {"type": "broadcast", "event": "m", "payload": d})
+
+## nome que aparece pros outros: o nick da conta, ou o nome do personagem
+func meu_nome() -> String:
+	return Conta.nick if Conta.logado() else str(Game.NOMES.get(Game.personagem, "?"))
+
+func oi() -> void:
+	_oi = 1.0
+	enviar("oi", {"nome": meu_nome(), "p": Game.personagem, "host": host, "pronto": pronto, "fase": fase_sala})
+
+func nome_de(quem: String) -> String:
+	return meu_nome() if quem == id else str(jogadores.get(quem, {}).get("nome", "?"))
 
 func numero_jogadores() -> int:
 	return 1 + jogadores.size()
@@ -108,7 +125,7 @@ func _process(delta: float) -> void:
 		_oi -= delta
 		if _oi <= 0.0:
 			_oi = 1.0
-			enviar("oi", {"nome": Game.NOMES.get(Game.personagem, "?"), "p": Game.personagem, "host": host})
+			oi()
 		var mudou := false
 		var agora := Time.get_ticks_msec()
 		for k in jogadores.keys():
@@ -147,8 +164,9 @@ func _tratar(m: Dictionary) -> void:
 			j["nome"] = d["nome"]
 		if d.has("p"):
 			j["p"] = d["p"]
-		if d.has("host"):
-			j["host"] = d["host"]
+		for c in ["host", "pronto", "fase"]:
+			if d.has(c):
+				j[c] = d[c]
 		jogadores[de] = j
 		if novo:
 			jogadores_mudou.emit()

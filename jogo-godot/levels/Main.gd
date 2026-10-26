@@ -129,6 +129,8 @@ func _process(delta: float) -> void:
 		(p["corrente"] as Line2D).points = PackedVector2Array([p["ancora"], gancho])
 	if ativo:
 		tempo += delta / Engine.time_scale      # cronômetro em segundos de verdade
+		if Online.ativo and Online.corrida.get("largou", false):   # online: relógio desde a largada (vale depois de morrer)
+			tempo = (Time.get_ticks_msec() - int(Online.corrida["inicio_ms"])) / 1000.0
 		# caiu do veículo: a tentativa acaba 2,5 s depois (dá tempo de rolar até a chegada)
 		if is_instance_valid(player) and not player.montado:
 			if _caiu_em < 0.0:
@@ -1568,8 +1570,14 @@ func _on_checkpoint(b: Node2D, ck: Vector2) -> void:
 func _fim(ganhou: bool, motivo: String) -> void:
 	if not ativo or _queda7:                     # caindo do terraço pra luta: ninguém morre
 		return
-	if Online.ativo and not ganhou:              # online: renasce enquanto alguém do time estiver vivo
-		_morte_online(motivo)
+	if Online.ativo and not ganhou:
+		if Game.fase == 5:                       # co-op: renasce enquanto alguém do time estiver vivo
+			_morte_online(motivo)
+		else:                                    # corrida: volta pro começo
+			_morte_corrida(motivo)
+		return
+	if Online.ativo and Game.fase != 5:          # corrida: chegou (ou derrotou o chefe)
+		_chegou_online()
 		return
 	ativo = false
 	Audio.parar_chefe()
@@ -2304,6 +2312,7 @@ func _iniciar_queda7() -> void:
 		Game.checkpoint_x = ini.x
 		Game.checkpoint_chao = ini.y
 		Game.queda_fade = true
+		_recomecando = true                   # online: recarrega sem sair da sala
 		get_tree().reload_current_scene.call_deferred())
 
 ## começo da fase 7: no corredor toca a música da escola; no checkpoint da queda começa a luta
@@ -2342,18 +2351,31 @@ var _renasce_t := -1.0
 var _rotulo_online: Label
 
 func _reiniciar() -> void:
-	if Online.ativo:                          # online: volta pra sala (o chefe é de todo mundo)
-		Online.sair()
-		get_tree().change_scene_to_file("res://levels/Sala.tscn")
+	if Online.ativo:
+		if Game.fase == 5:                    # co-op: o chefe é de todo mundo, volta pra sala (sem sair dela)
+			_ir_pra_sala()
+		else:                                 # corrida: volta pro começo e o relógio continua
+			_recarregar()
 		return
 	get_tree().reload_current_scene()
 
+## recarrega a fase sem sair da sala online
+func _recarregar() -> void:
+	_recomecando = true
+	get_tree().paused = false
+	get_tree().reload_current_scene()
+
+func _ir_pra_sala() -> void:
+	_recomecando = true
+	get_tree().paused = false
+	get_tree().change_scene_to_file("res://levels/Sala.tscn")
+
 func _iniciar_online() -> void:
-	if Online.host and Online.rodada > 1:            # recomeço: reenvia o aviso (celular pode perder uma mensagem)
-		var ids: Array = Game.get_meta("ids_online", [])
-		for k in 4:
-			get_tree().create_timer((0.5 + k * 1.0) * Engine.time_scale, true).timeout.connect(func() -> void:
-				Online.enviar("comecar", {"ids": ids, "r": Online.rodada}))
+	var c := Online.corrida
+	if Online.host and not c.get("largou", false):   # reenvia o aviso de começar (celular pode perder uma mensagem)
+		for k in 3:
+			get_tree().create_timer(0.5 + k * 1.0, true, false, true).timeout.connect(func() -> void:
+				Online.enviar("comecar", {"ids": c.get("ids", []), "r": Online.rodada, "fase": Game.fase}))
 	Online.recebeu.connect(_online_msg)
 	Online.caiu.connect(func() -> void: _mensagem("CONEXÃO CAIU!", Color(1, 0.4, 0.3)))
 	_rotulo_online = Label.new()
@@ -2363,6 +2385,179 @@ func _iniciar_online() -> void:
 	_rotulo_online.add_theme_constant_override("outline_size", 6)
 	_rotulo_online.position = Vector2(24, 165)
 	$HUD.add_child(_rotulo_online)
+	if not c.get("largou", false):
+		_esperar_largada.call_deferred()
+	for arg in OS.get_cmdline_user_args():       # teste: chega sozinho N s depois da largada
+		if arg.begins_with("chegar="):
+			_teste_chegar.call_deferred(float(arg.substr(7)))
+
+func _teste_chegar(s: float) -> void:
+	while is_inside_tree() and not Online.corrida.get("largou", false):
+		await get_tree().create_timer(0.2, true, false, true).timeout
+	await get_tree().create_timer(s, true, false, true).timeout
+	if is_inside_tree():
+		_fim(true, "meta")
+
+# ---------- largada junto: espera todo mundo carregar, aí 3, 2, 1, VAI ----------
+const ESPERA_CARREGAR := 12.0         # quem demora mais que isso pra carregar larga atrasado
+var _carregados: Dictionary = {}
+var _contagem: Label
+var _contando := false
+var _espera_ms := 0
+var _decidiu := false
+
+func _esperar_largada() -> void:
+	get_tree().paused = true
+	_contagem = Label.new()
+	_contagem.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	_contagem.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	_contagem.add_theme_font_size_override("font_size", 64)
+	_contagem.add_theme_color_override("font_color", Color(1, 0.85, 0.3))
+	_contagem.add_theme_color_override("font_outline_color", Color.BLACK)
+	_contagem.add_theme_constant_override("outline_size", 18)
+	_contagem.set_anchors_preset(Control.PRESET_FULL_RECT)
+	_contagem.text = "ESPERANDO TODO MUNDO\nCARREGAR..."
+	$HUD.add_child(_contagem)
+	_carregados[Online.id] = true
+	_espera_ms = Time.get_ticks_msec()
+	while is_inside_tree() and not _contando:
+		Online.enviar("carregou", {"r": Online.rodada})
+		if Online.host:
+			_conferir_largada()
+		await get_tree().create_timer(1.0, true, false, true).timeout
+
+## quem criou a sala solta a largada quando todo mundo carregou (ou cansou de esperar)
+func _conferir_largada() -> void:
+	if _decidiu:
+		return
+	for k in Online.corrida.get("ids", []):
+		if (k == Online.id or Online.jogadores.has(k)) and not _carregados.has(k) \
+				and Time.get_ticks_msec() - _espera_ms < ESPERA_CARREGAR * 1000.0:
+			return
+	_decidiu = true
+	var vai := Time.get_ticks_msec() + 3000
+	_contagem_ate(vai)
+	while is_inside_tree() and Time.get_ticks_msec() < vai + 20000:   # reenvia: quem carregar atrasado larga junto
+		Online.enviar("largada", {"r": Online.rodada, "atraso": (Time.get_ticks_msec() - vai) / 1000.0})
+		await get_tree().create_timer(1.5, true, false, true).timeout
+
+func _contagem_ate(vai: int) -> void:
+	if _contando:
+		return
+	_contando = true
+	var ult := -1
+	while is_inside_tree() and Time.get_ticks_msec() < vai:
+		var n := ceili((vai - Time.get_ticks_msec()) / 1000.0)
+		if n != ult:
+			ult = n
+			_contagem.add_theme_font_size_override("font_size", 200)
+			_contagem.text = str(n)
+			Audio.tocar("clique")
+		await get_tree().create_timer(0.05, true, false, true).timeout
+	if not is_inside_tree():
+		return
+	Online.corrida["largou"] = true
+	Online.corrida["inicio_ms"] = vai
+	get_tree().paused = false
+	_contagem.text = "VAI!"
+	_contagem.add_theme_color_override("font_color", Color(0.45, 1, 0.5))
+	Audio.tocar("confirma")
+	await get_tree().create_timer(0.8, true, false, true).timeout
+	if is_instance_valid(_contagem):
+		_contagem.queue_free()
+
+# ---------- corrida (todas as fases menos a do Péce) ----------
+const ESPERA_CORRIDA := 30.0          # depois que o primeiro chega, os outros têm 30 s
+var _resultado_ok := false
+
+func _morte_corrida(motivo: String) -> void:
+	if _morto_online:
+		return
+	_morto_online = true
+	aviso.text = {"esmagado": "ESMAGADO!", "agarrado": "TE PEGOU!", "laser": "DESINTEGRADO!", "pedra": "ESMAGADO!", "agua": "AFOGOU!", "buraco": "CAIU!", "caiu": "CAIU!"}.get(motivo, "MORREU!") + "\nvoltando pro começo..."
+	aviso.add_theme_color_override("font_color", Color(1, 0.35, 0.3))
+	aviso.visible = true
+	Audio.tocar("morte")
+	_envio_t = 0.0
+	await get_tree().create_timer(2.0, true, false, true).timeout
+	if is_inside_tree() and not _resultado_ok:
+		_recarregar()
+
+func _lugar(quem: String) -> int:
+	var ch: Dictionary = Online.corrida.get("chegadas", {})
+	var t := float(ch.get(quem, INF))
+	var n := 1
+	for k in ch:
+		if k != quem and float(ch[k]) < t:
+			n += 1
+	return n
+
+func _chegou_online() -> void:
+	if _morto_online or not ativo:
+		return
+	ativo = false
+	Audio.parar_chefe()
+	Audio.motor(false)
+	Audio.tocar("vitoria")
+	_esconder_barras_chefe()
+	if is_instance_valid(player):
+		pecas.festa(_meta_pos, player.foco().global_position)
+	var c := Online.corrida
+	(c["chegadas"] as Dictionary)[Online.id] = tempo
+	if int(c.get("primeiro_ms", -1)) < 0:
+		c["primeiro_ms"] = Time.get_ticks_msec()
+	var t := tempo
+	for k in 3:
+		get_tree().create_timer(0.05 + k * 0.7, true, false, true).timeout.connect(func() -> void:
+			Online.enviar("chegou", {"t": t, "r": Online.rodada}))
+	aviso.text = "CHEGOU EM %dº!\n%.1f s" % [_lugar(Online.id), t]
+	aviso.add_theme_color_override("font_color", Color(0.45, 1, 0.5))
+	aviso.visible = true
+	print("[ONLINE] chegou %.2f lugar %d" % [t, _lugar(Online.id)])
+
+func _conferir_fim_corrida() -> void:
+	var c := Online.corrida
+	if _resultado_ok or not c.get("largou", false):
+		return
+	var ch: Dictionary = c.get("chegadas", {})
+	var todos := true
+	for k in c.get("ids", []):
+		if (k == Online.id or Online.jogadores.has(k)) and not ch.has(k):
+			todos = false
+	var p := int(c.get("primeiro_ms", -1))
+	var resta := (ESPERA_CORRIDA - (Time.get_ticks_msec() - p) / 1000.0) if p >= 0 else INF
+	if todos or resta <= 0.0:
+		_resultado_corrida()
+	elif p >= 0 and ch.has(Online.id):
+		aviso.text = "CHEGOU EM %dº!\nesperando os outros... %d s" % [_lugar(Online.id), ceili(resta)]
+	elif p >= 0 and _rotulo_online:
+		_rotulo_online.text = "ALGUÉM JÁ CHEGOU! A CORRIDA ACABA EM %d s" % ceili(resta)
+		_rotulo_online.add_theme_color_override("font_color", Color(1, 0.4, 0.3))
+
+func _resultado_corrida() -> void:
+	_resultado_ok = true
+	ativo = false
+	Audio.motor(false)
+	Audio.parar_chefe()
+	var c := Online.corrida
+	var ch: Dictionary = c.get("chegadas", {})
+	var lista: Array = []
+	for k in c.get("ids", []):
+		if k == Online.id or Online.jogadores.has(k) or ch.has(k):
+			lista.append([k, float(ch.get(k, INF))])
+	lista.sort_custom(func(a: Array, b: Array) -> bool: return a[1] < b[1])
+	var txt := ""
+	for i in lista.size():
+		var nome := Online.nome_de(lista[i][0]) + (" (você)" if lista[i][0] == Online.id else "")
+		txt += ("%dº   %s   %.1f s\n" % [i + 1, nome, lista[i][1]]) if lista[i][1] < INF else ("—   %s   não chegou\n" % nome)
+	aviso.text = ("%s VENCEU!" % Online.nome_de(lista[0][0])) if not lista.is_empty() and lista[0][1] < INF else "NINGUÉM CHEGOU!"
+	aviso.add_theme_color_override("font_color", Color(1, 0.85, 0.3))
+	aviso.visible = true
+	print("[ONLINE] resultado: ", txt.replace("\n", " | "))
+	_fim_online(true, txt.strip_edges())
+	if Online.host and "denovo" in OS.get_cmdline_user_args() and Online.rodada < 2:   # teste: o líder joga de novo
+		await get_tree().create_timer(2.0, true, false, true).timeout
+		_nova_rodada(Game.fase)
 
 func _process_online(delta: float) -> void:
 	var dt := delta / Engine.time_scale
@@ -2381,7 +2576,7 @@ func _process_online(delta: float) -> void:
 			pe = Vector2(player.chassi.global_position.x, baixo)
 		Online.enviar("p", {"x": int(pe.x), "y": int(pe.y), "r": snappedf(player.chassi.rotation, 0.01),
 			"vx": int(v.x), "vy": int(v.y), "v": not _morto_online and player.montado, "pers": Game.personagem,
-			"nome": Game.NOMES.get(Game.personagem, "?")})
+			"nome": Online.meu_nome()})
 	var agora := Time.get_ticks_msec()
 	var vivos := 0
 	for k in _fantasmas.keys():
@@ -2399,7 +2594,11 @@ func _process_online(delta: float) -> void:
 			vivos += 1
 	if _rotulo_online:
 		_rotulo_online.visible = not aviso.visible
-		_rotulo_online.text = "ONLINE · SALA %s · %d jogadores · %d vivos" % [Online.sala, Game.online_n, vivos + (0 if _morto_online else 1)]
+		if Game.fase == 5:
+			_rotulo_online.text = "ONLINE · SALA %s · %d jogadores · %d vivos" % [Online.sala, Game.online_n, vivos + (0 if _morto_online else 1)]
+		else:
+			_rotulo_online.text = "CORRIDA · SALA %s · %d jogadores" % [Online.sala, Game.online_n]
+			_conferir_fim_corrida()
 	if _renasce_t >= 0.0:
 		_renasce_t -= dt
 		aviso.text = "MORREU!\nrenasce em %d s" % ceili(_renasce_t)
@@ -2504,14 +2703,29 @@ func _online_msg(e: String, d: Dictionary, de: String) -> void:
 				var c: Label = _botoes[i]["contador"]
 				if is_instance_valid(c):
 					c.text = str(d.get("t", ""))
-		"denovo":                                    # alguém quer continuar com a equipe
-			if Online.host:
-				_querem_de_novo[de] = true
-				_atualizar_fim_online()
-		"comecar":                                   # quem criou a sala recomeçou a luta
+		"comecar":                                   # o líder começou outra partida
 			if not Online.host and Online.id in (d.get("ids", []) as Array) and int(d.get("r", 0)) > Online.rodada:
 				Online.rodada = int(d.get("r", 0))
-				_recomecar(d.get("ids", []))
+				_recomecar(d.get("ids", []), int(d.get("fase", Game.fase)))
+		"sala":                                      # o líder voltou pra sala: todo mundo volta
+			if not Online.host and int(d.get("r", 0)) == Online.rodada:
+				_ir_pra_sala()
+		"carregou":
+			if Online.host and int(d.get("r", 0)) == Online.rodada:
+				_carregados[de] = true
+				_conferir_largada()
+		"largada":
+			if not Online.host and int(d.get("r", 0)) == Online.rodada and not _contando and is_instance_valid(_contagem):
+				_contagem_ate(Time.get_ticks_msec() - int(float(d.get("atraso", 0.0)) * 1000.0))
+		"chegou":
+			var c := Online.corrida
+			var ch: Dictionary = c.get("chegadas", {})
+			if int(d.get("r", 0)) == Online.rodada and not ch.has(de) and c.has("chegadas"):
+				ch[de] = float(d.get("t", 0.0))
+				if int(c.get("primeiro_ms", -1)) < 0:
+					c["primeiro_ms"] = Time.get_ticks_msec()
+				if de != Online.id:
+					_mensagem("%s CHEGOU EM %dº!" % [Online.nome_de(de), _lugar(de)], Color(1, 0.85, 0.3))
 		"vit":                                       # quem criou a sala derrotou o chefe: o time venceu
 			if not Online.host and int(d.get("r", 0)) == Online.rodada:
 				_vitoria_online()
@@ -2620,14 +2834,12 @@ func _esconder_barras_chefe() -> void:
 				if n:
 					(n as CanvasItem).visible = false
 
-## fim online (time todo morreu ou venceu): jogar de novo com a equipe ou voltar pro lobby
+## fim online (corrida acabou, time venceu ou morreu): o líder escolhe jogar de novo ou voltar pra sala
 var _recomecando := false
-var _querem_de_novo: Dictionary = {}
 var _painel_on: Control
 var _info_fim: Label
-var _b_denovo: Button
 
-func _fim_online(ganhou := false) -> void:
+func _fim_online(ganhou := false, resultado := "") -> void:
 	if painel:
 		painel.visible = false
 	_painel_on = Control.new()
@@ -2642,33 +2854,39 @@ func _fim_online(ganhou := false) -> void:
 	if _rotulo_online:
 		_rotulo_online.visible = false
 	var v := get_viewport().get_visible_rect().size
-	_b_denovo = _botao_fim("JOGAR DE NOVO" if ganhou else "CONTINUAR COM A EQUIPE", Vector2(v.x / 2.0 - 440, v.y * 0.55), Color(0.4, 1, 0.5))
-	_b_denovo.pressed.connect(func() -> void:
-		Audio.tocar("confirma")
-		if Online.host:
-			var ids: Array = [Online.id] + Online.jogadores.keys()    # todo mundo que ainda está na sala
-			Online.rodada += 1
-			Game.set_meta("ids_online", ids)
-			Online.enviar("comecar", {"ids": ids, "r": Online.rodada})
-			_recomecar(ids)
-		else:
-			Online.enviar("denovo", {})
-			_b_denovo.disabled = true
-			_info_fim.text = "Esperando quem criou a sala recomeçar...")
-	var b_lobby := _botao_fim("VOLTAR PRO LOBBY", Vector2(v.x / 2.0 + 40, v.y * 0.55), Color(1, 0.8, 0.3))
-	b_lobby.pressed.connect(func() -> void:
+	if resultado != "":
+		var r := Label.new()
+		r.text = resultado
+		r.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+		r.add_theme_font_size_override("font_size", 36)
+		r.add_theme_color_override("font_outline_color", Color.BLACK)
+		r.add_theme_constant_override("outline_size", 10)
+		r.size = Vector2(v.x, 200)
+		r.position = Vector2(0, v.y * 0.06 + 100)
+		_painel_on.add_child(r)
+	var y := v.y * (0.62 if resultado != "" else 0.55)
+	if Online.host:
+		var b_denovo := _botao_fim("JOGAR DE NOVO", Vector2(v.x / 2.0 - 440, y), Color(0.4, 1, 0.5))
+		b_denovo.pressed.connect(func() -> void:
+			Audio.tocar("confirma")
+			_nova_rodada(Game.fase))
+	var b_sala := _botao_fim("VOLTAR PRA SALA", Vector2(v.x / 2.0 + 40 if Online.host else v.x / 2.0 - 200, y), Color(1, 0.8, 0.3))
+	b_sala.pressed.connect(func() -> void:
 		Audio.tocar("clique")
-		Online.sair()
-		get_tree().change_scene_to_file("res://levels/Menu.tscn"))
+		if Online.host:                           # o líder leva todo mundo
+			for k in 3:
+				Online.enviar("sala", {"r": Online.rodada})
+		_ir_pra_sala())
 	_info_fim = Label.new()
 	_info_fim.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	_info_fim.add_theme_font_size_override("font_size", 26)
 	_info_fim.add_theme_color_override("font_outline_color", Color.BLACK)
 	_info_fim.add_theme_constant_override("outline_size", 8)
 	_info_fim.size = Vector2(v.x, 40)
-	_info_fim.position = Vector2(0, v.y * 0.55 + 110)
+	_info_fim.position = Vector2(0, y + 104)
+	_info_fim.text = ("JOGAR DE NOVO recomeça com todo mundo que está na sala; VOLTAR PRA SALA pra trocar de fase." if Online.host
+		else "Esperando o líder: jogar de novo ou voltar pra sala.")
 	_painel_on.add_child(_info_fim)
-	_atualizar_fim_online()
 
 func _botao_fim(texto: String, pos: Vector2, cor: Color) -> Button:
 	var b := Button.new()
@@ -2687,20 +2905,21 @@ func _botao_fim(texto: String, pos: Vector2, cor: Color) -> Button:
 	_painel_on.add_child(b)
 	return b
 
-func _atualizar_fim_online() -> void:
-	if _info_fim == null or not is_instance_valid(_info_fim):
-		return
-	if Online.host:
-		var n := _querem_de_novo.size()
-		_info_fim.text = ("%d da equipe quer%s jogar de novo. " % [n, "" if n == 1 else "em"] if n > 0 else "") + "Recomeça com todo mundo que ainda está na sala."
-	elif not _b_denovo.disabled:
-		_info_fim.text = "Aperta pra jogar de novo e espera quem criou a sala recomeçar."
+## o líder começa outra partida na mesma fase com todo mundo que está na sala
+func _nova_rodada(fase: int) -> void:
+	var ids: Array = [Online.id] + Online.jogadores.keys()
+	Online.rodada += 1
+	Online.enviar("comecar", {"ids": ids, "r": Online.rodada, "fase": fase})
+	_recomecar(ids, fase)
 
-## recomeça a luta online com essas pessoas (sem fechar a sala)
-func _recomecar(ids: Array) -> void:
+## recomeça a partida online com essas pessoas (sem fechar a sala)
+func _recomecar(ids: Array, fase: int) -> void:
 	_recomecando = true
+	Online.corrida = {"r": Online.rodada, "fase": fase, "ids": ids, "largou": false, "chegadas": {}, "primeiro_ms": -1}
 	Game.online_n = clampi(ids.size(), 1, Online.MAX_JOGADORES)
+	Game.fase = fase
 	Game.checkpoint_x = -1.0
+	get_tree().paused = false
 	get_tree().change_scene_to_file("res://levels/Main.tscn")
 
 # ---------- FASE 8: Block Blast (boss: Geresch) ----------
@@ -2873,6 +3092,7 @@ func _cutscene8() -> void:
 		Game.checkpoint_x = ARENA8_X + 1600.0
 		Game.checkpoint_chao = CHAO_Y
 		Game.queda_fade = true
+		_recomecando = true                   # online: recarrega sem sair da sala
 		get_tree().reload_current_scene.call_deferred()
 	video.finished.connect(ir, CONNECT_ONE_SHOT)
 
