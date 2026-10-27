@@ -3370,12 +3370,17 @@ func _cutscene9() -> void:
 		return
 	_cena9 = true
 	_queda7 = true                                # ninguém morre durante o vídeo
-	_tocar_video("res://assets/julgamento/entrada.ogv", func() -> void:
+	var ir := func() -> void:
 		Game.checkpoint_x = ARENA9_X + 1600.0
 		Game.checkpoint_chao = CHAO_Y
 		Game.queda_fade = true
 		_recomecando = true
-		get_tree().reload_current_scene.call_deferred())
+		get_tree().reload_current_scene.call_deferred()
+	if Game.get_meta("viu_entrada9", false):        # vídeo só na primeira vez
+		ir.call()
+		return
+	Game.set_meta("viu_entrada9", true)
+	_tocar_video("res://assets/julgamento/entrada.ogv", ir)
 
 ## vídeo por cima de tudo, com o jogo pausado; `depois` roda quando acaba
 func _tocar_video(arq: String, depois: Callable) -> void:
@@ -3405,9 +3410,12 @@ func _tocar_video(arq: String, depois: Callable) -> void:
 
 ## "o martelo caiu...", depois o martelo de juiz, e começa a luta 2 (Çtamandura + Périne)
 func _video_martelo() -> void:
+	if Game.get_meta("viu_martelo9", false):        # vídeo só na primeira vez
+		ctamandura.luta_2()
+		return
+	Game.set_meta("viu_martelo9", true)
 	_tocar_video("res://assets/julgamento/martelo.ogv", func() -> void:
-		_tocar_video("res://assets/julgamento/juiz.ogv", func() -> void:
-			ctamandura.luta_2()))
+		ctamandura.luta_2())
 
 ## começo da fase 9: música da fase; no checkpoint da arena começa a luta
 func _inicio_9() -> void:
