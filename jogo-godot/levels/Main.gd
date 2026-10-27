@@ -3160,6 +3160,10 @@ func _cutscene8() -> void:
 	Audio.musica_chefe("geresch", MUSICA8_LOOP - VIDEO8_LEVANTA, MUSICA8_LOOP)   # batida cai quando ele levanta
 	video.play()
 	var ir := func() -> void:
+		if not is_instance_valid(video) or video.get_meta("foi", false):
+			return
+		video.set_meta("foi", true)
+		video.stop()
 		get_tree().paused = false
 		Game.checkpoint_x = ARENA8_X + 1600.0
 		Game.checkpoint_chao = CHAO_Y
@@ -3167,6 +3171,7 @@ func _cutscene8() -> void:
 		_recomecando = true                   # online: recarrega sem sair da sala
 		get_tree().reload_current_scene.call_deferred()
 	video.finished.connect(ir, CONNECT_ONE_SHOT)
+	_botao_pular(cena, ir)
 
 ## começo da fase 8: no checkpoint da arena começa a luta (música já tocando)
 func _inicio_8() -> void:
@@ -3402,11 +3407,40 @@ func _tocar_video(arq: String, depois: Callable) -> void:
 	get_tree().paused = true
 	Engine.time_scale = 1.0                       # o vídeo anda em tempo normal
 	video.play()
-	video.finished.connect(func() -> void:
+	var acabou := func() -> void:
+		if not is_instance_valid(cena) or cena.is_queued_for_deletion():
+			return
+		video.stop()
 		get_tree().paused = false
 		Engine.time_scale = Game.RITMO
 		cena.queue_free()
-		depois.call(), CONNECT_ONE_SHOT)
+		depois.call()
+	video.finished.connect(acabou, CONNECT_ONE_SHOT)
+	_botao_pular(cena, acabou)
+
+## botão PULAR no canto da cutscene
+func _botao_pular(cena: CanvasLayer, acao: Callable) -> void:
+	var b := Button.new()
+	b.text = "PULAR ›"
+	b.focus_mode = Control.FOCUS_NONE
+	b.process_mode = Node.PROCESS_MODE_ALWAYS
+	b.add_theme_font_size_override("font_size", 30)
+	var st := StyleBoxFlat.new()
+	st.bg_color = Color(0, 0, 0, 0.55)
+	st.set_corner_radius_all(14)
+	st.set_border_width_all(3)
+	st.border_color = Color(1, 1, 1, 0.6)
+	st.content_margin_left = 22
+	st.content_margin_right = 22
+	for k in ["normal", "hover", "pressed"]:
+		b.add_theme_stylebox_override(k, st)
+	var v := get_viewport().get_visible_rect().size
+	b.size = Vector2(190, 66)
+	b.position = Vector2(v.x - 220, v.y - 96)
+	b.pressed.connect(func() -> void:
+		Audio.tocar("clique")
+		acao.call())
+	cena.add_child(b)
 
 ## "o martelo caiu...", depois o martelo de juiz, e começa a luta 2 (Çtamandura + Périne)
 func _video_martelo() -> void:
