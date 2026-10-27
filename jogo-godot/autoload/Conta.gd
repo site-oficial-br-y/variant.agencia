@@ -164,7 +164,7 @@ func _entrou() -> void:
 	_envio_t = ENVIO_JOGO
 	mudou.emit()
 	carregar_inventario()
-	for f in range(1, 9):                            # recordes feitos antes de ter conta também valem
+	for f in range(1, 10):                           # recordes feitos antes de ter conta também valem
 		var t := Game.recorde(f)
 		if t < INF:
 			enviar_recorde(f, t, "")

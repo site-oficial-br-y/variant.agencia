@@ -14,13 +14,16 @@ create unique index if not exists bicho_perfis_apelido on public.bicho_perfis (l
 
 create table if not exists public.bicho_recordes (
   user_id uuid not null references public.bicho_perfis (id) on delete cascade,
-  fase smallint not null check (fase between 1 and 8),
+  fase smallint not null check (fase between 1 and 9),
   tempo real not null check (tempo > 0),
   personagem text,
   quando timestamptz not null default now(),
   primary key (user_id, fase)
 );
 create index if not exists bicho_recordes_fase_tempo on public.bicho_recordes (fase, tempo);
+-- fase 9 (O Julgamento): amplia a regra antiga de 1 a 8
+alter table public.bicho_recordes drop constraint if exists bicho_recordes_fase_check;
+alter table public.bicho_recordes add constraint bicho_recordes_fase_check check (fase between 1 and 9);
 
 -- todo mundo lê (ranking público); ninguém escreve direto, só pelas funções abaixo
 alter table public.bicho_perfis enable row level security;
@@ -78,7 +81,7 @@ returns boolean language plpgsql security definer set search_path = '' as $$
 declare
   v_uid uuid := auth.uid();
 begin
-  if v_uid is null or p_fase is null or p_fase not between 1 and 8
+  if v_uid is null or p_fase is null or p_fase not between 1 and 9
      or p_tempo is null or p_tempo <= 0 then
     return false;
   end if;

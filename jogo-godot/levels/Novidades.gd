@@ -2,8 +2,9 @@ extends Control
 ## Aviso de atualização: aparece por cima do lobby na primeira vez que abre a versão nova.
 ## Fundo é a arte do patch escurecida; o X fecha e fica no lobby.
 
-const VERSAO := "2.0"
+const VERSAO := "2.2"
 const ITENS := [
+	["FASE 9: O JULGAMENTO", "O espaço dos olhos: cristais caindo, lasers roxos e o chefe ÇTAMANDURA. Decore onde o martelo vai bater. E cuidado com o martelo...", Color(0.8, 0.4, 1.0)],
 	["LOJA DE SKINS", "Erick Folhas, Gabriel Zumbi, Caio Santos, Vitinho no Creta e o lendário Lima Gorila Dourado.", Color(1.0, 0.78, 0.2)],
 	["GORISCH NOVO", "Farda militar e ult nova no segundo botão: fica muito mais rápido, com rastro vermelho. Turbo agora é infinito.", Color(1.0, 0.35, 0.3)],
 	["MINHA CONTA", "Troca o nick, escolhe a skin de cada personagem e acompanha seus pedidos.", Color(0.6, 0.38, 1.0)],

@@ -47,7 +47,7 @@ func _ready() -> void:
 			Game.fase = int(a.substr(2))
 	Engine.time_scale = Game.RITMO           # física a 180 Hz x 3 = mesmo passo de 1/60 s de jogo
 	RenderingServer.set_default_clear_color(Color(0.33, 0.55, 0.93))
-	tema = ["campo", "obra", "montanha", "lab", "boss", "mercado", "escola", "colorido"][clampi(Game.fase, 1, 8) - 1]
+	tema = ["campo", "obra", "montanha", "lab", "boss", "mercado", "escola", "colorido", "julgamento"][clampi(Game.fase, 1, 9) - 1]
 	_construir_fundo("hw" if tema == "campo" else tema)
 	_mat = PhysicsMaterial.new()
 	_mat.friction = 1.0
@@ -115,6 +115,8 @@ func _pos_jogador() -> void:
 		_inicio_7.call_deferred()
 	if Game.fase == 8:
 		_inicio_8.call_deferred()
+	if Game.fase == 9:
+		_inicio_9.call_deferred()
 	if "autoteste" in OS.get_cmdline_user_args():
 		_rodar_teste()
 	elif "screenshot" in OS.get_cmdline_user_args():
@@ -140,7 +142,7 @@ func _process(delta: float) -> void:
 				_fim(false, "caiu")
 	if is_instance_valid(player) and is_instance_valid(player.chassi):
 		var f := player.foco()
-		if f:
+		if f and not has_meta("cam_base"):             # arena do Çtamandura: câmera parada
 			camera.alvo = f
 		var alvo_x: float = player.foco().global_position.x
 		recorde = maxi(recorde, int(maxf(0.0, (alvo_x - SPAWN_X) / 40.0)))
@@ -203,6 +205,11 @@ func _physics_process(delta: float) -> void:
 			geresch.chuva(delta, 2.4 if px > 1500.0 and px < _chuva8_x1 and not _cena8 else 0.0)
 		if _palco8 and not _palco8.get("camera"):
 			_palco8.set("camera", camera)
+	if Game.fase == 9 and julgamento:
+		julgamento.atualizar(delta, camera)
+		var px9 := player.foco().global_position.x if is_instance_valid(player) and is_instance_valid(player.chassi) else 0.0
+		julgamento.chuva(delta, 2.6 if px9 > 1500.0 and px9 < _chuva9_x1 and not _cena9 else 0.0)
+		ctamandura.atualizar(delta)
 	if boss:
 		boss.atualizar(delta)
 		_rodada_boss(delta)
@@ -225,6 +232,7 @@ func _construir_chao() -> void:
 		6: _fase_6()
 		7: _fase_7()
 		8: _fase_8()
+		9: _fase_9()
 		_: _fase_1()
 
 ## marcos comuns: zona de morte, checkpoints (lista de Vector2: x, chão) e chegada
@@ -825,7 +833,7 @@ func _parede_arena(x: float, y: float) -> void:
 	cs.shape = r
 	cs.position = Vector2(0, -13000)
 	sb.add_child(cs)
-	if Game.fase == 8:                                  # parede neon (combina com o palco)
+	if Game.fase in [8, 9]:                             # parede neon (combina com o palco)
 		pecas.poligono(Pecas.retangulo(Vector2.ZERO, Vector2(400, 4000)), Color(0.1, 0.07, 0.2), 3, null, 1.0, sb)
 		for dx in [-200.0, 200.0]:
 			pecas.linha(PackedVector2Array([Vector2(dx, -2000), Vector2(dx, 2000)]), 60.0, Color(1, 0.35, 0.8, 0.2), 3, sb)
@@ -1481,8 +1489,8 @@ func _construir_fundo(tema: String) -> void:
 	var pb := ParallaxBackground.new()
 	add_child(pb)
 	var grad := Gradient.new()
-	grad.set_color(0, {"colorido": Color(0.36, 0.18, 0.6), "mercado": Color(0.9, 0.85, 0.75), "boss": Color(0.01, 0.01, 0.02), "obra": Color(0.36, 0.52, 0.78), "montanha": Color(0.2, 0.38, 0.78)}.get(tema, Color(0.27, 0.47, 0.92)))
-	grad.set_color(1, {"colorido": Color(0.15, 0.5, 0.82), "mercado": Color(0.95, 0.9, 0.8), "boss": Color(0.05, 0.03, 0.07), "lab": Color(0.6, 0.65, 0.7), "campo": Color(0.86, 0.93, 0.98), "obra": Color(0.95, 0.85, 0.72), "montanha": Color(0.78, 0.88, 0.98)}.get(tema, Color(0.62, 0.78, 0.98)))
+	grad.set_color(0, {"julgamento": Color(0.02, 0.01, 0.05), "colorido": Color(0.36, 0.18, 0.6), "mercado": Color(0.9, 0.85, 0.75), "boss": Color(0.01, 0.01, 0.02), "obra": Color(0.36, 0.52, 0.78), "montanha": Color(0.2, 0.38, 0.78)}.get(tema, Color(0.27, 0.47, 0.92)))
+	grad.set_color(1, {"julgamento": Color(0.1, 0.04, 0.16), "colorido": Color(0.15, 0.5, 0.82), "mercado": Color(0.95, 0.9, 0.8), "boss": Color(0.05, 0.03, 0.07), "lab": Color(0.6, 0.65, 0.7), "campo": Color(0.86, 0.93, 0.98), "obra": Color(0.95, 0.85, 0.72), "montanha": Color(0.78, 0.88, 0.98)}.get(tema, Color(0.62, 0.78, 0.98)))
 	var gt := GradientTexture2D.new()
 	gt.gradient = grad
 	gt.fill_from = Vector2(0, 0)
@@ -1496,7 +1504,7 @@ func _construir_fundo(tema: String) -> void:
 	ceu_s.stretch_mode = TextureRect.STRETCH_SCALE
 	fundo_ceu.add_child(ceu_s)
 	var camadas: Array = [["nuvem", 0.12, -1300.0, 4.8], ["ui/morros_longe", 0.25, 720.0, 4.1], ["ui/morros_perto", 0.45, 980.0, 4.4]]
-	if tema in ["lab", "boss", "mercado"]:
+	if tema in ["lab", "boss", "mercado", "julgamento"]:
 		camadas = []
 	if tema == "escola":
 		camadas = [["nuvem", 0.12, -1300.0, 4.8]]
@@ -2892,7 +2900,7 @@ func _vitoria_online() -> void:
 
 ## esconde barra de vida e nome do chefe (tela de fim fica limpa)
 func _esconder_barras_chefe() -> void:
-	for c in [boss, adriano, geresch]:
+	for c in [boss, adriano, geresch, ctamandura]:
 		if is_instance_valid(c):
 			for n in [c._barra, c._barra_fundo, c._rotulo]:
 				if n:
@@ -3295,3 +3303,138 @@ func _mover_esmagadores(_delta: float) -> void:
 						break
 					_on_perigo(b, "esmagado")
 					break
+
+# ---------- FASE 9: O Julgamento (boss: Çtamandura) ----------
+## espaço cheio de olhos: corpos vagando no fundo, cristais cósmicos caindo do céu e
+## portões de laser roxo. No fim toca o vídeo do martelo do juiz e começa a luta.
+const ARENA9_X := 250000.0
+const ARENA9_LARG := 9000.0
+var julgamento: Julgamento
+var ctamandura: Ctamandura
+var _chuva9_x1 := 0.0
+var _cena9 := false
+
+func _fase_9() -> void:
+	var y := CHAO_Y
+	pecas.cor_chao = Color(0.07, 0.03, 0.12)
+	pecas.borda_neon = Color(0.75, 0.35, 1.0)
+	_parede_arena(-2700.0, y)
+	julgamento = Julgamento.new()
+	add_child(julgamento)
+	julgamento.montar(self, y)
+	var p := _t_plano(Vector2(-2600, y), 3900, false)
+	pecas.placa(Vector2(-900, y), "LARGADA")
+	p = _t_plano(p, 1200, false)
+	p = _portoes9(p, 2, 3.6)
+	p = _t_ladeira(p, 2600, -500)
+	p = _t_ladeira(p, 2600, 500)
+	p = _espinhos8(p)
+	p = _portoes9(p, 3, 3.5)
+	p = _t_ondas(p, 3, 130.0)
+	p = _t_minas(p)
+	p = _portoes9(p, 4, 3.4)
+	p = _espinhos8(p)
+	p = _t_ladeira(p, 2400, -400)
+	p = _portoes9(p, 3, 3.3)
+	p = _t_ladeira(p, 2400, 400)
+	p = _t_plano(p, 2500, false)
+	_chuva9_x1 = p.x - 3500.0
+	var fim := _area(Vector2(p.x - 800.0, p.y - 700), Vector2(200, 1600))
+	fim.body_entered.connect(func(b: Node2D) -> void:
+		if b.is_in_group("veiculo") or b.is_in_group("piloto"): _cutscene9.call_deferred())
+	pecas.poligono(Pecas.retangulo(Vector2(p.x - 800.0, p.y - 1200.0), Vector2(60, 2400)), Color(0.8, 0.5, 1.0, 0.3), -2)
+	# arena da luta
+	pecas.terreno(PackedVector2Array([Vector2(ARENA9_X - 3000.0, y), Vector2(ARENA9_X + ARENA9_LARG + 3000.0, y)]), y + 2600.0, false)
+	_parede_arena(ARENA9_X, y)
+	_parede_arena(ARENA9_X + ARENA9_LARG, y)
+	ctamandura = Ctamandura.new()
+	add_child(ctamandura)
+	ctamandura.montar(self, ARENA9_X + 200.0, ARENA9_X + ARENA9_LARG - 200.0, y)
+	ctamandura.martelo_caiu.connect(_video_martelo)
+	ctamandura.derrotado.connect(func() -> void:
+		_meta_pos = player.foco().global_position
+		_fim(true, "venceu"))
+	_marcos([], Vector2(ARENA9_X + ARENA9_LARG, y), y + 3000.0, false)
+
+## reta com portões de laser roxo (cada um num tempo diferente)
+func _portoes9(p: Vector2, n: int, periodo: float) -> Vector2:
+	var comp := 2400.0 + n * 2700.0                     # reta antes do 1º: dá pra frear; entre eles cabe o carro do Vitinho
+	_t_plano(p, comp, false)
+	for k in n:
+		julgamento.portao(p.x + 2400.0 + k * 2700.0, p.y, periodo, k * periodo * 0.37)
+	return p + Vector2(comp, 0)
+
+## fim da parte normal: vídeo do martelo do juiz, aí salva na arena e a luta começa
+func _cutscene9() -> void:
+	if _cena9 or not ativo:
+		return
+	_cena9 = true
+	_queda7 = true                                # ninguém morre durante o vídeo
+	_tocar_video("res://assets/julgamento/entrada.ogv", func() -> void:
+		Game.checkpoint_x = ARENA9_X + 1600.0
+		Game.checkpoint_chao = CHAO_Y
+		Game.queda_fade = true
+		_recomecando = true
+		get_tree().reload_current_scene.call_deferred())
+
+## vídeo por cima de tudo, com o jogo pausado; `depois` roda quando acaba
+func _tocar_video(arq: String, depois: Callable) -> void:
+	var cena := CanvasLayer.new()
+	cena.layer = 80
+	cena.process_mode = Node.PROCESS_MODE_ALWAYS
+	add_child(cena)
+	var preto := ColorRect.new()
+	preto.color = Color.BLACK
+	preto.set_anchors_preset(Control.PRESET_FULL_RECT)
+	cena.add_child(preto)
+	var video := VideoStreamPlayer.new()
+	video.stream = load(arq)
+	video.expand = true
+	video.set_anchors_preset(Control.PRESET_FULL_RECT)
+	video.process_mode = Node.PROCESS_MODE_ALWAYS
+	cena.add_child(video)
+	get_tree().paused = true
+	Engine.time_scale = 1.0                       # o vídeo anda em tempo normal
+	Audio.parar_chefe()
+	video.play()
+	video.finished.connect(func() -> void:
+		get_tree().paused = false
+		Engine.time_scale = Game.RITMO
+		cena.queue_free()
+		depois.call(), CONNECT_ONE_SHOT)
+
+## "o martelo caiu...": vídeo e começa a luta 2 (Çtamandura + Périne com o martelo)
+func _video_martelo() -> void:
+	_tocar_video("res://assets/julgamento/martelo.ogv", func() -> void:
+		Audio.musica_chefe("ctamandura")
+		ctamandura.luta_2())
+
+## começo da fase 9: música da fase; no checkpoint da arena começa a luta
+func _inicio_9() -> void:
+	if Game.checkpoint_x < ARENA9_X - 1000.0:
+		Audio.musica_chefe("julgamento")
+		return
+	do_inicio = true
+	Audio.musica_chefe("ctamandura")
+	ctamandura.comecar()
+	var meio := Node2D.new()                       # câmera aberta e parada: dá pra ver todas as faixas
+	meio.position = Vector2(ARENA9_X + ARENA9_LARG / 2.0, CHAO_Y - 1500.0)
+	add_child(meio)
+	camera.alvo = meio
+	camera.zoom = Vector2(0.135, 0.135)
+	camera.offset = Vector2.ZERO
+	camera.global_position = meio.position
+	set_meta("cam_base", Vector2.ZERO)
+	if Game.queda_fade:
+		Game.queda_fade = false
+		var cena := CanvasLayer.new()
+		cena.layer = 80
+		add_child(cena)
+		var preto := ColorRect.new()
+		preto.color = Color.BLACK
+		preto.set_anchors_preset(Control.PRESET_FULL_RECT)
+		preto.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		cena.add_child(preto)
+		var tw := cena.create_tween()
+		tw.tween_property(preto, "color:a", 0.0, 0.5)
+		tw.tween_callback(cena.queue_free)
