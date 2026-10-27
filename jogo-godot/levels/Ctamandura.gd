@@ -14,7 +14,7 @@ signal derrotado
 
 const VIDA_1 := 6
 const VIDA_2 := 8
-const MARCA_L := 1000.0                   # largura de cada marca (onde o martelo bate)
+const MARCA_L := 950.0                   # largura de cada marca (onde o martelo bate)
 const ROSA := Color(1.0, 0.3, 0.75)
 const ROXO := Color(0.72, 0.3, 1.0)
 
@@ -205,9 +205,9 @@ func _fim_rodada() -> void:
 
 # ---------- memória: o martelo bate nas faixas que acenderam ----------
 func _iniciar_memoria() -> void:
-	var n := clampi(2 + _rodada / 3, 2, 4)            # começa com 2 marcas, chega a 4
+	var n := clampi(4 + _rodada / 2, 4, 6)            # começa com 4 marcas, chega a 6
 	if luta == 2:
-		n = 4
+		n = 6
 	_marcadas.clear()
 	var tentativas := 0
 	while _marcadas.size() < n and tentativas < 200:  # lugares soltos, sem encostar uns nos outros
@@ -215,7 +215,7 @@ func _iniciar_memoria() -> void:
 		var x := randf_range(x0 + MARCA_L / 2.0, x1 - MARCA_L / 2.0)
 		var ok := true
 		for y in _marcadas:
-			if absf(float(y) - x) < MARCA_L + 250.0:
+			if absf(float(y) - x) < MARCA_L + 180.0:
 				ok = false
 		if ok:
 			_marcadas.append(x)

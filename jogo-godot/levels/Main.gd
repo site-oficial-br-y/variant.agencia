@@ -3393,9 +3393,9 @@ func _tocar_video(arq: String, depois: Callable) -> void:
 	video.set_anchors_preset(Control.PRESET_FULL_RECT)
 	video.process_mode = Node.PROCESS_MODE_ALWAYS
 	cena.add_child(video)
+	video.volume_db = -80.0                       # vídeo sem som: a música continua tocando
 	get_tree().paused = true
 	Engine.time_scale = 1.0                       # o vídeo anda em tempo normal
-	Audio.parar_chefe()
 	video.play()
 	video.finished.connect(func() -> void:
 		get_tree().paused = false
@@ -3407,7 +3407,6 @@ func _tocar_video(arq: String, depois: Callable) -> void:
 func _video_martelo() -> void:
 	_tocar_video("res://assets/julgamento/martelo.ogv", func() -> void:
 		_tocar_video("res://assets/julgamento/juiz.ogv", func() -> void:
-			Audio.musica_chefe("ctamandura")
 			ctamandura.luta_2()))
 
 ## começo da fase 9: música da fase; no checkpoint da arena começa a luta
@@ -3416,7 +3415,7 @@ func _inicio_9() -> void:
 		Audio.musica_chefe("julgamento")
 		return
 	do_inicio = true
-	Audio.musica_chefe("ctamandura")
+	Audio.musica_chefe("ctamandura", 119.0)      # já entra na metade da música
 	ctamandura.comecar()
 	var meio := Node2D.new()                       # câmera aberta e parada: dá pra ver todas as faixas
 	meio.position = Vector2(ARENA9_X + ARENA9_LARG / 2.0, CHAO_Y - 1500.0)

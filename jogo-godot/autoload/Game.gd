@@ -27,7 +27,7 @@ const TURBO_INFINITO := ["cadeira", "gamer"]   # Gabriel e Gorisch: turbo sem co
 const BOMBA_EXTRA := ["scooter"]          # Gian: turbo + bomba num segundo botão
 const NITRO_EXTRA := ["chefe"]           # Vitinho: nitro de fogo azul no segundo botão (C/B)
 const ULT_DASH := ["gamer"]              # Gorisch: ult no segundo botão (impulso + dash vermelho)
-const VERSAO := "v2.2.3"            # aparece no canto do lobby (pra conferir se atualizou)
+const VERSAO := "v2.2.4"            # aparece no canto do lobby (pra conferir se atualizou)
 const RITMO := 3.0                   # mundo 3x mais rápido: queda pesada e ritmo de Happy Wheels
 const ARQ_PROGRESSO := "user://progresso.cfg"
 var checkpoint_x: float = -1.0       # -1 = começa do início; sobrevive ao reinício (R)
