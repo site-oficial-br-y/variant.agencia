@@ -48,6 +48,7 @@ var trava: Label
 var _t := 0.0
 var _atalhos: Array = []              # LOJA, MINHA CONTA, RANKING (coluna acima do JOGAR)
 var _vol: Volume
+var _leve: Button
 
 func _ready() -> void:
 	Audio.musica_menu(true)
@@ -215,6 +216,16 @@ func _ready() -> void:
 	_vol = Volume.new()
 	_vol.abre_direita = true
 	add_child(_vol)
+	_leve = Button.new()                             # celular fraco: menos efeitos e tela mais leve
+	_leve.focus_mode = Control.FOCUS_NONE
+	_leve.add_theme_font_size_override("font_size", 22)
+	_leve.size = Vector2(190, 64)
+	_leve.pressed.connect(func() -> void:
+		Audio.tocar("clique")
+		Game.set_leve(not Game.leve)
+		_texto_leve())
+	add_child(_leve)
+	_texto_leve()
 	get_viewport().size_changed.connect(_atualizar)
 	if not "screenshot" in OS.get_cmdline_user_args() and not load("res://levels/Novidades.gd").ja_viu():
 		add_child(load("res://levels/Novidades.gd").new())     # aviso da atualização, por cima do lobby
@@ -359,8 +370,14 @@ func _atualizar() -> void:
 	trava.position = Vector2(vp.x - 440, vp.y - 170)
 	if _vol:
 		_vol.position = Vector2(30, vp.y - 112)
+		_leve.position = Vector2(122, vp.y - 112)
 		for i in _atalhos.size():
 			(_atalhos[i] as Button).position = Vector2(vp.x - 255, 172 + i * 70)
+
+func _texto_leve() -> void:
+	_leve.text = "MODO LEVE ✓" if Game.leve else "MODO LEVE"
+	for k in ["normal", "hover", "pressed"]:
+		_leve.add_theme_stylebox_override(k, _caixa(Color(0.4, 1.0, 0.5) if Game.leve else ROXO, 14))
 
 func _trancado(i: int) -> bool:
 	return OPCOES[i] == "vini" and not Game.vini_liberado()

@@ -24,12 +24,17 @@ var _tinha_gotas := false
 
 func _ready() -> void:
 	z_index = 20
+	if Game.leve:
+		max_gotas = 120
+		max_manchas = 200
 	_camada_manchas = Node2D.new()          # manchas paradas: só redesenha quando chega mancha nova
 	_camada_manchas.draw.connect(_desenhar_manchas)
 	add_child(_camada_manchas)
 
 ## Espirra n gotas em `pos`, em leque na direção `dir` (ou em volta se ZERO).
 func jorrar(pos: Vector2, n: int, forca: float = 500.0, dir: Vector2 = Vector2.ZERO, vel_base: Vector2 = Vector2.ZERO) -> void:
+	if Game.leve:
+		n = maxi(1, n / 3)
 	for i in n:
 		var d: Vector2
 		if dir == Vector2.ZERO:

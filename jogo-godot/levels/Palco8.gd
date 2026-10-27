@@ -26,7 +26,7 @@ func _ready() -> void:
 	add_child(_fundo)
 	var r := RandomNumberGenerator.new()
 	r.seed = 88
-	for k in 14:
+	for k in (5 if Game.leve else 14):
 		var prof: float = [0.15, 0.3, 0.5][k % 3]
 		var no := Peca.new()
 		no.forma = FORMAS[r.randi() % FORMAS.size()]

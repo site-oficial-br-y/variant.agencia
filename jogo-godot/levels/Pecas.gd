@@ -792,6 +792,8 @@ func cerca(x0: float, x1: float, chao: float, escala := 2.2) -> void:
 # ---------- partículas ----------
 func particulas(pos: Vector2, qtd: int, cor0: Color, cor1: Color, v0: float, v1: float, vida: float,
 		tam0: float, tam1: float, grav := 900.0, dir := Vector2.UP, espalha := 180.0) -> void:
+	if Game.leve:
+		qtd = maxi(2, qtd / 3)
 	var p := CPUParticles2D.new()
 	p.position = pos
 	p.texture = _brilho

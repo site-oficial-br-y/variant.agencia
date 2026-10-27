@@ -27,7 +27,7 @@ const TURBO_INFINITO := ["cadeira", "gamer"]   # Gabriel e Gorisch: turbo sem co
 const BOMBA_EXTRA := ["scooter"]          # Gian: turbo + bomba num segundo botão
 const NITRO_EXTRA := ["chefe"]           # Vitinho: nitro de fogo azul no segundo botão (C/B)
 const ULT_DASH := ["gamer"]              # Gorisch: ult no segundo botão (impulso + dash vermelho)
-const VERSAO := "v2.0.9"            # aparece no canto do lobby (pra conferir se atualizou)
+const VERSAO := "v2.1"            # aparece no canto do lobby (pra conferir se atualizou)
 const RITMO := 3.0                   # mundo 3x mais rápido: queda pesada e ritmo de Happy Wheels
 const ARQ_PROGRESSO := "user://progresso.cfg"
 var checkpoint_x: float = -1.0       # -1 = começa do início; sobrevive ao reinício (R)
@@ -50,6 +50,10 @@ var _gira: CanvasLayer
 
 func _ready() -> void:
 	set_volume(volume())
+	var cfg := ConfigFile.new()
+	cfg.load(ARQ_PROGRESSO)
+	leve = bool(cfg.get_value("config", "leve", false))
+	_aplicar_leve.call_deferred()
 	_gira = CanvasLayer.new()
 	_gira.layer = 100
 	var fundo := ColorRect.new()
@@ -113,6 +117,21 @@ func recorde(f: int) -> float:
 	var cfg := ConfigFile.new()
 	cfg.load(ARQ_PROGRESSO)
 	return float(cfg.get_value("recorde", str(f), INF))
+
+## modo leve (celular fraco): tela desenhada em 1280x720, menos partículas, sangue e fundo animado
+var leve := false
+
+func set_leve(v: bool) -> void:
+	leve = v
+	var cfg := ConfigFile.new()
+	cfg.load(ARQ_PROGRESSO)
+	cfg.set_value("config", "leve", v)
+	cfg.save(ARQ_PROGRESSO)
+	_aplicar_leve()
+
+func _aplicar_leve() -> void:
+	var w := get_tree().root
+	w.content_scale_mode = Window.CONTENT_SCALE_MODE_VIEWPORT if leve else Window.CONTENT_SCALE_MODE_CANVAS_ITEMS
 
 ## volume geral (0 a 1), salvo no progresso
 func volume() -> float:
