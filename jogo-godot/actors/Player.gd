@@ -571,10 +571,10 @@ func _especial(ch: Dictionary, delta: float) -> void:
 				if _pulo_t > 0.4 and _no_chao():          # caiu: fumaceira
 					_no_pulo = false
 					_fumaca_pouso()
-		"repele":                          # Chefe: tira a camisa, 12 s rebatendo golpe de chefe (e tira 1 de vida dele)
+		"repele":                          # Chefe: tira a camisa, 6 s rebatendo golpe de chefe (e tira 1 de vida dele)
 			if apertou and recarga <= 0.0 and _repele_t <= 0.0:
-				_usar(105.0)                         # 35 s reais até poder de novo
-				_repele_t = 12.0
+				_usar(81.0)                          # 6 s de ult + 21 s de recarga depois (reais, mundo 3x)
+				_repele_t = 6.0
 				_repele_dano = false
 				_vestir(true)
 				_ligar_aura(true)

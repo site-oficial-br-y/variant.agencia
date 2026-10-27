@@ -14,7 +14,7 @@ signal derrotado
 
 const VIDA_1 := 6
 const VIDA_2 := 8
-const FAIXAS := 5
+const MARCA_L := 1000.0                   # largura de cada marca (onde o martelo bate)
 const ROSA := Color(1.0, 0.3, 0.75)
 const ROXO := Color(0.72, 0.3, 1.0)
 
@@ -30,9 +30,8 @@ var _t := 0.0
 var _estado := "pausa"
 var _timer := 2.5
 var _rodada := 0                          # quantas rodadas já passaram (dificuldade sobe)
-var _marcadas: Array = []                 # faixas que o martelo vai bater
-var _faixas: Array = []                   # nós das marcas no chão (uma por faixa)
-var _golpe_i := 0
+var _marcadas: Array = []                 # x de cada marca (onde o martelo vai bater)
+var _marcas: Array = []                   # nós das marcas no chão desta rodada
 var _lasers: Array = []
 var _olho: Dictionary = {}
 var _tremor := 0.0
@@ -53,40 +52,11 @@ var _tex_brilho: Texture2D
 func _real(delta: float) -> float:
 	return delta / Engine.time_scale
 
-func _largura_faixa() -> float:
-	return (x1 - x0) / FAIXAS
-
-func _centro_faixa(i: int) -> float:
-	return x0 + (i + 0.5) * _largura_faixa()
-
 func montar(main: Node2D, xa: float, xb: float, y_chao: float) -> void:
 	fase = main
 	x0 = xa
 	x1 = xb
 	chao = y_chao
-	for i in FAIXAS:                                   # marcas das faixas: apagadas até a rodada de memória
-		var m := Polygon2D.new()
-		var w := _largura_faixa() / 2.0 - 30.0
-		m.polygon = PackedVector2Array([Vector2(-w, -50), Vector2(w, -50), Vector2(w, 14), Vector2(-w, 14)])
-		m.color = Color(1, 0.08, 0.15)
-		m.position = Vector2(_centro_faixa(i), chao)
-		m.z_index = 8
-		m.modulate.a = 0.0
-		var coluna := Polygon2D.new()
-		coluna.polygon = PackedVector2Array([Vector2(-w, -50), Vector2(w, -50), Vector2(w, -2400), Vector2(-w, -2400)])
-		coluna.vertex_colors = PackedColorArray([Color(1, 0.1, 0.2, 0.55), Color(1, 0.1, 0.2, 0.55), Color(1, 0.1, 0.2, 0.0), Color(1, 0.1, 0.2, 0.0)])
-		m.add_child(coluna)
-		var num := Label.new()                         # número da faixa (ajuda a memorizar)
-		num.text = str(i + 1)
-		num.add_theme_font_size_override("font_size", 260)
-		num.add_theme_color_override("font_outline_color", Color.BLACK)
-		num.add_theme_constant_override("outline_size", 40)
-		num.position = Vector2(-90, -900)
-		m.add_child(num)
-		fase.add_child(m)
-		_faixas.append(m)
-		if i > 0:                                      # divisória fina entre faixas (fica sempre)
-			fase.pecas.linha(PackedVector2Array([Vector2(x0 + i * _largura_faixa(), chao - 6), Vector2(x0 + i * _largura_faixa(), chao + 400)]), 14.0, Color(0.8, 0.4, 1.0, 0.5), 2)
 
 ## liga a luta: fundo de olhos, cabeça e mãos dele, barra de vida
 func comecar() -> void:
@@ -175,31 +145,26 @@ func atualizar(delta: float) -> void:
 					_iniciar_memoria()
 				else:
 					_iniciar_laser()
-		"mostra":                                       # faixas acesas: decore
+		"mostra":                                       # marcas acesas por pouco tempo: decore
 			_timer -= dt
-			for i in FAIXAS:
-				(_faixas[i] as Node2D).modulate.a = (1.0 if fmod(_timer, 0.3) < 0.22 else 0.75) if i in _marcadas else 0.0
 			if _timer <= 0.0:
-				for f in _faixas:
-					(f as Node2D).modulate.a = 0.0
+				for m in _marcas:
+					(m as Node).queue_free()
+				_marcas.clear()
 				_estado = "espera"
-				_timer = maxf(0.6, 1.4 - 0.1 * _rodada)
-				fase._mensagem("ONDE ELE VAI BATER?", Color(1, 0.6, 0.9))
-		"espera":
+				_timer = 1.6 if luta == 1 else 1.2
+				fase._mensagem("LEMBRA ONDE ERA?", Color(1, 0.6, 0.9))
+		"espera":                                       # sem marca nenhuma: vai pra onde não estava marcado
 			_timer -= dt
 			if _timer <= 0.0:
+				for x in _marcadas:                     # o martelo bate em todas ao mesmo tempo
+					_martelada(float(x), MARCA_L / 2.0)
 				_estado = "golpes"
-				_golpe_i = 0
-				_timer = 0.0
+				_timer = 1.0
 		"golpes":
 			_timer -= dt
 			if _timer <= 0.0:
-				if _golpe_i >= _marcadas.size():
-					_fim_rodada()
-				else:
-					_martelada(_centro_faixa(int(_marcadas[_golpe_i])), _largura_faixa() / 2.0 - 20.0)
-					_golpe_i += 1
-					_timer = maxf(0.25, 0.5 - 0.03 * _rodada) if luta == 1 else 0.3
+				_fim_rodada()
 		"laser":
 			_timer -= dt
 			if _timer <= 0.0 and _lasers.is_empty():
@@ -240,17 +205,28 @@ func _fim_rodada() -> void:
 
 # ---------- memória: o martelo bate nas faixas que acenderam ----------
 func _iniciar_memoria() -> void:
-	var n := clampi(2 + _rodada / 2, 2, FAIXAS - 1)    # sempre sobra ao menos uma faixa
+	var n := clampi(2 + _rodada / 3, 2, 4)            # começa com 2 marcas, chega a 4
 	if luta == 2:
-		n = FAIXAS - 1
-	var todas: Array = range(FAIXAS)
-	todas.shuffle()
-	_marcadas = todas.slice(0, n)
-	_marcadas.sort()
-	if randf() < 0.5:
-		_marcadas.reverse()
+		n = 4
+	_marcadas.clear()
+	var tentativas := 0
+	while _marcadas.size() < n and tentativas < 200:  # lugares soltos, sem encostar uns nos outros
+		tentativas += 1
+		var x := randf_range(x0 + MARCA_L / 2.0, x1 - MARCA_L / 2.0)
+		var ok := true
+		for y in _marcadas:
+			if absf(float(y) - x) < MARCA_L + 250.0:
+				ok = false
+		if ok:
+			_marcadas.append(x)
+	for x in _marcadas:
+		var m := Geresch.marcador(MARCA_L / 2.0)
+		m.position = Vector2(float(x), chao)
+		m.modulate.a = 1.0
+		fase.add_child(m)
+		_marcas.append(m)
 	_estado = "mostra"
-	_timer = maxf(0.9, 2.2 - 0.18 * _rodada) if luta == 1 else 0.9
+	_timer = maxf(0.7, 1.3 - 0.06 * _rodada) if luta == 1 else 0.6   # marca fica pouco tempo
 	Audio.tocar("checkpoint", 0.8)
 	fase._mensagem("DECORE!", Color(1, 0.35, 0.6))
 
