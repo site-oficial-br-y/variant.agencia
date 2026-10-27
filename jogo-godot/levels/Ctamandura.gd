@@ -6,8 +6,8 @@ class_name Ctamandura
 ##       martelo vai bater), apagam, e depois o martelo cai nelas uma a uma. Fica onde NÃO acendeu.
 ##     - LASER ROSA: colunas e diagonais com aviso (mais fáceis que as do Adriano).
 ##     Depois de cada rodada aparece um olho no chão: passou por cima, ele leva dano.
-##  2) O martelo cai (vídeo) e o Périne pega: agora o Périne te persegue no segway batendo
-##     com o martelo, junto com as rodadas do Çtamandura, mais rápidas.
+##  2) O martelo cai (vídeos) e o Périne (Belzebu) pega: ele aparece no fundo, ao lado do
+##     Çtamandura, e bate com o martelo onde você está, junto com as rodadas mais rápidas.
 
 signal martelo_caiu                       # fim da luta 1 (Main toca o vídeo e chama luta_2)
 signal derrotado
@@ -140,10 +140,9 @@ func luta_2() -> void:
 	vida = VIDA_2
 	_rodada = 2
 	_cabeca.texture = load("res://assets/julgamento/cabeca_raiva.png")
-	_mao_e.texture = load("res://assets/julgamento/mao_fogo_e.png")
-	_mao_e.flip_h = false
+	_mao_e.visible = false                             # o Périne fica no lugar da mão esquerda
 	_mao_d.texture = load("res://assets/julgamento/mao_fogo_d.png")
-	_rotulo.text = "ÇTAMANDURA + PÉRINE"
+	_rotulo.text = "ÇTAMANDURA E PÉRINE (BELZEBU)"
 	_criar_perine()
 	_estado = "pausa"
 	_timer = 2.0
@@ -437,75 +436,80 @@ func _pegou_olho() -> void:
 			_rotulo.text = "ÇTAMANDURA DERROTADO!"
 			_rotulo.add_theme_color_override("font_color", Color(0.5, 1, 0.5))
 			if not _perine.is_empty():
-				(_perine["no"] as Node).queue_free()
+				(_perine["marca"] as Node).queue_free()
+				for k in ["img", "martelo", "aura"]:
+					var n: CanvasItem = _perine[k]
+					n.create_tween().tween_property(n, "modulate:a", 0.0, 1.2)
 				_perine = {}
 		return
 	_estado = "pausa"
 	_timer = 1.6
 
-# ---------- Périne com o martelo (luta 2) ----------
+# ---------- Périne (Belzebu) no fundo com o martelo (luta 2) ----------
+## ele fica no fundo, ao lado do Çtamandura: ergue o martelo, uma marca vermelha pisca
+## perto de você no chão e ele bate (o golpe cai do céu na marca)
 func _criar_perine() -> void:
-	var no := Node2D.new()
-	no.position = Vector2(x1 - 1200.0, chao)
-	no.z_index = 4
-	fase.add_child(no)
-	var corpo := Sprite2D.new()
-	corpo.texture = load("res://assets/julgamento/perine.png")
-	corpo.centered = false
-	corpo.offset = Vector2(-211, -1379)                # pé no chão
-	corpo.scale = Vector2.ONE * 1.05
-	corpo.modulate = Color(1.0, 0.85, 1.0)
-	no.add_child(corpo)
-	var aura := _bola(Vector2(0, -700), 16.0, ROXO)    # brilho do martelo nele
-	aura.reparent(no, false)
-	aura.z_index = -1
+	var img := Sprite2D.new()
+	img.texture = load("res://assets/julgamento/perine.png")
+	img.modulate = Color(1.0, 0.75, 1.0)
+	img.flip_h = true                                  # olhando pra arena
+	_camada_boss.add_child(img)
+	_camada_boss.move_child(img, 0)                   # atrás das mãos e da cabeça
 	var martelo := Sprite2D.new()
 	martelo.texture = load("res://assets/julgamento/martelo.png")
-	martelo.position = Vector2(-120, -900)
-	martelo.offset = Vector2(0, -300)                  # gira pela mão
-	martelo.scale = Vector2.ONE * 1.6
-	no.add_child(martelo)
-	var marca := Geresch.marcador(520.0)
-	marca.position = Vector2(no.position.x - 700.0, chao)
+	martelo.offset = Vector2(0, -330)                  # gira pelo cabo
+	_camada_boss.add_child(martelo)
+	var aura := Sprite2D.new()
+	var tmp := _bola(Vector2.ZERO, 1.0, ROXO)        # só pra pegar a textura de brilho
+	aura.texture = tmp.texture
+	tmp.queue_free()
+	aura.material = CanvasItemMaterial.new()
+	(aura.material as CanvasItemMaterial).blend_mode = CanvasItemMaterial.BLEND_MODE_ADD
+	aura.modulate = Color(0.8, 0.3, 1.0, 0.7)
+	_camada_boss.add_child(aura)
+	_camada_boss.move_child(aura, 0)
+	var marca := Geresch.marcador(560.0)
+	marca.position = Vector2((x0 + x1) / 2.0, chao)
 	fase.add_child(marca)
-	_perine = {"no": no, "martelo": martelo, "marca": marca, "estado": "anda", "t": 2.0, "vx": 0.0}
+	_perine = {"img": img, "martelo": martelo, "aura": aura, "marca": marca, "estado": "espera", "t": 2.5, "rot": 0.0}
 
 func _passo_perine(dt: float) -> void:
-	var no: Node2D = _perine["no"]
+	var v := fase.get_viewport().get_visible_rect().size
+	var img: Sprite2D = _perine["img"]
 	var martelo: Sprite2D = _perine["martelo"]
+	var aura: Sprite2D = _perine["aura"]
 	var marca: Node2D = _perine["marca"]
-	var px := _alvo_x()
-	var lado := signf(px - no.position.x)
-	if lado == 0.0:
-		lado = -1.0
+	var e := v.y * 0.5 / 1379.0
+	img.scale = Vector2.ONE * e
+	img.position = Vector2(v.x * 0.2, v.y * 0.36 + sin(_t * 1.1) * 10.0)
+	aura.scale = Vector2.ONE * v.y * 0.9 / 64.0 * (1.0 + 0.06 * sin(_t * 3.0))
+	aura.position = img.position
+	martelo.scale = Vector2.ONE * e * 0.75
+	martelo.position = img.position + Vector2(150, -60) * e * 2.0
 	_perine["t"] = float(_perine["t"]) - dt
+	var alvo_rot := 0.4
 	match _perine["estado"]:
-		"anda":                                         # vem atrás de você
-			var alvo_x := px - lado * 900.0
-			no.position.x = move_toward(no.position.x, clampf(alvo_x, x0 + 500.0, x1 - 500.0), 2600.0 * dt)
-			(no.get_child(0) as Sprite2D).flip_h = lado > 0.0
-			martelo.rotation = lerp_angle(martelo.rotation, -0.4 * lado, 0.1)
+		"espera":
 			marca.modulate.a = 0.0
 			if float(_perine["t"]) <= 0.0:
 				_perine["estado"] = "ergue"
-				_perine["t"] = 0.75
-				_perine["lado"] = lado
-				marca.position = Vector2(no.position.x + lado * 800.0, chao)
-		"ergue":                                        # martelo lá em cima e marca vermelha piscando
-			var l: float = _perine["lado"]
-			martelo.rotation = lerp_angle(martelo.rotation, -2.6 * l, 0.15)
+				_perine["t"] = 0.8
+				marca.position = Vector2(clampf(_alvo_x() + randf_range(-300, 300), x0 + 600.0, x1 - 600.0), chao)
+		"ergue":                                        # martelo lá em cima e marca piscando
+			alvo_rot = -2.4
 			marca.modulate.a = 1.0 if fmod(float(_perine["t"]), 0.16) < 0.1 else 0.6
 			if float(_perine["t"]) <= 0.0:
 				_perine["estado"] = "bate"
-				_perine["t"] = 0.5
-				martelo.rotation = 1.4 * l
+				_perine["t"] = 0.6
 				marca.modulate.a = 0.0
-				_acerta_faixa(marca.position.x, 600.0, "esmagado")
-				_impacto(marca.position, 2.0)
+				_martelada(marca.position.x, 600.0)
 		"bate":
+			alvo_rot = 1.3
 			if float(_perine["t"]) <= 0.0:
-				_perine["estado"] = "anda"
-				_perine["t"] = randf_range(1.6, 2.6)
+				_perine["estado"] = "espera"
+				_perine["t"] = randf_range(2.0, 3.2)
+	_perine["rot"] = lerp_angle(float(_perine["rot"]), alvo_rot, 0.25 if _perine["estado"] == "bate" else 0.12)
+	martelo.rotation = float(_perine["rot"])
 
 # ---------- comum ----------
 func _alvo_x() -> float:

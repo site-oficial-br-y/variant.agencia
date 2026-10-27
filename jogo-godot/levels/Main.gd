@@ -3403,11 +3403,12 @@ func _tocar_video(arq: String, depois: Callable) -> void:
 		cena.queue_free()
 		depois.call(), CONNECT_ONE_SHOT)
 
-## "o martelo caiu...": vídeo e começa a luta 2 (Çtamandura + Périne com o martelo)
+## "o martelo caiu...", depois o martelo de juiz, e começa a luta 2 (Çtamandura + Périne)
 func _video_martelo() -> void:
 	_tocar_video("res://assets/julgamento/martelo.ogv", func() -> void:
-		Audio.musica_chefe("ctamandura")
-		ctamandura.luta_2())
+		_tocar_video("res://assets/julgamento/juiz.ogv", func() -> void:
+			Audio.musica_chefe("ctamandura")
+			ctamandura.luta_2()))
 
 ## começo da fase 9: música da fase; no checkpoint da arena começa a luta
 func _inicio_9() -> void:
