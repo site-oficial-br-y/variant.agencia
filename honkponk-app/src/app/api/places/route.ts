@@ -43,6 +43,15 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ error: 'Faça login para buscar leads.' }, { status: 401 })
   }
 
+  // Plano grátis não busca de verdade (só vê a demonstração): cada chamada aqui é paga ao
+  // Google. Quem tem moeda comprada ainda busca, e plano vencido conta como grátis.
+  const { data: perfil } = await auth.from('users_profiles').select('plan,honk_coins,plan_expires_at,team_owner_id').eq('id', user.id).single()
+  const vencido = !perfil?.team_owner_id && !!perfil?.plan_expires_at && new Date(perfil.plan_expires_at) < new Date()   // membro de equipe segue o dono
+  const gratis = !perfil || perfil.plan === 'free' || vencido
+  if (gratis && !((perfil?.honk_coins ?? 0) > 0)) {
+    return NextResponse.json({ error: 'Busca disponível nos planos pagos.' }, { status: 403 })
+  }
+
   // Trava de emergência: essa rota chama o Google direto e pode ser acessada sem passar
   // pelo /api/search (que tem os limites por plano). A rede de segurança de verdade contra
   // custo é a cota diária configurada no Google Cloud Console — isso aqui só barra script óbvio.

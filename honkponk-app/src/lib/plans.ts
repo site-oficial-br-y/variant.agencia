@@ -26,16 +26,16 @@ export interface PlanConfig {
 export const PLANS: Record<Plan, PlanConfig> = {
   free: {
     name: 'Grátis',
-    description: 'Para experimentar',
+    description: 'Para conhecer',
     price: 0,
     periods: [],
-    searchesPerDay: 1,
+    searchesPerDay: 0,
     maxResults: 5,
     allContacts: false,
     exportExcel: false,
     maxUsers: 1,
     dedicatedSupport: false,
-    features: ['1 busca por dia','Até 5 leads por busca','Apenas leads com contato disponível','WhatsApp + Instagram'],
+    features: ['Conta grátis','Demonstração de como os leads aparecem','Buscas reais a partir do Freelancer'],
   },
   freelancer: {
     name: 'Freelancer',

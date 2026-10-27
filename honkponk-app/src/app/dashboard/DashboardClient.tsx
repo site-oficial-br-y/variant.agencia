@@ -9,6 +9,7 @@ import type { Plan } from '@/lib/plans'
 import type { User } from '@supabase/supabase-js'
 import { QuizOverlay } from '@/components/QuizOverlay'
 import { SearchResults } from '@/components/SearchResults'
+import { DemoResults } from '@/components/DemoResults'
 import { SEGMENT_NAMES, SERVICE_META } from '@/lib/search'
 
 interface Profile { id: string; email: string; plan: Plan; searches_today: number; searches_reset_at: string; team_owner_id?: string | null; honk_coins?: number }
@@ -301,8 +302,8 @@ export function DashboardClient({ user, profile, teamMembers, searchHistory = []
             onMouseLeave={() => setHoveredCard(null)}
             style={{ background: 'rgba(255,255,255,.03)', border: `1px solid ${hoveredCard === 'searches' ? 'rgba(248,182,200,.35)' : 'rgba(255,255,255,.08)'}`, borderRadius: 16, padding: '20px', backdropFilter: 'blur(10px)', transform: hoveredCard === 'searches' ? 'translateY(-5px)' : 'none', boxShadow: hoveredCard === 'searches' ? '0 16px 40px rgba(0,0,0,.35)' : 'none', transition: 'all .3s cubic-bezier(.34,1.56,.64,1)', cursor: 'default' }}>
             <div style={{ fontSize: '.68rem', fontWeight: 700, color: '#f8b6c8', textTransform: 'uppercase' as const, letterSpacing: 1, marginBottom: 8 }}>Buscas hoje</div>
-            <div style={{ fontSize: '1.5rem', fontWeight: 900, marginBottom: 2 }}>{remaining === null ? '∞' : remaining}</div>
-            <div style={{ fontSize: '.76rem', color: 'rgba(255,255,255,.38)' }}>{remaining === null ? 'Ilimitadas' : `de ${planConfig.searchesPerDay} disponível${planConfig.searchesPerDay === 1 ? '' : 'is'}`}</div>
+            <div style={{ fontSize: '1.5rem', fontWeight: 900, marginBottom: 2 }}>{plan === 'free' ? 'Demo' : remaining === null ? '∞' : remaining}</div>
+            <div style={{ fontSize: '.76rem', color: 'rgba(255,255,255,.38)' }}>{plan === 'free' ? 'Assine pra buscar de verdade' : remaining === null ? 'Ilimitadas' : `de ${planConfig.searchesPerDay} disponível${planConfig.searchesPerDay === 1 ? '' : 'is'}`}</div>
           </div>
           {plan !== 'enterprise' && (
             <div
@@ -436,7 +437,9 @@ export function DashboardClient({ user, profile, teamMembers, searchHistory = []
                 ↺ Nova busca
               </button>
             </div>
-            <SearchResults key={JSON.stringify(searchParams)} params={searchParams} userId={user.id} plan={plan} onLimitReached={() => setLimitMsg(true)} />
+            {plan === 'free' && !((profile?.honk_coins ?? 0) > 0)
+              ? <DemoResults key={JSON.stringify(searchParams)} params={searchParams} logado />
+              : <SearchResults key={JSON.stringify(searchParams)} params={searchParams} userId={user.id} plan={plan} onLimitReached={() => setLimitMsg(true)} />}
           </div>
         )}
       </div>
