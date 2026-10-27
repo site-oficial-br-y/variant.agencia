@@ -22,7 +22,7 @@ export function PricingSection({ onGetStarted }: { onGetStarted?: () => void }) 
         <div className="reveal" style={{ textAlign: 'center', marginBottom: 60 }}>
           <span style={{ display: 'inline-block', background: 'rgba(248,182,200,.1)', border: '1px solid rgba(248,182,200,.2)', borderRadius: 100, padding: '4px 14px', fontSize: '.75rem', fontWeight: 700, color: '#f8b6c8', marginBottom: 16, letterSpacing: '.5px', textTransform: 'uppercase' as const }}>Preços</span>
           <h2 style={{ fontSize: 'clamp(1.8rem,4vw,2.8rem)', fontWeight: 800, letterSpacing: -1.5, lineHeight: 1.15, marginBottom: 14 }}>Planos para todos os tamanhos.</h2>
-          <p style={{ color: 'rgba(255,255,255,.45)', fontSize: '1rem' }}>Comece grátis. Escale quando precisar.</p>
+          <p style={{ color: 'rgba(255,255,255,.45)', fontSize: '1rem' }}>Veja como funciona de graça. Busque de verdade a partir de R$ 19,90.</p>
         </div>
         <div className="stagger" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(240px,1fr))', gap: 20 }}>
           {plans.map(({ key, featured }, i) => {
@@ -65,7 +65,7 @@ export function PricingSection({ onGetStarted }: { onGetStarted?: () => void }) 
                 </ul>
                 {plan.price === 0 ? (
                   <button onClick={onGetStarted} className="btn-primary" style={{ width: '100%', background: 'rgba(255,255,255,.08)', color: '#fff', border: '1px solid rgba(255,255,255,.15)', borderRadius: 12, padding: '13px 20px', fontSize: '.9rem', fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit', transition: 'background .2s' }}>
-                    Começar grátis
+                    Ver demonstração
                   </button>
                 ) : (
                   <Link href={`/checkout/${key}`} className="btn-primary" style={{ display: 'block', width: '100%', background: featured ? 'linear-gradient(135deg,#e879a0,#c2185b)' : 'rgba(232,121,160,.15)', color: '#fff', border: featured ? 'none' : '1px solid rgba(232,121,160,.3)', borderRadius: 12, padding: '13px 20px', fontSize: '.9rem', fontWeight: 700, textDecoration: 'none', textAlign: 'center', boxShadow: featured ? '0 8px 30px rgba(232,121,160,.35)' : 'none', transition: 'all .2s' }}>

@@ -18,6 +18,7 @@ export default function HomePage() {
   const [searchParams, setSearchParams] = useState<QuizData | null>(null)
   const [userId, setUserId] = useState<string | null>(null)
   const [userPlan, setUserPlan] = useState<Plan>('free')
+  const [userCoins, setUserCoins] = useState(0)
   const [limitMsg, setLimitMsg] = useState(false)
   const supabase = createClient()
 
@@ -25,8 +26,8 @@ export default function HomePage() {
     supabase.auth.getUser().then(({ data }) => {
       if (data.user) {
         setUserId(data.user.id)
-        supabase.from('users_profiles').select('plan').eq('id', data.user.id).single().then(({ data: p }) => {
-          if (p) setUserPlan(p.plan as Plan)
+        supabase.from('users_profiles').select('plan,honk_coins').eq('id', data.user.id).single().then(({ data: p }) => {
+          if (p) { setUserPlan(p.plan as Plan); setUserCoins(p.honk_coins || 0) }
         })
       }
     })
@@ -167,9 +168,9 @@ export default function HomePage() {
                 <Link href="/#precos" style={{ background: 'linear-gradient(135deg,#e879a0,#c2185b)', color: '#fff', borderRadius: 10, padding: '10px 20px', fontSize: '.85rem', fontWeight: 700, textDecoration: 'none' }}>Fazer upgrade</Link>
               </div>
             )}
-            {userId
+            {userId && (userPlan !== 'free' || userCoins > 0)
               ? <SearchResults params={searchParams} userId={userId} plan={userPlan} onLimitReached={() => setLimitMsg(true)} />
-              : <DemoResults params={searchParams} />}
+              : <DemoResults params={searchParams} logado={!!userId} />}
           </div>
         </section>
       )}
