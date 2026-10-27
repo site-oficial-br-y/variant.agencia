@@ -154,6 +154,7 @@ func atualizar(delta: float) -> void:
 				_estado = "espera"
 				_timer = 1.6 if luta == 1 else 1.2
 				fase._mensagem("LEMBRA ONDE ERA?", Color(1, 0.6, 0.9))
+				_lasers_no_meio()
 		"espera":                                       # sem marca nenhuma: vai pra onde não estava marcado
 			_timer -= dt
 			if _timer <= 0.0:
@@ -263,6 +264,22 @@ func _impacto(onde: Vector2, f: float) -> void:
 		j.tremer(onde, f)
 	Audio.tocar("impacto_forte", 1.0, 0.1)
 	Audio.tocar("caixa", 0.7)
+
+## enquanto você lembra das marcas: colunas de laser rosa nos lugares livres (fecha o caminho)
+func _lasers_no_meio() -> void:
+	var n := 2 if luta == 1 else 3
+	var feitos := 0
+	var tentativas := 0
+	while feitos < n and tentativas < 100:
+		tentativas += 1
+		var x := randf_range(x0 + 300.0, x1 - 300.0)
+		var ok := true
+		for m in _marcadas:
+			if absf(float(m) - x) < MARCA_L / 2.0 + 150.0:
+				ok = false
+		if ok:
+			_coluna(x, 0.4 + feitos * 0.35)
+			feitos += 1
 
 # ---------- laser rosa ----------
 func _iniciar_laser() -> void:
