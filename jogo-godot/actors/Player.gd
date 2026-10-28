@@ -582,6 +582,7 @@ func _especial(ch: Dictionary, delta: float) -> void:
 				Audio.tocar("checkpoint", 1.0, 0.0)
 			if _repele_t > 0.0:
 				_repele_t -= delta / Engine.time_scale
+				imortal_t = maxf(_repele_t, 0.0)          # ult do Vitinho: imortal enquanto dura
 				_repele_fx -= delta / Engine.time_scale
 				_rastro(Color(1.0, 0.82, 0.3, 0.35), 0.1)
 				if _aura:
