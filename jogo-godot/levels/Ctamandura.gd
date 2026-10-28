@@ -443,6 +443,17 @@ func _pegou_olho() -> void:
 	_estado = "pausa"
 	_timer = 1.6
 
+## online: alguém do time pegou o olho em outra tela (aplica o mesmo dano aqui)
+func forcar_dano() -> void:
+	if morto or _estado == "fim1":
+		return
+	if _olho.is_empty():
+		var no := Node2D.new()
+		no.position = Vector2((x0 + x1) / 2.0, chao - 260.0)
+		fase.add_child(no)
+		_olho = {"no": no, "seta": no, "t": 0.0}
+	_pegou_olho()
+
 # ---------- Périne (Belzebu) no fundo com o martelo (luta 2) ----------
 ## ele fica no fundo, ao lado do Çtamandura: ergue o martelo, uma marca vermelha pisca
 ## perto de você no chão e ele bate (o golpe cai do céu na marca)

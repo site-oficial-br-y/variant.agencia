@@ -2357,7 +2357,7 @@ func _inicio_7() -> void:
 		return
 	do_inicio = true
 	camera.zoom = Vector2(0.22, 0.22)
-	adriano.comecar()
+	_comecar_boss(adriano.comecar)
 	Audio.musica_chefe("adriano")
 	if Game.queda_fade:                              # veio da tela preta: clareia pra luta
 		Game.queda_fade = false
@@ -2629,6 +2629,8 @@ func _process_online(delta: float) -> void:
 			vivos += 1
 	if _rotulo_online:
 		_rotulo_online.visible = not aviso.visible
+		if Game.fase in [7, 8, 9]:
+			_mandar_vida_boss(dt)
 		if Game.fase == 5:
 			if Online.host and ativo:
 				_mandar_vida_chefe(dt)
@@ -2763,6 +2765,17 @@ func _online_msg(e: String, d: Dictionary, de: String) -> void:
 					c["primeiro_ms"] = Time.get_ticks_msec()
 				if de != Online.id:
 					_mensagem("%s CHEGOU EM %dº!" % [Online.nome_de(de), _lugar(de)], Color(1, 0.85, 0.3))
+		"arena":                                     # alguém chegou na porta do chefe
+			if int(d.get("r", 0)) == Online.rodada:
+				_na_arena[de] = true
+				if Online.host and _luta_ok:
+					Online.enviar("luta", {"r": Online.rodada})
+		"luta":                                      # todo mundo chegou: começa a luta
+			if int(d.get("r", 0)) == Online.rodada:
+				_soltar_luta()
+		"bv":                                        # vida do chefe em outra tela: fica a menor
+			if int(d.get("r", 0)) == Online.rodada:
+				_sinc_vida_boss(int(d.get("v", 99)), int(d.get("l", 1)))
 		"vit":                                       # quem criou a sala derrotou o chefe: o time venceu
 			if not Online.host and int(d.get("r", 0)) == Online.rodada:
 				_vitoria_online()
@@ -3179,7 +3192,7 @@ func _inicio_8() -> void:
 		return
 	do_inicio = true
 	Audio.musica_chefe("geresch", MUSICA8_LOOP, MUSICA8_LOOP)
-	geresch.comecar()
+	_comecar_boss(geresch.comecar)
 	if Game.queda_fade:
 		Game.queda_fade = false
 		var cena := CanvasLayer.new()
@@ -3458,7 +3471,7 @@ func _inicio_9() -> void:
 		return
 	do_inicio = true
 	Audio.musica_chefe("ctamandura", 119.0)      # já entra na metade da música
-	ctamandura.comecar()
+	_comecar_boss(ctamandura.comecar)
 	var meio := Node2D.new()                       # câmera aberta e parada: dá pra ver todas as faixas
 	meio.position = Vector2(ARENA9_X + ARENA9_LARG / 2.0, CHAO_Y - 1500.0)
 	add_child(meio)
@@ -3480,3 +3493,87 @@ func _inicio_9() -> void:
 		var tw := cena.create_tween()
 		tw.tween_property(preto, "color:a", 0.0, 0.5)
 		tw.tween_callback(cena.queue_free)
+
+# ---------- online: chefe das fases 7, 8 e 9 é do time ----------
+## na porta do chefe espera todo mundo chegar (no máximo 60 s); a vida é a mesma pra todos
+var _na_arena: Dictionary = {}
+var _luta_ok := false
+var _luta_fn: Callable
+var _espera_lbl: Label
+var _bv_t := 0.0
+
+func _comecar_boss(f: Callable) -> void:
+	if not Online.ativo or Game.fase == 5:
+		f.call()
+		return
+	_luta_fn = f
+	_na_arena[Online.id] = true
+	_espera_lbl = Label.new()
+	_espera_lbl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	_espera_lbl.add_theme_font_size_override("font_size", 46)
+	_espera_lbl.add_theme_color_override("font_color", Color(1, 0.85, 0.3))
+	_espera_lbl.add_theme_color_override("font_outline_color", Color.BLACK)
+	_espera_lbl.add_theme_constant_override("outline_size", 12)
+	_espera_lbl.size = Vector2(get_viewport().get_visible_rect().size.x, 120)
+	_espera_lbl.position = Vector2(0, 160)
+	$HUD.add_child(_espera_lbl)
+	var t0 := Time.get_ticks_msec()
+	while is_inside_tree() and not _luta_ok:
+		var ids: Array = Online.corrida.get("ids", [])
+		var presentes := ids.filter(func(k): return k == Online.id or Online.jogadores.has(k))
+		var chegaram := presentes.filter(func(k): return _na_arena.has(k)).size()
+		_espera_lbl.text = "ESPERANDO OS OUTROS JOGADORES... %d/%d" % [chegaram, presentes.size()]
+		Online.enviar("arena", {"r": Online.rodada})
+		if Online.host and (chegaram >= presentes.size() or Time.get_ticks_msec() - t0 > 60000):
+			for k in 3:
+				Online.enviar("luta", {"r": Online.rodada})
+			_soltar_luta()
+		await get_tree().create_timer(1.0, true, false, true).timeout
+
+func _soltar_luta() -> void:
+	if _luta_ok or not _luta_fn.is_valid():
+		return
+	_luta_ok = true
+	if is_instance_valid(_espera_lbl):
+		_espera_lbl.queue_free()
+	_mensagem("TODO MUNDO CHEGOU! LUTA!", Color(0.5, 1, 0.6))
+	_luta_fn.call()
+
+## manda a vida do chefe pros outros (chamado no _process_online)
+func _mandar_vida_boss(dt: float) -> void:
+	_bv_t -= dt
+	if _bv_t > 0.0 or not _luta_ok:
+		return
+	_bv_t = 0.5
+	var c = _chefe_atual()
+	if c == null:
+		return
+	Online.enviar("bv", {"r": Online.rodada, "v": c.vida, "l": c.luta if c == ctamandura else 1})
+
+func _chefe_atual():
+	for c in [adriano, geresch, ctamandura]:
+		if is_instance_valid(c) and c.ativo:
+			return c
+	return null
+
+func _sinc_vida_boss(v: int, l: int) -> void:
+	var c = _chefe_atual()
+	if c == null or c.morto:
+		return
+	if c == ctamandura:
+		if l > ctamandura.luta and ctamandura.luta == 1:      # o time já foi pra luta 2
+			ctamandura.vida = 1
+			ctamandura.forcar_dano()
+		elif l == ctamandura.luta and v < ctamandura.vida:
+			for k in ctamandura.vida - v:
+				ctamandura.forcar_dano()
+	elif c == adriano:
+		for k in maxi(0, adriano.vida - v):
+			adriano.levar_choque()
+	elif c == geresch and v < geresch.vida:
+		var d: int = geresch.vida - v
+		if v <= 0:
+			geresch._levar_dano(d)
+		else:
+			geresch.vida = v
+			geresch._trocar_imagem()
