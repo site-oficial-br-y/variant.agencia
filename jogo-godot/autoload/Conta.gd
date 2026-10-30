@@ -164,10 +164,7 @@ func _entrou() -> void:
 	_envio_t = ENVIO_JOGO
 	mudou.emit()
 	carregar_inventario()
-	for f in range(1, 10):                           # recordes feitos antes de ter conta também valem
-		var t := Game.recorde(f)
-		if t < INF:
-			enviar_recorde(f, t, "")
+	# recordes antigos do aparelho não sobem mais (vinham tempos impossíveis); só vitória nova conta
 
 # ---------- loja e inventário ----------
 func tem(item: String) -> bool:
@@ -257,12 +254,15 @@ func _salvar() -> void:
 	cfg.save(Game.ARQ_PROGRESSO)
 
 ## token válido (renova se estiver pra vencer); "" se a conta caiu
-func _token() -> String:
+func _token(forcar := false) -> String:
 	if _refresh == "":
 		return ""
-	if Time.get_unix_time_from_system() < _expira - 60.0:
+	if not forcar and Time.get_unix_time_from_system() < _expira - 60.0:
 		return _access
 	var r := await _pedir(HTTPClient.METHOD_POST, "/auth/v1/token?grant_type=refresh_token", {"refresh_token": _refresh})
+	if int(r[0]) == 0:                               # celular sem sinal na hora: tenta mais uma vez
+		await get_tree().create_timer(2.0, true, false, true).timeout
+		r = await _pedir(HTTPClient.METHOD_POST, "/auth/v1/token?grant_type=refresh_token", {"refresh_token": _refresh})
 	if _guardar_sessao(r[1]):
 		return _access
 	if int(r[0]) == 400 or int(r[0]) == 401 or int(r[0]) == 403:   # sessão não vale mais: sai da conta
@@ -291,12 +291,12 @@ func _erro(d) -> String:
 	return msg if msg != "" else "Deu erro. Tenta de novo."
 
 ## requisição JSON pro Supabase: [código http, resposta]
-func _pedir(metodo: int, caminho: String, corpo = null, com_conta := false) -> Array:
+func _pedir(metodo: int, caminho: String, corpo = null, com_conta := false, repetiu := false) -> Array:
 	var tk := Online.CHAVE
 	if com_conta:
 		tk = await _token()
 		if tk == "":
-			return [401, null]
+			return [0 if logado() else -1, null]
 	var h := HTTPRequest.new()
 	h.timeout = 15.0
 	h.accept_gzip = false                            # no navegador a resposta já chega descompactada
@@ -309,5 +309,8 @@ func _pedir(metodo: int, caminho: String, corpo = null, com_conta := false) -> A
 	h.queue_free()
 	if int(r[0]) != HTTPRequest.RESULT_SUCCESS:
 		return [0, null]
+	if com_conta and not repetiu and int(r[1]) == 401:   # token venceu antes da hora (relógio do aparelho): renova e repete
+		if await _token(true) != "":
+			return await _pedir(metodo, caminho, corpo, true, true)
 	var txt := (r[3] as PackedByteArray).get_string_from_utf8()
 	return [int(r[1]), JSON.parse_string(txt) if txt != "" else null]

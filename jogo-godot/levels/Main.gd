@@ -74,6 +74,8 @@ func _ready() -> void:
 	if Online.ativo:
 		_iniciar_online()
 	_pos_jogador()
+	if not Online.ativo:
+		Game.guardar_retomada()
 
 func _criar_jogador(x: float, y: float) -> void:
 	player = Player.new()
@@ -1600,6 +1602,7 @@ func _fim(ganhou: bool, motivo: String) -> void:
 		aviso.text = "CHEGOU!\n%.1f s%s" % [tempo, "  NOVO RECORDE!" if novo else ""]
 		aviso.add_theme_color_override("font_color", Color(0.45, 1, 0.5))
 		Game.checkpoint_x = -1.0
+		Game.guardar_retomada()
 		Audio.motor(false)
 		Audio.tocar("vitoria")
 		pecas.festa(_meta_pos, player.foco().global_position)

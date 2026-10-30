@@ -213,6 +213,20 @@ func _ready() -> void:
 			get_tree().change_scene_to_file("res://levels/%s.tscn" % cena))
 		add_child(b)
 		_atalhos.append(b)
+	if not Game.retomada().is_empty():                # a página caiu no meio da fase: volta pro checkpoint
+		var c := Button.new()
+		c.text = "CONTINUAR FASE %d" % int(Game.retomada()["fase"])
+		c.focus_mode = Control.FOCUS_NONE
+		c.add_theme_font_size_override("font_size", 24)
+		c.add_theme_color_override("font_color", Color(0.45, 1, 0.5))
+		for k in ["normal", "hover", "pressed"]:
+			c.add_theme_stylebox_override(k, _caixa(Color(0.45, 1, 0.5), 14))
+		c.size = Vector2(230, 58)
+		c.pressed.connect(func() -> void:
+			Audio.tocar("confirma")
+			Game.retomar())
+		add_child(c)
+		_atalhos.append(c)
 	_vol = Volume.new()
 	_vol.abre_direita = true
 	add_child(_vol)

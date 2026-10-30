@@ -27,7 +27,7 @@ const TURBO_INFINITO := ["cadeira", "gamer"]   # Gabriel e Gorisch: turbo sem co
 const BOMBA_EXTRA := ["scooter"]          # Gian: turbo + bomba num segundo botão
 const NITRO_EXTRA := ["chefe"]           # Vitinho: nitro de fogo azul no segundo botão (C/B)
 const ULT_DASH := ["gamer"]              # Gorisch: ult no segundo botão (impulso + dash vermelho)
-const VERSAO := "v2.2.9"            # aparece no canto do lobby (pra conferir se atualizou)
+const VERSAO := "v2.3.0"            # aparece no canto do lobby (pra conferir se atualizou)
 const RITMO := 3.0                   # mundo 3x mais rápido: queda pesada e ritmo de Happy Wheels
 const ARQ_PROGRESSO := "user://progresso.cfg"
 var checkpoint_x: float = -1.0       # -1 = começa do início; sobrevive ao reinício (R)
@@ -174,6 +174,52 @@ func registrar_vitoria(f: int, tempo: float) -> bool:
 		cfg.save(ARQ_PROGRESSO)
 		return true
 	return false
+
+## checkpoint salvo no aparelho: se a página do celular cair (falta de memória), dá pra voltar de onde parou
+func guardar_retomada() -> void:
+	var cfg := ConfigFile.new()
+	cfg.load(ARQ_PROGRESSO)
+	if checkpoint_x <= 0.0:
+		if not cfg.has_section("retomar"):
+			return
+		cfg.erase_section("retomar")
+	else:
+		var viu: Array = []
+		for m in ["viu_entrada9", "viu_martelo9"]:
+			if get_meta(m, false):
+				viu.append(m)
+		cfg.set_value("retomar", "fase", fase)
+		cfg.set_value("retomar", "personagem", personagem)
+		cfg.set_value("retomar", "x", checkpoint_x)
+		cfg.set_value("retomar", "chao", checkpoint_chao)
+		cfg.set_value("retomar", "viu", viu)
+		cfg.set_value("retomar", "quando", Time.get_unix_time_from_system())
+	cfg.save(ARQ_PROGRESSO)
+
+## {fase, personagem, ...} ou {} se não tem (ou já faz mais de 3 h)
+func retomada() -> Dictionary:
+	var cfg := ConfigFile.new()
+	cfg.load(ARQ_PROGRESSO)
+	if not cfg.has_section("retomar"):
+		return {}
+	if Time.get_unix_time_from_system() - float(cfg.get_value("retomar", "quando", 0.0)) > 3 * 3600:
+		return {}
+	var d := {}
+	for k in cfg.get_section_keys("retomar"):
+		d[k] = cfg.get_value("retomar", k)
+	return d
+
+func retomar() -> void:
+	var d := retomada()
+	if d.is_empty():
+		return
+	fase = int(d["fase"])
+	personagem = str(d["personagem"])
+	checkpoint_x = float(d["x"])
+	checkpoint_chao = float(d["chao"])
+	for m in d.get("viu", []):
+		set_meta(m, true)
+	get_tree().change_scene_to_file("res://levels/Main.tscn")
 
 func set_estado(e: int) -> void:
 	estado = e
