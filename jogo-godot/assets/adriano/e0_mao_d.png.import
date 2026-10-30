@@ -15,9 +15,9 @@ dest_files=["res://.godot/imported/e0_mao_d.png-1f02e054c2cfaa6d80b8b0897c987a7a
 
 [params]
 
-compress/mode=0
+compress/mode=1
 compress/high_quality=false
-compress/lossy_quality=0.7
+compress/lossy_quality=0.9
 compress/hdr_compression=1
 compress/normal_map=0
 compress/channel_pack=0

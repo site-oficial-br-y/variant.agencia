@@ -56,6 +56,7 @@ func _ready() -> void:
 	mec = Mecanicas.new(self, pecas, func() -> Player: return player)
 	pecas.ao_explodir = _ao_explodir
 	_construir_chao()
+	Midia.preparar_fase(Game.fase)
 	if "ultimo_cp" in OS.get_cmdline_user_args() and cps.size() > 0:    # teste: começa perto da chegada
 		Game.checkpoint_x = (cps[cps.size() - 1] as Vector2).x
 		Game.checkpoint_chao = (cps[cps.size() - 1] as Vector2).y
@@ -3163,8 +3164,10 @@ func _cutscene8() -> void:
 	preto.color = Color.BLACK
 	preto.set_anchors_preset(Control.PRESET_FULL_RECT)
 	cena.add_child(preto)
+	get_tree().paused = true
+	var st := await _carregar_video(cena, "res://assets/geresch/intro.ogv")
 	var video := VideoStreamPlayer.new()
-	video.stream = load("res://assets/geresch/intro.ogv")
+	video.stream = st
 	video.expand = true
 	video.set_anchors_preset(Control.PRESET_FULL_RECT)
 	video.process_mode = Node.PROCESS_MODE_ALWAYS
@@ -3188,6 +3191,23 @@ func _cutscene8() -> void:
 		get_tree().reload_current_scene.call_deferred()
 	video.finished.connect(ir, CONNECT_ONE_SHOT)
 	_botao_pular(cena, ir)
+	if st == null:                                # vídeo não baixou: segue direto pra luta
+		ir.call()
+
+## espera o vídeo baixar (mostra CARREGANDO...); null se não deu
+func _carregar_video(cena: CanvasLayer, res: String) -> VideoStream:
+	if Midia.local(res) == "":
+		var txt := Label.new()
+		txt.text = "CARREGANDO..."
+		txt.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+		txt.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+		txt.set_anchors_preset(Control.PRESET_FULL_RECT)
+		txt.add_theme_font_size_override("font_size", 48)
+		cena.add_child(txt)
+		await Midia.esperar(res, 20.0)
+		if is_instance_valid(txt):
+			txt.queue_free()
+	return Midia.video(res)
 
 ## começo da fase 8: no checkpoint da arena começa a luta (música já tocando)
 func _inicio_8() -> void:
@@ -3413,8 +3433,15 @@ func _tocar_video(arq: String, depois: Callable) -> void:
 	preto.color = Color.BLACK
 	preto.set_anchors_preset(Control.PRESET_FULL_RECT)
 	cena.add_child(preto)
+	get_tree().paused = true
+	var st := await _carregar_video(cena, arq)
+	if st == null:                                # vídeo não baixou: pula
+		get_tree().paused = false
+		cena.queue_free()
+		depois.call()
+		return
 	var video := VideoStreamPlayer.new()
-	video.stream = load(arq)
+	video.stream = st
 	video.expand = true
 	video.set_anchors_preset(Control.PRESET_FULL_RECT)
 	video.process_mode = Node.PROCESS_MODE_ALWAYS

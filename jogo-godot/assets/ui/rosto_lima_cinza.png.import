@@ -15,9 +15,9 @@ dest_files=["res://.godot/imported/rosto_lima_cinza.png-44b5cc56397bfb7df0c3b5f7
 
 [params]
 
-compress/mode=0
+compress/mode=1
 compress/high_quality=false
-compress/lossy_quality=0.7
+compress/lossy_quality=0.9
 compress/hdr_compression=1
 compress/normal_map=0
 compress/channel_pack=0

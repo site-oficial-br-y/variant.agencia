@@ -9,6 +9,7 @@ config/features=PackedStringArray("4.3")
 
 [autoload]
 Game="*res://autoload/Game.gd"
+Midia="*res://autoload/Midia.gd"
 Playtest="*res://autoload/Playtest.gd"
 Audio="*res://autoload/Audio.gd"
 Online="*res://autoload/Online.gd"

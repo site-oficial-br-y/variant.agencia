@@ -15,9 +15,9 @@ dest_files=["res://.godot/imported/scooter.png-767f41bff5f1fd5bc8c24a205c4a7525.
 
 [params]
 
-compress/mode=0
+compress/mode=1
 compress/high_quality=false
-compress/lossy_quality=0.7
+compress/lossy_quality=0.9
 compress/hdr_compression=1
 compress/normal_map=0
 compress/channel_pack=0

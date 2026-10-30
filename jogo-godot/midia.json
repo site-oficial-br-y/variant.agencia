@@ -1,0 +1,14 @@
+{
+ "res://assets/audio/musica/menu.mp3": "menu-eea220da.ogg",
+ "res://assets/audio/musica/adriano.ogg": "adriano-2025fa46.ogg",
+ "res://assets/audio/musica/cepe.ogg": "cepe-a21c9a51.ogg",
+ "res://assets/audio/musica/ctamandura.ogg": "ctamandura-b229cf14.ogg",
+ "res://assets/audio/musica/escola.ogg": "escola-a0dd8416.ogg",
+ "res://assets/audio/musica/geresch.ogg": "geresch-ad413cb6.ogg",
+ "res://assets/audio/musica/julgamento.ogg": "julgamento-2659e83b.ogg",
+ "res://assets/audio/musica/pece.ogg": "pece-823118d9.ogg",
+ "res://assets/audio/musica/vendedor.ogg": "vendedor-d19bec67.ogg",
+ "res://assets/geresch/intro.ogv": "intro-35943865.ogv",
+ "res://assets/julgamento/entrada.ogv": "entrada-9ecc3566.ogv",
+ "res://assets/julgamento/martelo.ogv": "martelo-f833bd95.ogv"
+}

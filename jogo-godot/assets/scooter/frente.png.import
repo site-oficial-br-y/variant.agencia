@@ -15,9 +15,9 @@ dest_files=["res://.godot/imported/frente.png-2f5fa018a209b1a0ea59ba73b92e77be.c
 
 [params]
 
-compress/mode=0
+compress/mode=1
 compress/high_quality=false
-compress/lossy_quality=0.7
+compress/lossy_quality=0.9
 compress/hdr_compression=1
 compress/normal_map=0
 compress/channel_pack=0

@@ -15,9 +15,9 @@ dest_files=["res://.godot/imported/corpo.png-39fe6f32abca0b34012a9568c5f8062d.ct
 
 [params]
 
-compress/mode=0
+compress/mode=1
 compress/high_quality=false
-compress/lossy_quality=0.7
+compress/lossy_quality=0.9
 compress/hdr_compression=1
 compress/normal_map=0
 compress/channel_pack=0

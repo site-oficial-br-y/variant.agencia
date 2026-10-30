@@ -46,15 +46,23 @@ func tocar(nome: String, forca: float = 1.0, variacao: float = 0.08) -> void:
 ## motor: liga/desliga e ajusta o tom pela fração da velocidade máxima
 ## música de fundo dos menus (abertura, personagem, fases): loop; não reinicia
 ## ao trocar de tela de menu; para quando a fase começa
+const MENU := "res://assets/audio/musica/menu.mp3"
 var _musica: AudioStreamPlayer
+var _menu_ligado := false
 func musica_menu(ligada: bool) -> void:
+	_menu_ligado = ligada
 	if _musica == null:
 		_musica = AudioStreamPlayer.new()
-		var st := load("res://assets/audio/musica/menu.mp3") as AudioStreamMP3
-		st.loop = true
-		_musica.stream = st
 		_musica.volume_db = -6.0
 		add_child(_musica)
+	if _musica.stream == null:
+		var st := Midia.musica(MENU)
+		if st == null:                                # ainda baixando: toca quando chegar
+			if ligada:
+				_esperar_menu()
+			return
+		st.set("loop", true)
+		_musica.stream = st
 	if ligada:
 		parar_chefe()
 	if ligada and not _musica.playing:
@@ -62,17 +70,36 @@ func musica_menu(ligada: bool) -> void:
 	elif not ligada and _musica.playing:
 		_musica.stop()
 
+func _esperar_menu() -> void:
+	if await Midia.esperar(MENU, 120.0) != "" and _menu_ligado and _musica.stream == null:
+		musica_menu(true)
+
 ## música de chefe (pece, cepe, vendedor): loop até a fase acabar
 var _chefe: AudioStreamPlayer
+var _chefe_nome := ""
 func musica_chefe(nome: String, inicio := 0.0, loop_desde := 0.0) -> void:
 	if _chefe == null:
 		_chefe = AudioStreamPlayer.new()
 		_chefe.process_mode = Node.PROCESS_MODE_ALWAYS     # segue tocando na cutscene (jogo pausado)
 		_chefe.volume_db = -4.0
 		add_child(_chefe)
-	if _chefe.playing and _chefe.stream and _chefe.stream.resource_path.ends_with("/%s.ogg" % nome):
+	if _chefe.playing and _chefe_nome == nome:
 		return                                        # já está tocando: continua (ex.: queda -> luta)
-	var st := load("res://assets/audio/musica/%s.ogg" % nome) as AudioStreamOggVorbis
+	_chefe_nome = nome
+	var res := "res://assets/audio/musica/%s.ogg" % nome
+	var st := Midia.musica(res) as AudioStreamOggVorbis
+	if st == null:                                    # ainda baixando: entra quando chegar, no ponto certo
+		_chefe.stop()
+		var t0 := Time.get_ticks_msec()
+		await Midia.esperar(res, 120.0)
+		if _chefe_nome != nome or _chefe.playing:
+			return
+		st = Midia.musica(res) as AudioStreamOggVorbis
+		if st == null:
+			return
+		inicio += (Time.get_ticks_msec() - t0) / 1000.0
+		if inicio >= st.get_length():
+			inicio = loop_desde
 	st.loop = true
 	st.loop_offset = loop_desde                       # repete a partir daqui (ex.: parte forte)
 	_chefe.stream = st
@@ -106,6 +133,7 @@ func musica_ult(ligada: bool) -> void:
 			_chefe.volume_db = -4.0
 
 func parar_chefe() -> void:
+	_chefe_nome = ""
 	if _chefe and _chefe.playing:
 		_chefe.stop()
 	if _ult and _ult.playing:
