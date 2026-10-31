@@ -42,7 +42,12 @@ var _virada_t := 14.0
 var _mortes_teste_virada := 0
 var _costelas: Array = []               # ângulo (local) de cada lombada: interruptor não nasce embaixo
 var _arrasto_t := 0.0
-var _pos_virada_t := 0.0                    # tranco da virada: o chão arrasta quem está nele
+var _pos_virada_t := 0.0
+var _colorido: Node2D                   # Semaj: espinhos e interruptor desenhados por cima do filtro preto e branco
+
+## onde pôr aviso de espinho e interruptor: gira junto com a roda; no Semaj fica acima do filtro (com cor)
+func _pai_cor() -> Node2D:
+	return _colorido if is_instance_valid(_colorido) else corpo                    # tranco da virada: o chão arrasta quem está nele
 var _lado := 1.0
 var _sorteio := RandomNumberGenerator.new()
 var _interruptor: Dictionary = {}
@@ -230,7 +235,7 @@ func comecar() -> void:
 	_aviso.add_theme_color_override("font_outline_color", Color.BLACK)
 	_aviso.add_theme_constant_override("outline_size", 14)
 	hud.add_child(_aviso)
-	omega_alvo = 0.17
+	omega_alvo = 0.26
 	_estado = "luta"
 	_timer = 3.0
 	_novo_interruptor(4.0)
@@ -275,14 +280,14 @@ func atualizar(delta: float) -> void:
 		_timer -= dt
 		_virando_t = maxf(0.0, _virando_t - dt)
 		if _timer <= 0.0:
-			_pos_virada_t = 2.5
+			_pos_virada_t = 1.5
 			_estado = "luta"
 			omega_alvo = _giro_base()
 			_aviso.text = ""
 		return
 	_timer -= dt
 	if _timer <= 0.0:
-		_timer = (3.4 if luta == 1 else 2.6) - minf(_rodada * 0.08, 0.8)
+		_timer = (2.4 if luta == 1 else 1.8) - minf(_rodada * 0.06, 0.6)
 		_rodada += 1
 		_novo_espinho()
 		if luta == 2 and _rodada % 3 == 0:
@@ -296,7 +301,7 @@ func atualizar(delta: float) -> void:
 		_virada()
 
 func _giro_base() -> float:
-	return (0.17 if luta == 1 else 0.24) * _lado
+	return (0.26 if luta == 1 else 0.36) * _lado
 
 ## gira a roda (no passo de física, pra o chão arrastar quem está em cima)
 func _girar(delta: float) -> void:
@@ -304,6 +309,8 @@ func _girar(delta: float) -> void:
 	ang += omega * delta
 	corpo.rotation = ang
 	_nucleo.rotation = ang * 0.5
+	if is_instance_valid(_colorido):
+		_colorido.rotation = ang
 	if _arrasto_t > 0.0:
 		_arrasto_t -= _real(delta)
 		for b in _corpos():
@@ -323,7 +330,7 @@ func _girar(delta: float) -> void:
 ## virada: tranco forte (dispara pro mesmo lado ou inverte), depois volta ao giro normal
 func _virada() -> void:
 	_estado = "virada"
-	_virada_t = _sorteio.randf_range(13.0, 17.0) if luta == 1 else _sorteio.randf_range(9.0, 12.0)
+	_virada_t = _sorteio.randf_range(9.0, 12.0) if luta == 1 else _sorteio.randf_range(8.5, 10.5)
 	if "viradas" in OS.get_cmdline_user_args():          # teste: virada a cada 5 s
 		_virada_t = 5.0
 		_mortes_teste_virada += 1
@@ -420,7 +427,7 @@ func _passo_cara(dt: float) -> void:
 		_sumir = minf(1.0, _sumir + dt * 1.8)
 		if _sumir >= 1.0:
 			_cara_lado = -_cara_lado
-			_troca_t = _sorteio.randf_range(7.0, 10.0) if luta == 1 else _sorteio.randf_range(5.0, 7.5)
+			_troca_t = _sorteio.randf_range(4.5, 6.5) if luta == 1 else _sorteio.randf_range(3.5, 5.0)
 	else:
 		_sumir = maxf(0.0, _sumir - dt * 1.8)
 	var flash := 1.0 + _brilho_t * 3.0
@@ -435,13 +442,13 @@ func _cara_no_mundo() -> Vector2:
 
 # ---------- raios do núcleo ----------
 func _passo_raios(dt: float) -> void:
-	_raio_ang += dt * (0.45 if luta == 1 else -0.7)
+	_raio_ang += dt * -1.0
 	var alvo_len := R * 0.4                         # não alcança a cabeça de quem está no chão (bonecos têm ~1250 de altura)
 	_pos_virada_t = maxf(0.0, _pos_virada_t - dt)
 	var calmo := _estado == "virada" or _virada_t <= 1.6 or _pos_virada_t > 0.0
 	if calmo:                                       # do aviso até 2,5 s depois da virada: sem laser (você está sem controle)
 		alvo_len = 0.0
-	_raio_len = move_toward(_raio_len, alvo_len, dt * (2600.0 if calmo else 300.0))
+	_raio_len = move_toward(_raio_len, alvo_len, dt * (2600.0 if calmo else 800.0))
 	for r in _raios:
 		(r["linha"] as Line2D).visible = _raio_len > 430.0
 		(r["halo"] as Line2D).visible = _raio_len > 430.0
@@ -476,7 +483,7 @@ func _novo_interruptor(espera: float) -> void:
 	no.rotation = a + PI / 2.0
 	no.z_index = 7
 	no.visible = false
-	corpo.add_child(no)
+	_pai_cor().add_child(no)
 	var base := Polygon2D.new()
 	base.polygon = Pecas.retangulo(Vector2(0, 14), Vector2(260, 36))
 	base.color = Color(0.15, 0.15, 0.18)
@@ -497,7 +504,7 @@ func _novo_interruptor(espera: float) -> void:
 	seta.add_theme_constant_override("outline_size", 24)
 	seta.position = Vector2(-80, -620)
 	no.add_child(seta)
-	_interruptor = {"no": no, "a": a, "espera": espera, "seta": seta, "dura": 9.0}
+	_interruptor = {"no": no, "a": a, "espera": espera, "seta": seta, "dura": 7.0}
 
 func _passo_interruptor(dt: float) -> void:
 	if _interruptor.is_empty() or not fase.ativo:
@@ -542,7 +549,7 @@ func _apertou() -> void:
 	tw.tween_property(raio, "modulate:a", 0.0, 0.6)
 	tw.tween_callback(raio.queue_free)
 	if not morto:
-		_novo_interruptor(6.0 if luta == 1 else 5.0)
+		_novo_interruptor(3.5 if luta == 1 else 3.0)
 
 ## dano no núcleo (interruptor ou vindo do online)
 func levar_dano() -> void:
@@ -615,6 +622,14 @@ void fragment() {
 	camada.add_child(r)
 	var tw := r.create_tween()
 	tw.tween_method(func(v: float) -> void: m.set_shader_parameter("forca", v), 0.0, 1.0, 1.6)
+	var cor := CanvasLayer.new()                      # por cima do filtro, seguindo a câmera como o mundo
+	cor.layer = 72
+	cor.follow_viewport_enabled = true
+	fase.add_child(cor)
+	_colorido = Node2D.new()
+	_colorido.position = centro
+	_colorido.rotation = ang
+	cor.add_child(_colorido)
 
 ## online: o time já está no Semaj
 func forcar_luta2() -> void:
@@ -632,14 +647,14 @@ func _novo_espinho() -> void:
 		meio += largura * 1.5                          # não cobre o interruptor
 	var no := Node2D.new()
 	no.z_index = 6
-	corpo.add_child(no)
+	_pai_cor().add_child(no)
 	var faixa := Polygon2D.new()
 	var pts := PackedVector2Array()
 	var n := 14
 	for k in n + 1:
 		pts.append(_dir(meio - largura / 2.0 + largura * k / n) * (R - 6.0))
 	for k in range(n, -1, -1):
-		pts.append(_dir(meio - largura / 2.0 + largura * k / n) * (R - 90.0))
+		pts.append(_dir(meio - largura / 2.0 + largura * k / n) * (R - 150.0))
 	faixa.polygon = pts
 	faixa.color = Color(1, 0.15, 0.1, 0.0)
 	no.add_child(faixa)
@@ -654,14 +669,14 @@ func _novo_espinho() -> void:
 		d.color = Color(0.85, 0.85, 0.9)
 		dentes.add_child(d)
 	_espinhos.append({"no": no, "faixa": faixa, "dentes": dentes, "meio": meio, "larg": largura, "t": 0.0,
-		"aviso": 1.7 if luta == 1 else 1.35, "dura": 1.8})
+		"aviso": 1.35 if luta == 1 else 1.1, "dura": 1.4})
 
 func _passo_espinho(e: Dictionary, dt: float) -> void:
 	e["t"] += dt
 	var t: float = e["t"]
 	var faixa: Polygon2D = e["faixa"]
 	if t < e["aviso"]:
-		faixa.color.a = 0.25 + 0.35 * absf(sin(t * 9.0))
+		faixa.color.a = 0.4 + 0.5 * absf(sin(t * 11.0))
 		return
 	if t < e["aviso"] + e["dura"]:
 		if not (e["dentes"] as Node2D).visible:
