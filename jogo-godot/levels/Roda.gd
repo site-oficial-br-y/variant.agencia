@@ -41,7 +41,8 @@ var _rodada := 0
 var _virada_t := 14.0
 var _mortes_teste_virada := 0
 var _costelas: Array = []               # ângulo (local) de cada lombada: interruptor não nasce embaixo
-var _arrasto_t := 0.0                    # tranco da virada: o chão arrasta quem está nele
+var _arrasto_t := 0.0
+var _pos_virada_t := 0.0                    # tranco da virada: o chão arrasta quem está nele
 var _lado := 1.0
 var _sorteio := RandomNumberGenerator.new()
 var _interruptor: Dictionary = {}
@@ -274,6 +275,7 @@ func atualizar(delta: float) -> void:
 		_timer -= dt
 		_virando_t = maxf(0.0, _virando_t - dt)
 		if _timer <= 0.0:
+			_pos_virada_t = 2.5
 			_estado = "luta"
 			omega_alvo = _giro_base()
 			_aviso.text = ""
@@ -434,10 +436,17 @@ func _cara_no_mundo() -> Vector2:
 # ---------- raios do núcleo ----------
 func _passo_raios(dt: float) -> void:
 	_raio_ang += dt * (0.45 if luta == 1 else -0.7)
-	var alvo_len := R * (0.42 if luta == 1 else 0.6)
-	if _estado == "virada":                        # quem voa pro meio na virada não morre no raio
-		alvo_len = R * 0.22
-	_raio_len = move_toward(_raio_len, alvo_len, dt * (1400.0 if _estado == "virada" else 300.0))
+	var alvo_len := R * 0.4                         # não alcança a cabeça de quem está no chão (bonecos têm ~1250 de altura)
+	_pos_virada_t = maxf(0.0, _pos_virada_t - dt)
+	var calmo := _estado == "virada" or _virada_t <= 1.6 or _pos_virada_t > 0.0
+	if calmo:                                       # do aviso até 2,5 s depois da virada: sem laser (você está sem controle)
+		alvo_len = 0.0
+	_raio_len = move_toward(_raio_len, alvo_len, dt * (2600.0 if calmo else 300.0))
+	for r in _raios:
+		(r["linha"] as Line2D).visible = _raio_len > 430.0
+		(r["halo"] as Line2D).visible = _raio_len > 430.0
+	if _raio_len <= 430.0:
+		return
 	for r in _raios:
 		var a: float = r["a"] + _raio_ang
 		var p0 := _dir(a) * 420.0
@@ -449,6 +458,7 @@ func _passo_raios(dt: float) -> void:
 		for b in _corpos():
 			var p: Vector2 = (b as Node2D).global_position - centro
 			if p.distance_to(Geometry2D.get_closest_point_to_segment(p, p0, p1)) < 70.0:
+				if "secoes" in OS.get_cmdline_user_args(): print("[LASER] parte %s raio=%.0f len=%.0f estado=%s t=%.1f" % [b.name, p.length(), _raio_len, _estado, _t])
 				_morre(b, "laser")
 				return
 
@@ -588,6 +598,8 @@ func forcar_luta2() -> void:
 
 # ---------- espinhos ----------
 func _novo_espinho() -> void:
+	if "sem_espinho" in OS.get_cmdline_user_args():
+		return
 	var largura := deg_to_rad(_sorteio.randf_range(38.0, 52.0) if luta == 1 else _sorteio.randf_range(45.0, 65.0))
 	var meio := _jogador_ang() + _sorteio.randf_range(-1.2, 1.2)
 	if not _interruptor.is_empty() and absf(wrapf(meio - float(_interruptor["a"]), -PI, PI)) < largura:
