@@ -2,12 +2,12 @@ extends Control
 ## Aviso de atualização: aparece por cima do lobby na primeira vez que abre a versão nova.
 ## Fundo é a arte do patch escurecida; o X fecha e fica no lobby.
 
-const VERSAO := "2.6"
+const VERSAO := "2.7"
 const ITENS := [
-	["FASE 10: JAMES", "Protesto pegando fogo na rua e, no fim, a RODA: você luta dentro de uma roda gigante que gira. O chão anda, ela vira do nada e o James te vigia do fundo.", Color(1.0, 0.55, 0.2)],
+	["FASE 10: OLE OLE OLA", "A rua pegando fogo: arpão que arranca braço, canhão d'água da polícia, molotov voando e faixa de turbo pra pular os carros queimados.", Color(1.0, 0.55, 0.2)],
+	["JAMES E A RODA", "No fim você luta dentro de uma roda gigante que gira. O chão anda, ela vira do nada e o James te vigia do fundo.", Color(1.0, 0.75, 0.3)],
 	["E DEPOIS... SEMAJ", "Zerou o James? Ele volta do avesso. Roda mais rápida, mais lasers e música nova.", Color(0.8, 0.4, 1.0)],
 	["INTERRUPTOR VERDE", "É o único jeito de dar dano: passa por cima dele antes que suma. Às vezes ele vem até você, às vezes você corre atrás.", Color(0.4, 1.0, 0.5)],
-	["JOGO MAIS LEVE", "O jogo baixa 14 MB em vez de 66. Música e vídeo baixam na hora da fase e ficam guardados no aparelho.", Color(0.45, 0.8, 1.0)],
 	["CONTINUAR FASE", "Se a página cair no meio de um chefão, o menu mostra CONTINUAR e você volta de onde parou.", Color(1.0, 0.78, 0.2)],
 ]
 
