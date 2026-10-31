@@ -3885,6 +3885,12 @@ func _foto_roda() -> void:
 		var px := player.foco().global_position.x - roda.centro.x
 		if absf(px) > 500.0:
 			quer = -signf(px)
+		var pa := (player.foco().global_position - roda.centro).angle()
+		for r in roda._raios:                              # linha vermelha perto: foge pro lado de fora dela
+			var d := wrapf(pa - float(r["a"]), -PI, PI)
+			if float(r["t"]) < Roda.RAIO_AVISO + Roda.RAIO_DURA and absf(d) < 0.8:
+				quer = -1.0 if d > 0.0 else 1.0
+				if "secoes" in OS.get_cmdline_user_args(): print("[FOGE] d=%.2f quer=%.0f t=%.2f" % [d, quer, float(r["t"])])
 		if not roda._interruptor.is_empty() and roda._interruptor["espera"] <= 0.0:
 			var dx: float = (roda._interruptor["no"] as Node2D).global_position.x - player.foco().global_position.x
 			var dy: float = (roda._interruptor["no"] as Node2D).global_position.y - roda.centro.y

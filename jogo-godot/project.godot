@@ -6,6 +6,8 @@ config/name="Bicho Ehn"
 config/icon="res://assets/ui/icone.png"
 run/main_scene="res://levels/Abertura.tscn"
 config/features=PackedStringArray("4.3")
+boot_splash/bg_color=Color(0.043, 0.024, 0.071, 1)
+boot_splash/show_image=false
 
 [autoload]
 Game="*res://autoload/Game.gd"

@@ -43,6 +43,7 @@ var _mortes_teste_virada := 0
 var _costelas: Array = []               # ângulo (local) de cada lombada: interruptor não nasce embaixo
 var _arrasto_t := 0.0
 var _pos_virada_t := 0.0
+var _cor_camada: CanvasLayer
 var _colorido: Node2D                   # Semaj: espinhos e interruptor desenhados por cima do filtro preto e branco
 
 ## onde pôr aviso de espinho e interruptor: gira junto com a roda; no Semaj fica acima do filtro (com cor)
@@ -54,7 +55,6 @@ var _interruptor: Dictionary = {}
 var _espinhos: Array = []
 var _raios: Array = []                   # {linha, halo, a}
 var _raio_ang := 0.0
-var _raio_len := R * 0.42
 var _nucleo: Node2D
 var _olho: Polygon2D
 var _cara: Sprite2D
@@ -240,21 +240,6 @@ func comecar() -> void:
 	_timer = 3.0
 	_novo_interruptor(4.0)
 
-func _novo_raio(a: float) -> void:
-	var halo := Line2D.new()
-	halo.width = 120.0
-	halo.default_color = Color(1, 0.3, 0.1, 0.25)
-	halo.z_index = 5
-	halo.begin_cap_mode = Line2D.LINE_CAP_ROUND
-	halo.end_cap_mode = Line2D.LINE_CAP_ROUND
-	add_child(halo)
-	var l := Line2D.new()
-	l.width = 44.0
-	l.default_color = Color(1, 0.85, 0.6)
-	l.z_index = 5
-	l.end_cap_mode = Line2D.LINE_CAP_ROUND
-	add_child(l)
-	_raios.append({"linha": l, "halo": halo, "a": a})
 
 # ---------- passo ----------
 func atualizar(delta: float) -> void:
@@ -301,7 +286,7 @@ func atualizar(delta: float) -> void:
 		_virada()
 
 func _giro_base() -> float:
-	return (0.26 if luta == 1 else 0.36) * _lado
+	return (0.24 if luta == 1 else 0.32) * _lado
 
 ## gira a roda (no passo de física, pra o chão arrastar quem está em cima)
 func _girar(delta: float) -> void:
@@ -311,6 +296,18 @@ func _girar(delta: float) -> void:
 	_nucleo.rotation = ang * 0.5
 	if is_instance_valid(_colorido):
 		_colorido.rotation = ang
+	for b in _corpos():
+		var rb := b as RigidBody2D
+		if rb and rb.continuous_cd == RigidBody2D.CCD_MODE_DISABLED:
+			rb.continuous_cd = RigidBody2D.CCD_MODE_CAST_SHAPE        # rápido na virada não atravessa a parede
+		if rb and ativo:                                  # atravessou mesmo assim: volta pra dentro da roda
+			var rel := rb.global_position - centro
+			if rel.length() > R + 40.0 and rel.length() < R + ESP + 3000.0:
+				var n := rel.normalized()
+				rb.global_position = centro + n * (R - 140.0)
+				var vn := rb.linear_velocity.dot(n)
+				if vn > 0.0:
+					rb.linear_velocity -= n * vn * 1.4
 	if _arrasto_t > 0.0:
 		_arrasto_t -= _real(delta)
 		for b in _corpos():
@@ -338,7 +335,7 @@ func _virada() -> void:
 	var inverte := luta == 2 and _sorteio.randf() < 0.6
 	if inverte:
 		_lado = -_lado
-	omega_alvo = (0.95 if luta == 1 else 1.15) * _lado
+	omega_alvo = (0.95 if luta == 1 else 1.0) * _lado
 	_timer = 2.4
 	_arrasto_t = 0.55
 	_tremor = 1.0
@@ -440,34 +437,77 @@ func _cara_no_mundo() -> Vector2:
 		return centro
 	return fase.get_viewport().get_canvas_transform().affine_inverse() * _cara.position
 
-# ---------- raios do núcleo ----------
+# ---------- raios do núcleo (só Semaj) ----------
+## tiro avisado: linha vermelha fina do núcleo até a parede, perto de onde você está;
+## 1 s depois o raio dispara nela por um instante. Parado no ângulo do tiro = desintegrado.
+const RAIO_AVISO := 1.3
+const RAIO_DURA := 0.55
+
+func _novo_raio(a: float) -> void:
+	var pai: Node = _cor_camada if is_instance_valid(_cor_camada) else self
+	var mira := Line2D.new()
+	mira.width = 16.0
+	mira.default_color = Color(1, 0.1, 0.1, 0.0)
+	var halo := Line2D.new()
+	halo.width = 230.0
+	halo.default_color = Color(1, 0.3, 0.15, 0.35)
+	halo.begin_cap_mode = Line2D.LINE_CAP_ROUND
+	halo.end_cap_mode = Line2D.LINE_CAP_ROUND
+	halo.visible = false
+	var l := Line2D.new()
+	l.width = 90.0
+	l.default_color = Color(1, 0.95, 0.85)
+	l.end_cap_mode = Line2D.LINE_CAP_ROUND
+	l.visible = false
+	for n in [mira, halo, l]:
+		n.points = PackedVector2Array([centro + _dir(a) * 420.0, centro + _dir(a) * (R + 40.0)])
+		n.z_index = 8
+		pai.add_child(n)
+	_raios.append({"mira": mira, "linha": l, "halo": halo, "a": a, "t": 0.0})
+
 func _passo_raios(dt: float) -> void:
-	_raio_ang += dt * -1.0
-	var alvo_len := R * 0.4                         # não alcança a cabeça de quem está no chão (bonecos têm ~1250 de altura)
 	_pos_virada_t = maxf(0.0, _pos_virada_t - dt)
 	var calmo := _estado == "virada" or _virada_t <= 1.6 or _pos_virada_t > 0.0
-	if calmo:                                       # do aviso até 2,5 s depois da virada: sem laser (você está sem controle)
-		alvo_len = 0.0
-	_raio_len = move_toward(_raio_len, alvo_len, dt * (2600.0 if calmo else 800.0))
-	for r in _raios:
-		(r["linha"] as Line2D).visible = _raio_len > 430.0
-		(r["halo"] as Line2D).visible = _raio_len > 430.0
-	if _raio_len <= 430.0:
-		return
-	for r in _raios:
-		var a: float = r["a"] + _raio_ang
-		var p0 := _dir(a) * 420.0
-		var p1 := _dir(a) * _raio_len
-		var pisca := 0.85 + 0.15 * sin(_t * 30.0)
-		(r["linha"] as Line2D).points = PackedVector2Array([p0, p1])
-		(r["halo"] as Line2D).points = PackedVector2Array([p0, p1])
-		(r["linha"] as Line2D).modulate.a = pisca
-		for b in _corpos():
-			var p: Vector2 = (b as Node2D).global_position - centro
-			if p.distance_to(Geometry2D.get_closest_point_to_segment(p, p0, p1)) < 70.0:
-				if "secoes" in OS.get_cmdline_user_args(): print("[LASER] parte %s raio=%.0f len=%.0f estado=%s t=%.1f" % [b.name, p.length(), _raio_len, _estado, _t])
-				_morre(b, "laser")
-				return
+	if luta == 2 and not morto and not calmo and _virando_t <= 0.0:
+		_raio_ang -= dt
+		if _raio_ang <= 0.0:                           # próximo tiro: perto de você (às vezes dois)
+			_raio_ang = _sorteio.randf_range(2.4, 3.2)
+			var alvo := (_foco_jogador() - centro).angle()
+			_novo_raio(alvo + _sorteio.randf_range(-0.22, 0.22))
+	for r in _raios.duplicate():
+		r["t"] += dt
+		var t: float = r["t"]
+		var mira: Line2D = r["mira"]
+		if t < RAIO_AVISO:
+			mira.default_color.a = 0.35 + 0.55 * absf(sin(t * 14.0))
+			continue
+		mira.visible = false
+		if t < RAIO_AVISO + RAIO_DURA:
+			if not (r["linha"] as Line2D).visible:
+				(r["linha"] as Line2D).visible = true
+				(r["halo"] as Line2D).visible = true
+				Audio.tocar("turbo", 0.8, 0.1)
+				_tremor = maxf(_tremor, 0.25)
+			var a: float = r["a"]
+			var p0 := _dir(a) * 420.0
+			var p1 := _dir(a) * (R + 40.0)
+			(r["linha"] as Line2D).width = 90.0 * (1.0 - (t - RAIO_AVISO) / RAIO_DURA * 0.6)
+			for b in _corpos():
+				var p: Vector2 = (b as Node2D).global_position - centro
+				if p.distance_to(Geometry2D.get_closest_point_to_segment(p, p0, p1)) < 60.0:
+					if "secoes" in OS.get_cmdline_user_args(): print("[LASER] a=%.2f jogador=%.2f parte_raio=%.0f t=%.2f" % [a, (_foco_jogador() - centro).angle(), p.length(), t])
+					_morre(b, "laser")
+					break
+			continue
+		for n in [mira, r["linha"], r["halo"]]:
+			(n as Node).queue_free()
+		_raios.erase(r)
+
+func _foco_jogador() -> Vector2:
+	var pl: Player = fase.player
+	if is_instance_valid(pl) and is_instance_valid(pl.chassi):
+		return pl.foco().global_position
+	return centro + Vector2(0, R)
 
 # ---------- interruptor (dá dano) ----------
 ## aparece longe do jogador; com o giro ele vem vindo (ou você vai até ele)
@@ -593,9 +633,7 @@ func _virar_semaj() -> void:
 	_preto_e_branco()
 	_lado = -_lado
 	_virada_t = 9.0
-	_raio_len = 0.0                                   # lasers do meio só no Semaj: nascem do núcleo e crescem
-	for k in 4:
-		_novo_raio(TAU * k / 4.0)
+	_raio_ang = 3.0                                   # primeiro tiro de laser logo depois da transformação
 	_novo_interruptor(5.0)
 
 ## Semaj: o mundo perde a cor (filtro preto e branco por cima de tudo, entra aos poucos)
@@ -623,6 +661,7 @@ void fragment() {
 	var tw := r.create_tween()
 	tw.tween_method(func(v: float) -> void: m.set_shader_parameter("forca", v), 0.0, 1.0, 1.6)
 	var cor := CanvasLayer.new()                      # por cima do filtro, seguindo a câmera como o mundo
+	_cor_camada = cor
 	cor.layer = 72
 	cor.follow_viewport_enabled = true
 	fase.add_child(cor)
@@ -705,8 +744,8 @@ func _morrer() -> void:
 		(e["no"] as Node).queue_free()
 	_espinhos.clear()
 	for r in _raios:
-		(r["linha"] as Node).queue_free()
-		(r["halo"] as Node).queue_free()
+		for n in [r["mira"], r["linha"], r["halo"]]:
+			(n as Node).queue_free()
 	_raios.clear()
 	fase._mensagem("SEMAJ CAIU! A RODA PAROU!", VERDE)
 
