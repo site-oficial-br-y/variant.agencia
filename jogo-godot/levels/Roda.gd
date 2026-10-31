@@ -39,6 +39,7 @@ var _timer := 2.0
 var _t := 0.0
 var _rodada := 0
 var _virada_t := 14.0
+var _mortes_teste_virada := 0
 var _arrasto_t := 0.0                    # tranco da virada: o chão arrasta quem está nele
 var _lado := 1.0
 var _sorteio := RandomNumberGenerator.new()
@@ -311,8 +312,8 @@ func _girar(delta: float) -> void:
 			if rel.length() > R - 450.0:
 				var v_chao := Vector2(-rel.y, rel.x) * omega
 				var acel := Input.get_axis("brake", "accelerate")
-				var segura := 0.35 if acel != 0.0 and signf(acel) == -signf(v_chao.x) else 1.0   # acelerando contra: segura melhor
-				rb.linear_velocity = rb.linear_velocity.lerp(v_chao, clampf(delta * 5.0 * segura, 0.0, 1.0))
+				var segura := 0.2 if acel != 0.0 and signf(acel) == -signf(v_chao.x) else 1.0   # acelerando contra: segura melhor
+				rb.linear_velocity = rb.linear_velocity.lerp(v_chao, clampf(delta * 3.0 * segura, 0.0, 1.0))
 	if _tremor > 0.0:
 		var cam: Camera2D = fase.camera
 		cam.offset = Vector2(randf_range(-1, 1), randf_range(-1, 1)) * _tremor * 120.0
@@ -321,12 +322,16 @@ func _girar(delta: float) -> void:
 func _virada() -> void:
 	_estado = "virada"
 	_virada_t = _sorteio.randf_range(13.0, 17.0) if luta == 1 else _sorteio.randf_range(9.0, 12.0)
+	if "viradas" in OS.get_cmdline_user_args():          # teste: virada a cada 5 s
+		_virada_t = 5.0
+		_mortes_teste_virada += 1
+		print("[VIRADA] n=%d luta=%d" % [_mortes_teste_virada, luta])
 	var inverte := luta == 2 and _sorteio.randf() < 0.6
 	if inverte:
 		_lado = -_lado
-	omega_alvo = (1.15 if luta == 1 else 1.4) * _lado
+	omega_alvo = (0.95 if luta == 1 else 1.15) * _lado
 	_timer = 2.4
-	_arrasto_t = 0.9
+	_arrasto_t = 0.55
 	_tremor = 1.0
 	Audio.tocar("impacto_forte", 1.0, 0.0)
 
@@ -532,8 +537,8 @@ func levar_dano() -> void:
 	vida -= 1
 	_brilho_t = 0.5
 	_tremor = 0.6
-	Audio.tocar("impacto_forte", 1.0, 0.0)
-	Audio.tocar("pece_grito", 0.7, 0.1)
+	Audio.tocar("choque", 1.0, 0.05)
+	Audio.tocar("impacto_forte", 0.8, 0.0)
 	fase._mensagem("CHOQUE NO %s!" % _nome_cara().to_upper(), VERDE)
 	if vida <= 0:
 		if luta == 1:
@@ -563,7 +568,7 @@ func _virar_semaj() -> void:
 	_barra.color = Color(0.7, 0.2, 1.0)
 	Audio.parar_chefe()
 	Audio.musica_chefe(MUSICA_2)
-	Audio.tocar("pece_grito", 1.0, 0.0)
+	Audio.tocar("ronco", 1.0, 0.0)
 	_lado = -_lado
 	_virada_t = 9.0
 	for k in 2:

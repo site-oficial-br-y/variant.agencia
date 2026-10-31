@@ -61,6 +61,11 @@ func _ready() -> void:
 		Game.checkpoint_x = (cps[cps.size() - 1] as Vector2).x
 		Game.checkpoint_chao = (cps[cps.size() - 1] as Vector2).y
 
+	for a in OS.get_cmdline_user_args():                 # teste: nasce em x/chão dados
+		if a.begins_with("nasce="):
+			var v := a.substr(6).split(",")
+			Game.checkpoint_x = float(v[0])
+			Game.checkpoint_chao = float(v[1])
 	if "na_roda" in OS.get_cmdline_user_args() and Game.fase == 10:     # teste: começa dentro da roda
 		Game.checkpoint_x = ARENA10_X
 		Game.checkpoint_chao = CHAO_Y
@@ -222,6 +227,8 @@ func _physics_process(delta: float) -> void:
 		ctamandura.atualizar(delta)
 	if Game.fase == 10 and roda:
 		roda.atualizar(delta)
+		if protesto:
+			protesto.atualizar(delta)
 		_passo_fundo10()
 	if boss:
 		boss.atualizar(delta)
@@ -1623,7 +1630,7 @@ func _fim(ganhou: bool, motivo: String) -> void:
 	else:
 		if _alarme:
 			_alarme.stop()
-		aviso.text = {"esmagado": "ESMAGADO!", "agarrado": "TE PEGOU!", "laser": "DESINTEGRADO!", "pedra": "ESMAGADO!", "pego": "TE PEGOU!", "agua": "AFOGOU!", "fogo": "QUEIMOU!", "buraco": "CAIU!", "caiu": "CAIU!"}.get(motivo, "MORREU!") + "\naperta R"
+		aviso.text = {"esmagado": "ESMAGADO!", "agarrado": "TE PEGOU!", "laser": "DESINTEGRADO!", "pedra": "ESMAGADO!", "pego": "TE PEGOU!", "agua": "AFOGOU!", "fogo": "QUEIMOU!", "arpao": "ARPOADO!", "buraco": "CAIU!", "caiu": "CAIU!"}.get(motivo, "MORREU!") + "\naperta R"
 		Audio.motor(false)
 		Audio.tocar("morte")
 		print("[FASE] perdeu %s x=%.0f" % [motivo, player.foco().global_position.x if is_instance_valid(player) else 0.0])
@@ -2524,7 +2531,7 @@ func _morte_corrida(motivo: String) -> void:
 	if _morto_online:
 		return
 	_morto_online = true
-	aviso.text = {"esmagado": "ESMAGADO!", "agarrado": "TE PEGOU!", "laser": "DESINTEGRADO!", "pedra": "ESMAGADO!", "agua": "AFOGOU!", "fogo": "QUEIMOU!", "buraco": "CAIU!", "caiu": "CAIU!"}.get(motivo, "MORREU!") + "\nvoltando pro começo..."
+	aviso.text = {"esmagado": "ESMAGADO!", "agarrado": "TE PEGOU!", "laser": "DESINTEGRADO!", "pedra": "ESMAGADO!", "agua": "AFOGOU!", "fogo": "QUEIMOU!", "arpao": "ARPOADO!", "buraco": "CAIU!", "caiu": "CAIU!"}.get(motivo, "MORREU!") + "\nvoltando pro começo..."
 	aviso.add_theme_color_override("font_color", Color(1, 0.35, 0.3))
 	aviso.visible = true
 	Audio.tocar("morte")
@@ -3645,24 +3652,41 @@ func _fase_10() -> void:
 	_fundo10.stretch_mode = TextureRect.STRETCH_SCALE
 	_fundo10.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	camada.add_child(_fundo10)
+	protesto = Protesto.new()
+	add_child(protesto)
+	protesto.montar(self)
 	var p := _t_plano(Vector2(-2600, y), 3900, false)
 	pecas.placa(Vector2(-900, y), "LARGADA")
 	p = _t_plano(p, 1200, false)
+	if "secoes" in OS.get_cmdline_user_args(): print("[SECAO] _t_plano -> %.0f,%.0f" % [p.x, p.y])
 	p = _barricada10(p)
+	if "secoes" in OS.get_cmdline_user_args(): print("[SECAO] _barricada10 -> %.0f,%.0f" % [p.x, p.y])
+	p = _arpoes10(p, [[460.0, 0.0]])
+	if "secoes" in OS.get_cmdline_user_args(): print("[SECAO] _arpoes10 -> %.0f,%.0f" % [p.x, p.y])
+	p = _turbo10(p)
+	if "secoes" in OS.get_cmdline_user_args(): print("[SECAO] _turbo10 -> %.0f,%.0f" % [p.x, p.y])
+	p = _canhao10(p)
+	if "secoes" in OS.get_cmdline_user_args(): print("[SECAO] _canhao10 -> %.0f,%.0f" % [p.x, p.y])
+	p = _molotov10(p, 5200.0)
+	if "secoes" in OS.get_cmdline_user_args(): print("[SECAO] _molotov10 -> %.0f,%.0f" % [p.x, p.y])
 	p = _fogueira10(p)
-	p = _t_ondas(p, 3, 120.0)
-	p = _t_tnt(p)
-	p = _t_tnt(p)
-	p = _fogueira10(p)
-	p = _t_salto(p)
+	if "secoes" in OS.get_cmdline_user_args(): print("[SECAO] _fogueira10 -> %.0f,%.0f" % [p.x, p.y])
+	p = _arpoes10(p, [[480.0, 0.0], [260.0, 1.3]])
+	if "secoes" in OS.get_cmdline_user_args(): print("[SECAO] _arpoes10 -> %.0f,%.0f" % [p.x, p.y])
 	p = _barricada10(p)
-	p = _t_predio(p)
-	p = _t_minas(p)
+	if "secoes" in OS.get_cmdline_user_args(): print("[SECAO] _barricada10 -> %.0f,%.0f" % [p.x, p.y])
+	p = _turbo10(p)
+	if "secoes" in OS.get_cmdline_user_args(): print("[SECAO] _turbo10 -> %.0f,%.0f" % [p.x, p.y])
+	p = _molotov10(p, 4200.0)
+	if "secoes" in OS.get_cmdline_user_args(): print("[SECAO] _molotov10 -> %.0f,%.0f" % [p.x, p.y])
+	p = _canhao10(p)
+	if "secoes" in OS.get_cmdline_user_args(): print("[SECAO] _canhao10 -> %.0f,%.0f" % [p.x, p.y])
+	p = _arpoes10(p, [[450.0, 0.0], [300.0, 0.9], [520.0, 1.8]])
+	if "secoes" in OS.get_cmdline_user_args(): print("[SECAO] _arpoes10 -> %.0f,%.0f" % [p.x, p.y])
 	p = _fogueira10(p)
-	p = _t_ladeira(p, 2400, -450)
-	p = _t_ladeira(p, 2400, 450)
-	p = _barricada10(p)
+	if "secoes" in OS.get_cmdline_user_args(): print("[SECAO] _fogueira10 -> %.0f,%.0f" % [p.x, p.y])
 	p = _t_plano(p, 2600, false)
+	if "secoes" in OS.get_cmdline_user_args(): print("[SECAO] _t_plano -> %.0f,%.0f" % [p.x, p.y])
 	var fim := _area(Vector2(p.x - 800.0, p.y - 700), Vector2(200, 1600))
 	fim.body_entered.connect(func(b: Node2D) -> void:
 		if b.is_in_group("veiculo") or b.is_in_group("piloto"): _entrar_roda.call_deferred())
@@ -3676,6 +3700,51 @@ func _fase_10() -> void:
 	_marcos([], Vector2(ARENA10_X + Roda.R * 3.0, y), y + 3000.0, false)
 
 var _fundo10: TextureRect
+var protesto: Protesto
+
+## postes de arpão do lado direito da rua, mirando pra trás (em você); cada um [altura, atraso]
+func _arpoes10(p: Vector2, postes: Array) -> Vector2:
+	var comp := 2600.0 + postes.size() * 1500.0
+	_t_plano(p, comp, false)
+	pecas.placa_perigo(p + Vector2(500, 0))
+	for k in postes.size():
+		protesto.arpoador(p + Vector2(2600.0 + k * 1500.0, 0), postes[k][0], 2.6, postes[k][1])
+	return p + Vector2(comp, 0)
+
+## faixa de turbo descendo até a rampa grande, salto por cima do carro pegando fogo
+func _turbo10(p: Vector2) -> Vector2:
+	_t_plano(p, 600, false)
+	var q := _t_ladeira(p + Vector2(600, 0), 3000, 350)
+	for k in 3:
+		mec.painel_aceleracao(p + Vector2(600 + 600 + k * 800, 350.0 * (600 + k * 800) / 3000.0), 600.0, 700.0, 3000.0)
+	pecas.terreno(PackedVector2Array([q, q + Vector2(700, 0)]), q.y + 2600.0)
+	pecas.rampa(q.x + 100, q.x + 700, q.y, 360)
+	var fosso := q.y + 900.0
+	pecas.terreno(PackedVector2Array([Vector2(q.x + 700, fosso), Vector2(q.x + 2700, fosso)]), fosso + 600.0, false)
+	for k in 2:                                       # carros queimados no fosso
+		var carro := Polygon2D.new()
+		carro.polygon = PackedVector2Array([Vector2(-330, 0), Vector2(-330, -150), Vector2(-160, -150), Vector2(-90, -260), Vector2(160, -260), Vector2(250, -150), Vector2(330, -150), Vector2(330, 0)])
+		carro.color = Color(0.12, 0.1, 0.1)
+		carro.position = Vector2(q.x + 1250 + k * 900, fosso)
+		add_child(carro)
+		protesto._fogo_chao(Vector2(q.x + 1250 + k * 900, fosso - 150), 1e9)
+	pecas.zona_letal(Vector2(q.x + 1700, fosso - 200), Vector2(2000, 400), "fogo")
+	var r := Vector2(q.x + 2700, q.y + 120)
+	pecas.terreno(PackedVector2Array([r, r + Vector2(900, 120), r + Vector2(2600, 120)]), r.y + 2600.0)
+	return r + Vector2(2600, 120)
+
+## caminhão da polícia na calçada com canhão d'água ligando e desligando
+func _canhao10(p: Vector2) -> Vector2:
+	_t_plano(p, 6200, false)
+	protesto.canhao(p + Vector2(5000, 0), 3.4, 1.7, _sorteio.randf_range(0.0, 3.0))
+	return p + Vector2(6200, 0)
+
+## reta com a multidão jogando molotov
+func _molotov10(p: Vector2, comp: float) -> Vector2:
+	_t_plano(p, comp, false)
+	pecas.placa_perigo(p + Vector2(300, 0))
+	protesto.zona_molotov(p.x + 800.0, p.x + comp - 400.0, p.y, 1.2)
+	return p + Vector2(comp, 0)
 
 func _passo_fundo10() -> void:
 	if not is_instance_valid(_fundo10) or not _fundo10.is_visible_in_tree():
@@ -3791,7 +3860,8 @@ func _foto_roda() -> void:
 		if "semaj" in OS.get_cmdline_user_args() and roda and roda.ativo and roda.luta == 1 and (Time.get_ticks_msec() - t0) > 9000:
 			roda.forcar_luta2()
 		if not "na_roda" in OS.get_cmdline_user_args():          # percurso: só acelera e fotografa
-			Input.action_press("accelerate")
+			if not "parado" in OS.get_cmdline_user_args():
+				Input.action_press("accelerate")
 			if (Time.get_ticks_msec() - t0) / 3000 > n:
 				n += 1
 				await _captura("roda_%02d" % n)
