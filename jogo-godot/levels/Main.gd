@@ -71,6 +71,12 @@ func _ready() -> void:
 		Game.checkpoint_chao = CHAO_Y
 	if "foto_roda" in OS.get_cmdline_user_args():
 		_foto_roda.call_deferred()
+	if "alturas" in OS.get_cmdline_user_args():
+		get_tree().create_timer(2.0).timeout.connect(func() -> void:
+			var ch: Vector2 = player.chassi.global_position
+			print("[ALT] chassi y=%.0f chao=%.0f" % [ch.y, Game.checkpoint_chao])
+			for k in player.membros: print("[ALT] membro %s y=%.0f" % [k, (player.membros[k] as Node2D).global_position.y - Game.checkpoint_chao])
+			for k in player.sprites: print("[ALT] sprite %s y=%.0f" % [k, (player.sprites[k] as Node2D).global_position.y - Game.checkpoint_chao]))
 	_criar_jogador(SPAWN_X, CHAO_Y)
 	sangue = Sangue.new()
 	sangue.escala = 3.2
@@ -3661,7 +3667,7 @@ func _fase_10() -> void:
 	if "secoes" in OS.get_cmdline_user_args(): print("[SECAO] _t_plano -> %.0f,%.0f" % [p.x, p.y])
 	p = _barricada10(p)
 	if "secoes" in OS.get_cmdline_user_args(): print("[SECAO] _barricada10 -> %.0f,%.0f" % [p.x, p.y])
-	p = _arpoes10(p, [[460.0, 0.0]])
+	p = _arpoes10(p, [[900.0, 0.0]])
 	if "secoes" in OS.get_cmdline_user_args(): print("[SECAO] _arpoes10 -> %.0f,%.0f" % [p.x, p.y])
 	p = _turbo10(p)
 	if "secoes" in OS.get_cmdline_user_args(): print("[SECAO] _turbo10 -> %.0f,%.0f" % [p.x, p.y])
@@ -3671,7 +3677,7 @@ func _fase_10() -> void:
 	if "secoes" in OS.get_cmdline_user_args(): print("[SECAO] _molotov10 -> %.0f,%.0f" % [p.x, p.y])
 	p = _fogueira10(p)
 	if "secoes" in OS.get_cmdline_user_args(): print("[SECAO] _fogueira10 -> %.0f,%.0f" % [p.x, p.y])
-	p = _arpoes10(p, [[480.0, 0.0], [260.0, 1.3]])
+	p = _arpoes10(p, [[950.0, 0.0], [540.0, 0.0]])
 	if "secoes" in OS.get_cmdline_user_args(): print("[SECAO] _arpoes10 -> %.0f,%.0f" % [p.x, p.y])
 	p = _barricada10(p)
 	if "secoes" in OS.get_cmdline_user_args(): print("[SECAO] _barricada10 -> %.0f,%.0f" % [p.x, p.y])
@@ -3681,7 +3687,7 @@ func _fase_10() -> void:
 	if "secoes" in OS.get_cmdline_user_args(): print("[SECAO] _molotov10 -> %.0f,%.0f" % [p.x, p.y])
 	p = _canhao10(p)
 	if "secoes" in OS.get_cmdline_user_args(): print("[SECAO] _canhao10 -> %.0f,%.0f" % [p.x, p.y])
-	p = _arpoes10(p, [[450.0, 0.0], [300.0, 0.9], [520.0, 1.8]])
+	p = _arpoes10(p, [[560.0, 0.0], [1000.0, 0.0], [1220.0, 0.0]])
 	if "secoes" in OS.get_cmdline_user_args(): print("[SECAO] _arpoes10 -> %.0f,%.0f" % [p.x, p.y])
 	p = _fogueira10(p)
 	if "secoes" in OS.get_cmdline_user_args(): print("[SECAO] _fogueira10 -> %.0f,%.0f" % [p.x, p.y])
@@ -3708,7 +3714,7 @@ func _arpoes10(p: Vector2, postes: Array) -> Vector2:
 	_t_plano(p, comp, false)
 	pecas.placa_perigo(p + Vector2(500, 0))
 	for k in postes.size():
-		protesto.arpoador(p + Vector2(2600.0 + k * 1500.0, 0), postes[k][0], 2.6, postes[k][1])
+		protesto.arpoador(p + Vector2(2600.0 + k * 1500.0, 0), postes[k][0], 3.2, postes[k][1])   # o grupo atira junto: depois da rajada dá pra passar
 	return p + Vector2(comp, 0)
 
 ## faixa de turbo descendo até a rampa grande, salto por cima do carro pegando fogo

@@ -151,9 +151,11 @@ func _passo_arpao(p: Dictionary, delta: float) -> void:
 func _partes(pl: Player) -> Array:
 	var r: Array = []
 	if pl.montado:
-		for k in pl.membros:
-			if not pl.perdeu.has(k):
-				r.append([k, pl.membros[k], 95.0 if k in MEMBROS else 120.0])
+		for k in pl.sprites:                              # centro de cada peça desenhada
+			var nome: String = str(k).split("_")[0]
+			if pl.perdeu.has(nome) or not pl.membros.has(nome) or not is_instance_valid(pl.sprites[k]):
+				continue
+			r.append([nome, pl.sprites[k], 110.0 if nome in MEMBROS else 140.0])
 		if is_instance_valid(pl.chassi):
 			r.append(["chassi", pl.chassi, 130.0])
 		for rd in pl.rodas:
@@ -165,6 +167,7 @@ func _partes(pl: Player) -> Array:
 	return r
 
 func _acertou(p: Dictionary, pl: Player, parte: String, no_parte: Node2D) -> void:
+	if "secoes" in OS.get_cmdline_user_args(): print("[ARPAO] pegou ", parte)
 	var proj: Node2D = p["no"]
 	var dir: Vector2 = p["dir"]
 	var sangue: Sangue = fase.sangue
