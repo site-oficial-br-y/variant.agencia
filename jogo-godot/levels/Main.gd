@@ -3684,7 +3684,7 @@ func _passo_fundo10() -> void:
 	var esc := maxf(v.x / 2172.0, v.y / 724.0) * 1.12
 	_fundo10.size = Vector2(2172, 724) * esc
 	var cx := camera.global_position.x if is_instance_valid(camera) else 0.0
-	_fundo10.position = Vector2(-fposmod(cx * 0.012, _fundo10.size.x - v.x), (v.y - _fundo10.size.y) / 2.0)
+	_fundo10.position = Vector2(-fposmod(cx * 0.012, _fundo10.size.x - v.x), v.y * 0.55 - _fundo10.size.y * 0.74)   # rua da arte na altura do chão
 	if Game.checkpoint_x >= ARENA10_X - 5000.0:
 		_fundo10.visible = false
 
@@ -3717,10 +3717,11 @@ func _fogueira10(p: Vector2) -> Vector2:
 	fogo.direction = Vector2.UP
 	fogo.spread = 15.0
 	fogo.gravity = Vector2(0, -500)
-	fogo.initial_velocity_min = 150.0
-	fogo.initial_velocity_max = 350.0
-	fogo.scale_amount_min = 10.0
-	fogo.scale_amount_max = 22.0
+	fogo.initial_velocity_min = 200.0
+	fogo.initial_velocity_max = 450.0
+	fogo.texture = pecas._brilho
+	fogo.scale_amount_min = 2.2
+	fogo.scale_amount_max = 4.5
 	var g := Gradient.new()
 	g.offsets = PackedFloat32Array([0.0, 0.4, 1.0])
 	g.colors = PackedColorArray([Color(1, 0.9, 0.4, 0.95), Color(1, 0.4, 0.1, 0.8), Color(0.2, 0.1, 0.1, 0.0)])
