@@ -40,6 +40,7 @@ var _t := 0.0
 var _rodada := 0
 var _virada_t := 14.0
 var _mortes_teste_virada := 0
+var _costelas: Array = []               # ângulo (local) de cada lombada: interruptor não nasce embaixo
 var _arrasto_t := 0.0                    # tranco da virada: o chão arrasta quem está nele
 var _lado := 1.0
 var _sorteio := RandomNumberGenerator.new()
@@ -133,6 +134,7 @@ func montar(main: Node2D, c: Vector2, mat: PhysicsMaterial) -> void:
 	corpo.add_child(fora)
 	for k in 4:                                        # costelas (lombadas) presas na parede
 		_costela(PI / 2.0 + PI / 4.0 + k * TAU / 4.0)
+		_costelas.append(PI / 2.0 + PI / 4.0 + k * TAU / 4.0)
 	_montar_nucleo()
 
 func _circulo(r: float, n: int) -> PackedVector2Array:
@@ -227,8 +229,6 @@ func comecar() -> void:
 	_aviso.add_theme_color_override("font_outline_color", Color.BLACK)
 	_aviso.add_theme_constant_override("outline_size", 14)
 	hud.add_child(_aviso)
-	for k in 3:
-		_novo_raio(TAU * k / 3.0)
 	omega_alvo = 0.17
 	_estado = "luta"
 	_timer = 3.0
@@ -457,6 +457,10 @@ func _passo_raios(dt: float) -> void:
 func _novo_interruptor(espera: float) -> void:
 	var vem := _sorteio.randf() < 0.5               # metade vem até você, metade sobe e você corre atrás
 	var a := _jogador_ang() + _lado * (_sorteio.randf_range(-2.4, -1.7) if vem else _sorteio.randf_range(0.7, 1.1))
+	for c in _costelas:                                 # caiu em cima de uma lombada: empurra pro lado
+		var d := wrapf(a - float(c), -PI, PI)
+		if absf(d) < 0.25:
+			a = float(c) + (0.25 if d >= 0.0 else -0.25)
 	var no := Node2D.new()
 	no.position = _dir(a) * R
 	no.rotation = a + PI / 2.0
@@ -571,8 +575,9 @@ func _virar_semaj() -> void:
 	Audio.tocar("ronco", 1.0, 0.0)
 	_lado = -_lado
 	_virada_t = 9.0
-	for k in 2:
-		_novo_raio(TAU * (k + 0.5) / 2.0)
+	_raio_len = 0.0                                   # lasers do meio só no Semaj: nascem do núcleo e crescem
+	for k in 4:
+		_novo_raio(TAU * k / 4.0)
 	_novo_interruptor(5.0)
 
 ## online: o time já está no Semaj
