@@ -2,15 +2,13 @@ extends Control
 ## Aviso de atualização: aparece por cima do lobby na primeira vez que abre a versão nova.
 ## Fundo é a arte do patch escurecida; o X fecha e fica no lobby.
 
-const VERSAO := "2.2"
+const VERSAO := "2.6"
 const ITENS := [
-	["FASE 9: O JULGAMENTO", "O espaço dos olhos: cristais caindo, lasers roxos e o chefe ÇTAMANDURA. Decore onde o martelo vai bater. E cuidado com o martelo...", Color(0.8, 0.4, 1.0)],
-	["LOJA DE SKINS", "Erick Folhas, Gabriel Zumbi, Caio Santos, Vitinho no Creta e o lendário Lima Gorila Dourado.", Color(1.0, 0.78, 0.2)],
-	["GORISCH NOVO", "Farda militar e ult nova no segundo botão: fica muito mais rápido, com rastro vermelho. Turbo agora é infinito.", Color(1.0, 0.35, 0.3)],
-	["MINHA CONTA", "Troca o nick, escolhe a skin de cada personagem e acompanha seus pedidos.", Color(0.6, 0.38, 1.0)],
-	["ONLINE EM TODAS AS FASES", "Sala com líder: ele escolhe a fase, todo mundo dá PRONTO. Corrida com pódio no fim.", Color(0.4, 1.0, 0.5)],
-	["RANKING PÚBLICO", "Melhores tempos de cada fase e quem tem mais tempo de jogo.", Color(0.45, 0.8, 1.0)],
-	["E MAIS", "Vida do Péce sincronizada no online, botão de volume e dá pra instalar o jogo na tela inicial.", Color(0.9, 0.85, 1.0)],
+	["FASE 10: JAMES", "Protesto pegando fogo na rua e, no fim, a RODA: você luta dentro de uma roda gigante que gira. O chão anda, ela vira do nada e o James te vigia do fundo.", Color(1.0, 0.55, 0.2)],
+	["E DEPOIS... SEMAJ", "Zerou o James? Ele volta do avesso. Roda mais rápida, mais lasers e música nova.", Color(0.8, 0.4, 1.0)],
+	["INTERRUPTOR VERDE", "É o único jeito de dar dano: passa por cima dele antes que suma. Às vezes ele vem até você, às vezes você corre atrás.", Color(0.4, 1.0, 0.5)],
+	["JOGO MAIS LEVE", "O jogo baixa 14 MB em vez de 66. Música e vídeo baixam na hora da fase e ficam guardados no aparelho.", Color(0.45, 0.8, 1.0)],
+	["CONTINUAR FASE", "Se a página cair no meio de um chefão, o menu mostra CONTINUAR e você volta de onde parou.", Color(1.0, 0.78, 0.2)],
 ]
 
 static func ja_viu() -> bool:

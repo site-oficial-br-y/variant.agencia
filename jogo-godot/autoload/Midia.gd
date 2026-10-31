@@ -14,7 +14,7 @@ const POR_FASE := {
 	8: ["res://assets/geresch/intro.ogv", "res://assets/audio/musica/geresch.ogg"],
 	9: ["res://assets/julgamento/entrada.ogv", "res://assets/audio/musica/julgamento.ogg",
 		"res://assets/audio/musica/ctamandura.ogg", "res://assets/julgamento/martelo.ogv"],
-	10: ["res://assets/audio/musica/james.ogg", "res://assets/audio/musica/cepe.ogg"],
+	10: ["res://assets/audio/musica/james.ogg", "res://assets/audio/musica/semaj.ogg"],
 }
 
 var _nomes: Dictionary = {}

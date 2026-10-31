@@ -13,7 +13,7 @@ ARQS = [
     'assets/audio/musica/menu.mp3',
     'assets/audio/musica/adriano.ogg', 'assets/audio/musica/cepe.ogg', 'assets/audio/musica/ctamandura.ogg',
     'assets/audio/musica/escola.ogg', 'assets/audio/musica/geresch.ogg', 'assets/audio/musica/julgamento.ogg',
-    'assets/audio/musica/pece.ogg', 'assets/audio/musica/vendedor.ogg', 'assets/audio/musica/james.ogg',
+    'assets/audio/musica/pece.ogg', 'assets/audio/musica/vendedor.ogg', 'assets/audio/musica/james.ogg', 'assets/audio/musica/semaj.ogg',
     'assets/geresch/intro.ogv', 'assets/julgamento/entrada.ogv', 'assets/julgamento/martelo.ogv',
 ]
 
