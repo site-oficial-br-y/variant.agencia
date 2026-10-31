@@ -81,7 +81,7 @@ returns boolean language plpgsql security definer set search_path = '' as $$
 declare
   v_uid uuid := auth.uid();
 begin
-  if v_uid is null or p_fase is null or p_fase not between 1 and 9
+  if v_uid is null or p_fase is null or p_fase not between 1 and 10
      or p_tempo is null or p_tempo <= 0 then
     return false;
   end if;

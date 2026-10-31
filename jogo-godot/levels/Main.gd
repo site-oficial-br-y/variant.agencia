@@ -47,7 +47,7 @@ func _ready() -> void:
 			Game.fase = int(a.substr(2))
 	Engine.time_scale = Game.RITMO           # física a 180 Hz x 3 = mesmo passo de 1/60 s de jogo
 	RenderingServer.set_default_clear_color(Color(0.33, 0.55, 0.93))
-	tema = ["campo", "obra", "montanha", "lab", "boss", "mercado", "escola", "colorido", "julgamento"][clampi(Game.fase, 1, 9) - 1]
+	tema = ["campo", "obra", "montanha", "lab", "boss", "mercado", "escola", "colorido", "julgamento", "roda"][clampi(Game.fase, 1, 10) - 1]
 	_construir_fundo("hw" if tema == "campo" else tema)
 	_mat = PhysicsMaterial.new()
 	_mat.friction = 1.0
@@ -61,6 +61,11 @@ func _ready() -> void:
 		Game.checkpoint_x = (cps[cps.size() - 1] as Vector2).x
 		Game.checkpoint_chao = (cps[cps.size() - 1] as Vector2).y
 
+	if "na_roda" in OS.get_cmdline_user_args() and Game.fase == 10:     # teste: começa dentro da roda
+		Game.checkpoint_x = ARENA10_X
+		Game.checkpoint_chao = CHAO_Y
+	if "foto_roda" in OS.get_cmdline_user_args():
+		_foto_roda.call_deferred()
 	_criar_jogador(SPAWN_X, CHAO_Y)
 	sangue = Sangue.new()
 	sangue.escala = 3.2
@@ -120,6 +125,8 @@ func _pos_jogador() -> void:
 		_inicio_8.call_deferred()
 	if Game.fase == 9:
 		_inicio_9.call_deferred()
+	if Game.fase == 10:
+		_inicio_10.call_deferred()
 	if "autoteste" in OS.get_cmdline_user_args():
 		_rodar_teste()
 	elif "screenshot" in OS.get_cmdline_user_args():
@@ -213,6 +220,8 @@ func _physics_process(delta: float) -> void:
 		var px9 := player.foco().global_position.x if is_instance_valid(player) and is_instance_valid(player.chassi) else 0.0
 		julgamento.chuva(delta, 2.6 if px9 > 1500.0 and px9 < _chuva9_x1 and not _cena9 else 0.0)
 		ctamandura.atualizar(delta)
+	if Game.fase == 10 and roda:
+		roda.atualizar(delta)
 	if boss:
 		boss.atualizar(delta)
 		_rodada_boss(delta)
@@ -236,6 +245,7 @@ func _construir_chao() -> void:
 		7: _fase_7()
 		8: _fase_8()
 		9: _fase_9()
+		10: _fase_10()
 		_: _fase_1()
 
 ## marcos comuns: zona de morte, checkpoints (lista de Vector2: x, chão) e chegada
@@ -836,7 +846,7 @@ func _parede_arena(x: float, y: float) -> void:
 	cs.shape = r
 	cs.position = Vector2(0, -13000)
 	sb.add_child(cs)
-	if Game.fase in [8, 9]:                             # parede neon (combina com o palco)
+	if Game.fase in [8, 9, 10]:                         # parede neon (combina com o palco)
 		pecas.poligono(Pecas.retangulo(Vector2.ZERO, Vector2(400, 4000)), Color(0.1, 0.07, 0.2), 3, null, 1.0, sb)
 		for dx in [-200.0, 200.0]:
 			pecas.linha(PackedVector2Array([Vector2(dx, -2000), Vector2(dx, 2000)]), 60.0, Color(1, 0.35, 0.8, 0.2), 3, sb)
@@ -1492,8 +1502,8 @@ func _construir_fundo(tema: String) -> void:
 	var pb := ParallaxBackground.new()
 	add_child(pb)
 	var grad := Gradient.new()
-	grad.set_color(0, {"julgamento": Color(0.02, 0.01, 0.05), "colorido": Color(0.36, 0.18, 0.6), "mercado": Color(0.9, 0.85, 0.75), "boss": Color(0.01, 0.01, 0.02), "obra": Color(0.36, 0.52, 0.78), "montanha": Color(0.2, 0.38, 0.78)}.get(tema, Color(0.27, 0.47, 0.92)))
-	grad.set_color(1, {"julgamento": Color(0.1, 0.04, 0.16), "colorido": Color(0.15, 0.5, 0.82), "mercado": Color(0.95, 0.9, 0.8), "boss": Color(0.05, 0.03, 0.07), "lab": Color(0.6, 0.65, 0.7), "campo": Color(0.86, 0.93, 0.98), "obra": Color(0.95, 0.85, 0.72), "montanha": Color(0.78, 0.88, 0.98)}.get(tema, Color(0.62, 0.78, 0.98)))
+	grad.set_color(0, {"roda": Color(0.03, 0.02, 0.03), "julgamento": Color(0.02, 0.01, 0.05), "colorido": Color(0.36, 0.18, 0.6), "mercado": Color(0.9, 0.85, 0.75), "boss": Color(0.01, 0.01, 0.02), "obra": Color(0.36, 0.52, 0.78), "montanha": Color(0.2, 0.38, 0.78)}.get(tema, Color(0.27, 0.47, 0.92)))
+	grad.set_color(1, {"roda": Color(0.16, 0.07, 0.03), "julgamento": Color(0.1, 0.04, 0.16), "colorido": Color(0.15, 0.5, 0.82), "mercado": Color(0.95, 0.9, 0.8), "boss": Color(0.05, 0.03, 0.07), "lab": Color(0.6, 0.65, 0.7), "campo": Color(0.86, 0.93, 0.98), "obra": Color(0.95, 0.85, 0.72), "montanha": Color(0.78, 0.88, 0.98)}.get(tema, Color(0.62, 0.78, 0.98)))
 	var gt := GradientTexture2D.new()
 	gt.gradient = grad
 	gt.fill_from = Vector2(0, 0)
@@ -1507,7 +1517,7 @@ func _construir_fundo(tema: String) -> void:
 	ceu_s.stretch_mode = TextureRect.STRETCH_SCALE
 	fundo_ceu.add_child(ceu_s)
 	var camadas: Array = [["nuvem", 0.12, -1300.0, 4.8], ["ui/morros_longe", 0.25, 720.0, 4.1], ["ui/morros_perto", 0.45, 980.0, 4.4]]
-	if tema in ["lab", "boss", "mercado", "julgamento"]:
+	if tema in ["lab", "boss", "mercado", "julgamento", "roda"]:
 		camadas = []
 	if tema == "escola":
 		camadas = [["nuvem", 0.12, -1300.0, 4.8]]
@@ -2633,7 +2643,7 @@ func _process_online(delta: float) -> void:
 			vivos += 1
 	if _rotulo_online:
 		_rotulo_online.visible = not aviso.visible
-		if Game.fase in [7, 8, 9]:
+		if Game.fase in [7, 8, 9, 10]:
 			_mandar_vida_boss(dt)
 		if Game.fase == 5:
 			if Online.host and ativo:
@@ -3581,7 +3591,7 @@ func _mandar_vida_boss(dt: float) -> void:
 	Online.enviar("bv", {"r": Online.rodada, "v": c.vida, "l": c.luta if c == ctamandura else 1})
 
 func _chefe_atual():
-	for c in [adriano, geresch, ctamandura]:
+	for c in [adriano, geresch, ctamandura, roda]:
 		if is_instance_valid(c) and c.ativo:
 			return c
 	return null
@@ -3597,6 +3607,9 @@ func _sinc_vida_boss(v: int, l: int) -> void:
 		elif l == ctamandura.luta and v < ctamandura.vida:
 			for k in ctamandura.vida - v:
 				ctamandura.forcar_dano()
+	elif c == roda:
+		for k in maxi(0, roda.vida - v):
+			roda.levar_dano()
 	elif c == adriano:
 		for k in maxi(0, adriano.vida - v):
 			adriano.levar_choque()
@@ -3607,3 +3620,122 @@ func _sinc_vida_boss(v: int, l: int) -> void:
 		else:
 			geresch.vida = v
 			geresch._trocar_imagem()
+
+# ---------- FASE 10: A RODA ----------
+## percurso de fábrica e, no fim, a roda gigante que gira: a luta é dentro dela
+const ARENA10_X := 300000.0
+var roda: Roda
+var _cena10 := false
+
+func _fase_10() -> void:
+	var y := CHAO_Y
+	pecas.cor_chao = Color(0.1, 0.08, 0.1)
+	pecas.borda_neon = Color(1.0, 0.55, 0.15)
+	_parede_arena(-2700.0, y)
+	var p := _t_plano(Vector2(-2600, y), 3900, false)
+	pecas.placa(Vector2(-900, y), "LARGADA")
+	p = _t_plano(p, 1200, false)
+	p = _t_serras(p)
+	p = _t_plano(p, 900, false)
+	p = _t_prensa(p)
+	p = _t_ondas(p, 3, 120.0)
+	p = _t_moveis(p)
+	p = _t_plano(p, 1000, false)
+	p = _t_minas(p)
+	p = _t_ladeira(p, 2400, -450)
+	p = _t_serras(p)
+	p = _t_ladeira(p, 2400, 450)
+	p = _t_retrateis(p)
+	p = _t_plano(p, 1200, false)
+	p = _t_prensa(p)
+	p = _t_ondas(p, 4, 130.0)
+	p = _t_plano(p, 2600, false)
+	var fim := _area(Vector2(p.x - 800.0, p.y - 700), Vector2(200, 1600))
+	fim.body_entered.connect(func(b: Node2D) -> void:
+		if b.is_in_group("veiculo") or b.is_in_group("piloto"): _entrar_roda.call_deferred())
+	pecas.poligono(Pecas.retangulo(Vector2(p.x - 800.0, p.y - 1200.0), Vector2(60, 2400)), Color(1, 0.6, 0.2, 0.3), -2)
+	roda = Roda.new()
+	add_child(roda)
+	roda.montar(self, Vector2(ARENA10_X, y - Roda.R), _mat)
+	roda.derrotado.connect(func() -> void:
+		_meta_pos = player.foco().global_position
+		_fim(true, "venceu"))
+	_marcos([], Vector2(ARENA10_X + Roda.R * 3.0, y), y + 3000.0, false)
+
+## fim do percurso: tela escura e você aparece dentro da roda
+func _entrar_roda() -> void:
+	if _cena10 or not ativo:
+		return
+	_cena10 = true
+	_queda7 = true
+	var cena := CanvasLayer.new()
+	cena.layer = 80
+	cena.process_mode = Node.PROCESS_MODE_ALWAYS
+	add_child(cena)
+	var preto := ColorRect.new()
+	preto.color = Color(0, 0, 0, 0)
+	preto.set_anchors_preset(Control.PRESET_FULL_RECT)
+	cena.add_child(preto)
+	var tw := cena.create_tween()
+	tw.tween_property(preto, "color:a", 1.0, 0.5)
+	tw.tween_callback(func() -> void:
+		Game.checkpoint_x = ARENA10_X
+		Game.checkpoint_chao = CHAO_Y
+		Game.queda_fade = true
+		_recomecando = true
+		get_tree().reload_current_scene.call_deferred())
+
+func _inicio_10() -> void:
+	if Game.checkpoint_x < ARENA10_X - 5000.0:
+		Audio.musica_chefe("vendedor")
+		return
+	do_inicio = true
+	Audio.musica_chefe("cepe")
+	_comecar_boss(roda.comecar)
+	var meio := Node2D.new()                       # câmera parada no meio: a roda inteira na tela
+	meio.position = roda.centro
+	add_child(meio)
+	camera.alvo = meio
+	camera.zoom = Vector2(0.125, 0.125)
+	camera.offset = Vector2.ZERO
+	camera.global_position = meio.position
+	set_meta("cam_base", Vector2.ZERO)
+	if Game.queda_fade:
+		Game.queda_fade = false
+		var cena := CanvasLayer.new()
+		cena.layer = 80
+		add_child(cena)
+		var preto := ColorRect.new()
+		preto.color = Color.BLACK
+		preto.set_anchors_preset(Control.PRESET_FULL_RECT)
+		preto.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		cena.add_child(preto)
+		var tw := cena.create_tween()
+		tw.tween_property(preto, "color:a", 0.0, 0.5)
+		tw.tween_callback(cena.queue_free)
+
+## teste: robô segura contra o giro e indo pro interruptor; tira fotos
+func _foto_roda() -> void:
+	var n := 0
+	var t0 := Time.get_ticks_msec()
+	while (Time.get_ticks_msec() - t0) < 70000 and is_inside_tree():
+		await get_tree().create_timer(0.1, true, false, true).timeout
+		if not roda or not roda.ativo or not is_instance_valid(player.chassi):
+			continue
+		var quer := 1.0 if roda._lado > 0.0 else -1.0
+		var px := player.foco().global_position.x - roda.centro.x
+		if absf(px) > 500.0:
+			quer = -signf(px)
+		if not roda._interruptor.is_empty() and roda._interruptor["espera"] <= 0.0:
+			var dx: float = (roda._interruptor["no"] as Node2D).global_position.x - player.foco().global_position.x
+			var dy: float = (roda._interruptor["no"] as Node2D).global_position.y - roda.centro.y
+			if dy > Roda.R * 0.55:
+				quer = signf(dx)
+		Input.action_release("accelerate")
+		Input.action_release("brake")
+		Input.action_press("accelerate" if quer > 0.0 else "brake")
+		if (Time.get_ticks_msec() - t0) / 3000 > n:
+			n += 1
+			print("[RODA] t=%d vida=%d estado=%s omega=%.2f vivo=%s" % [n * 3, roda.vida, roda._estado, roda.omega, ativo])
+			await _captura("roda_%02d" % n)
+	get_tree().quit()
