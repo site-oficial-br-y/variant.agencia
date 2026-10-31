@@ -583,12 +583,38 @@ func _virar_semaj() -> void:
 	Audio.parar_chefe()
 	Audio.musica_chefe(MUSICA_2)
 	Audio.tocar("ronco", 1.0, 0.0)
+	_preto_e_branco()
 	_lado = -_lado
 	_virada_t = 9.0
 	_raio_len = 0.0                                   # lasers do meio só no Semaj: nascem do núcleo e crescem
 	for k in 4:
 		_novo_raio(TAU * k / 4.0)
 	_novo_interruptor(5.0)
+
+## Semaj: o mundo perde a cor (filtro preto e branco por cima de tudo, entra aos poucos)
+func _preto_e_branco() -> void:
+	var camada := CanvasLayer.new()
+	camada.layer = 70
+	fase.add_child(camada)
+	var r := ColorRect.new()
+	r.set_anchors_preset(Control.PRESET_FULL_RECT)
+	r.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	var sh := Shader.new()
+	sh.code = """shader_type canvas_item;
+uniform sampler2D tela : hint_screen_texture, filter_linear;
+uniform float forca = 0.0;
+void fragment() {
+	vec3 c = texture(tela, SCREEN_UV).rgb;
+	float l = dot(c, vec3(0.299, 0.587, 0.114));
+	l = clamp((l - 0.5) * 1.15 + 0.5, 0.0, 1.0);
+	COLOR = vec4(mix(c, vec3(l), forca), 1.0);
+}"""
+	var m := ShaderMaterial.new()
+	m.shader = sh
+	r.material = m
+	camada.add_child(r)
+	var tw := r.create_tween()
+	tw.tween_method(func(v: float) -> void: m.set_shader_parameter("forca", v), 0.0, 1.0, 1.6)
 
 ## online: o time já está no Semaj
 func forcar_luta2() -> void:
