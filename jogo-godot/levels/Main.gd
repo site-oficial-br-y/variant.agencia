@@ -3726,16 +3726,16 @@ func _turbo10(p: Vector2) -> Vector2:
 	pecas.terreno(PackedVector2Array([q, q + Vector2(700, 0)]), q.y + 2600.0)
 	pecas.rampa(q.x + 100, q.x + 700, q.y, 360)
 	var fosso := q.y + 900.0
-	pecas.terreno(PackedVector2Array([Vector2(q.x + 700, fosso), Vector2(q.x + 2700, fosso)]), fosso + 600.0, false)
+	pecas.terreno(PackedVector2Array([Vector2(q.x + 700, fosso), Vector2(q.x + 2300, fosso)]), fosso + 600.0, false)
 	for k in 2:                                       # carros queimados no fosso
 		var carro := Polygon2D.new()
 		carro.polygon = PackedVector2Array([Vector2(-330, 0), Vector2(-330, -150), Vector2(-160, -150), Vector2(-90, -260), Vector2(160, -260), Vector2(250, -150), Vector2(330, -150), Vector2(330, 0)])
 		carro.color = Color(0.12, 0.1, 0.1)
-		carro.position = Vector2(q.x + 1250 + k * 900, fosso)
+		carro.position = Vector2(q.x + 1150 + k * 700, fosso)
 		add_child(carro)
-		protesto._fogo_chao(Vector2(q.x + 1250 + k * 900, fosso - 150), 1e9)
-	pecas.zona_letal(Vector2(q.x + 1700, fosso - 200), Vector2(2000, 400), "fogo")
-	var r := Vector2(q.x + 2700, q.y + 120)
+		protesto._fogo_chao(Vector2(q.x + 1150 + k * 700, fosso - 150), 1e9)
+	pecas.zona_letal(Vector2(q.x + 1500, fosso - 200), Vector2(1600, 400), "fogo")
+	var r := Vector2(q.x + 2300, q.y + 120)
 	pecas.terreno(PackedVector2Array([r, r + Vector2(900, 120), r + Vector2(2600, 120)]), r.y + 2600.0)
 	return r + Vector2(2600, 120)
 
