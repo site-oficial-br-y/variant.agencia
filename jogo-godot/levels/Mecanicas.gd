@@ -303,13 +303,16 @@ func painel_aceleracao(base: Vector2, larg := 900.0, ganho := 1100.0, vmax := 32
 		tw.tween_interval(0.12 * k)
 		tw.tween_property(s, "modulate:a", 0.25, 0.25)
 		tw.tween_property(s, "modulate:a", 1.0, 0.25)
-	var a := _area(Vector2(0, -120), Vector2(larg, 240), n)
+	var a := _area(Vector2(0, -450), Vector2(larg, 900), n)      # alto: o centro do veículo fica bem acima do chão
 	a.body_entered.connect(func(b: Node2D) -> void:
 		if not b.is_in_group("veiculo"):
 			return
 		var pl: Player = jogador.call()
-		if not is_instance_valid(pl) or b != pl.chassi:
+		if not is_instance_valid(pl) or not (b == pl.chassi or b in pl.rodas):   # segway/monociclo: só a roda encosta
 			return
+		if Time.get_ticks_msec() - int(a.get_meta("ult", -9999)) < 500:
+			return
+		a.set_meta("ult", Time.get_ticks_msec())
 		for rb in _corpos_do_jogador():
 			var c := rb as RigidBody2D
 			var dir := Vector2.RIGHT.rotated(c.rotation if c == pl.chassi else pl.chassi.rotation)

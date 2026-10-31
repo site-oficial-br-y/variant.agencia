@@ -71,6 +71,13 @@ func _ready() -> void:
 		Game.checkpoint_chao = CHAO_Y
 	if "foto_roda" in OS.get_cmdline_user_args():
 		_foto_roda.call_deferred()
+	if "velocidade" in OS.get_cmdline_user_args():          # teste: velocidade do veículo a cada 0,25 s
+		var t := Timer.new()
+		t.wait_time = 0.25
+		t.autostart = true
+		add_child(t)
+		t.timeout.connect(func() -> void:
+			if is_instance_valid(player.chassi): print("[VEL] x=%.0f v=%.0f" % [player.chassi.global_position.x, player.chassi.linear_velocity.length()]))
 	if "alturas" in OS.get_cmdline_user_args():
 		get_tree().create_timer(2.0).timeout.connect(func() -> void:
 			var ch: Vector2 = player.chassi.global_position
@@ -3726,24 +3733,24 @@ func _turbo10(p: Vector2) -> Vector2:
 	pecas.terreno(PackedVector2Array([q, q + Vector2(700, 0)]), q.y + 2600.0)
 	pecas.rampa(q.x + 100, q.x + 700, q.y, 360)
 	var fosso := q.y + 900.0
-	pecas.terreno(PackedVector2Array([Vector2(q.x + 700, fosso), Vector2(q.x + 2300, fosso)]), fosso + 600.0, false)
-	for k in 2:                                       # carros queimados no fosso
+	pecas.terreno(PackedVector2Array([Vector2(q.x + 700, fosso), Vector2(q.x + 3000, fosso)]), fosso + 600.0, false)
+	for k in 3:                                       # carros queimados no fosso
 		var carro := Polygon2D.new()
 		carro.polygon = PackedVector2Array([Vector2(-330, 0), Vector2(-330, -150), Vector2(-160, -150), Vector2(-90, -260), Vector2(160, -260), Vector2(250, -150), Vector2(330, -150), Vector2(330, 0)])
 		carro.color = Color(0.12, 0.1, 0.1)
-		carro.position = Vector2(q.x + 1150 + k * 700, fosso)
+		carro.position = Vector2(q.x + 1250 + k * 800, fosso)
 		add_child(carro)
-		protesto._fogo_chao(Vector2(q.x + 1150 + k * 700, fosso - 150), 1e9)
-	pecas.zona_letal(Vector2(q.x + 1500, fosso - 200), Vector2(1600, 400), "fogo")
-	var r := Vector2(q.x + 2300, q.y + 120)
+		protesto._fogo_chao(Vector2(q.x + 1250 + k * 800, fosso - 150), 1e9)
+	pecas.zona_letal(Vector2(q.x + 1850, fosso - 200), Vector2(2300, 400), "fogo")
+	var r := Vector2(q.x + 3000, q.y + 120)
 	pecas.terreno(PackedVector2Array([r, r + Vector2(900, 120), r + Vector2(2600, 120)]), r.y + 2600.0)
 	return r + Vector2(2600, 120)
 
 ## caminhão da polícia na calçada com canhão d'água ligando e desligando
 func _canhao10(p: Vector2) -> Vector2:
-	_t_plano(p, 6200, false)
-	protesto.canhao(p + Vector2(5000, 0), 3.4, 1.7, _sorteio.randf_range(0.0, 3.0))
-	return p + Vector2(6200, 0)
+	_t_plano(p, 7600, false)
+	protesto.canhao(p + Vector2(6400, 0), 3.4, 1.7, _sorteio.randf_range(0.0, 3.0))   # o jato não alcança o fosso de trás
+	return p + Vector2(7600, 0)
 
 ## reta com a multidão jogando molotov
 func _molotov10(p: Vector2, comp: float) -> Vector2:

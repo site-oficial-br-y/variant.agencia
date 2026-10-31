@@ -211,84 +211,162 @@ func _cravar(proj: Node2D, pl: Player, parte: String, dir: Vector2) -> void:
 	fase.sangue.esguichar(rb, Vector2.ZERO, -dir, 3.0)
 
 # ---------- CANHÃO D'ÁGUA ----------
-## caminhão na beira da rua (lado direito, virado pra trás); o jato liga e desliga
+## caminhão blindado na beira da rua, virado pra trás; o canhão do teto liga e desliga
+const CAM_ALT := 1350.0                  # altura do caminhão no mundo
+const CAM_BICO := Vector2(430, 22)       # boca do canhão na arte (1100 x 672)
+const JATO_ALCANCE := Vector2(-2500, 0)  # até onde o jato vai (o y é o chão)
+
 func canhao(base: Vector2, periodo := 3.4, liga := 1.6, atraso := 0.0) -> void:
 	var no := Node2D.new()
 	no.position = base
 	no.z_index = -1
-	no.scale = Vector2.ONE * 1.4
 	fase.add_child(no)
-	var cab := Polygon2D.new()
-	cab.polygon = PackedVector2Array([Vector2(-60, -10), Vector2(-60, -420), Vector2(140, -420), Vector2(260, -260), Vector2(260, -10)])
-	cab.color = Color(0.12, 0.16, 0.3)
-	no.add_child(cab)
-	var bau := Polygon2D.new()
-	bau.polygon = Pecas.retangulo(Vector2(-520, -260), Vector2(900, 500))
-	bau.color = Color(0.16, 0.2, 0.36)
-	no.add_child(bau)
-	for x in [-800.0, -260.0, 120.0]:
-		var roda := Polygon2D.new()
-		var c := PackedVector2Array()
-		for k in 20:
-			c.append(Vector2(x, -10) + Vector2.from_angle(TAU * k / 20) * 110.0)
-		roda.polygon = c
-		roda.color = Color(0.05, 0.05, 0.06)
-		no.add_child(roda)
-	var luz := Polygon2D.new()
-	luz.polygon = Pecas.retangulo(Vector2(-200, -530), Vector2(220, 40))
-	luz.color = Color(1, 0.2, 0.2)
-	no.add_child(luz)
-	var bico := Polygon2D.new()
-	bico.polygon = PackedVector2Array([Vector2(-640, -560), Vector2(-900, -470), Vector2(-900, -420), Vector2(-640, -500)])
-	bico.color = Color(0.3, 0.3, 0.34)
-	no.add_child(bico)
-	var jato := Line2D.new()
-	jato.points = PackedVector2Array([Vector2(-900, -445), Vector2(-2400, -300), Vector2(-3900, -120)])
-	jato.width = 170.0
-	jato.default_color = Color(0.55, 0.85, 1.0, 0.0)
-	jato.begin_cap_mode = Line2D.LINE_CAP_ROUND
-	jato.end_cap_mode = Line2D.LINE_CAP_ROUND
-	jato.z_index = 12
+	var esc := CAM_ALT / 672.0
+	var spr := Sprite2D.new()
+	spr.texture = load("res://assets/roda/caminhao.png")
+	spr.centered = false
+	spr.scale = Vector2.ONE * esc
+	spr.position = Vector2(-1100.0 * esc * 0.45, -672.0 * esc + 40.0)
+	no.add_child(spr)
+	var bico := spr.position + CAM_BICO * esc
+	var giro := Sprite2D.new()                           # giroflex por cima (pisca vermelho/azul)
+	giro.texture = fase.pecas._brilho
+	giro.scale = Vector2.ONE * 9.0
+	giro.position = spr.position + Vector2(330, 140) * esc
+	giro.z_index = 1
+	no.add_child(giro)
+	var jato := Node2D.new()
+	jato.z_index = 14
 	no.add_child(jato)
-	var placa := Label.new()
-	placa.text = "POLÍCIA"
-	placa.add_theme_font_size_override("font_size", 90)
-	placa.add_theme_color_override("font_color", Color(1, 1, 1))
-	placa.position = Vector2(-470, -330)
-	no.add_child(placa)
-	_canhoes.append({"no": no, "jato": jato, "luz": luz, "periodo": periodo, "liga": liga, "t": -atraso, "base": base})
+	var fora := _linha_agua(230.0, Color(0.6, 0.85, 1.0, 0.35))
+	var meio := _linha_agua(120.0, Color(0.75, 0.92, 1.0, 0.75))
+	var miolo := _linha_agua(46.0, Color(1, 1, 1, 0.9))
+	for l in [fora, meio, miolo]:
+		jato.add_child(l)
+	var gotas := _spray(Vector2.LEFT, 260.0, 0.9)
+	gotas.position = bico
+	no.add_child(gotas)
+	var pingo := _spray(Vector2.DOWN, 60.0, 0.6)          # o bico pinga antes de disparar
+	pingo.position = bico
+	pingo.amount = 6
+	no.add_child(pingo)
+	var respingo := _spray(Vector2.UP, 900.0, 0.7)
+	respingo.spread = 70.0
+	respingo.amount = 22 if Game.leve else 60
+	respingo.gravity = Vector2(0, 2400)
+	no.add_child(respingo)
+	var nevoa := _spray(Vector2.UP, 160.0, 1.4)
+	nevoa.amount = 8 if Game.leve else 20
+	nevoa.scale_amount_min = 6.0
+	nevoa.scale_amount_max = 11.0
+	nevoa.gravity = Vector2(0, -60)
+	no.add_child(nevoa)
+	_canhoes.append({"no": no, "jato": jato, "linhas": [fora, meio, miolo], "gotas": gotas, "pingo": pingo,
+		"respingo": respingo, "nevoa": nevoa, "giro": giro, "bico": bico, "periodo": periodo, "liga": liga,
+		"t": -atraso, "base": base, "abre": 0.0, "pts": PackedVector2Array()})
+
+func _linha_agua(larg: float, cor: Color) -> Line2D:
+	var l := Line2D.new()
+	l.width = larg
+	l.default_color = cor
+	var c := Curve.new()
+	c.add_point(Vector2(0.0, 0.35))
+	c.add_point(Vector2(0.5, 0.85))
+	c.add_point(Vector2(1.0, 1.0))
+	l.width_curve = c
+	l.begin_cap_mode = Line2D.LINE_CAP_ROUND
+	l.end_cap_mode = Line2D.LINE_CAP_ROUND
+	l.joint_mode = Line2D.LINE_JOINT_ROUND
+	return l
+
+func _spray(dir: Vector2, vel: float, vida: float) -> CPUParticles2D:
+	var p := CPUParticles2D.new()
+	p.texture = fase.pecas._brilho
+	p.amount = 18 if Game.leve else 50
+	p.lifetime = vida
+	p.direction = dir
+	p.spread = 20.0
+	p.initial_velocity_min = vel * 0.6
+	p.initial_velocity_max = vel * 1.4
+	p.gravity = Vector2(0, 1600)
+	p.scale_amount_min = 1.2
+	p.scale_amount_max = 2.6
+	var g := Gradient.new()
+	g.set_color(0, Color(0.9, 0.97, 1.0, 0.9))
+	g.set_color(1, Color(0.6, 0.85, 1.0, 0.0))
+	p.color_ramp = g
+	p.emitting = false
+	p.z_index = 15
+	return p
+
+## caminho do jato: sai do bico, sobe um pouco e cai no chão lá atrás (só o pedaço já aberto)
+func _caminho_jato(c: Dictionary, abre: float) -> PackedVector2Array:
+	var de: Vector2 = c["bico"]
+	var ate := Vector2(JATO_ALCANCE.x, -30.0)
+	var pts := PackedVector2Array()
+	var n := 16
+	for k in n + 1:
+		var u := float(k) / n * abre
+		var p := de.lerp(ate, u) + Vector2(0, -120.0 * sin(PI * u))
+		p.y += sin(_t * 23.0 + u * 9.0) * 14.0 * u                 # treme
+		pts.append(p)
+	return pts
 
 func _passo_canhao(c: Dictionary, dt: float, delta: float) -> void:
 	c["t"] += dt
-	var base: Vector2 = c["base"]
-	var fase_t: float = fposmod(c["t"], c["periodo"])
+	var periodo: float = c["periodo"]
+	var fase_t: float = fposmod(c["t"], periodo)
 	var ligado: bool = fase_t < float(c["liga"])
-	var avisa: bool = fase_t > float(c["periodo"]) - 0.6
-	var jato: Line2D = c["jato"]
-	jato.default_color.a = (0.75 + 0.15 * sin(_t * 40.0)) if ligado else (0.15 if avisa else 0.0)
-	jato.width = 170.0 + (sin(_t * 30.0) * 20.0 if ligado else 0.0)
-	(c["luz"] as Polygon2D).color = Color(1, 0.2, 0.2) if fmod(_t, 0.5) < 0.25 else Color(0.2, 0.4, 1)
-	if not ligado:
+	var avisa: bool = fase_t > periodo - 0.7
+	var longe := absf((c["base"] as Vector2).x - _foco().x) > 7000.0
+	(c["giro"] as Sprite2D).modulate = Color(1, 0.15, 0.15) if fmod(_t, 0.4) < 0.2 else Color(0.2, 0.4, 1)
+	c["abre"] = move_toward(c["abre"], 1.0 if ligado else 0.0, dt * (4.0 if ligado else 6.0))
+	var abre: float = c["abre"]
+	(c["pingo"] as CPUParticles2D).emitting = avisa and not longe
+	(c["gotas"] as CPUParticles2D).emitting = abre > 0.1 and not longe
+	var jato: Node2D = c["jato"]
+	jato.visible = abre > 0.01
+	var no: Node2D = c["no"]
+	var fim := Vector2(JATO_ALCANCE.x, -30.0)
+	(c["respingo"] as CPUParticles2D).position = fim
+	(c["nevoa"] as CPUParticles2D).position = fim
+	(c["respingo"] as CPUParticles2D).emitting = abre > 0.95 and not longe
+	(c["nevoa"] as CPUParticles2D).emitting = abre > 0.95 and not longe
+	if abre <= 0.01:
+		return
+	var pts := _caminho_jato(c, abre)
+	for l in c["linhas"]:
+		(l as Line2D).points = pts
+	if not ligado and abre < 0.5:
 		return
 	var pl := _player()
 	if pl == null:
 		return
-	var no: Node2D = c["no"]
-	var a := no.to_global(Vector2(-900, -445))
-	var b := no.to_global(Vector2(-3900, -120))
 	var empurrou := false
 	for parte in _partes(pl):
 		var rb := parte[1] as RigidBody2D
-		if rb == null:
+		var pos: Vector2 = (parte[1] as Node2D).global_position
+		var perto := false
+		for k in pts.size() - 1:
+			var a := no.to_global(pts[k])
+			var b := no.to_global(pts[k + 1])
+			if pos.distance_to(Geometry2D.get_closest_point_to_segment(pos, a, b)) < 200.0:
+				perto = true
+				break
+		if not perto:
 			continue
-		var pos := rb.global_position
-		if pos.distance_to(Geometry2D.get_closest_point_to_segment(pos, a, b)) < 230.0:
-			rb.linear_velocity += Vector2(-5200.0, -600.0) * delta
-			empurrou = true
-	if empurrou and is_instance_valid(pl.chassi) and pl.montado:
-		pl.chassi.linear_velocity += Vector2(-5200.0, -600.0) * delta
-		if fmod(_t, 0.15) < dt:
-			fase.pecas.particulas(pl.foco().global_position, 6, Color(0.7, 0.9, 1, 0.9), Color(0.7, 0.9, 1, 0), 200.0, 700.0, 0.5, 20.0, 50.0, 900.0, Vector2.LEFT, 50.0)
+		empurrou = true
+		if rb and rb.linear_velocity.x > -450.0:          # segura você, mas não te lança pra trás a mil
+			rb.linear_velocity += Vector2(-4300.0, -400.0) * delta
+	if empurrou and "secoes" in OS.get_cmdline_user_args() and fmod(_t, 0.5) < dt:
+		print("[JATO] empurrando x=%.0f" % pl.foco().global_position.x)
+	if empurrou and pl.montado and is_instance_valid(pl.chassi):
+		if pl.chassi.linear_velocity.x > -450.0:
+			pl.chassi.linear_velocity += Vector2(-4300.0, -400.0) * delta
+			for rd in pl.rodas:
+				(rd as RigidBody2D).linear_velocity += Vector2(-4300.0, -400.0) * delta
+		if fmod(_t, 0.12) < dt:
+			fase.pecas.particulas(pl.foco().global_position, 10, Color(0.85, 0.95, 1, 0.95), Color(0.7, 0.9, 1, 0), 300.0, 1100.0, 0.5, 25.0, 60.0, 1400.0, Vector2.LEFT, 70.0)
 
 # ---------- MOLOTOV ----------
 ## trecho onde a multidão joga garrafas
