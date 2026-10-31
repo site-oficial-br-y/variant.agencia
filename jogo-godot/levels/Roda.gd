@@ -1,14 +1,14 @@
 extends Node2D
 class_name Roda
-## Chefe da fase 10: A RODA. Você está dentro de uma roda gigante que gira (roda de hamster);
-## o chefe é o núcleo no meio dela e comanda o giro. Nada vem do fundo: o perigo é a própria roda.
+## Chefe da fase 10: JAMES. Você está dentro de uma roda gigante que gira (roda de hamster);
+## ele fica no fundo, trocando de lado, abrindo e fechando a boca, e comanda o giro.
 ##  - GIRO: o chão anda o tempo todo; parou de acelerar, ele te leva parede acima e você despenca.
 ##  - COSTELAS: lombadas presas na parede; no giro normal dá pra passar, na virada elas te arremessam.
 ##  - ESPINHOS: um trecho da parede acende vermelho e depois solta espinhos. Sai de cima (o chão anda!).
 ##  - VIRADA: ele dá um tranco e a roda dispara (ou troca de lado). Segura.
 ##  - LASERS: raios saindo do núcleo, girando. Pegam quem é arremessado pro meio.
-## Dano: o INTERRUPTOR verde na parede vem vindo com o giro; passou por cima, choque no núcleo.
-## Metade da vida: a roda gira mais rápido, troca de lado e os raios crescem.
+## Dano: o INTERRUPTOR verde na parede vem vindo com o giro; passou por cima, choque nele.
+## Zerou o James, ele vira o SEMAJ (reverso, vida cheia): roda mais rápida, troca de lado, mais raios.
 ## Giro em rad/s de JOGO (física); o resto em segundos REAIS (o jogo roda acelerado).
 
 signal derrotado
@@ -16,7 +16,10 @@ signal derrotado
 const R := 2400.0                        # raio de dentro (onde o chão está)
 const ESP := 320.0                       # espessura da parede
 const N := 96                            # pedaços da parede
-const VIDA := 8
+const VIDA_1 := 6
+const VIDA_2 := 8
+const MUSICA_1 := "vendedor"             # percurso e James (troca quando chegar a música dele)
+const MUSICA_2 := "cepe"                 # Semaj
 const LARANJA := Color(1.0, 0.55, 0.15)
 const VERDE := Color(0.35, 1.0, 0.45)
 const VERMELHO := Color(1.0, 0.18, 0.15)
@@ -27,7 +30,7 @@ var corpo: AnimatableBody2D
 var ang := 0.0
 var omega := 0.0
 var omega_alvo := 0.0
-var vida := VIDA
+var vida := VIDA_1
 var ativo := false
 var morto := false
 var luta := 1
@@ -46,6 +49,15 @@ var _raio_ang := 0.0
 var _raio_len := R * 0.42
 var _nucleo: Node2D
 var _olho: Polygon2D
+var _cara: Sprite2D
+var _aura: Sprite2D
+var _cara_lado := -1.0
+var _troca_t := 8.0
+var _sumir := 0.0                        # 0 = na tela; 1 = escondido embaixo (trocando de lado)
+var _boca_t := 0.4
+var _boca_aberta := false
+var _texs: Dictionary = {}
+var _virando_t := 0.0                    # transformação James -> Semaj
 var _brilho_t := 0.0
 var _tremor := 0.0
 var _fim_t := 0.0
@@ -67,7 +79,7 @@ func montar(main: Node2D, c: Vector2, mat: PhysicsMaterial) -> void:
 	position = c
 	var fundo := Polygon2D.new()                      # interior escuro, parado
 	fundo.polygon = _circulo(R + ESP * 0.5, 72)
-	fundo.color = Color(0.05, 0.03, 0.08)
+	fundo.color = Color(0.05, 0.03, 0.08, 0.6)          # meio transparente: o chefe aparece atrás da roda
 	fundo.z_index = -20
 	add_child(fundo)
 	for k in 6:                                        # anéis de luz parados atrás (dão noção do giro)
@@ -184,10 +196,6 @@ func _montar_nucleo() -> void:
 	_olho.polygon = _circulo(150.0, 32)
 	_olho.color = Color(1, 0.75, 0.3)
 	_nucleo.add_child(_olho)
-	var pupila := Polygon2D.new()
-	pupila.polygon = _circulo(62.0, 24)
-	pupila.color = Color(0.1, 0.02, 0.0)
-	_olho.add_child(pupila)
 
 ## liga a luta
 func comecar() -> void:
@@ -195,6 +203,7 @@ func comecar() -> void:
 		return
 	ativo = true
 	_sorteio.seed = 1010 + (Online.rodada if Online.ativo else randi())
+	_montar_cara()
 	var hud: CanvasLayer = fase.get_node("HUD")
 	_barra_fundo = ColorRect.new()
 	_barra_fundo.color = Color(0, 0, 0, 0.7)
@@ -205,7 +214,7 @@ func comecar() -> void:
 	_barra.size = Vector2(600, 24)
 	hud.add_child(_barra)
 	_rotulo = Label.new()
-	_rotulo.text = "A RODA"
+	_rotulo.text = "JAMES"
 	_rotulo.add_theme_font_size_override("font_size", 30)
 	_rotulo.add_theme_color_override("font_color", Color(1, 0.75, 0.45))
 	_rotulo.add_theme_color_override("font_outline_color", Color.BLACK)
@@ -250,9 +259,9 @@ func atualizar(delta: float) -> void:
 	_posicionar_hud()
 	_tremor = maxf(0.0, _tremor - dt * 2.0)
 	_brilho_t = maxf(0.0, _brilho_t - dt)
-	_olho.color = Color(1, 1, 1) if _brilho_t > 0.0 else (Color(1, 0.35, 0.2) if luta == 2 else Color(1, 0.75, 0.3))
+	_olho.color = Color(1, 1, 1) if _brilho_t > 0.0 else (Color(0.85, 0.2, 1.0) if luta == 2 else Color(1, 0.75, 0.3))
 	_nucleo.scale = Vector2.ONE * (1.0 + 0.05 * sin(_t * 3.0) + _brilho_t * 0.25)
-	_olhar_jogador()
+	_passo_cara(dt)
 	if morto:
 		_passo_morte(dt)
 		return
@@ -262,6 +271,7 @@ func atualizar(delta: float) -> void:
 		_passo_espinho(e, dt)
 	if _estado == "virada":
 		_timer -= dt
+		_virando_t = maxf(0.0, _virando_t - dt)
 		if _timer <= 0.0:
 			_estado = "luta"
 			omega_alvo = _giro_base()
@@ -347,12 +357,74 @@ func _jogador_ang() -> float:
 		return _local(pl.foco().global_position).x
 	return PI / 2.0 - ang
 
-func _olhar_jogador() -> void:
-	var pl: Player = fase.player
-	if not is_instance_valid(pl) or not is_instance_valid(pl.chassi):
+# ---------- o chefe no fundo ----------
+func _montar_cara() -> void:
+	for n in ["james", "james_grito", "semaj", "semaj_grito"]:
+		_texs[n] = load("res://assets/roda/%s.png" % n)
+	var fundo := CanvasLayer.new()
+	fundo.layer = -70
+	fase.add_child(fundo)
+	var tr := TextureRect.new()
+	tr.name = "fundo"
+	tr.texture = load("res://assets/roda/fundo_luta.jpg")
+	tr.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+	tr.stretch_mode = TextureRect.STRETCH_SCALE
+	tr.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	fundo.add_child(tr)
+	set_meta("fundo", tr)
+	var camada := CanvasLayer.new()
+	camada.layer = -50
+	fase.add_child(camada)
+	_aura = Sprite2D.new()
+	var g := Gradient.new()
+	g.colors = PackedColorArray([Color(1, 1, 1, 0.9), Color(1, 1, 1, 0.0)])
+	var gt := GradientTexture2D.new()
+	gt.gradient = g
+	gt.fill = GradientTexture2D.FILL_RADIAL
+	gt.fill_from = Vector2(0.5, 0.5)
+	gt.fill_to = Vector2(1.0, 0.5)
+	gt.width = 256
+	gt.height = 256
+	_aura.texture = gt
+	_aura.modulate = Color(1, 0.5, 0.2, 0.35)
+	camada.add_child(_aura)
+	_cara = Sprite2D.new()
+	_cara.texture = _texs["james"]
+	camada.add_child(_cara)
+
+func _nome_cara() -> String:
+	return "james" if luta == 1 else "semaj"
+
+## boca abrindo e fechando; grita (aberta) na virada e quando leva choque; troca de lado de tempos em tempos
+func _passo_cara(dt: float) -> void:
+	if _cara == null:
 		return
-	var v := (pl.foco().global_position - centro).normalized().rotated(-_nucleo.rotation)
-	(_olho.get_child(0) as Node2D).position = v * 70.0
+	var grito := _estado == "virada" or _brilho_t > 0.0 or _virando_t > 0.0
+	_boca_t -= dt
+	if _boca_t <= 0.0:
+		_boca_aberta = not _boca_aberta
+		_boca_t = _sorteio.randf_range(0.6, 1.4) if not _boca_aberta else _sorteio.randf_range(0.35, 0.8)
+		if luta == 2:
+			_boca_t *= 0.7
+	_cara.texture = _texs[_nome_cara() + ("_grito" if grito or _boca_aberta else "")]
+	if not morto and _virando_t <= 0.0:
+		_troca_t -= dt
+	if _troca_t <= 0.0:                               # afunda, troca de lado e sobe do outro
+		_sumir = minf(1.0, _sumir + dt * 1.8)
+		if _sumir >= 1.0:
+			_cara_lado = -_cara_lado
+			_troca_t = _sorteio.randf_range(7.0, 10.0) if luta == 1 else _sorteio.randf_range(5.0, 7.5)
+	else:
+		_sumir = maxf(0.0, _sumir - dt * 1.8)
+	var flash := 1.0 + _brilho_t * 3.0
+	_cara.modulate = Color(flash, flash, flash, 1.0 - _sumir * 0.6) if not morto else Color(1, 1, 1, maxf(0.0, 1.0 - _fim_t / 2.5))
+	_aura.modulate = (Color(0.8, 0.2, 1.0, 0.55) if luta == 2 else Color(1, 0.5, 0.2, 0.3)) * Color(1, 1, 1, _cara.modulate.a)
+
+## onde a cara está na tela (pra o raio do choque ir até ela)
+func _cara_no_mundo() -> Vector2:
+	if _cara == null:
+		return centro
+	return fase.get_viewport().get_canvas_transform().affine_inverse() * _cara.position
 
 # ---------- raios do núcleo ----------
 func _passo_raios(dt: float) -> void:
@@ -441,7 +513,7 @@ func _apertou() -> void:
 	var pts := PackedVector2Array()
 	for k in 12:
 		var t := k / 11.0
-		pts.append(de.lerp(centro, t) - centro + Vector2(randf_range(-90, 90), randf_range(-90, 90)) * (0.0 if k == 0 or k == 11 else 1.0))
+		pts.append(de.lerp(_cara_no_mundo(), t) - centro + Vector2(randf_range(-120, 120), randf_range(-120, 120)) * (0.0 if k == 0 or k == 11 else 1.0))
 	raio.points = pts
 	raio.width = 34.0
 	raio.default_color = VERDE
@@ -462,17 +534,47 @@ func levar_dano() -> void:
 	_tremor = 0.6
 	Audio.tocar("impacto_forte", 1.0, 0.0)
 	Audio.tocar("pece_grito", 0.7, 0.1)
-	fase._mensagem("CHOQUE NO NÚCLEO!", VERDE)
-	if vida <= VIDA / 2 and luta == 1:
-		luta = 2
-		_lado = -_lado
-		omega_alvo = _giro_base()
-		_virada_t = 6.0
-		for k in 2:
-			_novo_raio(TAU * (k + 0.5) / 2.0)
-		fase._mensagem("ELE FICOU BRAVO!", VERMELHO)
+	fase._mensagem("CHOQUE NO %s!" % _nome_cara().to_upper(), VERDE)
 	if vida <= 0:
-		_morrer()
+		if luta == 1:
+			_virar_semaj()
+		else:
+			_morrer()
+
+## zerou o James: ele vira o Semaj (reverso), com vida cheia, música nova e tudo mais difícil
+func _virar_semaj() -> void:
+	luta = 2
+	vida = VIDA_2
+	_virando_t = 2.6
+	_estado = "virada"
+	_timer = 2.6
+	omega_alvo = 0.0
+	_tremor = 1.2
+	for e in _espinhos:
+		(e["no"] as Node).queue_free()
+	_espinhos.clear()
+	if not _interruptor.is_empty():
+		(_interruptor["no"] as Node).queue_free()
+		_interruptor = {}
+	_aviso.text = "JAMES VIROU SEMAJ!"
+	_aviso.add_theme_color_override("font_color", Color(0.85, 0.4, 1.0))
+	_rotulo.text = "SEMAJ"
+	_rotulo.add_theme_color_override("font_color", Color(0.85, 0.6, 1.0))
+	_barra.color = Color(0.7, 0.2, 1.0)
+	Audio.parar_chefe()
+	Audio.musica_chefe(MUSICA_2)
+	Audio.tocar("pece_grito", 1.0, 0.0)
+	_lado = -_lado
+	_virada_t = 9.0
+	for k in 2:
+		_novo_raio(TAU * (k + 0.5) / 2.0)
+	_novo_interruptor(5.0)
+
+## online: o time já está no Semaj
+func forcar_luta2() -> void:
+	if luta == 1 and not morto:
+		vida = 0
+		_virar_semaj()
 
 # ---------- espinhos ----------
 func _novo_espinho() -> void:
@@ -543,7 +645,7 @@ func _morrer() -> void:
 		(r["linha"] as Node).queue_free()
 		(r["halo"] as Node).queue_free()
 	_raios.clear()
-	fase._mensagem("A RODA PAROU!", VERDE)
+	fase._mensagem("SEMAJ CAIU! A RODA PAROU!", VERDE)
 
 func _passo_morte(dt: float) -> void:
 	_fim_t += dt
@@ -566,7 +668,19 @@ func _posicionar_hud() -> void:
 	var v: Vector2 = fase.get_viewport().get_visible_rect().size
 	_barra_fundo.position = Vector2(v.x / 2.0 - 310.0, v.y - 70.0)
 	_barra.position = _barra_fundo.position + Vector2(10, 8)
-	_barra.size.x = 600.0 * maxf(0.0, float(vida) / VIDA)
+	_barra.size.x = 600.0 * maxf(0.0, float(vida) / (VIDA_1 if luta == 1 else VIDA_2))
+	if _cara:
+		var h := v.y * 0.9
+		var esc := h / 1003.0
+		var rs: float = (R + ESP) * (fase.camera.zoom.x if fase.camera else 0.125)
+		_cara.scale = Vector2.ONE * esc
+		_cara.position = Vector2(v.x / 2.0 + _cara_lado * rs * 0.72, v.y * 0.52 + sin(_t * 1.3) * 10.0 + _sumir * v.y * 0.9)
+		_aura.position = _cara.position
+		_aura.scale = Vector2.ONE * (h * 1.25 / 256.0)
+		var tr: TextureRect = get_meta("fundo")
+		var ef := maxf(v.x / 1024.0, v.y / 1536.0)
+		tr.size = Vector2(1024, 1536) * ef
+		tr.position = Vector2((v.x - tr.size.x) / 2.0, v.y - tr.size.y * 0.97)
 	_rotulo.position = _barra_fundo.position + Vector2(0, -42)
 	_aviso.size = Vector2(v.x, 100)
 	_aviso.position = Vector2(0, v.y * 0.2)

@@ -222,6 +222,7 @@ func _physics_process(delta: float) -> void:
 		ctamandura.atualizar(delta)
 	if Game.fase == 10 and roda:
 		roda.atualizar(delta)
+		_passo_fundo10()
 	if boss:
 		boss.atualizar(delta)
 		_rodada_boss(delta)
@@ -1622,7 +1623,7 @@ func _fim(ganhou: bool, motivo: String) -> void:
 	else:
 		if _alarme:
 			_alarme.stop()
-		aviso.text = {"esmagado": "ESMAGADO!", "agarrado": "TE PEGOU!", "laser": "DESINTEGRADO!", "pedra": "ESMAGADO!", "pego": "TE PEGOU!", "agua": "AFOGOU!", "buraco": "CAIU!", "caiu": "CAIU!"}.get(motivo, "MORREU!") + "\naperta R"
+		aviso.text = {"esmagado": "ESMAGADO!", "agarrado": "TE PEGOU!", "laser": "DESINTEGRADO!", "pedra": "ESMAGADO!", "pego": "TE PEGOU!", "agua": "AFOGOU!", "fogo": "QUEIMOU!", "buraco": "CAIU!", "caiu": "CAIU!"}.get(motivo, "MORREU!") + "\naperta R"
 		Audio.motor(false)
 		Audio.tocar("morte")
 		print("[FASE] perdeu %s x=%.0f" % [motivo, player.foco().global_position.x if is_instance_valid(player) else 0.0])
@@ -2523,7 +2524,7 @@ func _morte_corrida(motivo: String) -> void:
 	if _morto_online:
 		return
 	_morto_online = true
-	aviso.text = {"esmagado": "ESMAGADO!", "agarrado": "TE PEGOU!", "laser": "DESINTEGRADO!", "pedra": "ESMAGADO!", "agua": "AFOGOU!", "buraco": "CAIU!", "caiu": "CAIU!"}.get(motivo, "MORREU!") + "\nvoltando pro começo..."
+	aviso.text = {"esmagado": "ESMAGADO!", "agarrado": "TE PEGOU!", "laser": "DESINTEGRADO!", "pedra": "ESMAGADO!", "agua": "AFOGOU!", "fogo": "QUEIMOU!", "buraco": "CAIU!", "caiu": "CAIU!"}.get(motivo, "MORREU!") + "\nvoltando pro começo..."
 	aviso.add_theme_color_override("font_color", Color(1, 0.35, 0.3))
 	aviso.visible = true
 	Audio.tocar("morte")
@@ -3588,7 +3589,7 @@ func _mandar_vida_boss(dt: float) -> void:
 	var c = _chefe_atual()
 	if c == null:
 		return
-	Online.enviar("bv", {"r": Online.rodada, "v": c.vida, "l": c.luta if c == ctamandura else 1})
+	Online.enviar("bv", {"r": Online.rodada, "v": c.vida, "l": c.luta if c == ctamandura or c == roda else 1})
 
 func _chefe_atual():
 	for c in [adriano, geresch, ctamandura, roda]:
@@ -3608,8 +3609,11 @@ func _sinc_vida_boss(v: int, l: int) -> void:
 			for k in ctamandura.vida - v:
 				ctamandura.forcar_dano()
 	elif c == roda:
-		for k in maxi(0, roda.vida - v):
-			roda.levar_dano()
+		if l > roda.luta:                                    # o time já está no Semaj
+			roda.forcar_luta2()
+		elif l == roda.luta:
+			for k in maxi(0, roda.vida - v):
+				roda.levar_dano()
 	elif c == adriano:
 		for k in maxi(0, adriano.vida - v):
 			adriano.levar_choque()
@@ -3629,26 +3633,35 @@ var _cena10 := false
 
 func _fase_10() -> void:
 	var y := CHAO_Y
-	pecas.cor_chao = Color(0.1, 0.08, 0.1)
-	pecas.borda_neon = Color(1.0, 0.55, 0.15)
+	pecas.cor_chao = Color(0.15, 0.14, 0.16)
+	pecas.borda_neon = Color(1.0, 0.5, 0.2)
 	_parede_arena(-2700.0, y)
+	var camada := CanvasLayer.new()                  # cidade em protesto no fundo
+	camada.layer = -70
+	add_child(camada)
+	_fundo10 = TextureRect.new()
+	_fundo10.texture = load("res://assets/roda/fundo_fase.jpg")
+	_fundo10.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+	_fundo10.stretch_mode = TextureRect.STRETCH_SCALE
+	_fundo10.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	camada.add_child(_fundo10)
 	var p := _t_plano(Vector2(-2600, y), 3900, false)
 	pecas.placa(Vector2(-900, y), "LARGADA")
 	p = _t_plano(p, 1200, false)
-	p = _t_serras(p)
-	p = _t_plano(p, 900, false)
-	p = _t_prensa(p)
+	p = _barricada10(p)
+	p = _fogueira10(p)
 	p = _t_ondas(p, 3, 120.0)
-	p = _t_moveis(p)
-	p = _t_plano(p, 1000, false)
+	p = _t_tnt(p)
+	p = _t_tnt(p)
+	p = _fogueira10(p)
+	p = _t_salto(p)
+	p = _barricada10(p)
+	p = _t_predio(p)
 	p = _t_minas(p)
+	p = _fogueira10(p)
 	p = _t_ladeira(p, 2400, -450)
-	p = _t_serras(p)
 	p = _t_ladeira(p, 2400, 450)
-	p = _t_retrateis(p)
-	p = _t_plano(p, 1200, false)
-	p = _t_prensa(p)
-	p = _t_ondas(p, 4, 130.0)
+	p = _barricada10(p)
 	p = _t_plano(p, 2600, false)
 	var fim := _area(Vector2(p.x - 800.0, p.y - 700), Vector2(200, 1600))
 	fim.body_entered.connect(func(b: Node2D) -> void:
@@ -3661,6 +3674,61 @@ func _fase_10() -> void:
 		_meta_pos = player.foco().global_position
 		_fim(true, "venceu"))
 	_marcos([], Vector2(ARENA10_X + Roda.R * 3.0, y), y + 3000.0, false)
+
+var _fundo10: TextureRect
+
+func _passo_fundo10() -> void:
+	if not is_instance_valid(_fundo10) or not _fundo10.is_visible_in_tree():
+		return
+	var v := get_viewport().get_visible_rect().size
+	var esc := maxf(v.x / 2172.0, v.y / 724.0) * 1.12
+	_fundo10.size = Vector2(2172, 724) * esc
+	var cx := camera.global_position.x if is_instance_valid(camera) else 0.0
+	_fundo10.position = Vector2(-fposmod(cx * 0.012, _fundo10.size.x - v.x), (v.y - _fundo10.size.y) / 2.0)
+	if Game.checkpoint_x >= ARENA10_X - 5000.0:
+		_fundo10.visible = false
+
+## barricada de caixas atravessada na rua (dá pra empurrar), com cones na frente
+func _barricada10(p: Vector2) -> Vector2:
+	_t_plano(p, 2200, false)
+	pecas.cone(p + Vector2(250, 0))
+	pecas.rampa(p.x + 500, p.x + 1000, p.y, 150)
+	for k in 3:                                       # 2 embaixo, 1 em cima: dá pra pular ou derrubar
+		pecas.caixa(p + Vector2(1450 + [0.0, 160.0, 80.0][k], -75 - (150.0 if k == 2 else 0.0)), 150.0)
+	return p + Vector2(2200, 0)
+
+## pneus pegando fogo: rampa antes pra pular por cima do fogo
+func _fogueira10(p: Vector2) -> Vector2:
+	_t_plano(p, 2600, false)
+	pecas.rampa(p.x + 500, p.x + 1100, p.y, 260)
+	var c := p + Vector2(1500, 0)
+	for k in 3:                                       # pilha de pneus
+		var pneu := Polygon2D.new()
+		pneu.polygon = Pecas.retangulo(c + Vector2(-100 + k * 100, -45), Vector2(130, 90))
+		pneu.color = Color(0.08, 0.07, 0.08)
+		pneu.z_index = 1
+		add_child(pneu)
+	var fogo := CPUParticles2D.new()
+	fogo.position = c + Vector2(0, -60)
+	fogo.amount = 12 if Game.leve else 40
+	fogo.lifetime = 0.9
+	fogo.emission_shape = CPUParticles2D.EMISSION_SHAPE_RECTANGLE
+	fogo.emission_rect_extents = Vector2(160, 20)
+	fogo.direction = Vector2.UP
+	fogo.spread = 15.0
+	fogo.gravity = Vector2(0, -500)
+	fogo.initial_velocity_min = 150.0
+	fogo.initial_velocity_max = 350.0
+	fogo.scale_amount_min = 10.0
+	fogo.scale_amount_max = 22.0
+	var g := Gradient.new()
+	g.offsets = PackedFloat32Array([0.0, 0.4, 1.0])
+	g.colors = PackedColorArray([Color(1, 0.9, 0.4, 0.95), Color(1, 0.4, 0.1, 0.8), Color(0.2, 0.1, 0.1, 0.0)])
+	fogo.color_ramp = g
+	fogo.z_index = 2
+	add_child(fogo)
+	pecas.zona_letal(c + Vector2(0, -90), Vector2(300, 150), "fogo")
+	return p + Vector2(2600, 0)
 
 ## fim do percurso: tela escura e você aparece dentro da roda
 func _entrar_roda() -> void:
@@ -3686,11 +3754,10 @@ func _entrar_roda() -> void:
 		get_tree().reload_current_scene.call_deferred())
 
 func _inicio_10() -> void:
+	Audio.musica_chefe(Roda.MUSICA_1)                # a mesma música no percurso e no James
 	if Game.checkpoint_x < ARENA10_X - 5000.0:
-		Audio.musica_chefe("vendedor")
 		return
 	do_inicio = true
-	Audio.musica_chefe("cepe")
 	_comecar_boss(roda.comecar)
 	var meio := Node2D.new()                       # câmera parada no meio: a roda inteira na tela
 	meio.position = roda.centro
@@ -3720,6 +3787,14 @@ func _foto_roda() -> void:
 	var t0 := Time.get_ticks_msec()
 	while (Time.get_ticks_msec() - t0) < 70000 and is_inside_tree():
 		await get_tree().create_timer(0.1, true, false, true).timeout
+		if "semaj" in OS.get_cmdline_user_args() and roda and roda.ativo and roda.luta == 1 and (Time.get_ticks_msec() - t0) > 9000:
+			roda.forcar_luta2()
+		if not "na_roda" in OS.get_cmdline_user_args():          # percurso: só acelera e fotografa
+			Input.action_press("accelerate")
+			if (Time.get_ticks_msec() - t0) / 3000 > n:
+				n += 1
+				await _captura("roda_%02d" % n)
+			continue
 		if not roda or not roda.ativo or not is_instance_valid(player.chassi):
 			continue
 		var quer := 1.0 if roda._lado > 0.0 else -1.0
