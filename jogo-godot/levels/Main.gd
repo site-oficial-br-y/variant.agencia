@@ -3874,6 +3874,12 @@ func _foto_roda() -> void:
 		await get_tree().create_timer(0.1, true, false, true).timeout
 		if "semaj" in OS.get_cmdline_user_args() and roda and roda.ativo and roda.luta == 1 and (Time.get_ticks_msec() - t0) > 9000:
 			roda.forcar_luta2()
+		if "morrer" in OS.get_cmdline_user_args() and _ult_passo == 0 and (Time.get_ticks_msec() - t0) > 1500 and player.montado:
+			_ult_passo = -1
+			player.soltar_ragdoll(player.chassi.linear_velocity + Vector2(300, -500), false)
+			_fim(false, "caiu")
+			await get_tree().create_timer(0.35, true, false, true).timeout
+			await _captura("morte_fx")
 		if "ult_teste" in OS.get_cmdline_user_args():          # teste: liga a ult logo no começo
 			_ult_passo += 1
 			if _ult_passo == 2:

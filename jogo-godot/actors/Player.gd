@@ -558,7 +558,6 @@ func _especial(ch: Dictionary, delta: float) -> void:
 				if _mira:
 					_mira.visible = false
 				if _no_chao():
-					_usar(4.0)
 					_no_pulo = true
 					_pulo_t = 0.0
 					var v0 := _vel_pulo()
@@ -600,7 +599,7 @@ func _especial(ch: Dictionary, delta: float) -> void:
 					Audio.musica_ult(false)
 		"raquete":                         # Sartori: 6 s batendo a raquete sem parar: rebate tudo e fica rápido (não tira vida de chefe)
 			if apertou and recarga <= 0.0 and _repele_t <= 0.0:
-				_usar(72.0)                          # 6 s de ult + 18 s de recarga (reais, mundo 3x)
+				_usar(138.0)                         # 6 s de ult + 40 s de recarga (reais, mundo 3x)
 				_repele_t = 6.0
 				_repele_dano = true                  # rebate, mas não machuca chefe
 				_poses_raquete(true)
@@ -750,7 +749,7 @@ func _passo_raquete(dt: float) -> void:
 		if not golpe:                                # pose de saque -> raquetada: arco de luz, bolinha e tranco
 			_raq_spr.scale = Vector2(1.12, 0.92)
 			_arco_raquete()
-			_bolinha_padel()
+			_bolinha()
 			Audio.tocar("impacto_leve", 0.7, 0.25)
 
 ## arco de luz da raquetada (meia-lua dourada que abre e some na frente dele)
@@ -782,8 +781,8 @@ func _arco_raquete() -> void:
 		tw.parallel().tween_property(arco, "modulate:a", 0.0, 0.2 * Engine.time_scale)
 		tw.tween_callback(arco.queue_free)
 
-## bolinha de padel amarela saindo da raquete com rastro
-func _bolinha_padel() -> void:
+## bolinha de beach tennis saindo da raquete com rastro
+func _bolinha() -> void:
 	var b := Node2D.new()
 	b.z_index = 21
 	var bola := Polygon2D.new()
@@ -791,7 +790,7 @@ func _bolinha_padel() -> void:
 	for k in 16:
 		pts.append(Vector2(46, 0).rotated(TAU * k / 16.0))
 	bola.polygon = pts
-	bola.color = Color(0.85, 1.0, 0.2)
+	bola.color = Color(1.0, 0.55, 0.1)                 # bolinha de beach tennis
 	b.add_child(bola)
 	var risco := Line2D.new()
 	risco.points = PackedVector2Array([Vector2(-30, -20), Vector2(30, 20)])
@@ -838,14 +837,14 @@ func _flash_raquete() -> void:
 func _planar(delta: float) -> void:
 	if not montado or _no_chao():
 		return
-	var frente := signf(chassi.linear_velocity.x) if absf(chassi.linear_velocity.x) > 80.0 else 1.0
+	var dir := Input.get_axis("brake", "accelerate")        # só anda no ar se você mandar (pra trás também)
 	for rb in [chassi] + rodas:
 		var c := rb as RigidBody2D
 		c.apply_central_force(Vector2(0, -980.0 * 0.7) * c.mass)
 		if c.linear_velocity.y > 260.0:
 			c.linear_velocity.y = lerpf(c.linear_velocity.y, 260.0, 0.14)
-		if absf(c.linear_velocity.x) < 1700.0:
-			c.linear_velocity.x += frente * 1100.0 * delta
+		if dir != 0.0 and (signf(c.linear_velocity.x) != signf(dir) or absf(c.linear_velocity.x) < 1700.0):
+			c.linear_velocity.x += dir * 1400.0 * delta
 	chassi.apply_torque(inercia_chassi * (-wrapf(chassi.rotation, -PI, PI) * 14.0 - chassi.angular_velocity * 5.0))
 
 ## Bouças: ult no segundo botão: esquadrilha de aviões de papel. Saem dele em leque e voam no
@@ -1798,6 +1797,79 @@ func soltar_ragdoll(herda_vel: Vector2, pulo: bool = false) -> void:
 		juntas[j["b"]] = pj
 		_ang0[j["b"]] = corpos[j["b"]].rotation - corpos[j["a"]].rotation
 	boneco.queue_free()
+	if D.has("morte"):
+		_efeito_morte.call_deferred(herda_vel)
+
+## morte com a cara do personagem: Sartori quebra a raquete (a cabeça dela voa girando e espirram
+## bolinhas); Bouças amassa o avião de papel e solta uma chuva de papel picado
+func _efeito_morte(vel: Vector2) -> void:
+	var m: Dictionary = D["morte"]
+	for item in m.get("solta", []):
+		for peca in item.get("troca", {}):
+			if sprites.has(peca) and is_instance_valid(sprites[peca]):
+				var nova: String = item["troca"][peca]
+				var sp: Sprite2D = sprites[peca]
+				sp.position += centro_peca(nova) - centro_peca(peca)
+				sp.texture = load("res://assets/%s/%s.png" % [_pasta(), nova])
+		var rb := RigidBody2D.new()
+		rb.mass = 0.4
+		rb.collision_layer = 0b100
+		rb.collision_mask = 0b0001
+		rb.physics_material_override = _mat
+		var cs := CollisionShape2D.new()
+		var c := CircleShape2D.new()
+		c.radius = 90.0
+		cs.shape = c
+		rb.add_child(cs)
+		var sp2 := Sprite2D.new()
+		sp2.texture = load("res://assets/%s/%s.png" % [_pasta(), item["img"]])
+		sp2.z_index = 25
+		rb.add_child(sp2)
+		get_parent().add_child(rb)
+		rb.global_position = arte_para_mundo(centro_peca(item["img"]))
+		rb.linear_velocity = vel * 0.6 + Vector2(randf_range(400, 1100), randf_range(-1600, -900))
+		rb.angular_velocity = randf_range(14, 22) * (1.0 if randf() < 0.5 else -1.0)
+		Audio.tocar("metal", 1.0, 0.1)
+		get_tree().create_timer(25.0).timeout.connect(rb.queue_free)
+	for k in int(m.get("bolinhas", 0)):
+		var b := RigidBody2D.new()
+		b.mass = 0.1
+		b.collision_layer = 0b100
+		b.collision_mask = 0b0001
+		var bm := PhysicsMaterial.new()
+		bm.bounce = 0.75
+		b.physics_material_override = bm
+		var bc := CollisionShape2D.new()
+		var cc := CircleShape2D.new()
+		cc.radius = 40.0
+		bc.shape = cc
+		b.add_child(bc)
+		var bola := Polygon2D.new()
+		var pts := PackedVector2Array()
+		for i in 14:
+			pts.append(Vector2(40, 0).rotated(TAU * i / 14.0))
+		bola.polygon = pts
+		bola.color = Color(1.0, 0.55, 0.1)
+		bola.z_index = 25
+		b.add_child(bola)
+		get_parent().add_child(b)
+		b.global_position = foco().global_position + Vector2(randf_range(-150, 150), -200)
+		b.linear_velocity = vel * 0.4 + Vector2(randf_range(-900, 900), randf_range(-1800, -700))
+		get_tree().create_timer(20.0).timeout.connect(b.queue_free)
+	if m.get("papel", false):
+		for s in chassi.get_children():                    # avião amassa: achata, entorta e escurece
+			if s is Sprite2D or s is Node2D:
+				var tw := (s as Node2D).create_tween()
+				tw.tween_property(s, "scale", Vector2(0.82, 0.55), 0.35 * Engine.time_scale).set_trans(Tween.TRANS_BACK)
+				tw.parallel().tween_property(s, "skew", 0.35, 0.35 * Engine.time_scale)
+				tw.parallel().tween_property(s, "modulate", Color(0.72, 0.7, 0.68), 0.5 * Engine.time_scale)
+		chassi.angular_velocity += randf_range(-6, 6)
+		var pc = get_parent().get("pecas")
+		if pc:                                              # chuva de papel picado
+			for k in 3:
+				pc.particulas(chassi.global_position + Vector2(randf_range(-400, 400), -300), 30, Color(1, 1, 1, 1),
+					Color(0.95, 0.95, 0.9, 0.0), 500.0, 1800.0, 5.0, 25.0, 55.0, 250.0, Vector2.UP, 160.0)
+		Audio.tocar("caixa", 1.0, 0.1)
 
 # ---------- pancadas: sangue e desmembramento ----------
 ## tônus muscular: a junta tende a voltar ao ângulo da arte (mola + amortecimento),
