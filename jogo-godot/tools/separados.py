@@ -148,7 +148,7 @@ BOUCAS = {
         'piloto': ['tronco', 'cabeca', 'braco', 'coxa', 'canela'],
         'rodas': [{'corpo': 'roda0', 'c': [560.0, 822.0], 'r': 70, 'massa': 2.0, 'motriz': True},
                   {'corpo': 'roda1', 'c': [1250.0, 702.0], 'r': 60, 'massa': 1.5, 'motriz': True}],
-        'chassi': {'massa': 6.0, 'auto_equilibrio': False, 'vmax': 1000.0, 'forca': 0.0, 'planador': True,
+        'chassi': {'massa': 6.0, 'auto_equilibrio': False, 'vmax': 1450.0, 'forca': 0.0, 'planador': True, 'giro': 1.8,
                    'poly': [[80, 712], [215, 430], [320, 340], [700, 465], [1110, 505], [1590, 660], [490, 870]]},
         'corpos': {
             'cabeca': {'massa': 0.8, 'forma': ['circ', [810, 300], 110]},

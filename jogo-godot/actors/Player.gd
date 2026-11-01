@@ -604,6 +604,9 @@ func _especial(ch: Dictionary, delta: float) -> void:
 				_repele_t = 6.0
 				_repele_dano = true                  # rebate, mas não machuca chefe
 				_poses_raquete(true)
+				_ligar_aura(true)
+				_efeito_rebate(chassi.global_position + Vector2(0, -500))
+				_flash_raquete()
 				Audio.tocar("checkpoint", 1.0, 0.0)
 				Audio.tocar("turbo", 1.0, 0.0)
 			if _repele_t > 0.0:
@@ -614,9 +617,14 @@ func _especial(ch: Dictionary, delta: float) -> void:
 				_repele_fx -= dt_real
 				_rastro(Color(1.0, 0.85, 0.2, 0.45), 0.08)
 				_passo_raquete(dt_real)
+				if _aura:
+					var pulso := 1.0 + 0.15 * sin(Time.get_ticks_msec() / 70.0)
+					_aura.scale = Vector2.ONE * 10.0 * pulso
+					_aura.modulate.a = 0.6 + 0.25 * sin(Time.get_ticks_msec() / 110.0)
 				if _repele_t <= 0.0:
 					_rapido_t = 0.0
 					_poses_raquete(false)
+					_ligar_aura(false)
 		"dash":                            # Vini: arrancada muito rápida pra frente, com rastro
 			if apertou and recarga <= 0.0:
 				_usar(0.8)
@@ -734,11 +742,97 @@ func _passo_raquete(dt: float) -> void:
 	if not is_instance_valid(_raq_spr) or not _raq_spr.visible:
 		return
 	_raq_t += dt
-	if _raq_t >= 0.07:                              # troca de pose bem rápido: parece que bate sem parar
+	_raq_spr.scale = _raq_spr.scale.lerp(Vector2.ONE, minf(1.0, dt * 18.0))
+	if _raq_t >= 0.09:                              # troca de pose bem rápido: parece que bate sem parar
 		_raq_t = 0.0
-		_raq_spr.texture = _raq_tex[0] if _raq_spr.texture == _raq_tex[1] else _raq_tex[1]
-		if randf() < 0.35:
-			Audio.tocar("impacto_leve", 0.5, 0.2)
+		var golpe: bool = _raq_spr.texture == _raq_tex[0]
+		_raq_spr.texture = _raq_tex[1] if golpe else _raq_tex[0]
+		if not golpe:                                # pose de saque -> raquetada: arco de luz, bolinha e tranco
+			_raq_spr.scale = Vector2(1.12, 0.92)
+			_arco_raquete()
+			_bolinha_padel()
+			Audio.tocar("impacto_leve", 0.7, 0.25)
+
+## arco de luz da raquetada (meia-lua dourada que abre e some na frente dele)
+func _arco_raquete() -> void:
+	var add := CanvasItemMaterial.new()
+	add.blend_mode = CanvasItemMaterial.BLEND_MODE_ADD
+	var centro := chassi.global_position + Vector2(120, -620).rotated(chassi.rotation)
+	var ini := randf_range(-2.4, -1.6)
+	for i in 2:
+		var arco := Line2D.new()
+		var pts := PackedVector2Array()
+		for k in 15:
+			pts.append(Vector2(620, 0).rotated(ini + 2.3 * k / 14.0))
+		arco.points = pts
+		arco.width = 130.0 if i == 0 else 44.0
+		var larg := Curve.new()
+		larg.add_point(Vector2(0, 0.1))
+		larg.add_point(Vector2(0.6, 1.0))
+		larg.add_point(Vector2(1, 0.2))
+		arco.width_curve = larg
+		arco.default_color = Color(1, 0.75, 0.15, 0.85) if i == 0 else Color(1, 1, 0.85, 1.0)
+		arco.material = add
+		arco.z_index = 22
+		arco.global_position = centro
+		get_parent().add_child(arco)
+		var tw := arco.create_tween()
+		tw.tween_property(arco, "scale", Vector2.ONE * 1.35, 0.18 * Engine.time_scale).from(Vector2.ONE * 0.7)
+		tw.parallel().tween_property(arco, "rotation", 0.6, 0.18 * Engine.time_scale)
+		tw.parallel().tween_property(arco, "modulate:a", 0.0, 0.2 * Engine.time_scale)
+		tw.tween_callback(arco.queue_free)
+
+## bolinha de padel amarela saindo da raquete com rastro
+func _bolinha_padel() -> void:
+	var b := Node2D.new()
+	b.z_index = 21
+	var bola := Polygon2D.new()
+	var pts := PackedVector2Array()
+	for k in 16:
+		pts.append(Vector2(46, 0).rotated(TAU * k / 16.0))
+	bola.polygon = pts
+	bola.color = Color(0.85, 1.0, 0.2)
+	b.add_child(bola)
+	var risco := Line2D.new()
+	risco.points = PackedVector2Array([Vector2(-30, -20), Vector2(30, 20)])
+	risco.width = 8.0
+	risco.default_color = Color(1, 1, 1, 0.9)
+	b.add_child(risco)
+	get_parent().add_child(b)
+	var de := chassi.global_position + Vector2(260, -700).rotated(chassi.rotation)
+	b.global_position = de
+	var ate := de + Vector2(randf_range(1600, 2600), randf_range(-900, 300))
+	var tw := b.create_tween()
+	tw.tween_property(b, "global_position", ate, 0.45 * Engine.time_scale)
+	tw.parallel().tween_property(b, "rotation", 12.0, 0.45 * Engine.time_scale)
+	tw.parallel().tween_property(b, "modulate:a", 0.0, 0.45 * Engine.time_scale).set_delay(0.25 * Engine.time_scale)
+	tw.tween_callback(b.queue_free)
+
+## clarão dourado na tela quando liga a raquetada
+func _flash_raquete() -> void:
+	var cl := CanvasLayer.new()
+	cl.layer = 60
+	get_parent().add_child(cl)
+	var r := ColorRect.new()
+	r.color = Color(1, 0.85, 0.35, 0.55)
+	r.set_anchors_preset(Control.PRESET_FULL_RECT)
+	r.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	cl.add_child(r)
+	var t := Label.new()
+	t.text = "RAQUETADA!"
+	t.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	t.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	t.set_anchors_preset(Control.PRESET_FULL_RECT)
+	t.add_theme_font_size_override("font_size", 110)
+	t.add_theme_color_override("font_color", Color(1, 0.9, 0.3))
+	t.add_theme_color_override("font_outline_color", Color(0.3, 0.15, 0.0))
+	t.add_theme_constant_override("outline_size", 22)
+	cl.add_child(t)
+	var tw := cl.create_tween()
+	tw.tween_property(r, "color:a", 0.0, 0.35 * Engine.time_scale)
+	tw.parallel().tween_property(t, "scale", Vector2.ONE * 1.15, 0.9 * Engine.time_scale)
+	tw.parallel().tween_property(t, "modulate:a", 0.0, 0.9 * Engine.time_scale).set_delay(0.4 * Engine.time_scale)
+	tw.tween_callback(cl.queue_free)
 
 ## Bouças: o avião de papel plana sozinho quando está no ar (cai devagar e segue pra frente)
 func _planar(delta: float) -> void:
@@ -748,10 +842,10 @@ func _planar(delta: float) -> void:
 	for rb in [chassi] + rodas:
 		var c := rb as RigidBody2D
 		c.apply_central_force(Vector2(0, -980.0 * 0.7) * c.mass)
-		if c.linear_velocity.y > 300.0:
-			c.linear_velocity.y = lerpf(c.linear_velocity.y, 300.0, 0.12)
-		if absf(c.linear_velocity.x) < 1100.0:
-			c.linear_velocity.x += frente * 700.0 * delta
+		if c.linear_velocity.y > 260.0:
+			c.linear_velocity.y = lerpf(c.linear_velocity.y, 260.0, 0.14)
+		if absf(c.linear_velocity.x) < 1700.0:
+			c.linear_velocity.x += frente * 1100.0 * delta
 	chassi.apply_torque(inercia_chassi * (-wrapf(chassi.rotation, -PI, PI) * 14.0 - chassi.angular_velocity * 5.0))
 
 ## Bouças: ult no segundo botão: esquadrilha de aviões de papel. Saem dele em leque e voam no

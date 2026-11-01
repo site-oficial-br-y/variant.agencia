@@ -96,7 +96,7 @@
  "chassi": {
   "massa": 6.0,
   "auto_equilibrio": false,
-  "vmax": 1000.0,
+  "vmax": 1450.0,
   "forca": 0.0,
   "planador": true,
   "poly": [
@@ -128,7 +128,8 @@
     490,
     870
    ]
-  ]
+  ],
+  "giro": 1.8
  },
  "corpos": {
   "cabeca": {
