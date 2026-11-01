@@ -74,7 +74,7 @@ func arpoador(base: Vector2, altura := 330.0, periodo := 2.6, atraso := 0.0, ang
 	mira.default_color = Color(1, 0.1, 0.1, 0.0)
 	cano.add_child(mira)
 	_arpoadores.append({"no": no, "cano": cano, "ponta": ponta, "mira": mira, "periodo": periodo,
-		"t": -atraso, "base": base})
+		"t": -atraso - 1.0, "base": base})   # primeiro tiro depois de 1 s (não dispara no frame em que você chega)
 
 func _desenho_arpao() -> Node2D:
 	var n := Node2D.new()
@@ -141,6 +141,8 @@ func _passo_arpao(p: Dictionary, delta: float) -> void:
 	var pl := _player()
 	if pl == null or not fase.ativo:
 		return
+	if p.get("rebatido", false):
+		return
 	for alvo in _partes(pl):
 		var pos: Vector2 = (alvo[1] as Node2D).global_position
 		if pos.distance_to(Geometry2D.get_closest_point_to_segment(pos, ponta_de, ponta_ate)) < float(alvo[2]):
@@ -167,6 +169,13 @@ func _partes(pl: Player) -> Array:
 	return r
 
 func _acertou(p: Dictionary, pl: Player, parte: String, no_parte: Node2D) -> void:
+	if pl.repelir(no_parte.global_position):             # Sartori/Vitinho na ult: o arpão volta
+		p["dir"] = -(p["dir"] as Vector2)
+		(p["no"] as Node2D).rotation = (p["dir"] as Vector2).angle()
+		p["andou"] = 0.0
+		p["rebatido"] = true
+		Audio.tocar("metal", 1.0, 0.0)
+		return
 	if "secoes" in OS.get_cmdline_user_args(): print("[ARPAO] pegou ", parte)
 	var proj: Node2D = p["no"]
 	var dir: Vector2 = p["dir"]
@@ -425,6 +434,10 @@ func _passo_garrafa(g: Dictionary, dt: float) -> void:
 	no.queue_free()
 	(g["marca"] as Node).queue_free()
 	_garrafas.erase(g)
+	var pl := _player()
+	if pl and absf(_foco().x - alvo.x) < 500.0 and pl.repelir(alvo + Vector2(0, -300)):   # rebatida: volta pra multidão
+		Audio.tocar("impacto_leve", 1.0, 0.1)
+		return
 	Audio.tocar("caixa", 1.0, 0.2)
 	Audio.tocar("impacto_leve", 0.8)
 	fase.pecas.particulas(alvo + Vector2(0, -40), 20, Color(1, 0.8, 0.3, 1), Color(1, 0.3, 0.1, 0), 300.0, 900.0, 0.6, 30.0, 80.0, 900.0, Vector2.UP, 70.0)

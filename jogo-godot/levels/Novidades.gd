@@ -2,8 +2,10 @@ extends Control
 ## Aviso de atualização: aparece por cima do lobby na primeira vez que abre a versão nova.
 ## Fundo é a arte do patch escurecida; o X fecha e fica no lobby.
 
-const VERSAO := "2.7"
+const VERSAO := "2.9"
 const ITENS := [
+	["NOVO: SARTORI", "Padelista a pé. Na RAQUETADA ele bate a raquete sem parar: rebate arpão, molotov e golpe de chefe e fica bem rápido.", Color(1.0, 0.85, 0.2)],
+	["NOVO: BOUÇAS", "Avião de papel que plana sozinho, com turbo. No outro botão, a corrente de ar: sobe e plana rápido sem levar dano.", Color(0.9, 0.95, 1.0)],
 	["FASE 10: OLE OLE OLA", "A rua pegando fogo: arpão que arranca braço, canhão d'água da polícia, molotov voando e faixa de turbo pra pular os carros queimados.", Color(1.0, 0.55, 0.2)],
 	["JAMES E A RODA", "No fim você luta dentro de uma roda gigante que gira. O chão anda, ela vira do nada e o James te vigia do fundo.", Color(1.0, 0.75, 0.3)],
 	["E DEPOIS... SEMAJ", "Zerou o James? Ele volta do avesso. Roda mais rápida, mais lasers e música nova.", Color(0.8, 0.4, 1.0)],

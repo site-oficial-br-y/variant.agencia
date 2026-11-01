@@ -1744,8 +1744,8 @@ func _construir_hud() -> void:
 		[_toque("gas", Vector2.ZERO, 200, "accelerate"), func(v: Vector2) -> Vector2: return Vector2(v.x - 225, v.y - 225)],
 		[_toque_especial(), func(v: Vector2) -> Vector2: return Vector2(v.x - 195, v.y - 410)],
 		[_rotulo_carga(), func(v: Vector2) -> Vector2: return Vector2(v.x - 213, v.y - 452)],
-		[_rotulo_ult(), func(v: Vector2) -> Vector2: return Vector2(v.x - 405, v.y - 400) if Game.personagem in Game.ULT_DASH else Vector2(-9999, 0)],
-		[_toque_bomba(), func(v: Vector2) -> Vector2: return Vector2(v.x - 370, v.y - 360) if (Game.personagem in Game.BOMBA_EXTRA or Game.personagem in Game.NITRO_EXTRA or Game.personagem in Game.ULT_DASH) else Vector2(-9999, 0)],
+		[_rotulo_ult(), func(v: Vector2) -> Vector2: return Vector2(v.x - 405, v.y - 400) if (Game.personagem in Game.ULT_DASH or Game.personagem in Game.ULT_VENTO) else Vector2(-9999, 0)],
+		[_toque_bomba(), func(v: Vector2) -> Vector2: return Vector2(v.x - 370, v.y - 360) if (Game.personagem in Game.BOMBA_EXTRA or Game.personagem in Game.NITRO_EXTRA or Game.personagem in Game.ULT_DASH or Game.personagem in Game.ULT_VENTO) else Vector2(-9999, 0)],
 		[_botao("R", Vector2.ZERO, Vector2(80, 64), "reset"), func(v: Vector2) -> Vector2: return Vector2(v.x - 96, 14)],
 		[_botao("TROCAR", Vector2.ZERO, Vector2(180, 64), "menu"), func(v: Vector2) -> Vector2: return Vector2(v.x - 290, 14)],
 		[_volume(cl), func(v: Vector2) -> Vector2: return Vector2(v.x - 386, 14)],
@@ -1816,7 +1816,7 @@ func _toque_especial() -> TouchScreenButton:
 	return _botao_especial
 
 func _toque_bomba() -> TouchScreenButton:
-	var icone := "nitro" if Game.personagem in Game.NITRO_EXTRA else ("dash" if Game.personagem in Game.ULT_DASH else "bomba")
+	var icone := "nitro" if Game.personagem in Game.NITRO_EXTRA else ("dash" if (Game.personagem in Game.ULT_DASH or Game.personagem in Game.ULT_VENTO) else "bomba")
 	return _toque(icone, Vector2.ZERO, 130, "bomba")
 
 ## carga da habilidade embaixo do botão: PRONTO, segundos ou % do turbo
@@ -1843,7 +1843,7 @@ func _rotulo_ult() -> Label:
 	return _carga_ult
 
 func _atualizar_carga() -> void:
-	if _carga_ult and is_instance_valid(player) and Game.personagem in Game.ULT_DASH:
+	if _carga_ult and is_instance_valid(player) and (Game.personagem in Game.ULT_DASH or Game.personagem in Game.ULT_VENTO):
 		if player.ult_t > 0.0:
 			_carga_ult.text = "ULT!"
 			_carga_ult.add_theme_color_override("font_color", Color(1, 0.35, 0.3))
@@ -3864,6 +3864,8 @@ func _inicio_10() -> void:
 		tw.tween_property(preto, "color:a", 0.0, 0.5)
 		tw.tween_callback(cena.queue_free)
 
+var _ult_passo := 0
+
 ## teste: robô segura contra o giro e indo pro interruptor; tira fotos
 func _foto_roda() -> void:
 	var n := 0
@@ -3872,6 +3874,15 @@ func _foto_roda() -> void:
 		await get_tree().create_timer(0.1, true, false, true).timeout
 		if "semaj" in OS.get_cmdline_user_args() and roda and roda.ativo and roda.luta == 1 and (Time.get_ticks_msec() - t0) > 9000:
 			roda.forcar_luta2()
+		if "ult_teste" in OS.get_cmdline_user_args():          # teste: liga a ult logo no começo
+			_ult_passo += 1
+			if _ult_passo == 2:
+				Input.action_press("especial")
+				Input.action_press("bomba")
+			elif _ult_passo == 4:
+				Input.action_release("bomba")
+				if Game.personagem != "boucas":
+					Input.action_release("especial")
 		if not "na_roda" in OS.get_cmdline_user_args():          # percurso: só acelera e fotografa
 			if not "parado" in OS.get_cmdline_user_args():
 				Input.action_press("accelerate")

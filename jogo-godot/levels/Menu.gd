@@ -3,7 +3,7 @@ extends Control
 ## com moldura dourada e "SELECIONADO"), o personagem em pé no pedestal, nome grande
 ## com título, caixa do especial, barras de vida/velocidade/força e o botão JOGAR.
 
-const OPCOES := ["segway", "cadeira", "scooter", "monociclo", "gamer", "bicho", "wendell", "caio", "lima", "chefe", "vini"]
+const OPCOES := ["segway", "cadeira", "scooter", "monociclo", "gamer", "bicho", "wendell", "caio", "lima", "chefe", "sartori", "boucas", "vini"]
 ## título, especial, descrição, [vida, velocidade, força] (0..4)
 const INFO := {
 	"segway": ["EQUILIBRISTA", "SUPER SALTO", "Pulo reforçado pra passar por cima dos obstáculos.", [3, 3, 2]],
@@ -16,10 +16,12 @@ const INFO := {
 	"caio": ["EQUILIBRISTA", "RAPIDEZ", "Fica muito mais rápido por 8 segundos.", [2, 4, 2]],
 	"lima": ["DOMADOR", "MEGA PULO", "Segura pra mirar e solta: o gorila salta longe.", [4, 3, 4]],
 	"chefe": ["O CHEFE", "SEM CAMISA", "Tira a camisa e rebate os golpes dos chefões.", [3, 4, 4]],
+	"sartori": ["PADELISTA", "RAQUETADA", "Bate a raquete sem parar: rebate tudo que vem nele e fica bem rápido. Não machuca chefe.", [3, 4, 2]],
+	"boucas": ["AVIADOR", "TURBO + ULT", "O avião de papel plana sozinho no ar. Turbo no especial e, no outro botão, a corrente de ar: sobe e plana rápido sem levar dano.", [2, 4, 2]],
 	"vini": ["SECRETO", "DASH", "Arrancada rapidíssima. Segurando no ar, plana.", [2, 4, 3]],
 }
 const ICONES := {"salto": "pula", "turbo": "turbo", "pulo_duplo": "pula", "baloes": "baloes", "estrela": "estrela",
-	"rapido": "rapido", "mega_pulo": "mega_pulo", "repele": "repele", "dash": "dash"}
+	"rapido": "rapido", "mega_pulo": "mega_pulo", "repele": "repele", "dash": "dash", "raquete": "repele"}
 const ROXO := Color(0.6, 0.38, 1.0)
 const ROXO_ESCURO := Color(0.09, 0.05, 0.18, 0.82)
 const OURO := Color(1.0, 0.8, 0.25)

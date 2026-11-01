@@ -127,6 +127,46 @@ def rodar(nome, cfg, skin=''):
         print(f'  {k:10s} {p}')
 
 
+BOUCAS = {
+    'img_piloto': 'boucas_piloto_al.png',                 # piloto sentado já encaixado (escala 0,72 + deslocamento)
+    'img_veiculo': 'boucas_veiculo.png',
+    'ordem_piloto': ['cabeca', 'braco', 'canela', 'coxa', 'tronco'],
+    'partes': {
+        'cabeca': [(675, 170), (945, 170), (945, 390), (890, 398), (860, 422), (800, 428), (690, 422), (675, 350)],
+        'braco': [(850, 450), (910, 470), (912, 520), (1020, 525), (1092, 540), (1098, 592), (1050, 612), (950, 622),
+                  (830, 622), (750, 592), (750, 530), (810, 480)],
+        'canela': [(970, 622), (1050, 600), (1095, 670), (1112, 763), (1070, 770), (1020, 752), (980, 680)],
+        'coxa': [(850, 622), (970, 592), (1052, 592), (1062, 650), (980, 712), (932, 792), (850, 792)],
+        'tronco': [(655, 405), (885, 405), (915, 480), (885, 622), (925, 712), (935, 795), (705, 795), (650, 752)],
+    },
+    'frente_veiculo': {'frente': [(560, 562), (672, 580), (1052, 610), (1142, 566), (1600, 650), (1600, 900),
+                                  (400, 900), (400, 562)]},
+    'ordem_desenho': ['veiculo', 'canela', 'coxa', 'tronco', 'braco', 'cabeca', 'frente'],
+    'fisica': {
+        'corpo_de': {'veiculo': 'chassi', 'frente': 'chassi', 'cabeca': 'cabeca', 'tronco': 'tronco', 'braco': 'braco',
+                     'coxa': 'coxa', 'canela': 'canela'},
+        'piloto': ['tronco', 'cabeca', 'braco', 'coxa', 'canela'],
+        'rodas': [{'corpo': 'roda0', 'c': [560.0, 822.0], 'r': 70, 'massa': 2.0, 'motriz': True},
+                  {'corpo': 'roda1', 'c': [1250.0, 702.0], 'r': 60, 'massa': 1.5, 'motriz': True}],
+        'chassi': {'massa': 6.0, 'auto_equilibrio': False, 'vmax': 1000.0, 'forca': 0.0, 'planador': True,
+                   'poly': [[80, 712], [215, 430], [320, 340], [700, 465], [1110, 505], [1590, 660], [490, 870]]},
+        'corpos': {
+            'cabeca': {'massa': 0.8, 'forma': ['circ', [810, 300], 110]},
+            'tronco': {'massa': 2.0, 'forma': ['caps', [780, 480], [800, 720], 100]},
+            'braco': {'massa': 0.5, 'forma': ['caps', [870, 480], [1060, 560], 40]},
+            'coxa': {'massa': 1.1, 'forma': ['caps', [860, 720], [1040, 620], 60]},
+            'canela': {'massa': 0.9, 'forma': ['caps', [1050, 630], [1080, 750], 50]},
+        },
+        'juntas': [
+            {'a': 'tronco', 'b': 'cabeca', 'p': [800, 410], 'lim': 40},
+            {'a': 'tronco', 'b': 'braco', 'p': [870, 470], 'lim': 80},
+            {'a': 'tronco', 'b': 'coxa', 'p': [860, 720], 'lim': 70},
+            {'a': 'coxa', 'b': 'canela', 'p': [1050, 620], 'lim': 75},
+        ],
+    },
+}
+
+
 def zig(x0, x1, y, amp=22, passo=26):
     pts, x, k = [], x1, 0
     while x > x0:
@@ -257,7 +297,7 @@ if __name__ == '__main__':
     for arg in sys.argv[1:]:
         n, _, skin = arg.partition(':')
         print('==', arg)
-        cfg = dict({'lima': LIMA, 'chefe': CHEFE}[n])
+        cfg = dict({'lima': LIMA, 'chefe': CHEFE, 'boucas': BOUCAS}[n])
         if (n, skin) == ('lima', 'dourado'):
             cfg['pelo_todo'] = True
             cfg['escurecer'] = 0.72

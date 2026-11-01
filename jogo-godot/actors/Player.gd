@@ -420,22 +420,27 @@ func _montar_turbo(ch: Dictionary) -> void:
 		xs.append(float(p[0]))
 		ys.append(float(p[1]))
 	var traseira := Vector2(xs.min() - 30.0, lerpf(ys.min(), ys.max(), 0.62)) - origem
+	if ch.get("planador", false):                     # avião de papel: o jato sai do vinco do meio, sem bocal de metal
+		traseira = Vector2(xs.min() + 140.0, lerpf(ys.min(), ys.max(), 0.55)) - origem
 	var bocal := Node2D.new()
 	bocal.position = traseira
 	bocal.scale = Vector2.ONE * 1.35
 	bocal.z_index = 12
 	chassi.add_child(bocal)
 	var corpo := Polygon2D.new()
+	corpo.visible = not ch.get("planador", false)
 	corpo.polygon = PackedVector2Array([Vector2(110, -46), Vector2(-40, -62), Vector2(-40, 62), Vector2(110, 46)])
 	corpo.color = Color(0.42, 0.44, 0.48)
 	bocal.add_child(corpo)
 	var aro := Polygon2D.new()
 	aro.polygon = PackedVector2Array([Vector2(-40, -62), Vector2(-62, -70), Vector2(-62, 70), Vector2(-40, 62)])
 	aro.color = Color(0.2, 0.2, 0.23)
+	aro.visible = corpo.visible
 	bocal.add_child(aro)
 	var faixa := Polygon2D.new()
 	faixa.polygon = PackedVector2Array([Vector2(30, -52), Vector2(55, -50), Vector2(55, 50), Vector2(30, 52)])
 	faixa.color = Color(0.85, 0.2, 0.15)
+	faixa.visible = corpo.visible
 	bocal.add_child(faixa)
 	var g := Gradient.new()
 	g.set_color(0, Color(1, 1, 1, 1))
@@ -593,6 +598,25 @@ func _especial(ch: Dictionary, delta: float) -> void:
 					_vestir(false)
 					_ligar_aura(false)
 					Audio.musica_ult(false)
+		"raquete":                         # Sartori: 6 s batendo a raquete sem parar: rebate tudo e fica rápido (não tira vida de chefe)
+			if apertou and recarga <= 0.0 and _repele_t <= 0.0:
+				_usar(72.0)                          # 6 s de ult + 18 s de recarga (reais, mundo 3x)
+				_repele_t = 6.0
+				_repele_dano = true                  # rebate, mas não machuca chefe
+				_poses_raquete(true)
+				Audio.tocar("checkpoint", 1.0, 0.0)
+				Audio.tocar("turbo", 1.0, 0.0)
+			if _repele_t > 0.0:
+				var dt_real := delta / Engine.time_scale
+				_repele_t -= dt_real
+				imortal_t = maxf(_repele_t, 0.0)
+				_rapido_t = maxf(_repele_t, 0.0)
+				_repele_fx -= dt_real
+				_rastro(Color(1.0, 0.85, 0.2, 0.45), 0.08)
+				_passo_raquete(dt_real)
+				if _repele_t <= 0.0:
+					_rapido_t = 0.0
+					_poses_raquete(false)
 		"dash":                            # Vini: arrancada muito rápida pra frente, com rastro
 			if apertou and recarga <= 0.0:
 				_usar(0.8)
@@ -669,11 +693,96 @@ func _especial(ch: Dictionary, delta: float) -> void:
 			nitro = minf(1.0, nitro + 0.15 * delta / Engine.time_scale)
 	if personagem in Game.ULT_DASH:
 		_ult_gorisch(ch, delta / Engine.time_scale)
+	if ch.get("planador", false):
+		_planar(delta)
+	if personagem in Game.ULT_VENTO:
+		_ult_vento(delta / Engine.time_scale)
 	if personagem in Game.BOMBA_EXTRA:               # segundo botão: bomba com recarga própria
 		recarga_bomba = maxf(0.0, recarga_bomba - delta)
 		if Input.is_action_just_pressed("bomba") and recarga_bomba <= 0.0:
 			recarga_bomba = 2.5
 			_lancar_bomba()
+
+## Sartori: na ult o boneco some e ficam as duas fotos da raquetada alternando bem rápido
+var _raq_spr: Sprite2D
+var _raq_t := 0.0
+var _raq_tex: Array = []
+
+func _poses_raquete(liga: bool) -> void:
+	if not D.has("ult_poses"):
+		return
+	if liga and montado:
+		if _raq_spr == null:
+			var u: Dictionary = D["ult_poses"]
+			for a in u["arqs"]:
+				_raq_tex.append(load("res://assets/%s/%s.png" % [_pasta(), a]))
+			_raq_spr = Sprite2D.new()
+			_raq_spr.centered = false
+			_raq_spr.texture = _raq_tex[0]
+			_raq_spr.position = Vector2(u["x"], u["y"]) - origem
+			_raq_spr.z_index = 6
+			chassi.add_child(_raq_spr)
+		_raq_spr.visible = true
+		boneco.visible = false
+	else:
+		if is_instance_valid(_raq_spr):
+			_raq_spr.visible = false
+		if is_instance_valid(boneco) and montado:
+			boneco.visible = true
+
+func _passo_raquete(dt: float) -> void:
+	if not is_instance_valid(_raq_spr) or not _raq_spr.visible:
+		return
+	_raq_t += dt
+	if _raq_t >= 0.07:                              # troca de pose bem rápido: parece que bate sem parar
+		_raq_t = 0.0
+		_raq_spr.texture = _raq_tex[0] if _raq_spr.texture == _raq_tex[1] else _raq_tex[1]
+		if randf() < 0.35:
+			Audio.tocar("impacto_leve", 0.5, 0.2)
+
+## Bouças: o avião de papel plana sozinho quando está no ar (cai devagar e segue pra frente)
+func _planar(delta: float) -> void:
+	if not montado or _no_chao():
+		return
+	var frente := signf(chassi.linear_velocity.x) if absf(chassi.linear_velocity.x) > 80.0 else 1.0
+	for rb in [chassi] + rodas:
+		var c := rb as RigidBody2D
+		c.apply_central_force(Vector2(0, -980.0 * 0.7) * c.mass)
+		if c.linear_velocity.y > 300.0:
+			c.linear_velocity.y = lerpf(c.linear_velocity.y, 300.0, 0.12)
+		if absf(c.linear_velocity.x) < 1100.0:
+			c.linear_velocity.x += frente * 700.0 * delta
+	chassi.apply_torque(inercia_chassi * (-wrapf(chassi.rotation, -PI, PI) * 14.0 - chassi.angular_velocity * 5.0))
+
+## Bouças: ult no segundo botão (corrente de ar): rajada joga o avião lá em cima e ele plana
+## rápido e intocável por 5 s, soltando papel picado
+const ULT_VENTO_DURA := 5.0
+const ULT_VENTO_RECARGA := 18.0
+func _ult_vento(dt: float) -> void:
+	var aperta := Input.is_action_just_pressed("bomba")
+	if ult_t <= 0.0:
+		recarga_ult = maxf(0.0, recarga_ult - dt)
+		if aperta and recarga_ult <= 0.0 and montado:
+			ult_t = ULT_VENTO_DURA
+			Audio.tocar("turbo", 1.0, 0.0)
+			Audio.tocar("baloes", 0.8, 0.0)
+		return
+	if not montado:
+		ult_t = 0.0
+		recarga_ult = ULT_VENTO_RECARGA
+		return
+	ult_t -= dt
+	imortal_t = maxf(ult_t, 0.0)
+	var sobe := ult_t > ULT_VENTO_DURA - 0.8                  # primeiro a rajada pra cima, depois plana rápido
+	for rb in [chassi] + rodas:
+		var c := rb as RigidBody2D
+		c.apply_central_force(Vector2(0, -980.0) * c.mass)     # sem gravidade enquanto dura
+		var alvo := Vector2(1900.0, -1700.0) if sobe else Vector2(2600.0, 0.0)
+		c.linear_velocity = c.linear_velocity.lerp(alvo, 0.08)
+	chassi.apply_torque(inercia_chassi * (-wrapf(chassi.rotation, -PI, PI) * 20.0 - chassi.angular_velocity * 6.0))
+	_rastro(Color(1.0, 1.0, 1.0, 0.55), 0.06)
+	if ult_t <= 0.0:
+		recarga_ult = ULT_VENTO_RECARGA
 
 ## Gorisch: segundo botão liga a ult (impulso de velocidade + pose voando). Na ult, o botão
 ## de novo dá dash vermelho. Depois recarrega; o turbo de porcentagem continua no especial.
@@ -848,7 +957,7 @@ func pronto() -> float:
 		return 1.0
 	if habilidade == "mega_pulo" and _mirando:
 		return 1.0
-	if habilidade == "repele" and _repele_t > 0.0:
+	if habilidade in ["repele", "raquete"] and _repele_t > 0.0:
 		return 1.0
 	return 1.0 - recarga / maxf(recarga_total, 0.001)
 
@@ -1479,6 +1588,7 @@ func _angulo_chao_embaixo() -> float:
 
 # ---------- montado -> ragdoll ----------
 func soltar_ragdoll(herda_vel: Vector2, pulo: bool = false) -> void:
+	_poses_raquete(false)
 	if _repele_t > 0.0:
 		_repele_t = 0.0
 		_ligar_aura(false)

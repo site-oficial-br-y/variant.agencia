@@ -188,6 +188,47 @@ VINI = {
     },
 }
 
+SARTORI = {
+    'ordem_recorte': ['cabeca', 'braco', 'tronco', 'coxa', 'canela'],
+    'partes': {
+        'cabeca': [(265, 55), (500, 55), (500, 295), (445, 300), (390, 330), (330, 300), (265, 250)],
+        'braco': [(500, 285), (600, 250), (720, 185), (790, 140), (840, 0), (1024, 0), (1024, 215), (830, 235),
+                  (760, 275), (640, 340), (605, 380), (540, 375), (500, 330)],
+        'tronco': [(255, 290), (640, 290), (640, 560), (612, 1000), (320, 1000), (255, 600)],
+        'coxa': [(295, 985), (440, 985), (430, 1100), (412, 1192), (318, 1192), (300, 1100)],
+        'canela': [(295, 1185), (418, 1185), (402, 1300), (392, 1365), (545, 1445), (545, 1512), (255, 1512),
+                   (268, 1380), (305, 1300)],
+    },
+    'copias': {'coxa2': 'coxa', 'canela2': 'canela'},
+    'completar': {'tronco': 45},
+    'ordem_desenho': ['coxa2', 'canela2', 'tronco', 'coxa', 'canela', 'braco', 'cabeca'],
+    'fisica': {
+        'corpo_de': {'cabeca': 'cabeca', 'tronco': 'tronco', 'braco': 'braco', 'coxa': 'coxa', 'canela': 'canela',
+                     'coxa2': 'coxa2', 'canela2': 'canela2'},
+        'piloto': ['tronco', 'cabeca', 'braco', 'coxa', 'canela', 'coxa2', 'canela2'],
+        'rodas': [{'corpo': 'roda0', 'c': [370.0, 1405.0], 'r': 100, 'massa': 2.0, 'motriz': True}],
+        'chassi': {'massa': 5.0, 'auto_equilibrio': True, 'andar': True, 'preciso': True, 'vmax': 1000.0,
+                   'forca': 90000.0, 'mastro': {'x': 370.0, 'y0': 300.0, 'y1': 1405.0, 'w': 90.0}},
+        'corpos': {
+            'cabeca': {'massa': 0.8, 'forma': ['circ', [390, 190], 115]},
+            'tronco': {'massa': 2.0, 'forma': ['caps', [430, 420], [450, 900], 120]},
+            'braco': {'massa': 0.5, 'forma': ['caps', [560, 320], [790, 200], 42]},
+            'coxa': {'massa': 0.9, 'forma': ['caps', [370, 1010], [365, 1180], 62]},
+            'canela': {'massa': 0.8, 'forma': ['caps', [360, 1200], [350, 1440], 58]},
+            'coxa2': {'massa': 0.9, 'forma': ['caps', [370, 1010], [365, 1180], 62]},
+            'canela2': {'massa': 0.8, 'forma': ['caps', [360, 1200], [350, 1440], 58]},
+        },
+        'juntas': [
+            {'a': 'tronco', 'b': 'cabeca', 'p': [390, 300], 'lim': 40},
+            {'a': 'tronco', 'b': 'braco', 'p': [560, 320], 'lim': 80},
+            {'a': 'tronco', 'b': 'coxa', 'p': [370, 990], 'lim': 70},
+            {'a': 'coxa', 'b': 'canela', 'p': [362, 1190], 'lim': 75},
+            {'a': 'tronco', 'b': 'coxa2', 'p': [370, 990], 'lim': 70},
+            {'a': 'coxa2', 'b': 'canela2', 'p': [362, 1190], 'lim': 75},
+        ],
+    },
+}
+
 LIMA = {
     'ordem_recorte': ['cabeca', 'braco', 'canela', 'coxa', 'tronco', 'gbraco', 'gperna', 'gperna2'],
     'partes': {
@@ -244,4 +285,4 @@ if __name__ == '__main__':
     for arg in sys.argv[1:]:
         n, _, skin = arg.partition(':')
         print('==', arg)
-        rodar(n, {'caio': CAIO, 'vini': VINI, 'lima': LIMA}[n], skin)
+        rodar(n, {'caio': CAIO, 'vini': VINI, 'lima': LIMA, 'sartori': SARTORI}[n], skin)
