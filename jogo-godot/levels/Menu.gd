@@ -17,7 +17,7 @@ const INFO := {
 	"lima": ["DOMADOR", "MEGA PULO", "Segura pra mirar e solta: o gorila salta longe.", [4, 3, 4]],
 	"chefe": ["O CHEFE", "SEM CAMISA", "Tira a camisa e rebate os golpes dos chefões.", [3, 4, 4]],
 	"sartori": ["PADELISTA", "RAQUETADA", "Bate a raquete sem parar: rebate tudo que vem nele e fica bem rápido. Não machuca chefe.", [3, 4, 2]],
-	"boucas": ["AVIADOR", "TURBO + ULT", "O avião de papel plana sozinho no ar. Turbo no especial e, no outro botão, a corrente de ar: sobe e plana rápido sem levar dano.", [2, 4, 2]],
+	"boucas": ["AVIADOR", "TURBO + ESQUADRILHA", "O avião de papel plana sozinho no ar. Turbo no especial e, no outro botão, a esquadrilha: 14 aviões de papel que voam no chefe e tiram vida dele.", [2, 4, 2]],
 	"vini": ["SECRETO", "DASH", "Arrancada rapidíssima. Segurando no ar, plana.", [2, 4, 3]],
 }
 const ICONES := {"salto": "pula", "turbo": "turbo", "pulo_duplo": "pula", "baloes": "baloes", "estrela": "estrela",

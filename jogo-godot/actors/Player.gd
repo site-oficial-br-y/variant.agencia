@@ -754,35 +754,83 @@ func _planar(delta: float) -> void:
 			c.linear_velocity.x += frente * 700.0 * delta
 	chassi.apply_torque(inercia_chassi * (-wrapf(chassi.rotation, -PI, PI) * 14.0 - chassi.angular_velocity * 5.0))
 
-## Bouças: ult no segundo botão (corrente de ar): rajada joga o avião lá em cima e ele plana
-## rápido e intocável por 5 s, soltando papel picado
-const ULT_VENTO_DURA := 5.0
-const ULT_VENTO_RECARGA := 18.0
+## Bouças: ult no segundo botão: esquadrilha de aviões de papel. Saem dele em leque e voam no
+## chefe (de cada 7 que acertam, 1 de vida); sem chefe na tela, explodem lá na frente.
+const ULT_AVIOES := 14
+const ULT_AVIOES_RECARGA := 16.0
+var _avioes_falta := 0
+var _aviao_t := 0.0
+var _aviao_n := 0
+
 func _ult_vento(dt: float) -> void:
-	var aperta := Input.is_action_just_pressed("bomba")
 	if ult_t <= 0.0:
 		recarga_ult = maxf(0.0, recarga_ult - dt)
-		if aperta and recarga_ult <= 0.0 and montado:
-			ult_t = ULT_VENTO_DURA
-			Audio.tocar("turbo", 1.0, 0.0)
-			Audio.tocar("baloes", 0.8, 0.0)
-		return
-	if not montado:
-		ult_t = 0.0
-		recarga_ult = ULT_VENTO_RECARGA
+		if Input.is_action_just_pressed("bomba") and recarga_ult <= 0.0 and montado:
+			ult_t = 2.2
+			_avioes_falta = ULT_AVIOES
+			_aviao_n = 0
+			Audio.tocar("baloes", 1.0, 0.0)
 		return
 	ult_t -= dt
-	imortal_t = maxf(ult_t, 0.0)
-	var sobe := ult_t > ULT_VENTO_DURA - 0.8                  # primeiro a rajada pra cima, depois plana rápido
-	for rb in [chassi] + rodas:
-		var c := rb as RigidBody2D
-		c.apply_central_force(Vector2(0, -980.0) * c.mass)     # sem gravidade enquanto dura
-		var alvo := Vector2(1900.0, -1700.0) if sobe else Vector2(2600.0, 0.0)
-		c.linear_velocity = c.linear_velocity.lerp(alvo, 0.08)
-	chassi.apply_torque(inercia_chassi * (-wrapf(chassi.rotation, -PI, PI) * 20.0 - chassi.angular_velocity * 6.0))
-	_rastro(Color(1.0, 1.0, 1.0, 0.55), 0.06)
+	_aviao_t -= dt
+	if _aviao_t <= 0.0 and _avioes_falta > 0:
+		_aviao_t = 0.12
+		_avioes_falta -= 1
+		_aviao_n += 1
+		_lancar_aviao(_aviao_n)
 	if ult_t <= 0.0:
-		recarga_ult = ULT_VENTO_RECARGA
+		recarga_ult = ULT_AVIOES_RECARGA
+
+func _lancar_aviao(n: int) -> void:
+	var fase := get_parent()
+	var de := chassi.global_position + Vector2(randf_range(-150, 150), randf_range(-350, -150))
+	var alvo = fase.call("alvo_chefe") if fase.has_method("alvo_chefe") else null
+	var tem_chefe := alvo != null
+	var ate: Vector2 = alvo if tem_chefe else de + Vector2(randf_range(3500, 5200), randf_range(-1800, -600))
+	ate += Vector2(randf_range(-260, 260), randf_range(-200, 200))
+	var meio := de.lerp(ate, 0.5) + Vector2(randf_range(-900, 900), randf_range(-1600, -700))
+	var av := Node2D.new()
+	av.z_index = 30
+	var corpo := Polygon2D.new()
+	corpo.polygon = PackedVector2Array([Vector2(110, 0), Vector2(-90, -55), Vector2(-55, 0), Vector2(-90, 18)])
+	corpo.color = Color(0.97, 0.96, 0.93)
+	av.add_child(corpo)
+	var dobra := Polygon2D.new()
+	dobra.polygon = PackedVector2Array([Vector2(110, 0), Vector2(-55, 0), Vector2(-90, 18)])
+	dobra.color = Color(0.78, 0.78, 0.82)
+	av.add_child(dobra)
+	var risco := Line2D.new()
+	risco.points = PackedVector2Array([Vector2(-90, -10), Vector2(-260, -10)])
+	risco.width = 14.0
+	risco.default_color = Color(1, 1, 1, 0.35)
+	av.add_child(risco)
+	var cam: Camera2D = get_viewport().get_camera_2d()
+	av.scale = Vector2.ONE * 1.4 * (maxf(1.0, 0.26 / cam.zoom.x) if cam else 1.0)   # câmera aberta (arena): aviões maiores
+	fase.add_child(av)
+	av.global_position = de
+	Audio.tocar("pulo", 0.5, 0.3)
+	var dura := randf_range(0.9, 1.25)
+	var tw := av.create_tween()
+	tw.set_process_mode(Tween.TWEEN_PROCESS_IDLE)
+	var antes := [de]
+	tw.tween_method(func(u: float) -> void:
+		if not is_instance_valid(av):
+			return
+		var p := de.lerp(meio, u).lerp(meio.lerp(ate, u), u)
+		av.rotation = (p - (antes[0] as Vector2)).angle()
+		antes[0] = p
+		av.global_position = p, 0.0, 1.0, dura)
+	tw.tween_callback(func() -> void:
+		if not is_instance_valid(av):
+			return
+		var pos := av.global_position
+		av.queue_free()
+		var pecas = fase.get("pecas")
+		if pecas:
+			pecas.particulas(pos, 16, Color(1, 1, 1, 1), Color(1, 0.9, 0.6, 0), 300.0, 1200.0, 0.6, 30.0, 70.0, 600.0, Vector2.UP, 180.0)
+		Audio.tocar("impacto_leve", 0.7, 0.2)
+		if tem_chefe and n % 7 == 0 and fase.has_method("dano_ult_chefe"):
+			fase.call("dano_ult_chefe"))
 
 ## Gorisch: segundo botão liga a ult (impulso de velocidade + pose voando). Na ult, o botão
 ## de novo dá dash vermelho. Depois recarrega; o turbo de porcentagem continua no especial.

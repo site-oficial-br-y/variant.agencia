@@ -3915,3 +3915,46 @@ func _foto_roda() -> void:
 			print("[RODA] t=%d vida=%d estado=%s omega=%.2f vivo=%s" % [n * 3, roda.vida, roda._estado, roda.omega, ativo])
 			await _captura("roda_%02d" % n)
 	get_tree().quit()
+
+# ---------- ult do Bouças: aviões de papel no chefe ----------
+func _chefe_vivo():
+	if is_instance_valid(boss) and not boss.morto:
+		return boss
+	for c in [adriano, geresch, ctamandura, roda]:
+		if is_instance_valid(c) and c.ativo and not c.morto:
+			return c
+	if is_instance_valid(vendedor) and vendedor.ativo and not vendedor.acabou:
+		return vendedor
+	return null
+
+## onde os aviões miram: o chefe fica no fundo, no alto da tela (null = sem chefe)
+func alvo_chefe():
+	var c = _chefe_vivo()
+	if c == null or not is_instance_valid(camera):
+		return null
+	if c == roda:
+		return roda._cara_no_mundo()
+	var v := get_viewport().get_visible_rect().size
+	return camera.get_screen_center_position() + Vector2(0, -v.y * 0.28) / camera.zoom
+
+## um acerto da esquadrilha: tira 1 de vida do chefe que estiver lutando
+func dano_ult_chefe() -> void:
+	var c = _chefe_vivo()
+	if c == null:
+		return
+	_mensagem("ESQUADRILHA DE PAPEL!", Color(1, 1, 1))
+	if c == boss or c == adriano:
+		c.levar_choque()
+	elif c == roda:
+		roda.levar_dano()
+	elif c == ctamandura:
+		ctamandura.forcar_dano()
+	elif c == geresch:
+		if geresch.vida <= 1:
+			geresch._levar_dano(1)
+		else:
+			geresch.vida -= 1
+			geresch._trocar_imagem()
+			_mensagem("-1 NO GERESCH!", Color(0.5, 1, 0.6))
+	elif c == vendedor:
+		vendedor._t += 4.0                                  # vendedor cansa mais rápido
