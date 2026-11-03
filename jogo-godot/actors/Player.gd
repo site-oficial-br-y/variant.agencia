@@ -661,7 +661,8 @@ func _especial(ch: Dictionary, delta: float) -> void:
 				chassi.modulate = cor if imortal_t > 0.0 else Color.WHITE
 				for r in rodas:
 					(r as Node2D).modulate = chassi.modulate
-		"teleporte":                       # Wendell: some num clarão e reaparece lá na frente (estilo Goku)
+		"teleporte":                       # Bicho: some num clarão e reaparece lá na frente (estilo Goku)
+			imortal_t = maxf(0.0, imortal_t - delta)           # ninguém mais desconta: a estrela é do Wendell
 			if _tele_t > 0.0:
 				_tele_t -= delta
 				imortal_t = maxf(imortal_t, _tele_t)
