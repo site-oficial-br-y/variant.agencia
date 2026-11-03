@@ -132,6 +132,7 @@ func _pos_jogador() -> void:
 	add_child(player)
 	move_child(player, sangue.get_index())
 	camera.alvo = player.foco()
+	cosm = Cosmeticos.aplicar(self, player)
 
 	if "teste_queda" in OS.get_cmdline_user_args():
 		_teste_queda()
@@ -191,6 +192,7 @@ func _process(delta: float) -> void:
 		_atualizar_carga()
 		if dist_label:
 			dist_label.text = "%s   %d m   %.1f s" % [Game.NOMES.get(Game.personagem, ""), recorde, tempo]
+			_moldura(dist_label)
 
 ## bola de demolição: pêndulo CINEMÁTICO (AnimatableBody2D) — segue θ(t)=θ0·cos(ωt),
 ## nunca estica nem perde energia, e empurra corpos com massa "infinita"
@@ -1630,7 +1632,14 @@ func _on_checkpoint(b: Node2D, ck: Vector2) -> void:
 		Audio.tocar("checkpoint")
 		print("[FASE] checkpoint")
 
+var cosm: Cosmeticos
+var _fx_morte := false
+
 func _fim(ganhou: bool, motivo: String) -> void:
+	if not ganhou and not _fx_morte and ativo and is_instance_valid(cosm):
+		_fx_morte = true
+		cosm.morrer()
+		get_tree().create_timer(1.0, true, false, true).timeout.connect(func() -> void: _fx_morte = false)
 	if not ativo or _queda7:                     # caindo do terraço pra luta: ninguém morre
 		return
 	if Online.ativo and not ganhou and Game.fase in Game.MODOS_ONLINE:   # mata-mata / batata: tá fora
@@ -1650,6 +1659,10 @@ func _fim(ganhou: bool, motivo: String) -> void:
 	if ganhou:
 		_esconder_barras_chefe()
 		var novo := do_inicio and Game.registrar_vitoria(Game.fase, tempo)
+		if not Online.ativo:                          # XP do passe (o servidor decide quanto)
+			Passe.ganhar("fase", Game.fase)
+			if novo:
+				get_tree().create_timer(1.5, true, false, true).timeout.connect(func() -> void: Passe.ganhar("recorde"))
 		if not Online.ativo:                          # ranking público (se tiver conta)
 			_mandar_ranking()
 		aviso.text = "CHEGOU!\n%.1f s%s" % [tempo, "  NOVO RECORDE!" if novo else ""]
@@ -2650,6 +2663,11 @@ func _resultado_corrida() -> void:
 	aviso.add_theme_color_override("font_color", Color(1, 0.85, 0.3))
 	aviso.visible = true
 	print("[ONLINE] resultado: ", txt.replace("\n", " | "))
+	var meu := -1
+	for i in lista.size():
+		if lista[i][0] == Online.id:
+			meu = i if lista[i][1] < INF else 99
+	Passe.ganhar(["online_1", "online_2"][meu] if meu >= 0 and meu < 2 else "online")
 	_fim_online(true, txt.strip_edges())
 	if Online.host and "denovo" in OS.get_cmdline_user_args() and Online.rodada < 2:   # teste: o líder joga de novo
 		await get_tree().create_timer(2.0, true, false, true).timeout
@@ -2888,6 +2906,9 @@ func _renascer() -> void:
 	add_child(player)
 	move_child(player, sangue.get_index())
 	camera.alvo = player.foco()
+	if is_instance_valid(cosm):
+		cosm.queue_free()
+	cosm = Cosmeticos.aplicar(self, player)
 	_caiu_em = -1.0
 	if is_instance_valid(velho):
 		velho.queue_free()
@@ -2971,6 +2992,7 @@ func _vitoria_online() -> void:
 				Online.enviar("vit", {"r": Online.rodada}))
 	if not ativo:
 		return
+	Passe.ganhar("online_1")
 	ativo = false
 	_renasce_t = -1.0
 	_morto_online = false
@@ -4161,6 +4183,8 @@ func _resultado_arena(ordem: Array) -> void:
 	var txt := ""
 	for i in ordem.size():
 		txt += "%dº   %s%s\n" % [i + 1, Online.nome_de(ordem[i]), " (você)" if ordem[i] == Online.id else ""]
+	var meu := ordem.find(Online.id)
+	Passe.ganhar(["online_1", "online_2"][meu] if meu >= 0 and meu < 2 else "online")
 	var venc: String = ordem[0] if not ordem.is_empty() else ""
 	aviso.text = ("VOCÊ VENCEU!" if venc == Online.id else "%s VENCEU!" % Online.nome_de(venc)) if venc != "" else "ACABOU!"
 	aviso.add_theme_color_override("font_color", Color(1, 0.85, 0.3))
@@ -4326,3 +4350,16 @@ func _vida_teste() -> void:
 			await _captura("laser_%d" % k)
 		if k == (105 if Game.fase == 11 else 24):
 			get_tree().quit()
+
+## nick colorido do passe (HUD)
+func _moldura(l: Label) -> void:
+	match Passe.equipado("moldura"):
+		"moldura_ouro":
+			l.add_theme_color_override("font_color", Color(1, 0.85, 0.3))
+			l.add_theme_color_override("font_outline_color", Color(0.35, 0.2, 0.0))
+		"moldura_fogo":
+			l.add_theme_color_override("font_color", Color(1, 0.55 + 0.25 * sin(Time.get_ticks_msec() / 120.0), 0.15))
+			l.add_theme_color_override("font_outline_color", Color(0.4, 0.05, 0.0))
+		"moldura_arco":
+			l.add_theme_color_override("font_color", Color.from_hsv(fmod(Time.get_ticks_msec() / 2500.0, 1.0), 0.6, 1.0))
+			l.add_theme_color_override("font_outline_color", Color(0.1, 0.05, 0.2))

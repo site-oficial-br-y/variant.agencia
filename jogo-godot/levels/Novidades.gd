@@ -2,14 +2,13 @@ extends Control
 ## Aviso de atualização: aparece por cima do lobby na primeira vez que abre a versão nova.
 ## Fundo é a arte do patch escurecida; o X fecha e fica no lobby.
 
-const VERSAO := "3.2"
+const VERSAO := "3.3"
 const ITENS := [
-	["ONLINE: MATA-MATA NA RODA", "Todo mundo dentro da roda do James. A cada 15 s fica pior: laser, Semaj, laser duplo, espinho em dobro... O último vivo vence.", Color(1.0, 0.55, 0.2)],
-	["ONLINE: BATATA QUENTE", "A bomba passa encostando em outro jogador. Acabou o tempo, BUUUM. Arena nova com rampas, trampolins e turbo. O último vivo vence.", Color(1.0, 0.35, 0.3)],
-	["BICHO TURBINADO", "Saíram os balões. Agora ele se TELEPORTA pra frente num clarão, com recarga de 1 s, e ficou bem mais fácil de controlar.", Color(0.4, 0.85, 1.0)],
-	["ULT DO BICHO: LASER", "Um raio que sai dele e vai tirando vida do chefe aos poucos, cada vez mais rápido. Se andar ou teleportar, o laser corta.", Color(0.75, 0.4, 1.0)],
-	["BOUÇAS TRANCADO", "Agora o Bouças só libera depois de derrotar o SEMAJ na fase 10. Quem já zerou, já tem.", Color(0.9, 0.95, 1.0)],
-	["AJUSTES", "Bouças plana menos e cai mais rápido. O laser mostra os números de dano saindo do chefe.", Color(0.6, 1.0, 0.6)],
+	["NÍVEL DE CONTA", "Agora você ganha XP jogando: tempo de jogo, fase vencida, chefe derrotado, recorde e partida online. Seu nível aparece no menu.", Color(1.0, 0.82, 0.3)],
+	["PASSE DE BATALHA", "30 níveis de recompensa: rastros, auras, rodas brilhando, chapéus, nick colorido e efeitos de morte. Toca em NÍVEL no menu.", Color(0.6, 0.85, 1.0)],
+	["SKINS NO PASSE", "Uma skin do Wendell no nível 20 e uma do Gian no nível 30. Chegam em breve.", Color(1.0, 0.55, 0.2)],
+	["XP RETROATIVO", "Quem já jogava ganhou XP pelo tempo de jogo e pelas fases que já venceu.", Color(0.5, 1.0, 0.55)],
+	["RANKING DA FASE 10", "Vencer o Semaj agora entra no ranking certinho.", Color(0.85, 0.6, 1.0)],
 ]
 
 static func ja_viu() -> bool:

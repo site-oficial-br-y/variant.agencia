@@ -16,6 +16,7 @@ Playtest="*res://autoload/Playtest.gd"
 Audio="*res://autoload/Audio.gd"
 Online="*res://autoload/Online.gd"
 Conta="*res://autoload/Conta.gd"
+Passe="*res://autoload/Passe.gd"
 
 [physics]
 2d/default_gravity=980.0

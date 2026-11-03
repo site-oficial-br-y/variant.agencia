@@ -48,6 +48,8 @@ var ok_anel: Panel
 var jogar: Label
 var trava: Label
 var _t := 0.0
+var _nivel_btn: Button
+var _nivel_barra: ColorRect
 var _atalhos: Array = []              # LOJA, MINHA CONTA, RANKING (coluna acima do JOGAR)
 var _vol: Volume
 var _leve: Button
@@ -73,6 +75,23 @@ func _ready() -> void:
 	logo.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
 	logo.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
 	add_child(logo)
+	_nivel_btn = Button.new()                        # nível da conta + barra de XP: abre o passe
+	_nivel_btn.focus_mode = Control.FOCUS_NONE
+	_nivel_btn.add_theme_font_size_override("font_size", 22)
+	_nivel_btn.alignment = HORIZONTAL_ALIGNMENT_LEFT
+	for k in ["normal", "hover", "pressed"]:
+		_nivel_btn.add_theme_stylebox_override(k, _caixa(OURO, 14))
+	_nivel_btn.pressed.connect(func() -> void:
+		Audio.tocar("clique")
+		get_tree().change_scene_to_file("res://levels/PasseTela.tscn"))
+	add_child(_nivel_btn)
+	_nivel_barra = ColorRect.new()
+	_nivel_barra.color = Color(0.55, 0.85, 1.0)
+	_nivel_barra.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	_nivel_btn.add_child(_nivel_barra)
+	Passe.mudou.connect(_texto_nivel)
+	_texto_nivel()
+	Passe.atualizar()
 	titulo_lista = _rotulo("ESCOLHER PERSONAGEM", 22, 6, Color(0.82, 0.7, 1.0))
 	add_child(titulo_lista)
 	for i in OPCOES.size():
@@ -307,6 +326,9 @@ func _atualizar() -> void:
 	nevoa.size = vp
 	var pedestal_y := off.y + 0.775 * th * esc
 	logo.position = Vector2(22, 14)
+	_nivel_btn.position = Vector2(34, 160)
+	_nivel_btn.size = Vector2(250, 50)
+	_texto_nivel()
 	logo.size = Vector2(270, 145)
 	# rostos
 	var lado := minf(76.0, (vp.x - 340.0) / OPCOES.size() - 10.0)
@@ -411,3 +433,11 @@ func _jogar() -> void:
 	Game.personagem = OPCOES[atual]
 	Game.checkpoint_x = -1.0
 	get_tree().change_scene_to_file("res://levels/Fases.tscn")
+
+func _texto_nivel() -> void:
+	if not is_instance_valid(_nivel_btn):
+		return
+	var pr: Array = Passe.progresso()
+	_nivel_btn.text = "  NÍVEL %d   ·   PASSE ›" % Passe.nivel()
+	_nivel_barra.position = Vector2(10, 40)
+	_nivel_barra.size = Vector2(maxf(4.0, 230.0 * float(pr[0]) / float(pr[1])), 5)
