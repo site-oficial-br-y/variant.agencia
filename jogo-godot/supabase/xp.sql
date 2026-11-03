@@ -50,7 +50,7 @@ begin
   if v_uid is null then return jsonb_build_object('xp', 0, 'ganho', 0); end if;
   select xp_ultimo, fases_xp into v_ultimo, v_fases from public.bicho_perfis where id = v_uid for update;
   if not found then return jsonb_build_object('xp', 0, 'ganho', 0); end if;
-  if v_ultimo is not null and now() - v_ultimo < interval '8 seconds' then      -- ninguém vence 2 fases em 8 s
+  if p_motivo <> 'recorde' and v_ultimo is not null and now() - v_ultimo < interval '8 seconds' then
     return jsonb_build_object('xp', (select xp from public.bicho_perfis where id = v_uid), 'ganho', 0);
   end if;
   if p_motivo = 'fase' and p_fase between 1 and 10 then
