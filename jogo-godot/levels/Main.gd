@@ -47,7 +47,7 @@ func _ready() -> void:
 			Game.fase = int(a.substr(2))
 	Engine.time_scale = Game.RITMO           # física a 180 Hz x 3 = mesmo passo de 1/60 s de jogo
 	RenderingServer.set_default_clear_color(Color(0.33, 0.55, 0.93))
-	tema = ["campo", "obra", "montanha", "lab", "boss", "mercado", "escola", "colorido", "julgamento", "roda"][clampi(Game.fase, 1, 10) - 1]
+	tema = ["campo", "obra", "montanha", "lab", "boss", "mercado", "escola", "colorido", "julgamento", "roda", "roda", "campo"][clampi(Game.fase, 1, 12) - 1]
 	_construir_fundo("hw" if tema == "campo" else tema)
 	_mat = PhysicsMaterial.new()
 	_mat.friction = 1.0
@@ -66,6 +66,13 @@ func _ready() -> void:
 			var v := a.substr(6).split(",")
 			Game.checkpoint_x = float(v[0])
 			Game.checkpoint_chao = float(v[1])
+	if Game.fase == 11:                                  # mata-mata: todo mundo já nasce dentro da roda
+		var dx := maxi(0, (Online.corrida.get("ids", []) as Array).find(Online.id)) * 550.0 - 800.0
+		Game.checkpoint_x = ARENA10_X + dx
+		Game.checkpoint_chao = CHAO_Y - Roda.R + sqrt(Roda.R * Roda.R - dx * dx) - 30.0   # chão da roda é curvo
+	if Game.fase == 12:                                  # batata quente: cada um num canto da arena
+		Game.checkpoint_x = 1400.0 + maxi(0, (Online.corrida.get("ids", []) as Array).find(Online.id)) * 1700.0
+		Game.checkpoint_chao = CHAO_Y
 	if "na_roda" in OS.get_cmdline_user_args() and Game.fase == 10:     # teste: começa dentro da roda
 		Game.checkpoint_x = ARENA10_X
 		Game.checkpoint_chao = CHAO_Y
@@ -143,8 +150,12 @@ func _pos_jogador() -> void:
 		_inicio_8.call_deferred()
 	if Game.fase == 9:
 		_inicio_9.call_deferred()
-	if Game.fase == 10:
+	if Game.fase in [10, 11]:
+		if Game.fase == 11:
+			roda.mata_mata = true
 		_inicio_10.call_deferred()
+	if Game.fase == 12:
+		Audio.musica_chefe("escola")
 	if "autoteste" in OS.get_cmdline_user_args():
 		_rodar_teste()
 	elif "screenshot" in OS.get_cmdline_user_args():
@@ -238,7 +249,7 @@ func _physics_process(delta: float) -> void:
 		var px9 := player.foco().global_position.x if is_instance_valid(player) and is_instance_valid(player.chassi) else 0.0
 		julgamento.chuva(delta, 2.6 if px9 > 1500.0 and px9 < _chuva9_x1 and not _cena9 else 0.0)
 		ctamandura.atualizar(delta)
-	if Game.fase == 10 and roda:
+	if Game.fase in [10, 11] and roda:
 		roda.atualizar(delta)
 		if protesto:
 			protesto.atualizar(delta)
@@ -267,6 +278,8 @@ func _construir_chao() -> void:
 		8: _fase_8()
 		9: _fase_9()
 		10: _fase_10()
+		11: _fase_10()
+		12: _fase_batata()
 		_: _fase_1()
 
 ## marcos comuns: zona de morte, checkpoints (lista de Vector2: x, chão) e chegada
@@ -1615,6 +1628,9 @@ func _on_checkpoint(b: Node2D, ck: Vector2) -> void:
 func _fim(ganhou: bool, motivo: String) -> void:
 	if not ativo or _queda7:                     # caindo do terraço pra luta: ninguém morre
 		return
+	if Online.ativo and not ganhou and Game.fase in Game.MODOS_ONLINE:   # mata-mata / batata: tá fora
+		_morte_arena(motivo)
+		return
 	if Online.ativo and not ganhou:
 		if Game.fase == 5:                       # co-op: renasce enquanto alguém do time estiver vivo
 			_morte_online(motivo)
@@ -2457,6 +2473,8 @@ func _iniciar_online() -> void:
 	$HUD.add_child(_rotulo_online)
 	if not c.get("largou", false):
 		_esperar_largada.call_deferred()
+	if "fotos_arena" in OS.get_cmdline_user_args():      # teste: prints da partida
+		_fotos_arena.call_deferred()
 	for arg in OS.get_cmdline_user_args():       # teste: chega sozinho N s depois da largada
 		if arg.begins_with("chegar="):
 			_teste_chegar.call_deferred(float(arg.substr(7)))
@@ -2670,6 +2688,8 @@ func _process_online(delta: float) -> void:
 			if Online.host and ativo:
 				_mandar_vida_chefe(dt)
 			_rotulo_online.text = "ONLINE · SALA %s · %d jogadores · %d vivos" % [Online.sala, Game.online_n, vivos + (0 if _morto_online else 1)]
+		elif Game.fase in Game.MODOS_ONLINE:
+			_passo_arena(dt)
 		else:
 			_rotulo_online.text = "CORRIDA · SALA %s · %d jogadores" % [Online.sala, Game.online_n]
 			_conferir_fim_corrida()
@@ -2821,6 +2841,20 @@ func _online_msg(e: String, d: Dictionary, de: String) -> void:
 					(_botoes[i] as Dictionary)["ligado"] = true
 					_apertar(_botoes[i], true)
 				_sinc_chefe(d)
+		"res_arena":                                 # resultado decidido por quem criou a sala
+			if int(d.get("r", 0)) == Online.rodada:
+				_resultado_arena(d.get("o", []))
+		"fora":                                      # mata-mata / batata: alguém saiu
+			if int(d.get("r", 0)) == Online.rodada:
+				_fora_arena(de, d)
+		"bat":                                       # batata: com quem está a bomba
+			if int(d.get("r", 0)) == Online.rodada and int(d.get("n", 0)) >= _bat_n:
+				_bat_n = int(d.get("n", 0))
+				var antes := _bat_com
+				_bat_com = str(d.get("com", ""))
+				_bat_t = float(d.get("t", _bat_t))
+				if _bat_com == Online.id and antes != Online.id:
+					_bat_recebi()
 		"hp":                                        # vida do chefe segundo quem criou a sala
 			if not Online.host and int(d.get("r", 0)) == Online.rodada:
 				_sinc_chefe(d)
@@ -3964,3 +3998,270 @@ func dano_ult_chefe() -> void:
 			_mensagem("-1 NO GERESCH!", Color(0.5, 1, 0.6))
 	elif c == vendedor:
 		vendedor._t += 4.0                                  # vendedor cansa mais rápido
+
+# ---------- MODOS ONLINE: mata-mata na roda e batata quente ----------
+## morreu = tá fora (assiste). Quem fica por último vence. Batata: a bomba passa encostando
+## em alguém; quem estiver com ela quando o tempo acaba explode. Quem criou a sala sorteia a bomba.
+const BATATA_T := 18.0
+const BATATA_PASSA := 650.0               # distância pra passar a bomba
+var _fora_t: Dictionary = {}              # id -> ms em que saiu
+var _bat_com := ""
+var _bat_t := 0.0
+var _bat_n := 0
+var _bat_espera := 0.0                    # quem recebeu não devolve na hora
+var _bat_rodada := 0
+var _bat_dar_t := 2.5                     # (líder) tempo até sortear a próxima bomba
+var _bat_sinc := 0.0
+var _bat_no: Node2D
+var _bat_lbl: Label
+var _bat_tique := 0
+
+func _fase_batata() -> void:
+	var y := CHAO_Y
+	_parede_arena(200.0, y)
+	var p := _t_plano(Vector2(300, y), 2600, false)
+	p = _t_ondas(p, 2, 120.0)
+	_t_plano(p, 1800, false)
+	mec.trampolim(p + Vector2(900, 0), 1500.0, 0.0)
+	p += Vector2(1800, 0)
+	p = _t_ondas(p, 2, 140.0)
+	_t_plano(p, 1800, false)
+	mec.painel_aceleracao(p + Vector2(900, 0), 700.0, 700.0, 2600.0)
+	p += Vector2(1800, 0)
+	p = _t_plano(p, 2200, false)
+	_parede_arena(p.x - 100.0, y)
+	_marcos([], Vector2(p.x + 60000.0, y), y + 3000.0, false)
+	pecas.placa(Vector2(900, y), "BATATA QUENTE")
+
+func _vivos_arena() -> Array:
+	var r: Array = []
+	for k in Online.corrida.get("ids", []):
+		if (k == Online.id or Online.jogadores.has(k)) and not _fora_t.has(k):
+			r.append(k)
+	return r
+
+func _morte_arena(motivo: String) -> void:
+	if _morto_online:
+		return
+	_morto_online = true
+	_fora_t[Online.id] = Time.get_ticks_msec()
+	var onde := player.foco().global_position if is_instance_valid(player) else Vector2.ZERO
+	aviso.text = {"bomba": "BUUUM!", "laser": "DESINTEGRADO!", "esmagado": "ESMAGADO!", "buraco": "CAIU!", "caiu": "CAIU!"}.get(motivo, "MORREU!") + "\nVOCÊ TÁ FORA. ASSISTINDO..."
+	aviso.add_theme_color_override("font_color", Color(1, 0.35, 0.3))
+	aviso.visible = true
+	Audio.tocar("morte")
+	if _bat_com == Online.id:
+		_bat_com = ""
+	for k in 3:
+		get_tree().create_timer(0.05 + k * 0.6, true, false, true).timeout.connect(func() -> void:
+			Online.enviar("fora", {"r": Online.rodada, "m": motivo, "x": int(onde.x), "y": int(onde.y)}))
+
+func _fora_arena(de: String, d: Dictionary) -> void:
+	if _fora_t.has(de):
+		return
+	_fora_t[de] = Time.get_ticks_msec()
+	var onde := Vector2(float(d.get("x", 0)), float(d.get("y", 0)))
+	if str(d.get("m", "")) == "bomba":
+		_explosao_bomba(onde)
+	_mensagem("%s TÁ FORA!" % Online.nome_de(de), Color(1, 0.5, 0.35))
+	if _bat_com == de:
+		_bat_com = ""
+		_bat_dar_t = 2.5
+
+func _explosao_bomba(onde: Vector2) -> void:
+	pecas.particulas(onde + Vector2(0, -400), 50, Color(1, 0.9, 0.4, 1), Color(0.3, 0.1, 0.05, 0), 600.0, 2200.0, 1.4, 60.0, 160.0, 600.0, Vector2.UP, 180.0)
+	pecas.particulas(onde + Vector2(0, -400), 30, Color(0.25, 0.25, 0.25, 0.9), Color(0.1, 0.1, 0.1, 0), 200.0, 900.0, 2.5, 120.0, 260.0, -200.0, Vector2.UP, 120.0)
+	Audio.tocar("impacto_forte", 1.0, 0.0)
+	Audio.tocar("splat", 1.0)
+	camera.set("tremor", 1.0)
+
+func _passo_arena(dt: float) -> void:
+	var vivos := _vivos_arena()
+	var nome := "MATA-MATA" if Game.fase == 11 else "BATATA QUENTE"
+	_rotulo_online.text = "%s · SALA %s · %d vivos" % [nome, Online.sala, vivos.size()]
+	if Game.fase == 12 and Online.corrida.get("largou", false) and not _resultado_ok:
+		_passo_batata(dt, vivos)
+	if _resultado_ok or not Online.corrida.get("largou", false):
+		return
+	var presentes := 0
+	for k in Online.corrida.get("ids", []):
+		if k == Online.id or Online.jogadores.has(k):
+			presentes += 1
+	if (presentes >= 2 and vivos.size() <= 1) or (presentes < 2 and vivos.is_empty()):
+		var lider_saiu := true                            # quem criou a sala decide (morte quase junta dá empate)
+		for k in Online.jogadores:
+			if (Online.jogadores[k] as Dictionary).get("host", false):
+				lider_saiu = false
+		if Online.host or lider_saiu:
+			_resultado_arena(_ordem_arena(vivos))
+			var o := _ordem_arena(vivos)
+			for k in 3:
+				get_tree().create_timer(0.05 + k * 0.7, true, false, true).timeout.connect(func() -> void:
+					Online.enviar("res_arena", {"r": Online.rodada, "o": o}))
+
+func _ordem_arena(vivos: Array) -> Array:
+	var ordem: Array = vivos.duplicate()
+	var fora := _fora_t.keys()
+	fora.sort_custom(func(a, b) -> bool: return int(_fora_t[a]) > int(_fora_t[b]))
+	ordem.append_array(fora)
+	return ordem
+
+func _resultado_arena(ordem: Array) -> void:
+	if _resultado_ok:
+		return
+	_resultado_ok = true
+	print("[ARENA] fim ordem=%s" % [ordem])
+	ativo = false
+	Audio.motor(false)
+	Audio.parar_chefe()
+	if is_instance_valid(_bat_no):
+		_bat_no.queue_free()
+	if roda:
+		roda.esconder_barra()
+	var txt := ""
+	for i in ordem.size():
+		txt += "%dº   %s%s\n" % [i + 1, Online.nome_de(ordem[i]), " (você)" if ordem[i] == Online.id else ""]
+	var venc: String = ordem[0] if not ordem.is_empty() else ""
+	aviso.text = ("VOCÊ VENCEU!" if venc == Online.id else "%s VENCEU!" % Online.nome_de(venc)) if venc != "" else "ACABOU!"
+	aviso.add_theme_color_override("font_color", Color(1, 0.85, 0.3))
+	aviso.visible = true
+	if venc == Online.id:
+		Audio.tocar("vitoria")
+		if is_instance_valid(player):
+			pecas.festa(player.foco().global_position, player.foco().global_position)
+	_fim_online(true, txt.strip_edges())
+
+## batata: o líder sorteia/reenvia; quem está com a bomba passa encostando; tempo acabou, explode
+func _passo_batata(dt: float, vivos: Array) -> void:
+	_bat_espera = maxf(0.0, _bat_espera - dt)
+	if _bat_com != "":
+		_bat_t -= dt
+	if Online.host:
+		if _bat_com == "" or not (_bat_com in vivos):
+			_bat_com = ""
+			_bat_dar_t -= dt
+			if _bat_dar_t <= 0.0 and vivos.size() >= 1 and not (vivos.size() == 1 and Online.corrida.get("ids", []).size() > 1):
+				_bat_rodada += 1
+				_bat_n += 1
+				_bat_com = vivos[randi() % vivos.size()]
+				_bat_t = maxf(8.0, BATATA_T - (_bat_rodada - 1) * 3.0)
+				_bat_dar_t = 2.5
+				_bat_sinc = 0.0
+				if _bat_com == Online.id:
+					_bat_recebi()
+				else:
+					_mensagem("A BOMBA ESTÁ COM %s!" % Online.nome_de(_bat_com), Color(1, 0.6, 0.3))
+		_bat_sinc -= dt
+		if _bat_sinc <= 0.0 and _bat_com != "":
+			_bat_sinc = 1.0
+			Online.enviar("bat", {"r": Online.rodada, "com": _bat_com, "t": _bat_t, "n": _bat_n})
+	_desenhar_bomba()
+	if _bat_com != Online.id or _morto_online or not is_instance_valid(player):
+		return
+	var tq := ceili(_bat_t)                              # tique-taque
+	if tq != _bat_tique:
+		_bat_tique = tq
+		Audio.tocar("clique", 1.0 if tq <= 3 else 0.6, 0.0)
+	if _bat_t <= 0.0:                                     # explodiu na sua mão
+		var onde := player.foco().global_position
+		_explosao_bomba(onde)
+		mec.explosao(onde, 1400.0, 2800.0)
+		player.explodir.call_deferred("tronco")
+		_morte_arena("bomba")
+		return
+	if "bot_batata" in OS.get_cmdline_user_args() and not _fantasmas.is_empty():   # teste: vai atrás de alguém
+		var alvo: Vector2 = (_fantasmas.values()[0]["no"] as Node2D).global_position
+		Input.action_release("accelerate")
+		Input.action_release("brake")
+		Input.action_press("accelerate" if alvo.x > player.foco().global_position.x else "brake")
+	if _bat_espera > 0.0:
+		return
+	var eu := player.foco().global_position
+	for k in _fantasmas:
+		var g: Dictionary = _fantasmas[k]
+		if not g["vivo"] or not (k in vivos):
+			continue
+		if eu.distance_to((g["no"] as Node2D).global_position + Vector2(0, -500)) < BATATA_PASSA:
+			_bat_n += 1
+			_bat_com = k
+			for i in 2:
+				Online.enviar("bat", {"r": Online.rodada, "com": k, "t": _bat_t, "n": _bat_n})
+			_mensagem("PASSOU PRO %s!" % Online.nome_de(k), Color(0.5, 1, 0.6))
+			print("[ARENA] passei a bomba pro ", k, " t=", _bat_t)
+			Input.action_release("accelerate")
+			Input.action_release("brake")
+			Audio.tocar("pulo", 1.0, 0.0)
+			break
+
+func _bat_recebi() -> void:
+	_bat_espera = 2.5
+	print("[ARENA] recebi a bomba t=", _bat_t)
+	_mensagem("A BOMBA TÁ COM VOCÊ! ENCOSTA EM ALGUÉM!", Color(1, 0.3, 0.25))
+	Audio.tocar("metal", 1.0, 0.0)
+
+func _desenhar_bomba() -> void:
+	if _bat_com == "":
+		if is_instance_valid(_bat_no):
+			_bat_no.visible = false
+		return
+	if not is_instance_valid(_bat_no):
+		_bat_no = Node2D.new()
+		_bat_no.z_index = 40
+		var corpo := Polygon2D.new()
+		var pts := PackedVector2Array()
+		for k in 24:
+			pts.append(Vector2(170, 0).rotated(TAU * k / 24.0))
+		corpo.polygon = pts
+		corpo.color = Color(0.08, 0.08, 0.1)
+		_bat_no.add_child(corpo)
+		var brilho := Polygon2D.new()
+		var pb := PackedVector2Array()
+		for k in 12:
+			pb.append(Vector2(-55, -55) + Vector2(40, 0).rotated(TAU * k / 12.0))
+		brilho.polygon = pb
+		brilho.color = Color(1, 1, 1, 0.35)
+		_bat_no.add_child(brilho)
+		var pavio := Line2D.new()
+		pavio.points = PackedVector2Array([Vector2(60, -150), Vector2(110, -230), Vector2(170, -250)])
+		pavio.width = 22.0
+		pavio.default_color = Color(0.75, 0.6, 0.35)
+		_bat_no.add_child(pavio)
+		var faisca := Polygon2D.new()
+		var pf := PackedVector2Array()
+		for k in 10:
+			pf.append(Vector2(170, -250) + Vector2(45 if k % 2 == 0 else 18, 0).rotated(TAU * k / 10.0))
+		faisca.polygon = pf
+		faisca.color = Color(1, 0.8, 0.2)
+		faisca.name = "faisca"
+		_bat_no.add_child(faisca)
+		_bat_lbl = Label.new()
+		_bat_lbl.add_theme_font_size_override("font_size", 150)
+		_bat_lbl.add_theme_color_override("font_outline_color", Color.BLACK)
+		_bat_lbl.add_theme_constant_override("outline_size", 26)
+		_bat_lbl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+		_bat_lbl.size = Vector2(600, 200)
+		_bat_lbl.position = Vector2(-300, 170)
+		_bat_no.add_child(_bat_lbl)
+		add_child(_bat_no)
+	_bat_no.visible = true
+	var pos := Vector2.ZERO
+	if _bat_com == Online.id and is_instance_valid(player):
+		pos = player.foco().global_position + Vector2(0, -950)
+	elif _fantasmas.has(_bat_com):
+		pos = (_fantasmas[_bat_com]["no"] as Node2D).global_position + Vector2(0, -1500)
+	else:
+		_bat_no.visible = false
+		return
+	_bat_no.global_position = pos
+	var pulso := 1.0 + (0.18 if _bat_t < 4.0 else 0.08) * sin(Time.get_ticks_msec() / (60.0 if _bat_t < 4.0 else 140.0))
+	_bat_no.scale = Vector2.ONE * pulso
+	(_bat_no.get_node("faisca") as Node2D).rotation += 0.4
+	_bat_lbl.text = "%d" % maxi(0, ceili(_bat_t))
+	_bat_lbl.add_theme_color_override("font_color", Color(1, 0.25, 0.2) if _bat_t < 4.0 else Color(1, 0.9, 0.4))
+
+func _fotos_arena() -> void:
+	for k in 8:
+		await get_tree().create_timer(3.0, true, false, true).timeout
+		if not is_inside_tree():
+			return
+		await _captura("arena_%02d" % k)

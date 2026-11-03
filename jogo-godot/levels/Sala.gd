@@ -176,8 +176,9 @@ func _entrar() -> void:
 func _trocar_fase(d: int) -> void:
 	if not Online.host:
 		return
-	var i := Game.ORDEM.find(Online.fase_sala)
-	Online.fase_sala = Game.ORDEM[posmod(i + d, Game.ORDEM.size())]
+	var lista: Array = Game.ORDEM + Game.MODOS_ONLINE
+	var i := lista.find(Online.fase_sala)
+	Online.fase_sala = lista[posmod(i + d, lista.size())]
 	Online.oi()
 	_atualizar()
 
@@ -242,8 +243,10 @@ func _atualizar() -> void:
 		var f := Online.fase_sala
 		mini.texture = load("res://assets/ui/fase_%d.png" % f)
 		nome_fase.text = Game.nome_fase(f)
-		modo_fase.text = ("TODOS JUNTOS contra o chefe: todo mundo tem que apertar os botões." if f == 5
-			else "CORRIDA: quem chegar primeiro ganha. Morreu, volta pro começo.")
+		modo_fase.text = {5: "TODOS JUNTOS contra o chefe: todo mundo tem que apertar os botões.",
+			11: "MATA-MATA: todo mundo dentro da roda do James. Ela acelera e vira Semaj. Morreu, tá fora. Último vivo vence.",
+			12: "BATATA QUENTE: quem está com a bomba passa encostando em alguém. Acabou o tempo, explode. Último vivo vence."}.get(f,
+			"CORRIDA: quem chegar primeiro ganha. Morreu, volta pro começo.")
 		if not Online.host:
 			modo_fase.text += "\nO líder escolhe a fase."
 		b_ant.visible = Online.host

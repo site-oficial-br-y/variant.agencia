@@ -42,6 +42,7 @@ var _virada_t := 14.0
 var _mortes_teste_virada := 0
 var _costelas: Array = []               # ângulo (local) de cada lombada: interruptor não nasce embaixo
 var _arrasto_t := 0.0
+var mata_mata := false                   # online: sem interruptor nem vida; acelera e vira Semaj sozinho
 var _pos_virada_t := 0.0
 var _cor_camada: CanvasLayer
 var _colorido: Node2D                   # Semaj: espinhos e interruptor desenhados por cima do filtro preto e branco
@@ -239,6 +240,9 @@ func comecar() -> void:
 	_estado = "luta"
 	_timer = 3.0
 	_novo_interruptor(4.0)
+	if mata_mata:
+		for n in [_barra, _barra_fundo, _rotulo]:
+			n.visible = false
 
 
 # ---------- passo ----------
@@ -254,6 +258,11 @@ func atualizar(delta: float) -> void:
 	_olho.color = Color(1, 1, 1) if _brilho_t > 0.0 else (Color(0.85, 0.2, 1.0) if luta == 2 else Color(1, 0.75, 0.3))
 	_nucleo.scale = Vector2.ONE * (1.0 + 0.05 * sin(_t * 3.0) + _brilho_t * 0.25)
 	_passo_cara(dt)
+	if mata_mata and luta == 1 and _t > 40.0 and _estado != "virada":
+		_virar_semaj()
+		_rotulo.visible = false
+		_barra.visible = false
+		_barra_fundo.visible = false
 	if morto:
 		_passo_morte(dt)
 		return
@@ -286,7 +295,8 @@ func atualizar(delta: float) -> void:
 		_virada()
 
 func _giro_base() -> float:
-	return (0.24 if luta == 1 else 0.32) * _lado
+	var acel := 1.0 + minf(_t / 90.0, 0.8) if mata_mata else 1.0     # mata-mata: vai apertando
+	return (0.24 if luta == 1 else 0.32) * _lado * acel
 
 ## gira a roda (no passo de física, pra o chão arrastar quem está em cima)
 func _girar(delta: float) -> void:
@@ -512,6 +522,8 @@ func _foco_jogador() -> Vector2:
 # ---------- interruptor (dá dano) ----------
 ## aparece longe do jogador; com o giro ele vem vindo (ou você vai até ele)
 func _novo_interruptor(espera: float) -> void:
+	if mata_mata:
+		return
 	var vem := _sorteio.randf() < 0.5               # metade vem até você, metade sobe e você corre atrás
 	var a := _jogador_ang() + _lado * (_sorteio.randf_range(-2.4, -1.7) if vem else _sorteio.randf_range(0.7, 1.1))
 	for c in _costelas:                                 # caiu em cima de uma lombada: empurra pro lado

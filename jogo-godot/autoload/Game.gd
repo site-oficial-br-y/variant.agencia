@@ -8,12 +8,16 @@ enum Estado { JOGANDO, MORTO, VITORIA }
 var estado: int = Estado.JOGANDO
 var personagem: String = "segway"
 var fase: int = 1
-const FASES := ["", "", "", "LABORATÓRIO", "PÉCE", "ATACADÃO", "ESCOLA", "GERESCH", "O JULGAMENTO", "OLE OLE OLA"]   # nome de cada fase pelo número interno
+const FASES := ["", "", "", "LABORATÓRIO", "PÉCE", "ATACADÃO", "ESCOLA", "GERESCH", "O JULGAMENTO", "OLE OLE OLA", "MATA-MATA NA RODA", "BATATA QUENTE"]   # nome de cada fase pelo número interno
 ## ordem em que aparecem pro jogador (o número interno não muda: recordes e o Vini continuam valendo)
 const ORDEM := [1, 2, 3, 4, 6, 7, 5, 8, 9, 10]
 
+const MODOS_ONLINE := [11, 12]       # só no online: mata-mata na roda e batata quente
+
 func nome_fase(id: int) -> String:
 	var n: String = FASES[id - 1]
+	if id in MODOS_ONLINE:
+		return "MODO: " + n
 	return "FASE %d" % (ORDEM.find(id) + 1) + (": " + n if n != "" else "")
 
 func proxima_fase(id: int) -> int:
@@ -28,7 +32,7 @@ const BOMBA_EXTRA := ["scooter"]          # Gian: turbo + bomba num segundo bot�
 const NITRO_EXTRA := ["chefe"]           # Vitinho: nitro de fogo azul no segundo botão (C/B)
 const ULT_DASH := ["gamer"]              # Gorisch: ult no segundo botão (impulso + dash vermelho)
 const ULT_VENTO := ["boucas"]            # Bouças: ult no segundo botão (corrente de ar: sobe e plana rápido, intocável)
-const VERSAO := "v2.9.3"            # aparece no canto do lobby (pra conferir se atualizou)
+const VERSAO := "v3.0.0"            # aparece no canto do lobby (pra conferir se atualizou)
 const RITMO := 3.0                   # mundo 3x mais rápido: queda pesada e ritmo de Happy Wheels
 const ARQ_PROGRESSO := "user://progresso.cfg"
 var checkpoint_x: float = -1.0       # -1 = começa do início; sobrevive ao reinício (R)

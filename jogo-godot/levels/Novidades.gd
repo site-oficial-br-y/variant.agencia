@@ -2,8 +2,10 @@ extends Control
 ## Aviso de atualização: aparece por cima do lobby na primeira vez que abre a versão nova.
 ## Fundo é a arte do patch escurecida; o X fecha e fica no lobby.
 
-const VERSAO := "2.9"
+const VERSAO := "3.0"
 const ITENS := [
+	["ONLINE: MATA-MATA NA RODA", "Todo mundo dentro da roda do James. Ela vai acelerando e vira Semaj. Morreu, tá fora. O último vivo vence.", Color(1.0, 0.55, 0.2)],
+	["ONLINE: BATATA QUENTE", "A bomba começa com alguém e passa encostando em outro jogador. Acabou o tempo, BUUUM. O último vivo vence.", Color(1.0, 0.35, 0.3)],
 	["NOVO: SARTORI", "Jogador de beach tennis, a pé. Na RAQUETADA ele bate a raquete sem parar: rebate arpão, molotov e golpe de chefe e fica bem rápido.", Color(1.0, 0.85, 0.2)],
 	["NOVO: BOUÇAS", "Avião de papel que plana sozinho, com turbo. No outro botão, a ESQUADRILHA: 14 aviões de papel que voam no chefe e tiram vida dele.", Color(0.9, 0.95, 1.0)],
 	["FASE 10: OLE OLE OLA", "A rua pegando fogo: arpão que arranca braço, canhão d'água da polícia, molotov voando e faixa de turbo pra pular os carros queimados.", Color(1.0, 0.55, 0.2)],
