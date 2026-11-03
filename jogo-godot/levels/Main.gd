@@ -2990,6 +2990,8 @@ func _vitoria_online() -> void:
 
 ## esconde barra de vida e nome do chefe (tela de fim fica limpa)
 func _esconder_barras_chefe() -> void:
+	if is_instance_valid(roda) and roda.ativo:
+		roda.esconder_barra()
 	for c in [boss, adriano, geresch, ctamandura]:
 		if is_instance_valid(c):
 			for n in [c._barra, c._barra_fundo, c._rotulo]:
