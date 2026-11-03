@@ -941,6 +941,8 @@ const TELE_DIST := 1700.0
 var _tele_t := 0.0
 
 func _teleportar() -> void:
+	if personagem in Game.ULT_LASER and ult_t > 0.0:      # teleportou atirando: o laser corta
+		_fim_laser(true)
 	var dirx := Input.get_axis("brake", "accelerate")
 	if dirx == 0.0:
 		dirx = 1.0 if chassi.linear_velocity.x >= -50.0 else -1.0
@@ -1025,14 +1027,33 @@ var _laser_t := 0.0
 var _laser_carga := 0.0
 var _laser_no: Node2D
 var _laser_aviso := 0.0
+var _laser_num := 0.0
+
+## quanto falta pro próximo ponto de vida do chefe (HUD)
+func laser_progresso() -> float:
+	return _laser_carga
+
+func _numero_dano(onde: Vector2, n: int, forca: float) -> void:
+	var l := Label.new()
+	l.text = "-%d" % maxi(1, n)
+	l.add_theme_font_size_override("font_size", int(150 + 120 * forca))
+	l.add_theme_color_override("font_color", Color(0.8, 0.9, 1.0).lerp(Color(1, 0.5, 1.0), forca))
+	l.add_theme_color_override("font_outline_color", Color(0.1, 0.05, 0.25))
+	l.add_theme_constant_override("outline_size", 28)
+	l.z_index = 40
+	get_parent().add_child(l)
+	l.global_position = onde + Vector2(randf_range(-500, 300), randf_range(-300, 100))
+	var tw := l.create_tween()
+	tw.tween_property(l, "position:y", l.position.y - 700.0, 0.7 * Engine.time_scale)
+	tw.parallel().tween_property(l, "modulate:a", 0.0, 0.7 * Engine.time_scale).set_delay(0.3 * Engine.time_scale)
+	tw.tween_callback(l.queue_free)
 
 func _ult_laser(dt: float) -> void:
 	if ult_t <= 0.0:
 		recarga_ult = maxf(0.0, recarga_ult - dt)
 		if Input.is_action_just_pressed("bomba") and recarga_ult <= 0.0 and montado:
 			ult_t = LASER_DURA
-			_laser_t = 0.0
-			_laser_carga = 0.0
+			_laser_t = 0.0                                   # a carga NÃO zera: dano de laser curto fica guardado
 			Audio.tocar("choque", 1.0, 0.0)
 		return
 	var mexeu := not montado or Input.is_action_pressed("accelerate") or Input.is_action_pressed("brake")   # só corta se VOCÊ andar
@@ -1047,8 +1068,13 @@ func _ult_laser(dt: float) -> void:
 	var de := chassi.global_position + Vector2(160, -520).rotated(chassi.rotation)
 	var ate: Vector2 = alvo if alvo != null else de + Vector2(6000, -300)
 	var forca := clampf(_laser_t / 6.0, 0.0, 1.0)            # 0 -> 1: o raio engrossa e o dano acelera
-	if alvo != null and _laser_t > 0.4:
-		_laser_carga += dt * (0.1 + 0.55 * forca * forca)
+	if alvo != null and _laser_t > 0.15:
+		var ganho := dt * (0.18 + 0.27 * forca)                # ~0,2 de vida por segundo no começo, acelera
+		_laser_carga += ganho
+		_laser_num -= dt
+		if _laser_num <= 0.0:                                  # numerinho de dano subindo do chefe
+			_laser_num = 0.22
+			_numero_dano(ate, int(round((0.18 + 0.27 * forca) * 0.22 * 100.0)), forca)
 		if _laser_carga >= 1.0:
 			_laser_carga -= 1.0
 			if fase.has_method("dano_ult_chefe"):

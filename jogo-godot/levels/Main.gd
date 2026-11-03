@@ -1865,7 +1865,10 @@ func _rotulo_ult() -> Label:
 
 func _atualizar_carga() -> void:
 	if _carga_ult and is_instance_valid(player) and (Game.personagem in Game.ULT_DASH or (Game.personagem in Game.ULT_VENTO or Game.personagem in Game.ULT_LASER)):
-		if player.ult_t > 0.0:
+		if player.ult_t > 0.0 and Game.personagem in Game.ULT_LASER:
+			_carga_ult.text = "LASER %d%%" % int(player.laser_progresso() * 100.0)
+			_carga_ult.add_theme_color_override("font_color", Color(0.75, 0.6, 1.0))
+		elif player.ult_t > 0.0:
 			_carga_ult.text = "ULT!"
 			_carga_ult.add_theme_color_override("font_color", Color(1, 0.35, 0.3))
 		elif player.recarga_ult > 0.0:
@@ -4306,7 +4309,11 @@ func _vida_teste() -> void:
 		await get_tree().create_timer(1.0, true, false, true).timeout
 		var c = _chefe_vivo()
 		print("[VIDA] t=%d chefe=%s vida=%s ult=%.1f" % [k + 1, c.get_script().resource_path.get_file() if c else "-", str(c.vida) if c and "vida" in c else "-", player.ult_t])
-		if k == 2 and "tele_teste" in OS.get_cmdline_user_args():
+		if k == 6 and "tele_teste" in OS.get_cmdline_user_args() and "ult_teste" in OS.get_cmdline_user_args():
+			Input.action_press("especial")
+			await get_tree().create_timer(0.08, true, false, true).timeout
+			Input.action_release("especial")
+		if k == 2 and "tele_teste" in OS.get_cmdline_user_args() and not "ult_teste" in OS.get_cmdline_user_args():
 			Input.action_press("especial")
 			await get_tree().create_timer(0.08, true, false, true).timeout
 			Input.action_release("especial")
