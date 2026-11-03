@@ -382,6 +382,7 @@ func _atualizar() -> void:
 	ok_anel.visible = not preso
 	jogar.visible = not preso
 	trava.visible = preso
+	trava.text = "DERROTE O SEMAJ (FASE 10) PRA LIBERAR" if OPCOES[atual] == "boucas" else "VENÇA O PÉCE (FASE 7) PRA LIBERAR"
 	trava.size = Vector2(420, 70)
 	trava.position = Vector2(vp.x - 440, vp.y - 170)
 	if _vol:
@@ -396,7 +397,7 @@ func _texto_leve() -> void:
 		_leve.add_theme_stylebox_override(k, _caixa(Color(0.4, 1.0, 0.5) if Game.leve else ROXO, 14))
 
 func _trancado(i: int) -> bool:
-	return OPCOES[i] == "vini" and not Game.vini_liberado()
+	return (OPCOES[i] == "vini" and not Game.vini_liberado()) or (OPCOES[i] == "boucas" and not Game.boucas_liberado())
 
 func _selecionar(i: int) -> void:
 	Audio.tocar("clique")

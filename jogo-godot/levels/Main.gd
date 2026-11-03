@@ -3745,6 +3745,9 @@ func _fase_10() -> void:
 	add_child(roda)
 	roda.montar(self, Vector2(ARENA10_X, y - Roda.R), _mat)
 	roda.derrotado.connect(func() -> void:
+		Game.liberar_boucas()
+		if not Game.boucas_liberado_antes:
+			_mensagem("BOUÇAS LIBERADO!", Color(1, 0.9, 0.4))
 		_meta_pos = player.foco().global_position
 		_fim(true, "venceu"))
 	_marcos([], Vector2(ARENA10_X + Roda.R * 3.0, y), y + 3000.0, false)

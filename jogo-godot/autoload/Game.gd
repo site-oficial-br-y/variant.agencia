@@ -32,7 +32,7 @@ const BOMBA_EXTRA := ["scooter"]          # Gian: turbo + bomba num segundo bot�
 const NITRO_EXTRA := ["chefe"]           # Vitinho: nitro de fogo azul no segundo botão (C/B)
 const ULT_DASH := ["gamer"]              # Gorisch: ult no segundo botão (impulso + dash vermelho)
 const ULT_VENTO := ["boucas"]            # Bouças: ult no segundo botão (corrente de ar: sobe e plana rápido, intocável)
-const VERSAO := "v3.0.1"            # aparece no canto do lobby (pra conferir se atualizou)
+const VERSAO := "v3.0.2"            # aparece no canto do lobby (pra conferir se atualizou)
 const RITMO := 3.0                   # mundo 3x mais rápido: queda pesada e ritmo de Happy Wheels
 const ARQ_PROGRESSO := "user://progresso.cfg"
 var checkpoint_x: float = -1.0       # -1 = começa do início; sobrevive ao reinício (R)
@@ -158,6 +158,21 @@ func vini_liberado() -> bool:
 	var cfg := ConfigFile.new()
 	cfg.load(ARQ_PROGRESSO)
 	return recorde(5) < INF or bool(cfg.get_value("extra", "vini_dono", false))
+
+## Bouças: só depois de derrotar o Semaj (fase 10)
+func boucas_liberado() -> bool:
+	var cfg := ConfigFile.new()
+	cfg.load(ARQ_PROGRESSO)
+	return recorde(10) < INF or bool(cfg.get_value("extra", "semaj_vencido", false)) or bool(cfg.get_value("extra", "vini_dono", false))
+
+var boucas_liberado_antes := true
+
+func liberar_boucas() -> void:
+	boucas_liberado_antes = boucas_liberado()
+	var cfg := ConfigFile.new()
+	cfg.load(ARQ_PROGRESSO)
+	cfg.set_value("extra", "semaj_vencido", true)
+	cfg.save(ARQ_PROGRESSO)
 
 ## link secreto (?dono=vn7k2q): libera o Vini só no navegador de quem abriu por ele
 func _chave_secreta() -> void:
