@@ -840,9 +840,9 @@ func _planar(delta: float) -> void:
 	var dir := Input.get_axis("brake", "accelerate")        # só anda no ar se você mandar (pra trás também)
 	for rb in [chassi] + rodas:
 		var c := rb as RigidBody2D
-		c.apply_central_force(Vector2(0, -980.0 * 0.7) * c.mass)
-		if c.linear_velocity.y > 260.0:
-			c.linear_velocity.y = lerpf(c.linear_velocity.y, 260.0, 0.14)
+		c.apply_central_force(Vector2(0, -980.0 * 0.45) * c.mass)
+		if c.linear_velocity.y > 650.0:                    # plana, mas desce de verdade
+			c.linear_velocity.y = lerpf(c.linear_velocity.y, 650.0, 0.1)
 		if dir != 0.0 and (signf(c.linear_velocity.x) != signf(dir) or absf(c.linear_velocity.x) < 1700.0):
 			c.linear_velocity.x += dir * 1400.0 * delta
 	chassi.apply_torque(inercia_chassi * (-wrapf(chassi.rotation, -PI, PI) * 14.0 - chassi.angular_velocity * 5.0))

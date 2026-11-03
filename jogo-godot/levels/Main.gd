@@ -47,7 +47,7 @@ func _ready() -> void:
 			Game.fase = int(a.substr(2))
 	Engine.time_scale = Game.RITMO           # física a 180 Hz x 3 = mesmo passo de 1/60 s de jogo
 	RenderingServer.set_default_clear_color(Color(0.33, 0.55, 0.93))
-	tema = ["campo", "obra", "montanha", "lab", "boss", "mercado", "escola", "colorido", "julgamento", "roda", "roda", "campo"][clampi(Game.fase, 1, 12) - 1]
+	tema = ["campo", "obra", "montanha", "lab", "boss", "mercado", "escola", "colorido", "julgamento", "roda", "roda", "roda"][clampi(Game.fase, 1, 12) - 1]
 	_construir_fundo("hw" if tema == "campo" else tema)
 	_mat = PhysicsMaterial.new()
 	_mat.friction = 1.0
@@ -71,7 +71,7 @@ func _ready() -> void:
 		Game.checkpoint_x = ARENA10_X + dx
 		Game.checkpoint_chao = CHAO_Y - Roda.R + sqrt(Roda.R * Roda.R - dx * dx) - 30.0   # chão da roda é curvo
 	if Game.fase == 12:                                  # batata quente: cada um num canto da arena
-		Game.checkpoint_x = 1400.0 + maxi(0, (Online.corrida.get("ids", []) as Array).find(Online.id)) * 1700.0
+		Game.checkpoint_x = [2300.0, 9700.0, 3300.0, 8700.0][clampi((Online.corrida.get("ids", []) as Array).find(Online.id), 0, 3)]
 		Game.checkpoint_chao = CHAO_Y
 	if "na_roda" in OS.get_cmdline_user_args() and Game.fase == 10:     # teste: começa dentro da roda
 		Game.checkpoint_x = ARENA10_X
@@ -156,6 +156,7 @@ func _pos_jogador() -> void:
 		_inicio_10.call_deferred()
 	if Game.fase == 12:
 		Audio.musica_chefe("escola")
+		camera.zoom = Vector2(0.17, 0.17)                  # arena: câmera mais aberta pra ver todo mundo
 	if "autoteste" in OS.get_cmdline_user_args():
 		_rodar_teste()
 	elif "screenshot" in OS.get_cmdline_user_args():
@@ -249,6 +250,8 @@ func _physics_process(delta: float) -> void:
 		var px9 := player.foco().global_position.x if is_instance_valid(player) and is_instance_valid(player.chassi) else 0.0
 		julgamento.chuva(delta, 2.6 if px9 > 1500.0 and px9 < _chuva9_x1 and not _cena9 else 0.0)
 		ctamandura.atualizar(delta)
+	if Game.fase == 12:
+		_passo_fundo10()
 	if Game.fase in [10, 11] and roda:
 		roda.atualizar(delta)
 		if protesto:
@@ -3797,9 +3800,13 @@ func _passo_fundo10() -> void:
 	if not is_instance_valid(_fundo10) or not _fundo10.is_visible_in_tree():
 		return
 	var v := get_viewport().get_visible_rect().size
-	var esc := maxf(v.x / 2172.0, v.y / 724.0) * 1.12
-	_fundo10.size = Vector2(2172, 724) * esc
+	var tam := _fundo10.texture.get_size()
+	var esc := maxf(v.x / tam.x, v.y / tam.y) * 1.12
+	_fundo10.size = tam * esc
 	var cx := camera.global_position.x if is_instance_valid(camera) else 0.0
+	if Game.fase == 12:                                    # arena parada no fundo, só desliza um pouco
+		_fundo10.position = Vector2(-clampf(cx / BATATA_LARG, 0.0, 1.0) * (_fundo10.size.x - v.x), v.y - _fundo10.size.y)
+		return
 	_fundo10.position = Vector2(-fposmod(cx * 0.012, _fundo10.size.x - v.x), v.y * 0.55 - _fundo10.size.y * 0.74)   # rua da arte na altura do chão
 	if Game.checkpoint_x >= ARENA10_X - 5000.0:
 		_fundo10.visible = false
@@ -4016,22 +4023,44 @@ var _bat_no: Node2D
 var _bat_lbl: Label
 var _bat_tique := 0
 
+## arena da batata quente: 12 mil de largura em "U" (as pontas sobem em curva e devolvem você pro
+## meio), morro no centro, trampolins, rampas de pulo e setas de velocidade. Fundo: a arena com torcida.
+const BATATA_LARG := 12000.0
+
 func _fase_batata() -> void:
 	var y := CHAO_Y
-	_parede_arena(200.0, y)
-	var p := _t_plano(Vector2(300, y), 2600, false)
-	p = _t_ondas(p, 2, 120.0)
-	_t_plano(p, 1800, false)
-	mec.trampolim(p + Vector2(900, 0), 1500.0, 0.0)
-	p += Vector2(1800, 0)
-	p = _t_ondas(p, 2, 140.0)
-	_t_plano(p, 1800, false)
-	mec.painel_aceleracao(p + Vector2(900, 0), 700.0, 700.0, 2600.0)
-	p += Vector2(1800, 0)
-	p = _t_plano(p, 2200, false)
-	_parede_arena(p.x - 100.0, y)
-	_marcos([], Vector2(p.x + 60000.0, y), y + 3000.0, false)
-	pecas.placa(Vector2(900, y), "BATATA QUENTE")
+	pecas.cor_chao = Color(0.4, 0.34, 0.31)
+	pecas.borda_neon = Color(1.0, 0.25, 0.2)
+	var camada := CanvasLayer.new()
+	camada.layer = -70
+	add_child(camada)
+	_fundo10 = TextureRect.new()
+	_fundo10.texture = load("res://assets/roda/arena_batata.jpg")
+	_fundo10.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+	_fundo10.stretch_mode = TextureRect.STRETCH_SCALE
+	_fundo10.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	camada.add_child(_fundo10)
+	var L := BATATA_LARG
+	var pts := PackedVector2Array([Vector2(-60, y - 3200)])
+	for k in 13:                                           # ponta esquerda: curva que sobe
+		var t := k / 12.0
+		pts.append(Vector2(1700.0 * t, y - 1500.0 * pow(1.0 - t, 2.0)))
+	for p in [Vector2(4500, y), Vector2(5100, y - 520), Vector2(6900, y - 520), Vector2(7500, y)]:   # morro do meio
+		pts.append(p)
+	for k in 13:                                           # ponta direita
+		var t := k / 12.0
+		pts.append(Vector2(L - 1700.0 + 1700.0 * t, y - 1500.0 * t * t))
+	pts.append(Vector2(L + 60, y - 3200))
+	pecas.terreno(pts, y + 2600.0, false)
+	_parede_arena(-120.0, y)
+	_parede_arena(L + 120.0, y)
+	pecas.rampa(2700, 3200, y, 230)                        # rampas de pulo apontando pro meio
+	mec.trampolim(Vector2(3900, y), 2000.0, 0.0)
+	mec.trampolim(Vector2(8100, y), 2000.0, 0.0)
+	mec.painel_aceleracao(Vector2(2100, y), 800.0, 900.0, 3000.0)
+	mec.painel_aceleracao(Vector2(9300, y), 800.0, 900.0, 3000.0)
+	mec.trampolim(Vector2(6000, y - 520), 1700.0, 0.0)     # em cima do morro: pula alto
+	_marcos([], Vector2(L + 60000.0, y), y + 3000.0, false)
 
 func _vivos_arena() -> Array:
 	var r: Array = []
