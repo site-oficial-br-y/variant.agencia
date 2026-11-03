@@ -33,7 +33,7 @@ const NITRO_EXTRA := ["chefe"]           # Vitinho: nitro de fogo azul no segund
 const ULT_DASH := ["gamer"]              # Gorisch: ult no segundo botão (impulso + dash vermelho)
 const ULT_LASER := ["bicho"]             # Bicho: ult no segundo botão (laser que derrete o chefe; parado)
 const ULT_VENTO := ["boucas"]            # Bouças: ult no segundo botão (corrente de ar: sobe e plana rápido, intocável)
-const VERSAO := "v3.4.0"            # aparece no canto do lobby (pra conferir se atualizou)
+const VERSAO := "v3.5.0"            # aparece no canto do lobby (pra conferir se atualizou)
 const RITMO := 3.0                   # mundo 3x mais rápido: queda pesada e ritmo de Happy Wheels
 const ARQ_PROGRESSO := "user://progresso.cfg"
 var checkpoint_x: float = -1.0       # -1 = começa do início; sobrevive ao reinício (R)
@@ -97,6 +97,8 @@ const SKINS := {
 	"caio_santos": {"pers": "caio", "nome": "Santos", "raridade": "epico", "preco": 9.90},
 	"chefe_creta": {"pers": "chefe", "nome": "Creta", "raridade": "epico", "preco": 9.90},
 	"lima_dourado": {"pers": "lima", "nome": "Gorila Dourado", "raridade": "lendario", "preco": 19.90},
+	"wendell_acidente": {"pers": "wendell", "nome": "O Acidente", "raridade": "lendario", "preco": 0.0, "passe": 35},
+	"scooter_iceman": {"pers": "scooter", "nome": "Iceman", "raridade": "lendario", "preco": 0.0, "passe": 50},
 }
 
 ## skin equipada desse personagem ("" = visual normal)

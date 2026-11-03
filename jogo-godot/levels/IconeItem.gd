@@ -94,8 +94,9 @@ func _draw() -> void:
 			draw_string(f, Vector2(0, c.y + 14), txt, HORIZONTAL_ALIGNMENT_CENTER, size.x, 40 if dobro else 32, Color(1, 1, 1))
 			draw_string(f, Vector2(0, c.y + 38), "XP", HORIZONTAL_ALIGNMENT_CENTER, size.x, 20, cor)
 		"skin":
-			var pers: String = Passe.SKINS_PASSE.get(id, ["wendell", ""])[0]
-			var tex: Texture2D = load("res://assets/ui/rosto_%s.png" % pers)
+			var sp: Array = Passe.SKINS_PASSE.get(id, ["wendell", ""])
+			var arq := "res://assets/ui/rosto_%s.png" % sp[1]
+			var tex: Texture2D = load(arq if sp[1] != "" and ResourceLoader.exists(arq) else "res://assets/ui/rosto_%s.png" % sp[0])
 			if tex:
 				draw_circle(c, 56, Color(1, 0.8, 0.25, 0.25 + 0.1 * sin(_t * 3.0)))
 				draw_texture_rect(tex, Rect2(c - Vector2(50, 50), Vector2(100, 100)), false)

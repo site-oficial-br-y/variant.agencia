@@ -55,6 +55,8 @@ func _ready() -> void:
 	rolagem.add_child(grade)
 	for k in Game.SKINS:                       # mostra já; o servidor confirma preço e o que está à venda
 		var s: Dictionary = Game.SKINS[k]
+		if s.has("passe"):
+			continue
 		_itens.append({"item": k, "personagem": s["pers"], "nome": s["nome"], "raridade": s["raridade"], "preco": s["preco"], "ativo": true})
 	Conta.mudou.connect(_montar)
 	get_viewport().size_changed.connect(_layout)
@@ -67,7 +69,7 @@ func _carregar() -> void:
 	if not is_inside_tree():
 		return
 	if int(r[0]) == 200 and typeof(r[1]) == TYPE_ARRAY and not (r[1] as Array).is_empty():
-		_itens = r[1]
+		_itens = (r[1] as Array).filter(func(d) -> bool: return not Game.SKINS.get(str(d.get("item", "")), {}).has("passe"))
 	if Conta.logado():
 		var p: Array = await Conta.meus_pedidos()
 		if not is_inside_tree():

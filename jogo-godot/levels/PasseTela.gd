@@ -250,7 +250,7 @@ func _atualizar() -> void:
 		var est: Label = c.get_node("estado")
 		var cor: Color = it[4]
 		if it[3] == "skin":
-			est.text = "CHEGA EM BREVE" if lib else "NÍVEL %d" % it[0]
+			est.text = "✓ NO INVENTÁRIO" if lib else "NÍVEL %d" % it[0]
 		elif it[3] == "bonus":
 			est.text = "✓ RECEBIDO" if lib else "BÔNUS"
 		elif Passe.equipado(it[3]) == id:

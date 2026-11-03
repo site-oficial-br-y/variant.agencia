@@ -43,7 +43,7 @@ const ITENS := [
 	[32, "moldura_fogo", "Nick de Fogo", "moldura", Color(1.0, 0.4, 0.15)],
 	[33, "bonus_dobro_33", "XP em Dobro (15 min)", "bonus", Color(0.4, 0.85, 1.0)],
 	[34, "morte_fantasma", "Vira Fantasma", "morte", Color(0.9, 0.95, 1.0)],
-	[35, "skin_wendell", "Skin do Wendell", "skin", Color(1.0, 0.55, 0.2)],
+	[35, "skin_wendell", "Wendell: O Acidente", "skin", Color(1.0, 0.55, 0.2)],
 	[36, "bonus_xp_36", "+300 XP", "bonus", Color(0.5, 1.0, 0.6)],
 	[37, "roda_arco", "Roda Arco-íris", "roda", Color(1.0, 0.3, 0.6)],
 	[38, "rastro_estrela", "Estrelas", "rastro", Color(1.0, 0.95, 0.4)],
@@ -58,11 +58,11 @@ const ITENS := [
 	[47, "bonus_xp_47", "+300 XP", "bonus", Color(0.5, 1.0, 0.6)],
 	[48, "aura_arco", "Aura Arco-íris", "aura", Color(1.0, 0.4, 0.9)],
 	[49, "bonus_xp_49", "+300 XP", "bonus", Color(0.5, 1.0, 0.6)],
-	[50, "skin_gian", "Skin do Gian", "skin", Color(0.3, 0.7, 1.0)],
+	[50, "skin_gian", "Gian: Iceman", "skin", Color(0.3, 0.7, 1.0)],
 ]
 const TIPOS := {"bonus": "BÔNUS", "rastro": "RASTRO", "aura": "AURA", "roda": "RODA", "chapeu": "CHAPÉU", "morte": "MORTE", "moldura": "NICK", "skin": "SKIN"}
 ## skin do passe -> [personagem, item da skin]; vazio = arte ainda não chegou
-const SKINS_PASSE := {"skin_wendell": ["wendell", ""], "skin_gian": ["scooter", ""]}
+const SKINS_PASSE := {"skin_wendell": ["wendell", "wendell_acidente"], "skin_gian": ["scooter", "scooter_iceman"]}
 
 var xp := 0
 var equipados: Dictionary = {}          # tipo -> id

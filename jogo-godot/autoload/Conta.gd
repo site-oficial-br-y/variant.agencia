@@ -168,7 +168,10 @@ func _entrou() -> void:
 
 # ---------- loja e inventário ----------
 func tem(item: String) -> bool:
-	return admin or item in inventario
+	if admin or item in inventario:
+		return true
+	var nv := int(Game.SKINS.get(item, {}).get("passe", 0))
+	return nv > 0 and Passe.nivel() >= nv
 
 ## atualiza as skins compradas (e se é o dono) a partir do servidor
 func carregar_inventario() -> void:
