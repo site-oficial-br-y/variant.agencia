@@ -78,6 +78,8 @@ func _ready() -> void:
 		Game.checkpoint_chao = CHAO_Y
 	if "foto_roda" in OS.get_cmdline_user_args():
 		_foto_roda.call_deferred()
+	if "vida_teste" in OS.get_cmdline_user_args():
+		_vida_teste.call_deferred()
 	if "velocidade" in OS.get_cmdline_user_args():          # teste: velocidade do veículo a cada 0,25 s
 		var t := Timer.new()
 		t.wait_time = 0.25
@@ -1763,8 +1765,8 @@ func _construir_hud() -> void:
 		[_toque("gas", Vector2.ZERO, 200, "accelerate"), func(v: Vector2) -> Vector2: return Vector2(v.x - 225, v.y - 225)],
 		[_toque_especial(), func(v: Vector2) -> Vector2: return Vector2(v.x - 195, v.y - 410)],
 		[_rotulo_carga(), func(v: Vector2) -> Vector2: return Vector2(v.x - 213, v.y - 452)],
-		[_rotulo_ult(), func(v: Vector2) -> Vector2: return Vector2(v.x - 405, v.y - 400) if (Game.personagem in Game.ULT_DASH or Game.personagem in Game.ULT_VENTO) else Vector2(-9999, 0)],
-		[_toque_bomba(), func(v: Vector2) -> Vector2: return Vector2(v.x - 370, v.y - 360) if (Game.personagem in Game.BOMBA_EXTRA or Game.personagem in Game.NITRO_EXTRA or Game.personagem in Game.ULT_DASH or Game.personagem in Game.ULT_VENTO) else Vector2(-9999, 0)],
+		[_rotulo_ult(), func(v: Vector2) -> Vector2: return Vector2(v.x - 405, v.y - 400) if (Game.personagem in Game.ULT_DASH or (Game.personagem in Game.ULT_VENTO or Game.personagem in Game.ULT_LASER)) else Vector2(-9999, 0)],
+		[_toque_bomba(), func(v: Vector2) -> Vector2: return Vector2(v.x - 370, v.y - 360) if (Game.personagem in Game.BOMBA_EXTRA or Game.personagem in Game.NITRO_EXTRA or Game.personagem in Game.ULT_DASH or (Game.personagem in Game.ULT_VENTO or Game.personagem in Game.ULT_LASER)) else Vector2(-9999, 0)],
 		[_botao("R", Vector2.ZERO, Vector2(80, 64), "reset"), func(v: Vector2) -> Vector2: return Vector2(v.x - 96, 14)],
 		[_botao("TROCAR", Vector2.ZERO, Vector2(180, 64), "menu"), func(v: Vector2) -> Vector2: return Vector2(v.x - 290, 14)],
 		[_volume(cl), func(v: Vector2) -> Vector2: return Vector2(v.x - 386, 14)],
@@ -1835,7 +1837,7 @@ func _toque_especial() -> TouchScreenButton:
 	return _botao_especial
 
 func _toque_bomba() -> TouchScreenButton:
-	var icone := "nitro" if Game.personagem in Game.NITRO_EXTRA else ("dash" if (Game.personagem in Game.ULT_DASH or Game.personagem in Game.ULT_VENTO) else "bomba")
+	var icone := "nitro" if Game.personagem in Game.NITRO_EXTRA else ("dash" if (Game.personagem in Game.ULT_DASH or (Game.personagem in Game.ULT_VENTO or Game.personagem in Game.ULT_LASER)) else "bomba")
 	return _toque(icone, Vector2.ZERO, 130, "bomba")
 
 ## carga da habilidade embaixo do botão: PRONTO, segundos ou % do turbo
@@ -1862,7 +1864,7 @@ func _rotulo_ult() -> Label:
 	return _carga_ult
 
 func _atualizar_carga() -> void:
-	if _carga_ult and is_instance_valid(player) and (Game.personagem in Game.ULT_DASH or Game.personagem in Game.ULT_VENTO):
+	if _carga_ult and is_instance_valid(player) and (Game.personagem in Game.ULT_DASH or (Game.personagem in Game.ULT_VENTO or Game.personagem in Game.ULT_LASER)):
 		if player.ult_t > 0.0:
 			_carga_ult.text = "ULT!"
 			_carga_ult.add_theme_color_override("font_color", Color(1, 0.35, 0.3))
@@ -3927,7 +3929,8 @@ func _foto_roda() -> void:
 		if "ult_teste" in OS.get_cmdline_user_args():          # teste: liga a ult logo no começo
 			_ult_passo += 1
 			if _ult_passo == 2:
-				Input.action_press("especial")
+				if Game.personagem != "wendell":
+					Input.action_press("especial")
 				Input.action_press("bomba")
 			elif _ult_passo == 4:
 				Input.action_release("bomba")
@@ -4297,3 +4300,11 @@ func _fotos_arena() -> void:
 		if not is_inside_tree():
 			return
 		await _captura("arena_%02d" % k)
+
+func _vida_teste() -> void:
+	for k in 30:
+		await get_tree().create_timer(1.0, true, false, true).timeout
+		var c = _chefe_vivo()
+		print("[VIDA] t=%d chefe=%s vida=%s ult=%.1f" % [k + 1, c.get_script().resource_path.get_file() if c else "-", str(c.vida) if c and "vida" in c else "-", player.ult_t])
+		if k == 24:
+			get_tree().quit()

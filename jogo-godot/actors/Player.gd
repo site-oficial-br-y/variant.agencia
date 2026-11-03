@@ -661,6 +661,13 @@ func _especial(ch: Dictionary, delta: float) -> void:
 				chassi.modulate = cor if imortal_t > 0.0 else Color.WHITE
 				for r in rodas:
 					(r as Node2D).modulate = chassi.modulate
+		"teleporte":                       # Wendell: some num clarão e reaparece lá na frente (estilo Goku)
+			if _tele_t > 0.0:
+				_tele_t -= delta
+				imortal_t = maxf(imortal_t, _tele_t)
+			if apertou and recarga <= 0.0 and montado:
+				_usar(3.0)                           # 1 s real de recarga
+				_teleportar()
 		"pulo_duplo":                       # Erick: pula no chão e pula de novo no ar
 			var no_chao := _no_chao()
 			if no_chao and _espera_chao <= 0.0:
@@ -704,6 +711,8 @@ func _especial(ch: Dictionary, delta: float) -> void:
 		_planar(delta)
 	if personagem in Game.ULT_VENTO:
 		_ult_vento(delta / Engine.time_scale)
+	if personagem in Game.ULT_LASER:
+		_ult_laser(delta / Engine.time_scale)
 	if personagem in Game.BOMBA_EXTRA:               # segundo botão: bomba com recarga própria
 		recarga_bomba = maxf(0.0, recarga_bomba - delta)
 		if Input.is_action_just_pressed("bomba") and recarga_bomba <= 0.0:
@@ -925,6 +934,206 @@ func _lancar_aviao(n: int) -> void:
 		if tem_chefe and n % 7 == 0 and fase.has_method("dano_ult_chefe"):
 			fase.call("dano_ult_chefe"))
 
+## ---------- Wendell ----------
+## teleporte: clarão onde estava, risco de luz no caminho e clarão onde aparece; mantém a velocidade
+const TELE_DIST := 1700.0
+var _tele_t := 0.0
+
+func _teleportar() -> void:
+	var dirx := Input.get_axis("brake", "accelerate")
+	if dirx == 0.0:
+		dirx = 1.0 if chassi.linear_velocity.x >= -50.0 else -1.0
+	dirx = signf(dirx)
+	var de := chassi.global_position
+	var dist := TELE_DIST
+	var espaco := get_world_2d().direct_space_state
+	var q := PhysicsRayQueryParameters2D.create(de + Vector2(0, -250), de + Vector2(dirx * (TELE_DIST + 300.0), -250), 0b0001)
+	var hit := espaco.intersect_ray(q)
+	if not hit.is_empty():                                 # parede no caminho: para antes dela
+		dist = maxf(0.0, absf((hit["position"] as Vector2).x - de.x) - 350.0)
+	var desl := Vector2(dirx * dist, -120.0)
+	var ate := de + desl
+	_flash_tele(de, dirx)
+	for rb in [chassi] + rodas:
+		var c := rb as RigidBody2D
+		var tf := c.global_transform
+		tf.origin += desl
+		PhysicsServer2D.body_set_state(c.get_rid(), PhysicsServer2D.BODY_STATE_TRANSFORM, tf)
+		c.global_transform = tf
+	_tele_t = 1.2                                          # 0,4 s real intocável ao aparecer
+	_rastro_tele(de + Vector2(0, -350), ate + Vector2(0, -350))
+	_flash_tele(ate, dirx)
+	Audio.tocar("turbo", 1.0, 0.15)
+	Audio.tocar("checkpoint", 0.6, 0.3)
+
+func _flash_tele(onde: Vector2, dirx: float) -> void:
+	var add := CanvasItemMaterial.new()
+	add.blend_mode = CanvasItemMaterial.BLEND_MODE_ADD
+	var fx := Node2D.new()
+	fx.z_index = 30
+	fx.material = add
+	get_parent().add_child(fx)
+	fx.global_position = onde + Vector2(0, -400)
+	for i in 3:                                            # aneis que abrem
+		var anel := Line2D.new()
+		var pts := PackedVector2Array()
+		for k in 33:
+			pts.append(Vector2(260, 0).rotated(TAU * k / 32.0) * Vector2(0.6, 1.0))
+		anel.points = pts
+		anel.width = [70.0, 34.0, 14.0][i]
+		anel.default_color = [Color(0.3, 0.8, 1.0, 0.8), Color(0.75, 0.95, 1.0, 0.9), Color(1, 1, 1, 1)][i]
+		anel.use_parent_material = true
+		fx.add_child(anel)
+	for k in 6:                                            # riscos verticais de energia
+		var r := Line2D.new()
+		var x := randf_range(-180, 180)
+		r.points = PackedVector2Array([Vector2(x, randf_range(200, 500)), Vector2(x + randf_range(-30, 30), randf_range(-700, -400))])
+		r.width = randf_range(10, 26)
+		r.default_color = Color(0.6, 0.9, 1.0, 0.9)
+		r.use_parent_material = true
+		fx.add_child(r)
+	var tw := fx.create_tween()
+	tw.tween_property(fx, "scale", Vector2(2.6, 1.6), 0.35 * Engine.time_scale).from(Vector2(0.3, 0.3)).set_ease(Tween.EASE_OUT).set_trans(Tween.TRANS_CUBIC)
+	tw.parallel().tween_property(fx, "modulate:a", 0.0, 0.4 * Engine.time_scale)
+	tw.tween_callback(fx.queue_free)
+	var pc = get_parent().get("pecas")
+	if pc:
+		pc.particulas(onde + Vector2(0, -400), 24, Color(0.7, 0.95, 1.0, 1.0), Color(0.3, 0.6, 1.0, 0.0), 300.0, 1100.0, 0.5, 20.0, 50.0, 0.0, Vector2(dirx, 0), 180.0)
+
+func _rastro_tele(de: Vector2, ate: Vector2) -> void:
+	var add := CanvasItemMaterial.new()
+	add.blend_mode = CanvasItemMaterial.BLEND_MODE_ADD
+	for i in 2:
+		var l := Line2D.new()
+		l.points = PackedVector2Array([de, ate])
+		l.width = 220.0 if i == 0 else 60.0
+		l.default_color = Color(0.3, 0.75, 1.0, 0.45) if i == 0 else Color(0.9, 0.98, 1.0, 0.95)
+		l.material = add
+		l.z_index = 29
+		get_parent().add_child(l)
+		var tw := l.create_tween()
+		tw.tween_property(l, "width", 0.0, 0.25 * Engine.time_scale)
+		tw.parallel().tween_property(l, "modulate:a", 0.0, 0.25 * Engine.time_scale)
+		tw.tween_callback(l.queue_free)
+
+## ult (segundo botão): raio de energia saindo do peito até o chefe. Dano começa pouquinho
+## e vai acelerando; se ele andar, o raio corta. Sem chefe na tela, atira pra frente.
+const LASER_DURA := 9.0
+const LASER_RECARGA := 22.0
+var _laser_t := 0.0
+var _laser_carga := 0.0
+var _laser_no: Node2D
+var _laser_aviso := 0.0
+
+func _ult_laser(dt: float) -> void:
+	if ult_t <= 0.0:
+		recarga_ult = maxf(0.0, recarga_ult - dt)
+		if Input.is_action_just_pressed("bomba") and recarga_ult <= 0.0 and montado:
+			ult_t = LASER_DURA
+			_laser_t = 0.0
+			_laser_carga = 0.0
+			Audio.tocar("choque", 1.0, 0.0)
+		return
+	var mexeu := not montado or Input.is_action_pressed("accelerate") or Input.is_action_pressed("brake") \
+		or absf(chassi.linear_velocity.x) > 450.0
+	if mexeu and _laser_t > 0.3:                             # andou: o raio corta
+		_fim_laser(true)
+		return
+	ult_t -= dt
+	_laser_t += dt
+	var fase := get_parent()
+	var alvo = fase.call("alvo_chefe") if fase.has_method("alvo_chefe") else null
+	var de := chassi.global_position + Vector2(160, -520).rotated(chassi.rotation)
+	var ate: Vector2 = alvo if alvo != null else de + Vector2(6000, -300)
+	var forca := clampf(_laser_t / 6.0, 0.0, 1.0)            # 0 -> 1: o raio engrossa e o dano acelera
+	if alvo != null and _laser_t > 0.4:
+		_laser_carga += dt * (0.1 + 0.55 * forca * forca)
+		if _laser_carga >= 1.0:
+			_laser_carga -= 1.0
+			if fase.has_method("dano_ult_chefe"):
+				fase.call("dano_ult_chefe")
+			Audio.tocar("impacto_forte", 1.0, 0.0)
+	_desenhar_laser(de, ate, forca, alvo != null)
+	if ult_t <= 0.0:
+		_fim_laser(false)
+
+func _fim_laser(cortou: bool) -> void:
+	ult_t = 0.0
+	recarga_ult = LASER_RECARGA * (0.6 if cortou else 1.0)
+	if is_instance_valid(_laser_no):
+		var tw := _laser_no.create_tween()
+		tw.tween_property(_laser_no, "modulate:a", 0.0, 0.25 * Engine.time_scale)
+		tw.tween_callback(_laser_no.queue_free)
+		_laser_no = null
+	if cortou:
+		var fase := get_parent()
+		if fase.has_method("_mensagem"):
+			fase.call("_mensagem", "VOCÊ SE MEXEU! O LASER CORTOU", Color(1, 0.6, 0.4))
+
+func _desenhar_laser(de: Vector2, ate: Vector2, forca: float, no_chefe: bool) -> void:
+	if not is_instance_valid(_laser_no):
+		var add := CanvasItemMaterial.new()
+		add.blend_mode = CanvasItemMaterial.BLEND_MODE_ADD
+		_laser_no = Node2D.new()
+		_laser_no.z_index = 35
+		_laser_no.material = add
+		get_parent().add_child(_laser_no)
+		for i in 4:                                        # halo, corpo, núcleo, espiral
+			var l := Line2D.new()
+			l.name = "l%d" % i
+			l.begin_cap_mode = Line2D.LINE_CAP_ROUND
+			l.end_cap_mode = Line2D.LINE_CAP_ROUND
+			l.use_parent_material = true
+			_laser_no.add_child(l)
+		for nome in ["bola", "impacto"]:
+			var b := Polygon2D.new()
+			b.name = nome
+			var pts := PackedVector2Array()
+			for k in 24:
+				pts.append(Vector2(1, 0).rotated(TAU * k / 24.0))
+			b.polygon = pts
+			b.use_parent_material = true
+			_laser_no.add_child(b)
+	var t := Time.get_ticks_msec() / 1000.0
+	var pisca := 0.85 + 0.15 * sin(t * 47.0)
+	var larg := lerpf(70.0, 230.0, forca) * pisca
+	var cor_a := Color(0.25, 0.6, 1.0).lerp(Color(0.75, 0.3, 1.0), forca)
+	var l0: Line2D = _laser_no.get_node("l0")
+	var l1: Line2D = _laser_no.get_node("l1")
+	var l2: Line2D = _laser_no.get_node("l2")
+	var l3: Line2D = _laser_no.get_node("l3")
+	for l in [l0, l1, l2]:
+		l.points = PackedVector2Array([de, ate])
+	l0.width = larg * 3.2
+	l0.default_color = Color(cor_a.r, cor_a.g, cor_a.b, 0.28)
+	l1.width = larg * 1.5
+	l1.default_color = Color(cor_a.r, cor_a.g, cor_a.b, 0.75)
+	l2.width = larg * 0.55
+	l2.default_color = Color(1, 1, 1, 0.95)
+	var esp := PackedVector2Array()                       # espiral de energia enrolando o raio
+	var d := ate - de
+	var n := d.normalized().orthogonal()
+	for k in 41:
+		var u := k / 40.0
+		esp.append(de + d * u + n * sin(u * 30.0 - t * 25.0) * larg * 0.9)
+	l3.points = esp
+	l3.width = 14.0 + 16.0 * forca
+	l3.default_color = Color(0.8, 0.95, 1.0, 0.7)
+	var bola: Polygon2D = _laser_no.get_node("bola")
+	bola.position = de
+	bola.scale = Vector2.ONE * larg * 1.1
+	bola.color = Color(0.85, 0.95, 1.0, 0.9)
+	var imp: Polygon2D = _laser_no.get_node("impacto")
+	imp.position = ate
+	imp.scale = Vector2.ONE * larg * (1.6 + 0.4 * sin(t * 31.0))
+	imp.color = Color(cor_a.r, cor_a.g, cor_a.b, 0.8)
+	var pc = get_parent().get("pecas")
+	if pc and fmod(t, 0.12) < 0.02:
+		pc.particulas(ate, 10 + int(20 * forca), Color(1, 1, 1, 1), Color(cor_a.r, cor_a.g, cor_a.b, 0.0), 400.0, 1500.0 + 1500.0 * forca, 0.4, 20.0, 60.0, 0.0, -d.normalized(), 70.0)
+	var cam := get_viewport().get_camera_2d()
+	if cam and no_chefe:
+		cam.offset = Vector2(randf_range(-1, 1), randf_range(-1, 1)) * 25.0 * forca
+
 ## Gorisch: segundo botão liga a ult (impulso de velocidade + pose voando). Na ult, o botão
 ## de novo dá dash vermelho. Depois recarrega; o turbo de porcentagem continua no especial.
 func _ult_gorisch(_ch: Dictionary, dt: float) -> void:
@@ -1098,6 +1307,8 @@ func pronto() -> float:
 		return 1.0
 	if habilidade == "mega_pulo" and _mirando:
 		return 1.0
+	if habilidade == "teleporte":
+		return 1.0 - recarga / maxf(recarga_total, 0.001)
 	if habilidade in ["repele", "raquete"] and _repele_t > 0.0:
 		return 1.0
 	return 1.0 - recarga / maxf(recarga_total, 0.001)

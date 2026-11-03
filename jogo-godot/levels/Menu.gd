@@ -12,7 +12,7 @@ const INFO := {
 	"monociclo": ["MALABARISTA", "PULO DUPLO", "Pula no chão e pula de novo no ar.", [2, 3, 2]],
 	"gamer": ["SOLDADO GAMER", "TURBO + ULT", "Turbo infinito. No outro botão, a ult: fica muito mais rápido, com rastro vermelho.", [3, 4, 2]],
 	"bicho": ["COMPRADOR", "BALÕES", "Três balões nas costas: plana por 10 segundos.", [3, 2, 2]],
-	"wendell": ["MOTOQUEIRO", "ESTRELA", "Fica imortal por 10 segundos, igual ao Mário.", [3, 4, 3]],
+	"wendell": ["MOTOQUEIRO", "TELEPORTE + LASER", "Some num clarão e reaparece lá na frente. No outro botão, o laser: parado, derrete o chefe cada vez mais rápido.", [3, 4, 4]],
 	"caio": ["EQUILIBRISTA", "RAPIDEZ", "Fica muito mais rápido por 8 segundos.", [2, 4, 2]],
 	"lima": ["DOMADOR", "MEGA PULO", "Segura pra mirar e solta: o gorila salta longe.", [4, 3, 4]],
 	"chefe": ["O CHEFE", "SEM CAMISA", "Tira a camisa e rebate os golpes dos chefões.", [3, 4, 4]],
@@ -21,7 +21,7 @@ const INFO := {
 	"vini": ["SECRETO", "DASH", "Arrancada rapidíssima. Segurando no ar, plana.", [2, 4, 3]],
 }
 const ICONES := {"salto": "pula", "turbo": "turbo", "pulo_duplo": "pula", "baloes": "baloes", "estrela": "estrela",
-	"rapido": "rapido", "mega_pulo": "mega_pulo", "repele": "repele", "dash": "dash", "raquete": "repele"}
+	"rapido": "rapido", "mega_pulo": "mega_pulo", "repele": "repele", "dash": "dash", "raquete": "repele", "teleporte": "dash"}
 const ROXO := Color(0.6, 0.38, 1.0)
 const ROXO_ESCURO := Color(0.09, 0.05, 0.18, 0.82)
 const OURO := Color(1.0, 0.8, 0.25)
