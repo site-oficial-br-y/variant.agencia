@@ -3929,7 +3929,7 @@ func _foto_roda() -> void:
 		if "ult_teste" in OS.get_cmdline_user_args():          # teste: liga a ult logo no começo
 			_ult_passo += 1
 			if _ult_passo == 2:
-				if Game.personagem != "wendell":
+				if Game.personagem != "bicho":
 					Input.action_press("especial")
 				Input.action_press("bomba")
 			elif _ult_passo == 4:
@@ -3991,11 +3991,11 @@ func alvo_chefe():
 	return camera.get_screen_center_position() + Vector2(0, -v.y * 0.28) / camera.zoom
 
 ## um acerto da esquadrilha: tira 1 de vida do chefe que estiver lutando
-func dano_ult_chefe() -> void:
+func dano_ult_chefe(msg := "ESQUADRILHA DE PAPEL!") -> void:
 	var c = _chefe_vivo()
 	if c == null:
 		return
-	_mensagem("ESQUADRILHA DE PAPEL!", Color(1, 1, 1))
+	_mensagem(msg, Color(1, 1, 1))
 	if c == boss or c == adriano:
 		c.levar_choque()
 	elif c == roda:
@@ -4306,5 +4306,12 @@ func _vida_teste() -> void:
 		await get_tree().create_timer(1.0, true, false, true).timeout
 		var c = _chefe_vivo()
 		print("[VIDA] t=%d chefe=%s vida=%s ult=%.1f" % [k + 1, c.get_script().resource_path.get_file() if c else "-", str(c.vida) if c and "vida" in c else "-", player.ult_t])
+		if k == 2 and "tele_teste" in OS.get_cmdline_user_args():
+			Input.action_press("especial")
+			await get_tree().create_timer(0.08, true, false, true).timeout
+			Input.action_release("especial")
+			await _captura("tele")
+		if k in [5, 8] and "foto_laser" in OS.get_cmdline_user_args():
+			await _captura("laser_%d" % k)
 		if k == 24:
 			get_tree().quit()

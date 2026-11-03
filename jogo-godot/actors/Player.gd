@@ -1034,13 +1034,13 @@ func _ult_laser(dt: float) -> void:
 			_laser_carga = 0.0
 			Audio.tocar("choque", 1.0, 0.0)
 		return
-	var mexeu := not montado or Input.is_action_pressed("accelerate") or Input.is_action_pressed("brake") \
-		or absf(chassi.linear_velocity.x) > 450.0
+	var mexeu := not montado or Input.is_action_pressed("accelerate") or Input.is_action_pressed("brake")   # só corta se VOCÊ andar
 	if mexeu and _laser_t > 0.3:                             # andou: o raio corta
 		_fim_laser(true)
 		return
 	ult_t -= dt
 	_laser_t += dt
+	imortal_t = maxf(imortal_t, 0.2)                          # parado atirando: chefe não derruba
 	var fase := get_parent()
 	var alvo = fase.call("alvo_chefe") if fase.has_method("alvo_chefe") else null
 	var de := chassi.global_position + Vector2(160, -520).rotated(chassi.rotation)
@@ -1051,7 +1051,7 @@ func _ult_laser(dt: float) -> void:
 		if _laser_carga >= 1.0:
 			_laser_carga -= 1.0
 			if fase.has_method("dano_ult_chefe"):
-				fase.call("dano_ult_chefe")
+				fase.call("dano_ult_chefe", "LASER NO CHEFE!")
 			Audio.tocar("impacto_forte", 1.0, 0.0)
 	_desenhar_laser(de, ate, forca, alvo != null)
 	if ult_t <= 0.0:
@@ -1909,9 +1909,12 @@ func _dirigir() -> void:
 			- chassi.angular_velocity * balance_damping))
 	elif lean != 0.0:                # sem braço, controla mal
 		chassi.apply_torque(lean * inercia_chassi * (2.2 if _sem_braco() else 5.0) * float(ch.get("giro", 1.0)))
+		if ch.has("estavel"):        # fácil de controlar: o giro freia sozinho, não sai rodando
+			chassi.apply_torque(-chassi.angular_velocity * inercia_chassi * 1.5 * float(ch["estavel"]))
 	else:           # sem botão, se alinha sozinho com o chão embaixo: pousa certo na descida
 		var alvo := _angulo_chao_embaixo() if ch.get("nivela_chao", true) else 0.0   # pé comprido na frente: fica reto
-		chassi.apply_torque(inercia_chassi * (-wrapf(chassi.rotation - alvo, -PI, PI) * 6.0 - chassi.angular_velocity * 2.5))
+		var k := float(ch.get("estavel", 1.0))
+		chassi.apply_torque(inercia_chassi * (-wrapf(chassi.rotation - alvo, -PI, PI) * 6.0 * k - chassi.angular_velocity * 2.5 * k))
 	# pouso/batida forte arremessa o piloto; capotou ou caiu no buraco também
 	var dv := (v_roda_ant - roda_motriz.linear_velocity).length()
 	v_roda_ant = roda_motriz.linear_velocity

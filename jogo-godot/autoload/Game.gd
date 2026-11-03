@@ -26,14 +26,14 @@ func proxima_fase(id: int) -> int:
 const NOMES := {"segway": "PÉRINE", "cadeira": "GABRIEL", "scooter": "GIAN", "monociclo": "ERICK", "gamer": "GORISCH", "bicho": "BICHO", "wendell": "WENDELL", "caio": "CAIO", "vini": "VINI", "lima": "LIMA", "chefe": "CHEFE", "sartori": "SARTORI", "boucas": "BOUÇAS"}
 ## habilidade de cada um (botão especial), sempre com limite de uso
 const CHECKPOINTS := false              # sem checkpoint: morreu, volta pro começo da fase
-const HABILIDADES := {"segway": "salto", "cadeira": "turbo", "scooter": "turbo", "monociclo": "pulo_duplo", "gamer": "turbo", "bicho": "baloes", "wendell": "teleporte", "caio": "rapido", "vini": "dash", "lima": "mega_pulo", "chefe": "repele", "sartori": "raquete", "boucas": "turbo"}
+const HABILIDADES := {"segway": "salto", "cadeira": "turbo", "scooter": "turbo", "monociclo": "pulo_duplo", "gamer": "turbo", "bicho": "teleporte", "wendell": "estrela", "caio": "rapido", "vini": "dash", "lima": "mega_pulo", "chefe": "repele", "sartori": "raquete", "boucas": "turbo"}
 const TURBO_INFINITO := ["cadeira", "gamer", "boucas"]   # Gabriel e Gorisch: turbo sem combustível
 const BOMBA_EXTRA := ["scooter"]          # Gian: turbo + bomba num segundo botão
 const NITRO_EXTRA := ["chefe"]           # Vitinho: nitro de fogo azul no segundo botão (C/B)
 const ULT_DASH := ["gamer"]              # Gorisch: ult no segundo botão (impulso + dash vermelho)
-const ULT_LASER := ["wendell"]           # Wendell: ult no segundo botão (laser que derrete o chefe; parado)
+const ULT_LASER := ["bicho"]             # Bicho: ult no segundo botão (laser que derrete o chefe; parado)
 const ULT_VENTO := ["boucas"]            # Bouças: ult no segundo botão (corrente de ar: sobe e plana rápido, intocável)
-const VERSAO := "v3.0.2"            # aparece no canto do lobby (pra conferir se atualizou)
+const VERSAO := "v3.1.0"            # aparece no canto do lobby (pra conferir se atualizou)
 const RITMO := 3.0                   # mundo 3x mais rápido: queda pesada e ritmo de Happy Wheels
 const ARQ_PROGRESSO := "user://progresso.cfg"
 var checkpoint_x: float = -1.0       # -1 = começa do início; sobrevive ao reinício (R)

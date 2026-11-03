@@ -185,7 +185,7 @@ BICHO = {
         'piloto': ['tronco', 'cabeca', 'braco', 'coxa', 'canela'],
         'rodas': [{'corpo': 'roda0', 'c': [192.0, 1092.0], 'r': 62, 'massa': 1.0, 'motriz': True},
                   {'corpo': 'roda1', 'c': [1065.0, 1110.0], 'r': 62, 'massa': 1.0, 'motriz': False}],
-        'chassi': {'massa': 7.0, 'auto_equilibrio': False, 'vmax': 800.0, 'forca': 0.0, 'cesto': True,
+        'chassi': {'massa': 7.0, 'auto_equilibrio': False, 'vmax': 950.0, 'forca': 0.0, 'cesto': True, 'preciso': True, 'giro': 1.4, 'estavel': 2.2,
                    'poly': [[150, 840], [1160, 820], [1140, 1010], [230, 1010]],
                    'paredes': [[[165, 420], [180, 845]], [[1165, 470], [1150, 830]]]},
         'corpos': {

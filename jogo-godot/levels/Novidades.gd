@@ -2,8 +2,10 @@ extends Control
 ## Aviso de atualização: aparece por cima do lobby na primeira vez que abre a versão nova.
 ## Fundo é a arte do patch escurecida; o X fecha e fica no lobby.
 
-const VERSAO := "3.0"
+const VERSAO := "3.1"
 const ITENS := [
+	["BICHO TURBINADO", "Saíram os balões. Agora ele se TELEPORTA pra frente num clarão (recarga de 1 s) e é bem mais fácil de controlar.", Color(0.4, 0.85, 1.0)],
+	["ULT DO BICHO: LASER", "No outro botão, um raio que sai dele e derrete o chefe, cada vez mais rápido. Mas se você andar, o laser corta.", Color(0.75, 0.4, 1.0)],
 	["ONLINE: MATA-MATA NA RODA", "Todo mundo dentro da roda do James. Ela vai acelerando e vira Semaj. Morreu, tá fora. O último vivo vence.", Color(1.0, 0.55, 0.2)],
 	["ONLINE: BATATA QUENTE", "A bomba começa com alguém e passa encostando em outro jogador. Acabou o tempo, BUUUM. O último vivo vence.", Color(1.0, 0.35, 0.3)],
 	["NOVO: SARTORI", "Jogador de beach tennis, a pé. Na RAQUETADA ele bate a raquete sem parar: rebate arpão, molotov e golpe de chefe e fica bem rápido.", Color(1.0, 0.85, 0.2)],
