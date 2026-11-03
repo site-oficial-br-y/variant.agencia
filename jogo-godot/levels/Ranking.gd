@@ -161,9 +161,10 @@ func _carregar() -> void:
 	for i in lista.size():
 		var d: Dictionary = lista[i]
 		var valor := ("%.1f s" % float(d.get("tempo", 0.0))) if modo == "tempos" else _horas(int(d.get("tempo_jogo", 0)))
-		linhas.add_child(_linha(i, str(d.get("apelido", "?")), valor, str(d.get("personagem", "")), str(d.get("user_id", ""))))
+		linhas.add_child(_linha(i, str(d.get("apelido", "?")), valor, str(d.get("personagem", "")), str(d.get("user_id", "")),
+			Passe.nivel_de(int(d["xp"])) if d.get("xp") != null else 0))
 
-func _linha(i: int, ap: String, valor: String, pers: String, uid: String) -> Control:
+func _linha(i: int, ap: String, valor: String, pers: String, uid: String, nv: int = 0) -> Control:
 	var eu := Conta.logado() and (uid == Conta.user_id if uid != "" else ap.to_lower() == Conta.nick.to_lower())
 	var p := Panel.new()
 	p.mouse_filter = Control.MOUSE_FILTER_IGNORE         # deixa o dedo rolar a lista
@@ -193,8 +194,20 @@ func _linha(i: int, ap: String, valor: String, pers: String, uid: String) -> Con
 	nome.horizontal_alignment = HORIZONTAL_ALIGNMENT_LEFT
 	nome.clip_text = true
 	nome.position = Vector2(124, 8)
-	nome.size = Vector2(maxf(100.0, linhas.custom_minimum_size.x - 124 - 200), 44)
+	nome.size = Vector2(maxf(100.0, linhas.custom_minimum_size.x - 124 - 200 - (96 if nv > 0 else 0)), 44)
 	p.add_child(nome)
+	if nv > 0:
+		var cor_nv := Color(1.0, 0.45, 0.85) if nv >= 35 else (OURO if nv >= 20 else (Color(0.55, 0.85, 1.0) if nv >= 10 else Color(0.75, 0.75, 0.85)))
+		var nvl := _rotulo("NV %d" % nv, 20, 5, cor_nv)
+		var ns := StyleBoxFlat.new()
+		ns.bg_color = Color(cor_nv.r * 0.2, cor_nv.g * 0.2, cor_nv.b * 0.25, 0.9)
+		ns.set_corner_radius_all(10)
+		ns.set_border_width_all(2)
+		ns.border_color = cor_nv
+		nvl.add_theme_stylebox_override("normal", ns)
+		nvl.position = Vector2(linhas.custom_minimum_size.x - 214 - 92, 13)
+		nvl.size = Vector2(84, 32)
+		p.add_child(nvl)
 	var val := _rotulo(valor, 30, 8, OURO if i < 3 else Color.WHITE)
 	val.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
 	val.position = Vector2(linhas.custom_minimum_size.x - 214, 7)

@@ -226,10 +226,17 @@ func enviar_recorde(fase: int, tempo: float, personagem: String) -> int:
 
 ## [código http, lista]; código 0 = sem conexão
 func ranking_fase(fase: int) -> Array:
-	return await _pedir(HTTPClient.METHOD_GET, "/rest/v1/bicho_rank_tempos?select=apelido,tempo,personagem,user_id&fase=eq.%d&order=tempo.asc,quando.asc&limit=50" % fase)
+	return await _rank("/rest/v1/bicho_rank_tempos?select=apelido,tempo,personagem,user_id%s" + "&fase=eq.%d&order=tempo.asc,quando.asc&limit=50" % fase)
 
 func ranking_jogo() -> Array:
-	return await _pedir(HTTPClient.METHOD_GET, "/rest/v1/bicho_rank_jogo?select=apelido,tempo_jogo,personagem,user_id&order=tempo_jogo.desc&limit=50")
+	return await _rank("/rest/v1/bicho_rank_jogo?select=apelido,tempo_jogo,personagem,user_id%s&order=tempo_jogo.desc&limit=50")
+
+## pede com o XP de cada um (pra mostrar o nível); se o servidor ainda não tem a coluna, pede sem
+func _rank(url: String) -> Array:
+	var r := await _pedir(HTTPClient.METHOD_GET, url % ",xp")
+	if int(r[0]) >= 400:
+		r = await _pedir(HTTPClient.METHOD_GET, url % "")
+	return r
 
 func _guardar_sessao(d) -> bool:
 	if typeof(d) != TYPE_DICTIONARY or not d.has("access_token") or not d.has("refresh_token"):
