@@ -84,6 +84,15 @@ func _draw() -> void:
 			var f := get_theme_default_font()
 			draw_string_outline(f, Vector2(4, c.y + 14), "NICK", HORIZONTAL_ALIGNMENT_CENTER, size.x - 8, 38, 10, Color(0.1, 0.05, 0.15))
 			draw_string(f, Vector2(4, c.y + 14), "NICK", HORIZONTAL_ALIGNMENT_CENTER, size.x - 8, 38, cc)
+		"bonus":
+			var dobro: bool = id.begins_with("bonus_dobro")
+			draw_circle(c, 50 + sin(_t * 3.0) * 3.0, Color(cor, 0.2))
+			draw_arc(c, 48, -PI / 2.0, -PI / 2.0 + TAU * fmod(_t * 0.3, 1.0), 40, cor, 6.0)
+			var f := get_theme_default_font()
+			var txt := "2x" if dobro else "+300"
+			draw_string_outline(f, Vector2(0, c.y + 14), txt, HORIZONTAL_ALIGNMENT_CENTER, size.x, 40 if dobro else 32, 10, Color(0.05, 0.1, 0.15))
+			draw_string(f, Vector2(0, c.y + 14), txt, HORIZONTAL_ALIGNMENT_CENTER, size.x, 40 if dobro else 32, Color(1, 1, 1))
+			draw_string(f, Vector2(0, c.y + 38), "XP", HORIZONTAL_ALIGNMENT_CENTER, size.x, 20, cor)
 		"skin":
 			var pers: String = Passe.SKINS_PASSE.get(id, ["wendell", ""])[0]
 			var tex: Texture2D = load("res://assets/ui/rosto_%s.png" % pers)

@@ -220,7 +220,7 @@ func _ready() -> void:
 	ver.set_anchors_preset(Control.PRESET_BOTTOM_LEFT)
 	ver.position = Vector2(10, get_viewport().get_visible_rect().size.y - 26)
 	add_child(ver)
-	for a in [["LOJA", OURO, "Loja"], ["MINHA CONTA", ROXO, "MinhaConta"], ["RANKING", ROXO, "Ranking"]]:
+	for a in [["LOJA", OURO, "Loja"], ["INVENTÁRIO", OURO, "Inventario"], ["MINHA CONTA", ROXO, "MinhaConta"], ["RANKING", ROXO, "Ranking"]]:
 		var b := Button.new()
 		b.text = a[0]
 		b.focus_mode = Control.FOCUS_NONE
