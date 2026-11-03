@@ -43,6 +43,23 @@ var _mortes_teste_virada := 0
 var _costelas: Array = []               # ângulo (local) de cada lombada: interruptor não nasce embaixo
 var _arrasto_t := 0.0
 var mata_mata := false                   # online: sem interruptor nem vida; acelera e vira Semaj sozinho
+var _nivel_mm := 0
+
+## mata-mata: até 30 s só roda e espinho; depois sobe 1 nível a cada 15 s (laser, Semaj, laser duplo...)
+func nivel_mata() -> int:
+	return 0 if not mata_mata or _t < 30.0 else 1 + int((_t - 30.0) / 15.0)
+
+func _anunciar_nivel() -> void:
+	var n := nivel_mata()
+	if n == _nivel_mm:
+		return
+	_nivel_mm = n
+	var txt: String = ["", "LASERS LIGADOS!", "", "LASER DUPLO!", "ESPINHO EM DOBRO!", "CAOS TOTAL!"][mini(n, 5)]
+	if n >= 6:
+		txt = "NÍVEL %d!" % n
+	if txt != "":
+		fase._mensagem(txt, Color(1, 0.4, 0.3))
+		Audio.tocar("metal", 1.0, 0.0)
 var _pos_virada_t := 0.0
 var _cor_camada: CanvasLayer
 var _colorido: Node2D                   # Semaj: espinhos e interruptor desenhados por cima do filtro preto e branco
@@ -258,7 +275,9 @@ func atualizar(delta: float) -> void:
 	_olho.color = Color(1, 1, 1) if _brilho_t > 0.0 else (Color(0.85, 0.2, 1.0) if luta == 2 else Color(1, 0.75, 0.3))
 	_nucleo.scale = Vector2.ONE * (1.0 + 0.05 * sin(_t * 3.0) + _brilho_t * 0.25)
 	_passo_cara(dt)
-	if mata_mata and luta == 1 and _t > 40.0 and _estado != "virada":
+	if mata_mata:
+		_anunciar_nivel()
+	if mata_mata and luta == 1 and _t > 45.0 and _estado != "virada":
 		_virar_semaj()
 		_rotulo.visible = false
 		_barra.visible = false
@@ -282,9 +301,12 @@ func atualizar(delta: float) -> void:
 	_timer -= dt
 	if _timer <= 0.0:
 		_timer = (2.4 if luta == 1 else 1.8) - minf(_rodada * 0.06, 0.6)
+		var nv := nivel_mata()
+		if nv > 0:
+			_timer = maxf(0.9, _timer - 0.15 * nv)
 		_rodada += 1
 		_novo_espinho()
-		if luta == 2 and _rodada % 3 == 0:
+		if (luta == 2 and _rodada % 3 == 0) or nv >= 4:
 			_novo_espinho()
 	_virada_t -= dt
 	if _virada_t <= 1.4 and _aviso.text == "":
@@ -338,6 +360,8 @@ func _girar(delta: float) -> void:
 func _virada() -> void:
 	_estado = "virada"
 	_virada_t = _sorteio.randf_range(9.0, 12.0) if luta == 1 else _sorteio.randf_range(8.5, 10.5)
+	if nivel_mata() >= 4:
+		_virada_t = maxf(5.5, _virada_t - 0.6 * nivel_mata())
 	if "viradas" in OS.get_cmdline_user_args():          # teste: virada a cada 5 s
 		_virada_t = 5.0
 		_mortes_teste_virada += 1
@@ -478,12 +502,19 @@ func _novo_raio(a: float) -> void:
 func _passo_raios(dt: float) -> void:
 	_pos_virada_t = maxf(0.0, _pos_virada_t - dt)
 	var calmo := _estado == "virada" or _virada_t <= 1.6 or _pos_virada_t > 0.0
-	if luta == 2 and not morto and not calmo and _virando_t <= 0.0:
+	var nv := nivel_mata()
+	if (luta == 2 or nv >= 1) and not morto and not calmo and _virando_t <= 0.0:
 		_raio_ang -= dt
 		if _raio_ang <= 0.0:                           # próximo tiro: perto de você (às vezes dois)
 			_raio_ang = _sorteio.randf_range(2.4, 3.2)
+			if nv > 0:                                 # mata-mata: cada nível atira mais rápido
+				_raio_ang = maxf(1.0, _raio_ang - 0.35 * nv)
 			var alvo := (_foco_jogador() - centro).angle()
 			_novo_raio(alvo + _sorteio.randf_range(-0.22, 0.22))
+			if nv >= 3:                                # laser duplo: um do outro lado
+				_novo_raio(alvo + PI + _sorteio.randf_range(-0.8, 0.8))
+			if nv >= 5:
+				_novo_raio(alvo + _sorteio.randf_range(1.2, 2.0) * (1.0 if _sorteio.randf() < 0.5 else -1.0))
 	for r in _raios.duplicate():
 		r["t"] += dt
 		var t: float = r["t"]

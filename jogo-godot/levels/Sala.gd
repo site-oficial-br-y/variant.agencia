@@ -244,7 +244,7 @@ func _atualizar() -> void:
 		mini.texture = load("res://assets/ui/fase_%d.png" % f)
 		nome_fase.text = Game.nome_fase(f)
 		modo_fase.text = {5: "TODOS JUNTOS contra o chefe: todo mundo tem que apertar os botões.",
-			11: "MATA-MATA: todo mundo dentro da roda do James. Ela acelera e vira Semaj. Morreu, tá fora. Último vivo vence.",
+			11: "MATA-MATA: todo mundo dentro da roda. A cada 15 s fica mais difícil: laser, Semaj, laser duplo, espinho em dobro... Último vivo vence.",
 			12: "BATATA QUENTE: quem está com a bomba passa encostando em alguém. Acabou o tempo, explode. Último vivo vence."}.get(f,
 			"CORRIDA: quem chegar primeiro ganha. Morreu, volta pro começo.")
 		if not Online.host:

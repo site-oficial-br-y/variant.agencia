@@ -4305,9 +4305,11 @@ func _fotos_arena() -> void:
 		await _captura("arena_%02d" % k)
 
 func _vida_teste() -> void:
-	for k in 30:
+	for k in (110 if Game.fase == 11 else 30):
 		await get_tree().create_timer(1.0, true, false, true).timeout
 		var c = _chefe_vivo()
+		if roda and roda.mata_mata:
+			print("[MM] t=%.0f nivel=%d luta=%d raios=%d espinhos=%d vivo=%s" % [roda._t, roda.nivel_mata(), roda.luta, roda._raios.size(), roda._espinhos.size(), ativo])
 		print("[VIDA] t=%d chefe=%s vida=%s ult=%.1f" % [k + 1, c.get_script().resource_path.get_file() if c else "-", str(c.vida) if c and "vida" in c else "-", player.ult_t])
 		if k == 6 and "tele_teste" in OS.get_cmdline_user_args() and "ult_teste" in OS.get_cmdline_user_args():
 			Input.action_press("especial")
@@ -4320,5 +4322,5 @@ func _vida_teste() -> void:
 			await _captura("tele")
 		if k in [5, 8] and "foto_laser" in OS.get_cmdline_user_args():
 			await _captura("laser_%d" % k)
-		if k == 24:
+		if k == (105 if Game.fase == 11 else 24):
 			get_tree().quit()
