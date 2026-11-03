@@ -2,19 +2,14 @@ extends Control
 ## Aviso de atualização: aparece por cima do lobby na primeira vez que abre a versão nova.
 ## Fundo é a arte do patch escurecida; o X fecha e fica no lobby.
 
-const VERSAO := "3.1"
+const VERSAO := "3.2"
 const ITENS := [
-	["BICHO TURBINADO", "Saíram os balões. Agora ele se TELEPORTA pra frente num clarão (recarga de 1 s) e é bem mais fácil de controlar.", Color(0.4, 0.85, 1.0)],
-	["ULT DO BICHO: LASER", "No outro botão, um raio que sai dele e derrete o chefe, cada vez mais rápido. Mas se você andar, o laser corta.", Color(0.75, 0.4, 1.0)],
 	["ONLINE: MATA-MATA NA RODA", "Todo mundo dentro da roda do James. Ela vai acelerando e vira Semaj. Morreu, tá fora. O último vivo vence.", Color(1.0, 0.55, 0.2)],
-	["ONLINE: BATATA QUENTE", "A bomba começa com alguém e passa encostando em outro jogador. Acabou o tempo, BUUUM. O último vivo vence.", Color(1.0, 0.35, 0.3)],
-	["NOVO: SARTORI", "Jogador de beach tennis, a pé. Na RAQUETADA ele bate a raquete sem parar: rebate arpão, molotov e golpe de chefe e fica bem rápido.", Color(1.0, 0.85, 0.2)],
-	["NOVO: BOUÇAS", "Avião de papel que plana sozinho, com turbo. No outro botão, a ESQUADRILHA: 14 aviões de papel que voam no chefe e tiram vida dele.", Color(0.9, 0.95, 1.0)],
-	["FASE 10: OLE OLE OLA", "A rua pegando fogo: arpão que arranca braço, canhão d'água da polícia, molotov voando e faixa de turbo pra pular os carros queimados.", Color(1.0, 0.55, 0.2)],
-	["JAMES E A RODA", "No fim você luta dentro de uma roda gigante que gira. O chão anda, ela vira do nada e o James te vigia do fundo.", Color(1.0, 0.75, 0.3)],
-	["E DEPOIS... SEMAJ", "Zerou o James? Ele volta do avesso. Roda mais rápida, mais lasers e música nova.", Color(0.8, 0.4, 1.0)],
-	["INTERRUPTOR VERDE", "É o único jeito de dar dano: passa por cima dele antes que suma. Às vezes ele vem até você, às vezes você corre atrás.", Color(0.4, 1.0, 0.5)],
-	["CONTINUAR FASE", "Se a página cair no meio de um chefão, o menu mostra CONTINUAR e você volta de onde parou.", Color(1.0, 0.78, 0.2)],
+	["ONLINE: BATATA QUENTE", "A bomba passa encostando em outro jogador. Acabou o tempo, BUUUM. Arena nova com rampas, trampolins e turbo. O último vivo vence.", Color(1.0, 0.35, 0.3)],
+	["BICHO TURBINADO", "Saíram os balões. Agora ele se TELEPORTA pra frente num clarão, com recarga de 1 s, e ficou bem mais fácil de controlar.", Color(0.4, 0.85, 1.0)],
+	["ULT DO BICHO: LASER", "Um raio que sai dele e vai tirando vida do chefe aos poucos, cada vez mais rápido. Se andar ou teleportar, o laser corta.", Color(0.75, 0.4, 1.0)],
+	["BOUÇAS TRANCADO", "Agora o Bouças só libera depois de derrotar o SEMAJ na fase 10. Quem já zerou, já tem.", Color(0.9, 0.95, 1.0)],
+	["AJUSTES", "Bouças plana menos e cai mais rápido. O laser mostra os números de dano saindo do chefe.", Color(0.6, 1.0, 0.6)],
 ]
 
 static func ja_viu() -> bool:
