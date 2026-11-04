@@ -2,14 +2,14 @@ extends Control
 ## Aviso de atualização: aparece por cima do lobby na primeira vez que abre a versão nova.
 ## Fundo é a arte do patch escurecida; o X fecha e fica no lobby.
 
-const VERSAO := "3.5"
+const VERSAO := "3.6"
 const ITENS := [
+	["LOBBY NOVO", "Botões organizados: JOGAR e ONLINE direto no lobby, atalhos com ícone, cartão do passe com o próximo prêmio e bolinha vermelha quando tem coisa nova. Modo leve foi pra engrenagem.", Color(1.0, 0.75, 0.2)],
+	["NÍVEL NO RANKING", "Agora aparece o nível de cada jogador no ranking.", Color(0.55, 0.85, 1.0)],
 	["NÍVEL DE CONTA", "Agora você ganha XP jogando: tempo de jogo, fase vencida, chefe derrotado, recorde e partida online. Seu nível aparece no menu.", Color(1.0, 0.82, 0.3)],
 	["PASSE DE BATALHA", "50 níveis: rastros, auras, rodas brilhando, chapéus, nick colorido, efeitos de morte e bônus de XP (+300 ou XP em dobro). Toca em NÍVEL no menu.", Color(0.6, 0.85, 1.0)],
 	["SKINS NO PASSE", "Wendell: O ACIDENTE (nível 35) e Gian: ICEMAN (nível 50). Chegou no nível, tá no inventário.", Color(1.0, 0.55, 0.2)],
 	["INVENTÁRIO", "Nova aba no menu: suas skins e os itens do passe separados por tipo. Toca pra usar.", Color(1.0, 0.8, 0.25)],
-	["XP RETROATIVO", "Quem já jogava ganhou XP pelo tempo de jogo e pelas fases que já venceu.", Color(0.5, 1.0, 0.55)],
-	["RANKING DA FASE 10", "Vencer o Semaj agora entra no ranking certinho.", Color(0.85, 0.6, 1.0)],
 ]
 
 static func ja_viu() -> bool:

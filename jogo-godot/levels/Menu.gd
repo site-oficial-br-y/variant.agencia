@@ -43,15 +43,22 @@ var esp_nome: Label
 var esp_desc: Label
 var caixa_stats: Panel
 var barras: Array = []                  # [[ColorRect x4] x3]
-var ok: TextureButton
-var ok_anel: Panel
-var jogar: Label
+var jogar: Button
+var online: Button
 var trava: Label
 var _t := 0.0
 var _nivel_btn: Button
 var _nivel_barra: ColorRect
-var _atalhos: Array = []              # LOJA, MINHA CONTA, RANKING (coluna acima do JOGAR)
+var _nivel_fundo: ColorRect
+var _nivel_txt: Label
+var _nivel_prox: Label
+var _ponto_passe: Panel
+var _ponto_inv: Panel
+var _atalhos: Array = []              # LOJA, INVENTÁRIO, RANKING, CONTA (grade 2x2 na direita)
+var _continuar: Button
 var _vol: Volume
+var _engr: Button
+var _ajustes: Panel
 var _leve: Button
 
 func _ready() -> void:
@@ -75,20 +82,32 @@ func _ready() -> void:
 	logo.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
 	logo.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
 	add_child(logo)
-	_nivel_btn = Button.new()                        # nível da conta + barra de XP: abre o passe
+	_nivel_btn = Button.new()                        # cartão do passe: nível, barra de XP e o próximo prêmio
 	_nivel_btn.focus_mode = Control.FOCUS_NONE
-	_nivel_btn.add_theme_font_size_override("font_size", 22)
-	_nivel_btn.alignment = HORIZONTAL_ALIGNMENT_LEFT
 	for k in ["normal", "hover", "pressed"]:
-		_nivel_btn.add_theme_stylebox_override(k, _caixa(OURO, 14))
+		_nivel_btn.add_theme_stylebox_override(k, _caixa(OURO, 16))
 	_nivel_btn.pressed.connect(func() -> void:
 		Audio.tocar("clique")
+		_marcar_visto()
 		get_tree().change_scene_to_file("res://levels/PasseTela.tscn"))
 	add_child(_nivel_btn)
+	_nivel_txt = _rotulo("", 26, 6, OURO)
+	_nivel_txt.horizontal_alignment = HORIZONTAL_ALIGNMENT_LEFT
+	_nivel_btn.add_child(_nivel_txt)
+	_nivel_fundo = ColorRect.new()
+	_nivel_fundo.color = Color(1, 1, 1, 0.12)
+	_nivel_fundo.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	_nivel_btn.add_child(_nivel_fundo)
 	_nivel_barra = ColorRect.new()
 	_nivel_barra.color = Color(0.55, 0.85, 1.0)
 	_nivel_barra.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	_nivel_btn.add_child(_nivel_barra)
+	_nivel_prox = _rotulo("", 16, 4, Color(0.85, 0.8, 0.95))
+	_nivel_prox.horizontal_alignment = HORIZONTAL_ALIGNMENT_LEFT
+	_nivel_prox.clip_text = true
+	_nivel_btn.add_child(_nivel_prox)
+	_ponto_passe = _ponto()
+	_nivel_btn.add_child(_ponto_passe)
 	Passe.mudou.connect(_texto_nivel)
 	_texto_nivel()
 	Passe.atualizar()
@@ -193,25 +212,11 @@ func _ready() -> void:
 			sep.size = Vector2(2, 50)
 			caixa_stats.add_child(sep)
 
-	ok_anel = Panel.new()
-	var sa := StyleBoxFlat.new()
-	sa.bg_color = Color(0.2, 0.1, 0.4, 0.9)
-	sa.set_corner_radius_all(90)
-	sa.set_border_width_all(8)
-	sa.border_color = ROXO
-	sa.shadow_color = Color(0.6, 0.35, 1.0, 0.7)
-	sa.shadow_size = 22
-	ok_anel.add_theme_stylebox_override("panel", sa)
-	ok_anel.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	add_child(ok_anel)
-	ok = TextureButton.new()
-	ok.texture_normal = load("res://assets/ui/confirma.png")
-	ok.ignore_texture_size = true
-	ok.stretch_mode = TextureButton.STRETCH_KEEP_ASPECT_CENTERED
-	ok.pressed.connect(_jogar)
-	add_child(ok)
-	jogar = _rotulo("JOGAR", 46, 12, Color.WHITE)
-	jogar.add_theme_color_override("font_outline_color", Color(0.3, 0.1, 0.6))
+	online = _botao_grande("ONLINE", "online", ROXO, Color(0.3, 0.16, 0.6, 0.95), Color.WHITE, 30)
+	online.pressed.connect(_online)
+	add_child(online)
+	jogar = _botao_grande("JOGAR", "play", Color(1.0, 0.92, 0.6), Color(1.0, 0.74, 0.18), Color(0.2, 0.06, 0.32), 46)
+	jogar.pressed.connect(_jogar)
 	add_child(jogar)
 	trava = _rotulo("VENÇA O PÉCE (FASE 7) PRA LIBERAR", 26, 8, OURO)
 	add_child(trava)
@@ -220,46 +225,81 @@ func _ready() -> void:
 	ver.set_anchors_preset(Control.PRESET_BOTTOM_LEFT)
 	ver.position = Vector2(10, get_viewport().get_visible_rect().size.y - 26)
 	add_child(ver)
-	for a in [["LOJA", OURO, "Loja"], ["INVENTÁRIO", OURO, "Inventario"], ["MINHA CONTA", ROXO, "MinhaConta"], ["RANKING", ROXO, "Ranking"]]:
+	for a in [["LOJA", "loja", "Loja"], ["INVENTÁRIO", "inventario", "Inventario"], ["RANKING", "ranking", "Ranking"], ["CONTA", "conta", "MinhaConta"]]:
 		var b := Button.new()
-		b.text = a[0]
 		b.focus_mode = Control.FOCUS_NONE
-		b.add_theme_font_size_override("font_size", 26)
-		for k in ["normal", "hover", "pressed"]:
-			b.add_theme_stylebox_override(k, _caixa(a[1], 14))
-		b.size = Vector2(230, 58)
+		var cx := _caixa(ROXO, 16)
+		var cp := cx.duplicate() as StyleBoxFlat
+		cp.bg_color = Color(0.25, 0.14, 0.45, 0.95)
+		b.add_theme_stylebox_override("normal", cx)
+		b.add_theme_stylebox_override("hover", cx)
+		b.add_theme_stylebox_override("pressed", cp)
+		var ic := IconeMenu.new(a[1], OURO if a[1] == "loja" else Color(0.92, 0.88, 1.0))
+		ic.name = "icone"
+		b.add_child(ic)
+		var tx := _rotulo(a[0], 17, 5, Color.WHITE)
+		tx.name = "texto"
+		b.add_child(tx)
 		var cena: String = a[2]
 		b.pressed.connect(func() -> void:
 			Audio.tocar("clique")
+			if cena == "Inventario":
+				_marcar_visto()
 			get_tree().change_scene_to_file("res://levels/%s.tscn" % cena))
 		add_child(b)
 		_atalhos.append(b)
+	_ponto_inv = _ponto()
+	(_atalhos[1] as Button).add_child(_ponto_inv)
 	if not Game.retomada().is_empty():                # a página caiu no meio da fase: volta pro checkpoint
-		var c := Button.new()
-		c.text = "CONTINUAR FASE %d" % int(Game.retomada()["fase"])
-		c.focus_mode = Control.FOCUS_NONE
-		c.add_theme_font_size_override("font_size", 24)
-		c.add_theme_color_override("font_color", Color(0.45, 1, 0.5))
+		_continuar = Button.new()
+		_continuar.text = "CONTINUAR FASE %d" % int(Game.retomada()["fase"])
+		_continuar.focus_mode = Control.FOCUS_NONE
+		_continuar.add_theme_font_size_override("font_size", 22)
+		_continuar.add_theme_color_override("font_color", Color(0.45, 1, 0.5))
 		for k in ["normal", "hover", "pressed"]:
-			c.add_theme_stylebox_override(k, _caixa(Color(0.45, 1, 0.5), 14))
-		c.size = Vector2(230, 58)
-		c.pressed.connect(func() -> void:
+			_continuar.add_theme_stylebox_override(k, _caixa(Color(0.45, 1, 0.5), 14))
+		_continuar.pressed.connect(func() -> void:
 			Audio.tocar("confirma")
 			Game.retomar())
-		add_child(c)
-		_atalhos.append(c)
+		add_child(_continuar)
 	_vol = Volume.new()
 	_vol.abre_direita = true
 	add_child(_vol)
+	_engr = Button.new()                             # ajustes: modo leve (celular fraco)
+	_engr.focus_mode = Control.FOCUS_NONE
+	for k in ["normal", "hover", "pressed"]:
+		_engr.add_theme_stylebox_override(k, _caixa(ROXO, 14))
+	_engr.size = Vector2(64, 64)
+	var ig := IconeMenu.new("engrenagem", Color(0.92, 0.88, 1.0))
+	ig.position = Vector2(12, 12)
+	ig.size = Vector2(40, 40)
+	_engr.add_child(ig)
+	_engr.pressed.connect(func() -> void:
+		Audio.tocar("clique")
+		_ajustes.visible = not _ajustes.visible)
+	add_child(_engr)
+	_ajustes = Panel.new()
+	var sj := _caixa(ROXO, 16)
+	sj.bg_color = Color(0.1, 0.06, 0.2)
+	_ajustes.add_theme_stylebox_override("panel", sj)
+	_ajustes.z_index = 5
+	_ajustes.size = Vector2(250, 120)
+	_ajustes.visible = false
+	add_child(_ajustes)
+	var at := _rotulo("AJUSTES", 18, 5, Color(0.75, 0.65, 0.95))
+	at.position = Vector2(0, 10)
+	at.size = Vector2(250, 24)
+	_ajustes.add_child(at)
 	_leve = Button.new()                             # celular fraco: menos efeitos e tela mais leve
 	_leve.focus_mode = Control.FOCUS_NONE
-	_leve.add_theme_font_size_override("font_size", 22)
-	_leve.size = Vector2(190, 64)
+	_leve.add_theme_font_size_override("font_size", 20)
+	_leve.position = Vector2(16, 44)
+	_leve.size = Vector2(218, 58)
 	_leve.pressed.connect(func() -> void:
 		Audio.tocar("clique")
 		Game.set_leve(not Game.leve)
 		_texto_leve())
-	add_child(_leve)
+	_ajustes.add_child(_leve)
 	_texto_leve()
 	get_viewport().size_changed.connect(_atualizar)
 	if not "screenshot" in OS.get_cmdline_user_args() and not load("res://levels/Novidades.gd").ja_viu():
@@ -274,9 +314,8 @@ func _ready() -> void:
 
 func _process(delta: float) -> void:
 	_t += delta
-	if ok_anel:                                      # botão pulsando
-		var s := 1.0 + 0.04 * sin(_t * 4.0)
-		ok_anel.scale = Vector2.ONE * s
+	if jogar and jogar.visible:                      # botão pulsando
+		jogar.scale = Vector2.ONE * (1.0 + 0.03 * sin(_t * 4.0))
 	if quadros.size() > atual:
 		var st: StyleBoxFlat = (quadros[atual] as Panel).get_theme_stylebox("panel")
 		if st:
@@ -326,9 +365,6 @@ func _atualizar() -> void:
 	nevoa.size = vp
 	var pedestal_y := off.y + 0.775 * th * esc
 	logo.position = Vector2(22, 14)
-	_nivel_btn.position = Vector2(34, 160)
-	_nivel_btn.size = Vector2(250, 50)
-	_texto_nivel()
 	logo.size = Vector2(270, 145)
 	# rostos
 	var lado := minf(76.0, (vp.x - 340.0) / OPCOES.size() - 10.0)
@@ -391,27 +427,52 @@ func _atualizar() -> void:
 		for j in 4:
 			var r: ColorRect = barras[k][j]
 			r.color = (r.get_meta("cor") as Color) if j < int(vals[k]) and not preso else Color(1, 1, 1, 0.14)
-	# jogar
-	var d := 150.0
-	ok_anel.size = Vector2(d, d)
-	ok_anel.pivot_offset = Vector2(d, d) / 2.0
-	ok_anel.position = Vector2(vp.x - d - 50, vp.y - d - 92)
-	ok.size = Vector2(d * 0.62, d * 0.62)
-	ok.position = ok_anel.position + Vector2(d * 0.19, d * 0.19)
-	jogar.size = Vector2(d + 60, 60)
-	jogar.position = Vector2(ok_anel.position.x - 30, ok_anel.position.y + d + 6)
-	ok.visible = not preso
-	ok_anel.visible = not preso
+	# coluna da direita: passe, atalhos 2x2, online, jogar
+	var cw := 260.0
+	var colx := vp.x - cw - 24
+	var y := 160.0
+	_nivel_btn.position = Vector2(colx, y)
+	_nivel_btn.size = Vector2(cw, 82)
+	_texto_nivel()
+	y += 94
+	var tw2 := (cw - 10) / 2.0
+	var th2 := clampf((vp.y - 160 - 94 - 76 - 104 - 40) / 2.0 - 10, 64.0, 92.0)
+	for i in _atalhos.size():
+		var b: Button = _atalhos[i]
+		b.position = Vector2(colx + (i % 2) * (tw2 + 10), y + (i / 2) * (th2 + 10))
+		b.size = Vector2(tw2, th2)
+		var ic: Control = b.get_node("icone")
+		var lado_ic := minf(40.0, th2 - 34)
+		ic.position = Vector2((tw2 - lado_ic) / 2.0, 8)
+		ic.size = Vector2(lado_ic, lado_ic)
+		var tx: Label = b.get_node("texto")
+		tx.position = Vector2(0, th2 - 28)
+		tx.size = Vector2(tw2, 22)
+	_ponto_inv.position = Vector2(tw2 - 20, 6)
+	y += 2 * (th2 + 10) + 4
+	online.position = Vector2(colx, y)
+	online.size = Vector2(cw, 64)
+	_arruma_grande(online)
+	y += 76
+	jogar.position = Vector2(colx, y)
+	jogar.size = Vector2(cw, 96)
+	jogar.pivot_offset = jogar.size / 2.0
+	_arruma_grande(jogar)
 	jogar.visible = not preso
+	online.disabled = preso
+	online.modulate = Color(1, 1, 1, 0.4) if preso else Color.WHITE
 	trava.visible = preso
 	trava.text = "DERROTE O SEMAJ (FASE 10) PRA LIBERAR" if OPCOES[atual] == "boucas" else "VENÇA O PÉCE (FASE 7) PRA LIBERAR"
-	trava.size = Vector2(420, 70)
-	trava.position = Vector2(vp.x - 440, vp.y - 170)
+	trava.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	trava.size = Vector2(cw, 96)
+	trava.position = jogar.position
+	if _continuar:
+		_continuar.position = Vector2(34, 166)
+		_continuar.size = Vector2(250, 54)
 	if _vol:
 		_vol.position = Vector2(30, vp.y - 112)
-		_leve.position = Vector2(122, vp.y - 112)
-		for i in _atalhos.size():
-			(_atalhos[i] as Button).position = Vector2(vp.x - 255, 172 + i * 70)
+		_engr.position = Vector2(122, vp.y - 112)
+		_ajustes.position = Vector2(30, vp.y - 112 - 132)
 
 func _texto_leve() -> void:
 	_leve.text = "MODO LEVE ✓" if Game.leve else "MODO LEVE"
@@ -438,6 +499,107 @@ func _texto_nivel() -> void:
 	if not is_instance_valid(_nivel_btn):
 		return
 	var pr: Array = Passe.progresso()
-	_nivel_btn.text = "  NÍVEL %d   ·   PASSE ›" % Passe.nivel()
-	_nivel_barra.position = Vector2(10, 40)
-	_nivel_barra.size = Vector2(maxf(4.0, 230.0 * float(pr[0]) / float(pr[1])), 5)
+	var n := Passe.nivel()
+	var w := _nivel_btn.size.x
+	_nivel_txt.text = "NÍVEL %d" % n
+	_nivel_txt.position = Vector2(14, 6)
+	_nivel_txt.size = Vector2(w - 28, 32)
+	var pas := _rotulo("PASSE ›", 18, 5, Color.WHITE) if not _nivel_btn.has_node("pas") else _nivel_btn.get_node("pas")
+	if not _nivel_btn.has_node("pas"):
+		pas.name = "pas"
+		pas.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
+		_nivel_btn.add_child(pas)
+	pas.position = Vector2(14, 10)
+	pas.size = Vector2(w - 28, 26)
+	_nivel_fundo.position = Vector2(14, 42)
+	_nivel_fundo.size = Vector2(w - 28, 10)
+	_nivel_barra.position = _nivel_fundo.position
+	_nivel_barra.size = Vector2(maxf(6.0, (w - 28) * float(pr[0]) / float(pr[1])), 10)
+	var prox := ""
+	for it in Passe.ITENS:
+		if int(it[0]) > n and it[3] != "bonus":
+			prox = "Próximo: %s (nível %d)" % [it[2], it[0]]
+			break
+	_nivel_prox.text = prox if prox != "" else "%d / %d XP" % [pr[0], pr[1]]
+	_nivel_prox.position = Vector2(14, 56)
+	_nivel_prox.size = Vector2(w - 28, 20)
+	var visto := _visto()
+	_ponto_passe.visible = n > visto
+	_ponto_passe.position = Vector2(w - 16, -6)
+	var novo := false
+	for it in Passe.ITENS:
+		if int(it[0]) > visto and int(it[0]) <= n and it[3] != "bonus":
+			novo = true
+	if _ponto_inv:
+		_ponto_inv.visible = novo
+
+## nível que a pessoa já viu (pra bolinha vermelha de novidade no passe e no inventário)
+func _visto() -> int:
+	var cfg := ConfigFile.new()
+	cfg.load(Game.ARQ_PROGRESSO)
+	return int(cfg.get_value("extra", "passe_visto", 1))
+
+func _marcar_visto() -> void:
+	var cfg := ConfigFile.new()
+	cfg.load(Game.ARQ_PROGRESSO)
+	cfg.set_value("extra", "passe_visto", maxi(Passe.nivel(), _visto()))
+	cfg.save(Game.ARQ_PROGRESSO)
+
+func _ponto() -> Panel:
+	var p := Panel.new()
+	var st := StyleBoxFlat.new()
+	st.bg_color = Color(1.0, 0.25, 0.3)
+	st.set_corner_radius_all(11)
+	st.set_border_width_all(3)
+	st.border_color = Color(0.09, 0.05, 0.18)
+	p.add_theme_stylebox_override("panel", st)
+	p.size = Vector2(22, 22)
+	p.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	p.visible = false
+	return p
+
+func _botao_grande(texto: String, icone: String, borda: Color, fundo_cor: Color, cor_txt: Color, tam: int) -> Button:
+	var b := Button.new()
+	b.focus_mode = Control.FOCUS_NONE
+	var st := StyleBoxFlat.new()
+	st.bg_color = fundo_cor
+	st.set_corner_radius_all(22)
+	st.set_border_width_all(4)
+	st.border_color = borda
+	st.shadow_color = Color(fundo_cor, 0.55)
+	st.shadow_size = 18
+	var sp := st.duplicate() as StyleBoxFlat
+	sp.bg_color = fundo_cor.darkened(0.2)
+	b.add_theme_stylebox_override("normal", st)
+	b.add_theme_stylebox_override("hover", st)
+	b.add_theme_stylebox_override("pressed", sp)
+	b.add_theme_stylebox_override("disabled", st)
+	var ic := IconeMenu.new(icone, cor_txt)
+	ic.name = "icone"
+	b.add_child(ic)
+	var tx := _rotulo(texto, tam, 0, cor_txt)
+	tx.name = "texto"
+	b.add_child(tx)
+	return b
+
+func _arruma_grande(b: Button) -> void:
+	var h := b.size.y
+	var ic: Control = b.get_node("icone")
+	var tx: Label = b.get_node("texto")
+	var lado_ic := h * 0.42
+	var largura_txt := tx.get_theme_font("font").get_string_size(tx.text, HORIZONTAL_ALIGNMENT_LEFT, -1, tx.get_theme_font_size("font_size")).x
+	var total := lado_ic + 14 + largura_txt
+	var x0 := (b.size.x - total) / 2.0
+	ic.position = Vector2(x0, (h - lado_ic) / 2.0)
+	ic.size = Vector2(lado_ic, lado_ic)
+	tx.position = Vector2(x0 + lado_ic + 14, 0)
+	tx.size = Vector2(largura_txt + 4, h)
+	tx.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+
+func _online() -> void:
+	if _trancado(atual):
+		return
+	Audio.tocar("confirma")
+	Game.personagem = OPCOES[atual]
+	Game.checkpoint_x = -1.0
+	get_tree().change_scene_to_file("res://levels/Sala.tscn")
