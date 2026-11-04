@@ -53,6 +53,10 @@ var _nivel_fundo: ColorRect
 var _nivel_txt: Label
 var _nivel_prox: Label
 var _ponto_passe: Panel
+var _passe_st: StyleBoxFlat
+var _passe_brilho: ColorRect
+var _passe_icone: IconeItem
+var _passe_tit: Label
 var _ponto_inv: Panel
 var _atalhos: Array = []              # LOJA, INVENTÁRIO, RANKING, CONTA (grade 2x2 na direita)
 var _continuar: Button
@@ -84,14 +88,49 @@ func _ready() -> void:
 	add_child(logo)
 	_nivel_btn = Button.new()                        # cartão do passe: nível, barra de XP e o próximo prêmio
 	_nivel_btn.focus_mode = Control.FOCUS_NONE
-	for k in ["normal", "hover", "pressed"]:
-		_nivel_btn.add_theme_stylebox_override(k, _caixa(OURO, 16))
+	_nivel_btn.clip_contents = true
+	_passe_st = StyleBoxFlat.new()
+	_passe_st.bg_color = Color(0.42, 0.22, 0.04, 0.96)
+	_passe_st.set_corner_radius_all(18)
+	_passe_st.set_border_width_all(4)
+	_passe_st.border_color = OURO
+	_passe_st.shadow_color = Color(1, 0.75, 0.2, 0.5)
+	_passe_st.shadow_size = 16
+	var sp_p := _passe_st.duplicate() as StyleBoxFlat
+	sp_p.bg_color = Color(0.32, 0.16, 0.03, 0.96)
+	_nivel_btn.add_theme_stylebox_override("normal", _passe_st)
+	_nivel_btn.add_theme_stylebox_override("hover", _passe_st)
+	_nivel_btn.add_theme_stylebox_override("pressed", sp_p)
+	_passe_brilho = ColorRect.new()                  # faixa de brilho passando
+	_passe_brilho.color = Color(1, 0.95, 0.75, 0.22)
+	_passe_brilho.size = Vector2(46, 260)
+	_passe_brilho.rotation = 0.45
+	_passe_brilho.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	_nivel_btn.add_child(_passe_brilho)
+	var circ := Panel.new()
+	var sc := StyleBoxFlat.new()
+	sc.bg_color = Color(0.1, 0.05, 0.02, 0.6)
+	sc.set_corner_radius_all(40)
+	sc.set_border_width_all(3)
+	sc.border_color = Color(1, 0.85, 0.4)
+	circ.add_theme_stylebox_override("panel", sc)
+	circ.name = "circ"
+	circ.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	_nivel_btn.add_child(circ)
+	_passe_icone = IconeItem.new()
+	_passe_icone.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	_passe_icone.size = Vector2(130, 130)
+	_passe_icone.scale = Vector2(0.52, 0.52)
+	circ.add_child(_passe_icone)
+	_passe_tit = _rotulo("PASSE DE BATALHA  ›", 16, 5, Color(1, 0.92, 0.7))
+	_passe_tit.horizontal_alignment = HORIZONTAL_ALIGNMENT_LEFT
+	_nivel_btn.add_child(_passe_tit)
 	_nivel_btn.pressed.connect(func() -> void:
 		Audio.tocar("clique")
 		_marcar_visto()
 		get_tree().change_scene_to_file("res://levels/PasseTela.tscn"))
 	add_child(_nivel_btn)
-	_nivel_txt = _rotulo("", 26, 6, OURO)
+	_nivel_txt = _rotulo("", 30, 7, Color.WHITE)
 	_nivel_txt.horizontal_alignment = HORIZONTAL_ALIGNMENT_LEFT
 	_nivel_btn.add_child(_nivel_txt)
 	_nivel_fundo = ColorRect.new()
@@ -99,10 +138,10 @@ func _ready() -> void:
 	_nivel_fundo.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	_nivel_btn.add_child(_nivel_fundo)
 	_nivel_barra = ColorRect.new()
-	_nivel_barra.color = Color(0.55, 0.85, 1.0)
+	_nivel_barra.color = Color(1.0, 0.85, 0.3)
 	_nivel_barra.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	_nivel_btn.add_child(_nivel_barra)
-	_nivel_prox = _rotulo("", 16, 4, Color(0.85, 0.8, 0.95))
+	_nivel_prox = _rotulo("", 15, 4, Color(1, 0.9, 0.7))
 	_nivel_prox.horizontal_alignment = HORIZONTAL_ALIGNMENT_LEFT
 	_nivel_prox.clip_text = true
 	_nivel_btn.add_child(_nivel_prox)
@@ -316,6 +355,10 @@ func _process(delta: float) -> void:
 	_t += delta
 	if jogar and jogar.visible:                      # botão pulsando
 		jogar.scale = Vector2.ONE * (1.0 + 0.03 * sin(_t * 4.0))
+	if _passe_st:                                    # passe: brilho pulsando + faixa passando
+		_passe_st.shadow_size = int(14 + 10 * absf(sin(_t * 2.5)))
+		_passe_st.border_color = OURO.lerp(Color(1, 1, 0.85), 0.5 + 0.5 * sin(_t * 5.0))
+		_passe_brilho.position = Vector2(fmod(_t * 220.0, _nivel_btn.size.x + 500.0) - 160.0, -60)
 	if quadros.size() > atual:
 		var st: StyleBoxFlat = (quadros[atual] as Panel).get_theme_stylebox("panel")
 		if st:
@@ -432,11 +475,11 @@ func _atualizar() -> void:
 	var colx := vp.x - cw - 24
 	var y := 160.0
 	_nivel_btn.position = Vector2(colx, y)
-	_nivel_btn.size = Vector2(cw, 82)
+	_nivel_btn.size = Vector2(cw, 104)
 	_texto_nivel()
-	y += 94
+	y += 116
 	var tw2 := (cw - 10) / 2.0
-	var th2 := clampf((vp.y - 160 - 94 - 76 - 104 - 40) / 2.0 - 10, 64.0, 92.0)
+	var th2 := clampf((vp.y - 160 - 116 - 76 - 104 - 40) / 2.0 - 10, 64.0, 92.0)
 	for i in _atalhos.size():
 		var b: Button = _atalhos[i]
 		b.position = Vector2(colx + (i % 2) * (tw2 + 10), y + (i / 2) * (th2 + 10))
@@ -502,30 +545,34 @@ func _texto_nivel() -> void:
 	var n := Passe.nivel()
 	var w := _nivel_btn.size.x
 	_nivel_txt.text = "NÍVEL %d" % n
-	_nivel_txt.position = Vector2(14, 6)
-	_nivel_txt.size = Vector2(w - 28, 32)
-	var pas := _rotulo("PASSE ›", 18, 5, Color.WHITE) if not _nivel_btn.has_node("pas") else _nivel_btn.get_node("pas")
-	if not _nivel_btn.has_node("pas"):
-		pas.name = "pas"
-		pas.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
-		_nivel_btn.add_child(pas)
-	pas.position = Vector2(14, 10)
-	pas.size = Vector2(w - 28, 26)
-	_nivel_fundo.position = Vector2(14, 42)
-	_nivel_fundo.size = Vector2(w - 28, 10)
+	var circ: Panel = _nivel_btn.get_node("circ")
+	circ.position = Vector2(10, 18)
+	circ.size = Vector2(68, 68)
+	_passe_icone.position = (circ.size - _passe_icone.size * _passe_icone.scale) / 2.0
+	var x0 := 88.0
+	_passe_tit.position = Vector2(x0, 6)
+	_passe_tit.size = Vector2(w - x0 - 10, 22)
+	_nivel_txt.position = Vector2(x0, 24)
+	_nivel_txt.size = Vector2(w - x0 - 10, 36)
+	_nivel_fundo.position = Vector2(x0, 62)
+	_nivel_fundo.size = Vector2(w - x0 - 14, 12)
 	_nivel_barra.position = _nivel_fundo.position
-	_nivel_barra.size = Vector2(maxf(6.0, (w - 28) * float(pr[0]) / float(pr[1])), 10)
+	_nivel_barra.size = Vector2(maxf(6.0, (w - x0 - 14) * float(pr[0]) / float(pr[1])), 12)
 	var prox := ""
+	var prox_it: Array = []
 	for it in Passe.ITENS:
 		if int(it[0]) > n and it[3] != "bonus":
-			prox = "Próximo: %s (nível %d)" % [it[2], it[0]]
+			prox = "Próximo: %s" % it[2]
+			prox_it = it
 			break
+	_passe_icone.item = prox_it if not prox_it.is_empty() else Passe.ITENS[Passe.ITENS.size() - 1]
+	_passe_icone._rosto = null
 	_nivel_prox.text = prox if prox != "" else "%d / %d XP" % [pr[0], pr[1]]
-	_nivel_prox.position = Vector2(14, 56)
-	_nivel_prox.size = Vector2(w - 28, 20)
+	_nivel_prox.position = Vector2(x0, 78)
+	_nivel_prox.size = Vector2(w - x0 - 10, 20)
 	var visto := _visto()
 	_ponto_passe.visible = n > visto
-	_ponto_passe.position = Vector2(w - 16, -6)
+	_ponto_passe.position = Vector2(w - 30, 8)
 	var novo := false
 	for it in Passe.ITENS:
 		if int(it[0]) > visto and int(it[0]) <= n and it[3] != "bonus":

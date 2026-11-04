@@ -9,7 +9,6 @@ const ITENS := [
 	["LOJA NOVA", "Cara de loja de verdade: skin lendária em destaque, brilho da raridade e o preço direto no botão.", Color(0.4, 1.0, 0.5)],
 	["VINI E SARTORI MAIS FORTES", "Quem anda a pé não morre mais caindo de muito alto nem batendo o dash na parede. E a roda do passe não aparece mais voando em quem não tem roda.", Color(0.55, 0.85, 1.0)],
 	["LOBBY NOVO", "Botões organizados: JOGAR e ONLINE direto no lobby, atalhos com ícone, cartão do passe com o próximo prêmio e bolinha vermelha quando tem coisa nova. Modo leve foi pra engrenagem.", Color(1.0, 0.75, 0.2)],
-	["NÍVEL NO RANKING", "Agora aparece o nível de cada jogador no ranking.", Color(0.55, 0.85, 1.0)],
 ]
 
 static func ja_viu() -> bool:
