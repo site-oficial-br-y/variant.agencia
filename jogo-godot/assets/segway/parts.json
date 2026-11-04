@@ -4,11 +4,9 @@
  "ordem": [
   "roda",
   "poste",
-  "pe",
   "perna",
   "cabeca",
   "tronco",
-  "antebraco",
   "braco",
   "tronco_f"
  ],
@@ -26,10 +24,10 @@
    "h": 572
   },
   "perna": {
-   "x": 52,
+   "x": 41,
    "y": 587,
-   "w": 171,
-   "h": 285
+   "w": 262,
+   "h": 580
   },
   "cabeca": {
    "x": 136,
@@ -46,26 +44,14 @@
   "braco": {
    "x": 133,
    "y": 359,
-   "w": 134,
-   "h": 166
+   "w": 251,
+   "h": 298
   },
   "tronco_f": {
    "x": 152,
    "y": 355,
    "w": 45,
    "h": 19
-  },
-  "antebraco": {
-   "x": 203,
-   "y": 471,
-   "w": 181,
-   "h": 186
-  },
-  "pe": {
-   "x": 41,
-   "y": 854,
-   "w": 198,
-   "h": 271
   }
  },
  "nome": "segway",
@@ -76,17 +62,13 @@
   "cabeca": "cabeca",
   "tronco": "tronco",
   "braco": "braco",
-  "tronco_f": "tronco",
-  "antebraco": "antebraco",
-  "pe": "pe"
+  "tronco_f": "tronco"
  },
  "piloto": [
   "tronco",
   "cabeca",
   "braco",
-  "perna",
-  "antebraco",
-  "pe"
+  "perna"
  ],
  "rodas": [
   {
@@ -141,7 +123,7 @@
    ]
   },
   "braco": {
-   "massa": 0.275,
+   "massa": 0.5,
    "forma": [
     "caps",
     [
@@ -149,14 +131,14 @@
      384
     ],
     [
-     262,
-     487
+     345,
+     590
     ],
     30
    ]
   },
   "perna": {
-   "massa": 0.77,
+   "massa": 1.4,
    "forma": [
     "caps",
     [
@@ -164,40 +146,10 @@
      630
     ],
     [
-     145,
-     870
-    ],
-    52
-   ]
-  },
-  "antebraco": {
-   "massa": 0.225,
-   "forma": [
-    "caps",
-    [
-     262,
-     487
-    ],
-    [
-     345,
-     590
-    ],
-    27
-   ]
-  },
-  "pe": {
-   "massa": 0.63,
-   "forma": [
-    "caps",
-    [
-     145,
-     870
-    ],
-    [
      150,
      1110
     ],
-    47
+    52
    ]
   }
  },
@@ -221,15 +173,6 @@
    "lim": 75
   },
   {
-   "a": "braco",
-   "b": "antebraco",
-   "p": [
-    262,
-    487
-   ],
-   "lim": 70
-  },
-  {
    "a": "tronco",
    "b": "perna",
    "p": [
@@ -237,15 +180,6 @@
     612
    ],
    "lim": 55
-  },
-  {
-   "a": "perna",
-   "b": "pe",
-   "p": [
-    145,
-    870
-   ],
-   "lim": 75
   }
  ]
 }

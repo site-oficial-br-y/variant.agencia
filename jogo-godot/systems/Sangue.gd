@@ -29,6 +29,7 @@ var _camada_manchas: Node2D
 var _blocos: Array = []    # [{no, itens}] blocos de manchas; o mais velho sai inteiro
 var _manchas_sujas := false
 var _tinha_gotas := false
+var _quadro := 0
 
 func _ready() -> void:
 	z_index = 20
@@ -66,20 +67,24 @@ func esguichar(corpo: Node2D, local: Vector2, dir_local: Vector2, dur: float = 3
 func _process(delta: float) -> void:                 # por quadro: física a 180 Hz não precisa de 180 raios/gota
 	var espaco := get_world_2d().direct_space_state
 	var vivas: Array = []
-	for g in gotas:
+	_quadro += 1
+	for i in gotas.size():
+		var g: Dictionary = gotas[i]
 		g["vida"] -= delta
 		if g["vida"] <= 0.0:
 			continue
 		var v: Vector2 = g["v"]
 		v.y += gravidade * delta
 		v *= (1.0 - arrasto * delta)
-		var de: Vector2 = g["p"]
-		var para: Vector2 = de + v * delta
-		var q := PhysicsRayQueryParameters2D.create(de, para, mascara_mundo)
-		var hit := espaco.intersect_ray(q)
-		if hit:
-			_manchar(hit["position"], hit["normal"], g["r"], v.length())
-			continue
+		var para: Vector2 = g["p"] + v * delta
+		if (i + _quadro) % 2 == 0:                 # cada gota testa batida a cada 2 quadros (o raio cobre os dois passos)
+			var de: Vector2 = g.get("ult", g["p"])
+			var q := PhysicsRayQueryParameters2D.create(de, para, mascara_mundo)
+			var hit := espaco.intersect_ray(q)
+			if hit:
+				_manchar(hit["position"], hit["normal"], g["r"], v.length())
+				continue
+			g["ult"] = para
 		g["p"] = para
 		g["v"] = v
 		vivas.append(g)

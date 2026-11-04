@@ -42,6 +42,7 @@ var sprites: Dictionary = {}       # peça -> Sprite2D
 var corpos: Dictionary = {}        # corpo do piloto -> RigidBody2D
 var juntas: Dictionary = {}        # corpo filho -> PinJoint2D
 var v_ant: Dictionary = {}
+var _gibs: Array = []
 var _faixas: Dictionary = {}       # corpo -> Vector2(dobra mín, dobra máx) em rad, a partir da pose da arte
 var quebrado: Dictionary = {}      # corpo -> true (osso quebrado: a junta fica mole e o osso aparece)
 var _manchas_corpo: Dictionary = {} # corpo -> quantas manchas de sangue já tem
@@ -2241,7 +2242,6 @@ func explodir(membro: String) -> void:
 		pedacos = [["cranio", 3], ["cerebro", 2], ["olho", 2], ["dente", 2]]
 	elif membro == "tronco":
 		pedacos = [["costela", 3], ["coracao", 1], ["carne", 2]]
-		_tripa(pos, vel)
 	if Game.leve:
 		pedacos = [["carne", 4]] if not cabeca else [["carne", 3], ["olho", 1], ["cranio", 2]]
 	_tremer(1.0 if cabeca else 0.75)
@@ -2361,7 +2361,15 @@ func _pedaco(tipo: String, pos: Vector2, vel: Vector2) -> void:
 	g.angular_velocity = randf_range(-14, 14)
 	if sangue and tipo in ["carne", "cerebro", "coracao"] and randf() < 0.5:
 		sangue.esguichar(g, Vector2.ZERO, Vector2.UP, 1.0)
-	get_tree().create_timer(12.0).timeout.connect(g.queue_free)
+	_gibs.append(g)
+	while _gibs.size() > 10:                        # no máximo 10 pedaços com física ao mesmo tempo
+		var velho = _gibs.pop_front()
+		if is_instance_valid(velho):
+			velho.queue_free()
+	get_tree().create_timer(10.0).timeout.connect(func() -> void:
+		_gibs.erase(g)
+		if is_instance_valid(g):
+			g.queue_free())
 
 func foco() -> Node2D:
 	return chassi if montado else corpos.get("tronco", chassi)

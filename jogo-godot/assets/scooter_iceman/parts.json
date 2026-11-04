@@ -8,9 +8,7 @@
   "roda1",
   "cabeca",
   "tronco",
-  "pe",
   "perna",
-  "antebraco",
   "braco",
   "frente"
  ],
@@ -48,13 +46,13 @@
   "perna": {
    "x": 309,
    "y": 547,
-   "w": 239,
-   "h": 233
+   "w": 302,
+   "h": 264
   },
   "braco": {
    "x": 284,
    "y": 322,
-   "w": 179,
+   "w": 299,
    "h": 161
   },
   "frente": {
@@ -62,18 +60,6 @@
    "y": 354,
    "w": 866,
    "h": 677
-  },
-  "antebraco": {
-   "x": 422,
-   "y": 360,
-   "w": 161,
-   "h": 108
-  },
-  "pe": {
-   "x": 418,
-   "y": 547,
-   "w": 193,
-   "h": 264
   }
  },
  "corpo_de": {
@@ -84,17 +70,13 @@
   "cabeca": "cabeca",
   "tronco": "tronco",
   "braco": "braco",
-  "perna": "perna",
-  "antebraco": "antebraco",
-  "pe": "pe"
+  "perna": "perna"
  },
  "piloto": [
   "tronco",
   "cabeca",
   "braco",
-  "perna",
-  "antebraco",
-  "pe"
+  "perna"
  ],
  "rodas": [
   {
@@ -194,7 +176,7 @@
    ]
   },
   "braco": {
-   "massa": 0.275,
+   "massa": 0.5,
    "forma": [
     "caps",
     [
@@ -202,14 +184,14 @@
      360
     ],
     [
-     458,
-     390
+     570,
+     420
     ],
     40
    ]
   },
   "perna": {
-   "massa": 0.66,
+   "massa": 1.2,
    "forma": [
     "caps",
     [
@@ -217,40 +199,10 @@
      690
     ],
     [
-     450,
-     740
-    ],
-    70
-   ]
-  },
-  "antebraco": {
-   "massa": 0.225,
-   "forma": [
-    "caps",
-    [
-     458,
-     390
-    ],
-    [
-     570,
-     420
-    ],
-    36
-   ]
-  },
-  "pe": {
-   "massa": 0.54,
-   "forma": [
-    "caps",
-    [
-     450,
-     740
-    ],
-    [
      545,
      790
     ],
-    63
+    70
    ]
   }
  },
@@ -276,15 +228,6 @@
    "teste": -45
   },
   {
-   "a": "braco",
-   "b": "antebraco",
-   "p": [
-    458,
-    390
-   ],
-   "lim": 70
-  },
-  {
    "a": "tronco",
    "b": "perna",
    "p": [
@@ -293,15 +236,6 @@
    ],
    "lim": 60,
    "teste": 30
-  },
-  {
-   "a": "perna",
-   "b": "pe",
-   "p": [
-    450,
-    740
-   ],
-   "lim": 75
   }
  ]
 }
