@@ -1792,6 +1792,11 @@ func _on_corpo_bateu(_rid: RID, body: Node, _forma_outro: int, forma: int) -> vo
 			contra = maxf(contra, absf(v.x))                 # parede de verdade na frente: conta a batida
 	if body.is_in_group("pendulo"):
 		contra = maxf(contra, 3000.0)
+	elif D["chassi"].get("andar", false) and (body is StaticBody2D or body is AnimatableBody2D):
+		# a pé (Vini, Sartori): cai de pé e o dash na parede só para; só capotado de cabeça cai muito rápido
+		if _dash_t > 0.0 or absf(wrapf(chassi.rotation, -PI, PI)) < 0.9:
+			return
+		contra *= 0.6
 	if corpo in MEMBROS and contra < 3200.0:
 		if contra > 1400.0 and not (body is StaticBody2D or body is AnimatableBody2D):
 			_ferir_membro.call_deferred(corpo, contra * 0.5)

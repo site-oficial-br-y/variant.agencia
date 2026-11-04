@@ -345,8 +345,8 @@ func _montar_rodas(id: String) -> void:
 		var rb := rd as RigidBody2D
 		var cs := rb.get_child(0) as CollisionShape2D
 		var raio: float = (cs.shape as CircleShape2D).radius if cs and cs.shape is CircleShape2D else 100.0
-		if raio < 30.0:
-			continue
+		if raio < 30.0 or not rb.get_children().any(func(n) -> bool: return n is Sprite2D):
+			continue                                    # a pé / avião: a roda é invisível, sem efeito
 		var no := Node2D.new()
 		no.z_index = 8
 		rb.add_child(no)
