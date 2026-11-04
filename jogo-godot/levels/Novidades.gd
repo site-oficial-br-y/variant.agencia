@@ -2,13 +2,13 @@ extends Control
 ## Aviso de atualização: aparece por cima do lobby na primeira vez que abre a versão nova.
 ## Fundo é a arte do patch escurecida; o X fecha e fica no lobby.
 
-const VERSAO := "3.8"
+const VERSAO := "3.9"
 const ITENS := [
+	["GORE MELHORADO", "Sangue com brilho e respingo, escorre na parede, faz poça embaixo de quem sangra, toco do membro com osso aparecendo, pedaço de osso, dente e olho voando, tela treme e pisca vermelho quando a cabeça estoura.", Color(0.95, 0.2, 0.25)],
 	["FASES EM CARROSSEL", "A escolha de fase ficou grande: arrasta pro lado, usa as setas ou toca na fase do lado. Toca na do meio (ou em JOGAR) pra jogar.", Color(1.0, 0.75, 0.2)],
 	["SÍMBOLOS CONSERTADOS", "Os quadradinhos com número no lugar do ✓ e da ★ sumiram, e a imagem das skins do passe aparece certa.", Color(0.85, 0.6, 1.0)],
 	["LOJA NOVA", "Cara de loja de verdade: skin lendária em destaque, brilho da raridade e o preço direto no botão.", Color(0.4, 1.0, 0.5)],
 	["VINI E SARTORI MAIS FORTES", "Quem anda a pé não morre mais caindo de muito alto nem batendo o dash na parede. E a roda do passe não aparece mais voando em quem não tem roda.", Color(0.55, 0.85, 1.0)],
-	["LOBBY NOVO", "Botões organizados: JOGAR e ONLINE direto no lobby, atalhos com ícone, cartão do passe com o próximo prêmio e bolinha vermelha quando tem coisa nova. Modo leve foi pra engrenagem.", Color(1.0, 0.75, 0.2)],
 ]
 
 static func ja_viu() -> bool:

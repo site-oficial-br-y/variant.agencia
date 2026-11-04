@@ -12,11 +12,16 @@ class_name Sangue
 @export var mascara_mundo: int = 0b001
 
 const COR_GOTA := Color(0.72, 0.03, 0.07)
+const COR_BORDA := Color(0.32, 0.0, 0.02)
+const COR_BRILHO := Color(1.0, 0.55, 0.55, 0.55)
 const COR_MANCHA := Color(0.45, 0.01, 0.04, 0.92)
 
 var gotas: Array = []      # {p, v, r, vida}
 var manchas: Array = []    # {p, ang, rx, ry}
 var emissores: Array = []  # {corpo, local, dir_local, t, dur, base_vel}
+var escorrendo: Array = [] # {p, comp, alvo, larg, c} sangue escorrendo na parede/teto
+var pocas: Array = []      # {p, r, alvo, ang, c} poça crescendo embaixo de quem sangra parado
+var _camada_vivas: Node2D  # escorridos e poças que ainda estão crescendo
 
 var _camada_manchas: Node2D
 var _manchas_sujas := false
@@ -30,6 +35,9 @@ func _ready() -> void:
 	_camada_manchas = Node2D.new()          # manchas paradas: só redesenha quando chega mancha nova
 	_camada_manchas.draw.connect(_desenhar_manchas)
 	add_child(_camada_manchas)
+	_camada_vivas = Node2D.new()
+	_camada_vivas.draw.connect(_desenhar_vivas)
+	add_child(_camada_vivas)
 
 ## Espirra n gotas em `pos`, em leque na direção `dir` (ou em volta se ZERO).
 func jorrar(pos: Vector2, n: int, forca: float = 500.0, dir: Vector2 = Vector2.ZERO, vel_base: Vector2 = Vector2.ZERO) -> void:
@@ -42,7 +50,11 @@ func jorrar(pos: Vector2, n: int, forca: float = 500.0, dir: Vector2 = Vector2.Z
 		else:
 			d = dir.normalized().rotated(randf_range(-0.45, 0.45))
 		var v := d * forca * randf_range(0.35, 1.15) + vel_base * 0.6
-		gotas.append({"p": pos + d * randf_range(0, 10) * escala, "v": v, "r": randf_range(3.0, 8.0) * escala, "vida": 6.0})
+		gotas.append({"p": pos + d * randf_range(0, 10) * escala, "v": v, "r": randf_range(3.0, 8.0) * escala, "vida": 6.0,
+			"c": COR_GOTA.lerp(Color(0.5, 0.0, 0.03), randf() * 0.6)})
+		if not Game.leve and randf() < 0.35:        # névoa: gotinhas finas e rápidas
+			gotas.append({"p": pos, "v": d.rotated(randf_range(-0.6, 0.6)) * forca * randf_range(0.8, 1.6) + vel_base * 0.6,
+				"r": randf_range(1.2, 2.6) * escala, "vida": 2.0, "c": Color(0.85, 0.08, 0.1)})
 	if gotas.size() > max_gotas:
 		gotas = gotas.slice(gotas.size() - max_gotas)
 
@@ -87,19 +99,67 @@ func _process(delta: float) -> void:                 # por quadro: física a 180
 		var vel_corpo: Vector2 = corpo.linear_velocity if corpo is RigidBody2D else Vector2.ZERO
 		if n > 0:
 			jorrar(origem, n, 700.0 + 1100.0 * pulso * resto, dir, vel_corpo)
+		e["poca_t"] = float(e.get("poca_t", 0.0)) - delta
+		if vel_corpo.length() < 80.0 and e["poca_t"] <= 0.0:       # parado sangrando: forma poça embaixo
+			e["poca_t"] = 0.3
+			_poca(origem)
 		ativos.append(e)
 	emissores = ativos
+	var crescendo := false
+	for m in escorrendo:
+		if m["comp"] < m["alvo"]:
+			m["comp"] = minf(m["alvo"], m["comp"] + delta * 40.0 * escala * (1.2 - m["comp"] / m["alvo"]))
+			crescendo = true
+	for pc in pocas:
+		if pc["r"] < pc["alvo"]:
+			pc["r"] = minf(pc["alvo"], pc["r"] + delta * 30.0 * escala)
+			crescendo = true
+	if crescendo:
+		_camada_vivas.queue_redraw()
 	if gotas.size() > 0 or _manchas_sujas or _tinha_gotas:
 		queue_redraw()
 	_tinha_gotas = gotas.size() > 0
 
 func _manchar(pos: Vector2, normal: Vector2, r: float, vel: float) -> void:
+	if r < 2.8 * escala and randf() < 0.6:          # névoa: a maioria some no ar
+		return
 	var achata := clampf(vel / 900.0, 1.0, 3.2)                    # mais rápida = mais espalhada
-	manchas.append({"p": pos + normal * 1.5, "ang": normal.angle() + PI / 2.0,
+	var ang := normal.angle() + PI / 2.0
+	var cor := COR_MANCHA.lerp(Color(0.6, 0.02, 0.05, 0.9), randf() * 0.5)
+	manchas.append({"p": pos + normal * 1.5, "ang": ang, "c": cor,
 		"rx": r * achata * randf_range(0.9, 1.4), "ry": r * randf_range(0.35, 0.6)})
-	if manchas.size() > max_manchas:
+	if vel > 900.0 and not Game.leve:              # respingo: gotinhas em volta, na direção que ela vinha
+		var tan := Vector2.from_angle(ang)
+		for k in randi_range(1, 3):
+			var d := randf_range(1.5, 4.0) * r * achata * (1.0 if randf() < 0.5 else -1.0)
+			var rr := r * randf_range(0.2, 0.45)
+			manchas.append({"p": pos + normal * 1.5 + tan * d, "ang": ang, "c": cor, "rx": rr, "ry": rr * 0.7})
+	if normal.y > -0.55 and r > 4.0 * escala and escorrendo.size() < 60 and randf() < 0.5:   # parede/teto: escorre
+		escorrendo.append({"p": pos + normal * 1.5, "comp": 0.0, "alvo": randf_range(25.0, 110.0) * escala,
+			"larg": r * randf_range(0.5, 0.9), "c": cor})
+	while manchas.size() > max_manchas:
 		manchas.pop_front()
 	_manchas_sujas = true
+
+## poça no chão embaixo de `pos` (cresce devagar; perto de outra, aumenta ela)
+func _poca(pos: Vector2) -> void:
+	if Game.leve:
+		return
+	var q := PhysicsRayQueryParameters2D.create(pos, pos + Vector2(0, 600.0 * escala), mascara_mundo)
+	var hit := get_world_2d().direct_space_state.intersect_ray(q)
+	if hit.is_empty():
+		return
+	var p: Vector2 = hit["position"]
+	var n: Vector2 = hit["normal"]
+	for pc in pocas:
+		if (pc["p"] as Vector2).distance_to(p) < pc["alvo"] * 0.8:
+			pc["alvo"] = minf(pc["alvo"] + 6.0 * escala, 120.0 * escala)
+			return
+	pocas.append({"p": p + n * 1.0, "r": 4.0 * escala, "alvo": 22.0 * escala, "ang": n.angle() + PI / 2.0,
+		"c": Color(0.38, 0.0, 0.03, 0.95)})
+	if pocas.size() > 30:
+		pocas.pop_front()
+		_camada_vivas.queue_redraw()
 
 func _draw() -> void:
 	if _manchas_sujas:
@@ -109,14 +169,35 @@ func _draw() -> void:
 		var v: Vector2 = g["v"]
 		var esticada := clampf(v.length() / 700.0, 1.0, 2.6)       # gota alonga na direção do voo
 		draw_set_transform(g["p"], v.angle(), Vector2(g["r"] * esticada, g["r"]))
-		draw_circle(Vector2.ZERO, 1.0, COR_GOTA)
+		if Game.leve or g["r"] < 3.0 * escala:
+			draw_circle(Vector2.ZERO, 1.0, g.get("c", COR_GOTA))
+		else:                                       # gota de verdade: borda escura, miolo e brilho
+			draw_circle(Vector2.ZERO, 1.25, COR_BORDA)
+			draw_circle(Vector2.ZERO, 1.0, g.get("c", COR_GOTA))
+			draw_circle(Vector2(0.35, -0.35), 0.32, COR_BRILHO)
 	draw_set_transform(Vector2.ZERO, 0.0, Vector2.ONE)
 
 func _desenhar_manchas() -> void:
 	for m in manchas:
 		_camada_manchas.draw_set_transform(m["p"], m["ang"], Vector2(m["rx"], m["ry"]))
-		_camada_manchas.draw_circle(Vector2.ZERO, 1.0, COR_MANCHA)
+		_camada_manchas.draw_circle(Vector2.ZERO, 1.0, m.get("c", COR_MANCHA))
 	_camada_manchas.draw_set_transform(Vector2.ZERO, 0.0, Vector2.ONE)
 
+func _desenhar_vivas() -> void:
+	for pc in pocas:                                # poça: borda escura + miolo brilhante
+		_camada_vivas.draw_set_transform(pc["p"], pc["ang"], Vector2(pc["r"], pc["r"] * 0.22))
+		_camada_vivas.draw_circle(Vector2.ZERO, 1.0, pc["c"])
+		_camada_vivas.draw_circle(Vector2(-0.15, -0.2), 0.55, Color(0.62, 0.03, 0.07, 0.9))
+		_camada_vivas.draw_circle(Vector2(-0.3, -0.35), 0.15, Color(1, 0.6, 0.6, 0.35))
+	_camada_vivas.draw_set_transform(Vector2.ZERO, 0.0, Vector2.ONE)
+	for m in escorrendo:                            # fio escorrendo com gota na ponta
+		var a: Vector2 = m["p"]
+		var b: Vector2 = a + Vector2(0, m["comp"])
+		_camada_vivas.draw_line(a, b, m["c"], m["larg"])
+		_camada_vivas.draw_circle(b, m["larg"] * 0.85, m["c"])
+
 func limpar() -> void:
-	gotas.clear(); manchas.clear(); emissores.clear(); queue_redraw()
+	gotas.clear(); manchas.clear(); emissores.clear(); escorrendo.clear(); pocas.clear()
+	queue_redraw()
+	_camada_manchas.queue_redraw()
+	_camada_vivas.queue_redraw()

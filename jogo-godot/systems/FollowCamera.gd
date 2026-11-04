@@ -12,3 +12,13 @@ func _ready() -> void:
 func _physics_process(_delta: float) -> void:
 	if is_instance_valid(alvo):
 		global_position = global_position.lerp(alvo.global_position, lerp_rate)
+
+var tremor := 0.0                    # 0..1: pancada forte, explosão (decai sozinho)
+
+func _process(delta: float) -> void:
+	if tremor > 0.0:
+		var a := 38.0 * tremor * tremor
+		offset = Vector2(randf_range(-a, a), randf_range(-a, a))
+		tremor = maxf(0.0, tremor - delta * 2.2 / maxf(Engine.time_scale, 0.01))
+	elif offset != Vector2.ZERO:
+		offset = Vector2.ZERO

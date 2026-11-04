@@ -2189,6 +2189,9 @@ func arrancar(membro: String) -> void:
 		sangue.esguichar(pai, no_pai, no_pai.normalized(), 7.0)
 		var no_membro := lado.to_local(p_global)
 		sangue.esguichar(lado, no_membro, no_membro.normalized(), 4.0)
+		_ferida(pai, no_pai, 52.0)
+		_ferida(lado, no_membro, 46.0)
+	_tremer(0.45)
 
 ## estoura uma parte do corpo: some a peça, voam pedaços (carne, osso, olho) e
 ## o toco esguicha. Montado, primeiro vira ragdoll.
@@ -2209,6 +2212,7 @@ func explodir(membro: String) -> void:
 			if sangue and is_instance_valid(ponta):
 				var local := (ponta as Node2D).to_local(j.global_position)
 				sangue.esguichar(ponta, local, local.normalized(), 4.0 if filho != membro else 8.0)
+				_ferida(ponta as Node2D, local, 58.0)
 			juntas.erase(filho)
 			j.queue_free()
 	corpos.erase(membro)
@@ -2220,9 +2224,14 @@ func explodir(membro: String) -> void:
 	if sangue:
 		sangue.jorrar(pos, 110, 2600.0, Vector2.ZERO, vel * 0.3)
 	var cabeca := membro == "cabeca"
-	var pedacos: Array = [["carne", 5]]              # pedacinhos de carne pequenos (estilo do gênero)
+	var pedacos: Array = [["carne", 6], ["osso", 2]]   # pedacinhos de carne e osso (estilo do gênero)
 	if cabeca:
-		pedacos = [["carne", 6], ["olho", 1]]
+		pedacos = [["carne", 7], ["olho", 2], ["dente", 4], ["osso", 1]]
+	if Game.leve:
+		pedacos = [["carne", 4]] if not cabeca else [["carne", 4], ["olho", 1]]
+	_tremer(1.0 if cabeca else 0.75)
+	if cabeca:
+		_flash_sangue()
 	for tipo in pedacos:
 		for i in tipo[1]:
 			_pedaco(tipo[0], pos, vel)
@@ -2231,7 +2240,7 @@ func explodir(membro: String) -> void:
 		morreu.emit()
 
 func _pedaco(tipo: String, pos: Vector2, vel: Vector2) -> void:
-	var r: float = {"carne": randf_range(28, 55), "olho": 26.0}[tipo]
+	var r: float = {"carne": randf_range(42, 78), "olho": 38.0, "osso": randf_range(32, 42), "dente": 17.0}[tipo]
 	var g := RigidBody2D.new()
 	g.mass = 0.3
 	g.collision_layer = 0b100
@@ -2248,8 +2257,22 @@ func _pedaco(tipo: String, pos: Vector2, vel: Vector2) -> void:
 		var esc := 1.0 if tipo in ["olho", "dente"] else randf_range(0.65, 1.15)
 		var raio := r * esc
 		pts.append(Vector2(raio, 0).rotated(TAU * k / lados))
+	if tipo == "osso":                              # osso: comprido, com as pontas redondas
+		pts = PackedVector2Array()
+		for k in 16:
+			var a := TAU * k / 16.0
+			pts.append(Vector2(cos(a) * r * 1.7, sin(a) * r * 0.42))
+		for lado_o in [-1.0, 1.0]:
+			for dy in [-1.0, 1.0]:
+				var ponta := Polygon2D.new()
+				var pp := PackedVector2Array()
+				for k in 10:
+					pp.append(Vector2(r * 0.42, 0).rotated(TAU * k / 10.0) + Vector2(lado_o * r * 1.55, dy * r * 0.3))
+				ponta.polygon = pp
+				ponta.color = Color(0.95, 0.92, 0.82)
+				g.add_child(ponta)
 	var cor: Color = {"carne": Color(0.55, 0.03, 0.06).lerp(Color(0.75, 0.1, 0.12), randf() * 0.6),
-		"olho": Color(0.97, 0.97, 0.95)}[tipo]
+		"olho": Color(0.97, 0.97, 0.95), "osso": Color(0.95, 0.92, 0.82), "dente": Color(1.0, 0.98, 0.9)}[tipo]
 	var corpo := Polygon2D.new()
 	corpo.polygon = pts
 	corpo.color = cor
@@ -2258,8 +2281,8 @@ func _pedaco(tipo: String, pos: Vector2, vel: Vector2) -> void:
 	var fechado := pts.duplicate()
 	fechado.append(pts[0])
 	borda.points = fechado
-	borda.width = 5.0
-	borda.default_color = Color(0.3, 0.02, 0.03)
+	borda.width = 5.0 if tipo != "dente" else 3.0
+	borda.default_color = Color(0.3, 0.02, 0.03) if tipo in ["carne", "olho"] else Color(0.45, 0.35, 0.3)
 	g.add_child(borda)
 	if tipo == "olho":
 		var iris := Polygon2D.new()
@@ -2280,7 +2303,7 @@ func _pedaco(tipo: String, pos: Vector2, vel: Vector2) -> void:
 	add_child(g)
 	g.linear_velocity = vel * 0.5 + Vector2.UP.rotated(randf_range(-1.4, 1.4)) * randf_range(900, 2400)
 	g.angular_velocity = randf_range(-14, 14)
-	if sangue and tipo == "carne":
+	if sangue and tipo in ["carne", "olho"]:
 		sangue.esguichar(g, Vector2.ZERO, Vector2.UP, 1.5)
 	get_tree().create_timer(25.0).timeout.connect(g.queue_free)
 
@@ -2290,3 +2313,46 @@ func foco() -> Node2D:
 func _exit_tree() -> void:
 	if _repele_t > 0.0:
 		Audio.musica_ult(false)              # reiniciou com o especial ligado: para a música
+
+## toco do membro arrancado: carne viva com o osso aparecendo, presa no corpo
+func _ferida(rb: Node2D, local: Vector2, r: float) -> void:
+	if not is_instance_valid(rb):
+		return
+	var f := Node2D.new()
+	f.position = local
+	f.rotation = local.angle()
+	f.z_index = 15
+	var semente := randf() * 10.0
+	f.draw.connect(func() -> void:
+		var pts := PackedVector2Array()
+		for k in 12:
+			var a := TAU * k / 12.0
+			pts.append(Vector2(cos(a), sin(a)) * r * (0.85 + 0.25 * sin(a * 3.0 + semente)))
+		f.draw_colored_polygon(pts, Color(0.35, 0.0, 0.03))
+		f.draw_circle(Vector2.ZERO, r * 0.72, Color(0.7, 0.06, 0.09))
+		f.draw_circle(Vector2(-r * 0.2, -r * 0.2), r * 0.25, Color(0.95, 0.35, 0.35, 0.6))
+		f.draw_circle(Vector2(r * 0.08, 0), r * 0.3, Color(0.95, 0.92, 0.82))
+		f.draw_circle(Vector2(r * 0.08, 0), r * 0.14, Color(0.75, 0.6, 0.5)))
+	rb.add_child(f)
+
+func _tremer(forca: float) -> void:
+	var cam := get_viewport().get_camera_2d()
+	if cam and "tremor" in cam:
+		cam.set("tremor", maxf(float(cam.get("tremor")), forca))
+
+## cabeça estourou: a tela pisca vermelho rapidinho
+func _flash_sangue() -> void:
+	if Game.leve:
+		return
+	var cl := CanvasLayer.new()
+	cl.layer = 50
+	var cr := ColorRect.new()
+	cr.color = Color(0.7, 0.0, 0.05, 0.32)
+	cr.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	cr.set_anchors_preset(Control.PRESET_FULL_RECT)
+	cl.add_child(cr)
+	get_tree().current_scene.add_child(cl)
+	var tw := cr.create_tween()
+	tw.set_speed_scale(1.0 / maxf(Engine.time_scale, 0.01))
+	tw.tween_property(cr, "color:a", 0.0, 0.45)
+	tw.tween_callback(cl.queue_free)
