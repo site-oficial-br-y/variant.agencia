@@ -15,6 +15,12 @@ var b_passe: Button
 var abas: Array = []                       # [botão, nome]
 var subabas: Array = []
 var grade: GridContainer
+var janela: Control                         # área que corta a fileira (arrasta pro lado)
+var _rol := 0.0
+var _vel := 0.0
+var _arrastando := false
+var _moveu := 0.0
+var _ult_x := 0.0
 var vazio: Label
 var aba := "skins"
 var sub := "rastro"
@@ -47,10 +53,14 @@ func _ready() -> void:
 		var b := _botao(Passe.TIPOS[t], ROXO, func() -> void: _trocar_sub(nome))
 		b.add_theme_font_size_override("font_size", 20)
 		subabas.append([b, nome])
+	janela = Control.new()
+	janela.clip_contents = true
+	janela.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	add_child(janela)
 	grade = GridContainer.new()
 	grade.add_theme_constant_override("h_separation", 16)
 	grade.add_theme_constant_override("v_separation", 16)
-	add_child(grade)
+	janela.add_child(grade)
 	vazio = _rotulo("", 26, 8, Color(0.85, 0.82, 0.95))
 	vazio.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	add_child(vazio)
@@ -82,7 +92,11 @@ func _minhas_skins() -> Array:
 
 func _montar() -> void:
 	for c in grade.get_children():
+		grade.remove_child(c)
 		c.queue_free()
+	_rol = 0.0
+	_vel = 0.0
+	grade.size = Vector2.ZERO
 	for a in abas:
 		_estilo_aba(a[0], a[1] == aba, OURO)
 	for s in subabas:
@@ -91,13 +105,17 @@ func _montar() -> void:
 	vazio.text = ""
 	if aba == "skins":
 		var lista := _minhas_skins()
-		grade.columns = 5
+		grade.columns = _colunas(lista.size(), 290.0)
 		for item in lista:
 			grade.add_child(_cartao_skin(item))
 		if lista.is_empty():
 			vazio.text = "Você ainda não tem skin. Compra na LOJA ou chega no nível 35 do PASSE (skin do Wendell) e 50 (skin do Gian)."
 	else:
-		grade.columns = 6
+		var n := 0
+		for it in Passe.ITENS:
+			if it[3] == sub:
+				n += 1
+		grade.columns = _colunas(n, 236.0)
 		for it in Passe.ITENS:
 			if it[3] == sub:
 				grade.add_child(_cartao_item(it))
@@ -142,6 +160,8 @@ func _cartao_skin(item: String) -> Button:
 	est.size = Vector2(200, 26)
 	b.add_child(est)
 	b.pressed.connect(func() -> void:
+		if _moveu > 14.0:
+			return
 		Audio.tocar("confirma")
 		Game.equipar(pers, "" if usando else item)
 		_montar())
@@ -178,6 +198,8 @@ func _cartao_item(it: Array) -> Button:
 	est.size = Vector2(176, 28)
 	b.add_child(est)
 	b.pressed.connect(func() -> void:
+		if _moveu > 14.0:
+			return
 		if lib:
 			Audio.tocar("confirma")
 			Passe.alternar(id)
@@ -208,8 +230,9 @@ func _layout() -> void:
 		(subabas[i][0] as Button).position = Vector2(40 + i * 150, 168)
 		(subabas[i][0] as Button).size = Vector2(140, 46)
 	var y := 230.0 if aba == "itens" else 176.0
-	grade.position = Vector2(40, y)
-	grade.size = Vector2(v.x - 80, v.y - y - 20)
+	janela.position = Vector2(0, y - 10)
+	janela.size = Vector2(v.x, v.y - y)
+	grade.position = Vector2(40 - _rol, 10)
 	vazio.position = Vector2(80, y + 60)
 	vazio.size = Vector2(v.x - 160, 120)
 
@@ -244,3 +267,55 @@ func _rotulo(texto: String, tamanho: int, contorno: int, cor: Color) -> Label:
 	l.add_theme_constant_override("outline_size", contorno)
 	l.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	return l
+
+## quantas colunas: cabe quantas linhas na altura, o resto vai pro lado (arrasta)
+func _colunas(n: int, alto: float) -> int:
+	var h := get_viewport().get_visible_rect().size.y - (230.0 if aba == "itens" else 176.0) - 20.0
+	var linhas := maxi(1, int((h + 16.0) / (alto + 16.0)))
+	return maxi(1, ceili(float(n) / linhas))
+
+func _max_rol() -> float:
+	return maxf(0.0, grade.size.x + 80.0 - janela.size.x)
+
+func _input(ev: InputEvent) -> void:
+	var pos := Vector2.ZERO
+	var apertou := false
+	var soltou := false
+	var moveu := false
+	if ev is InputEventScreenTouch or (ev is InputEventMouseButton and ev.button_index == MOUSE_BUTTON_LEFT):
+		pos = ev.position
+		apertou = ev.pressed
+		soltou = not ev.pressed
+	elif ev is InputEventMouseButton and ev.pressed and ev.button_index in [MOUSE_BUTTON_WHEEL_UP, MOUSE_BUTTON_WHEEL_DOWN]:
+		_vel += -900.0 if ev.button_index == MOUSE_BUTTON_WHEEL_UP else 900.0
+		return
+	elif ev is InputEventScreenDrag or ev is InputEventMouseMotion:
+		pos = ev.position
+		moveu = true
+	if apertou:
+		if not Rect2(janela.position, janela.size).has_point(pos):
+			return
+		_arrastando = true
+		_ult_x = pos.x
+		_moveu = 0.0
+		_vel = 0.0
+	elif moveu and _arrastando:
+		var dx := pos.x - _ult_x
+		_ult_x = pos.x
+		_moveu += absf(dx)
+		_rol = clampf(_rol - dx, -60.0, _max_rol() + 60.0)
+		_vel = -dx / maxf(get_process_delta_time(), 0.001)
+	elif soltou:
+		_arrastando = false
+
+func _process(delta: float) -> void:
+	if not _arrastando:
+		_rol += _vel * delta                        # embalo
+		_vel = lerpf(_vel, 0.0, minf(1.0, delta * 4.0))
+		if _rol < 0.0:
+			_rol = lerpf(_rol, 0.0, minf(1.0, delta * 12.0))
+			_vel = 0.0
+		elif _rol > _max_rol():
+			_rol = lerpf(_rol, _max_rol(), minf(1.0, delta * 12.0))
+			_vel = 0.0
+	grade.position.x = 40.0 - _rol
