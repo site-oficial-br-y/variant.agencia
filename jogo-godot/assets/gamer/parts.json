@@ -6,11 +6,13 @@
   "cadeira",
   "roda0",
   "roda1",
+  "pe2",
   "perna2",
   "tronco",
   "apoio",
   "coxa",
   "canela",
+  "antebraco",
   "braco",
   "cabeca"
  ],
@@ -36,8 +38,8 @@
   "perna2": {
    "x": 787,
    "y": 807,
-   "w": 230,
-   "h": 622
+   "w": 137,
+   "h": 285
   },
   "tronco": {
    "x": 236,
@@ -65,15 +67,27 @@
   },
   "braco": {
    "x": 428,
-   "y": 524,
-   "w": 343,
-   "h": 169
+   "y": 560,
+   "w": 194,
+   "h": 133
   },
   "cabeca": {
    "x": 374,
    "y": 210,
    "w": 291,
    "h": 273
+  },
+  "antebraco": {
+   "x": 582,
+   "y": 524,
+   "w": 189,
+   "h": 154
+  },
+  "pe2": {
+   "x": 789,
+   "y": 1065,
+   "w": 228,
+   "h": 364
   }
  },
  "corpo_de": {
@@ -86,7 +100,9 @@
   "braco": "braco",
   "coxa": "coxa",
   "canela": "canela",
-  "perna2": "perna2"
+  "perna2": "perna2",
+  "antebraco": "antebraco",
+  "pe2": "pe2"
  },
  "piloto": [
   "tronco",
@@ -94,7 +110,9 @@
   "braco",
   "coxa",
   "canela",
-  "perna2"
+  "perna2",
+  "antebraco",
+  "pe2"
  ],
  "rodas": [
   {
@@ -203,7 +221,7 @@
    ]
   },
   "braco": {
-   "massa": 0.6,
+   "massa": 0.33,
    "forma": [
     "caps",
     [
@@ -211,8 +229,8 @@
      640
     ],
     [
-     740,
-     560
+     605,
+     600
     ],
     55
    ]
@@ -248,7 +266,7 @@
    ]
   },
   "perna2": {
-   "massa": 1.6,
+   "massa": 0.88,
    "forma": [
     "caps",
     [
@@ -256,10 +274,40 @@
      900
     ],
     [
+     865,
+     1085
+    ],
+    75
+   ]
+  },
+  "antebraco": {
+   "massa": 0.27,
+   "forma": [
+    "caps",
+    [
+     605,
+     600
+    ],
+    [
+     740,
+     560
+    ],
+    50
+   ]
+  },
+  "pe2": {
+   "massa": 0.72,
+   "forma": [
+    "caps",
+    [
+     865,
+     1085
+    ],
+    [
      880,
      1270
     ],
-    75
+    68
    ]
   }
  },
@@ -283,6 +331,15 @@
    ],
    "lim": 80,
    "teste": -40
+  },
+  {
+   "a": "braco",
+   "b": "antebraco",
+   "p": [
+    605,
+    600
+   ],
+   "lim": 70
   },
   {
    "a": "tronco",
@@ -313,6 +370,15 @@
    ],
    "lim": 70,
    "teste": 30
+  },
+  {
+   "a": "perna2",
+   "b": "pe2",
+   "p": [
+    865,
+    1085
+   ],
+   "lim": 75
   }
  ]
 }

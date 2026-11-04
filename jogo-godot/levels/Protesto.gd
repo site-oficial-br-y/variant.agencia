@@ -10,7 +10,7 @@ class_name Protesto
 
 const VEL_ARPAO := 3400.0                 # px/s de jogo
 const ALCANCE := 4200.0
-const MEMBROS := ["braco", "perna", "perna2", "coxa", "canela"]
+const MEMBROS := ["braco", "antebraco", "perna", "perna2", "coxa", "canela", "pe", "pe2", "coxa2", "canela2"]
 
 var fase: Node2D
 var _arpoadores: Array = []
