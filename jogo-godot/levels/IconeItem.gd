@@ -4,9 +4,14 @@ class_name IconeItem
 
 var item: Array = []
 var _t := 0.0
+var _rosto: Texture2D
 
 func _process(delta: float) -> void:
 	_t += delta
+	if _rosto == null and not item.is_empty() and item[3] == "skin":    # carrega fora do _draw (dentro dele sai branco)
+		var sp: Array = Passe.SKINS_PASSE.get(item[1], ["wendell", ""])
+		var arq := "res://assets/ui/rosto_%s.png" % sp[1]
+		_rosto = load(arq if sp[1] != "" and ResourceLoader.exists(arq) else "res://assets/ui/rosto_%s.png" % sp[0])
 	queue_redraw()
 
 func _draw() -> void:
@@ -94,9 +99,7 @@ func _draw() -> void:
 			draw_string(f, Vector2(0, c.y + 14), txt, HORIZONTAL_ALIGNMENT_CENTER, size.x, 40 if dobro else 32, Color(1, 1, 1))
 			draw_string(f, Vector2(0, c.y + 38), "XP", HORIZONTAL_ALIGNMENT_CENTER, size.x, 20, cor)
 		"skin":
-			var sp: Array = Passe.SKINS_PASSE.get(id, ["wendell", ""])
-			var arq := "res://assets/ui/rosto_%s.png" % sp[1]
-			var tex: Texture2D = load(arq if sp[1] != "" and ResourceLoader.exists(arq) else "res://assets/ui/rosto_%s.png" % sp[0])
+			var tex := _rosto
 			if tex:
 				draw_circle(c, 56, Color(1, 0.8, 0.25, 0.25 + 0.1 * sin(_t * 3.0)))
 				draw_texture_rect(tex, Rect2(c - Vector2(50, 50), Vector2(100, 100)), false)
