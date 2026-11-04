@@ -1162,8 +1162,8 @@ func _desenhar_laser(de: Vector2, ate: Vector2, forca: float, no_chefe: bool) ->
 	if pc and fmod(t, 0.12) < 0.02:
 		pc.particulas(ate, 10 + int(20 * forca), Color(1, 1, 1, 1), Color(cor_a.r, cor_a.g, cor_a.b, 0.0), 400.0, 1500.0 + 1500.0 * forca, 0.4, 20.0, 60.0, 0.0, -d.normalized(), 70.0)
 	var cam := get_viewport().get_camera_2d()
-	if cam and no_chefe:
-		cam.offset = Vector2(randf_range(-1, 1), randf_range(-1, 1)) * 25.0 * forca
+	if cam and no_chefe and "tremor" in cam:          # treme sem apagar o olhar-pra-frente da câmera
+		cam.set("tremor", maxf(float(cam.get("tremor")), 0.35 * forca))
 
 ## Gorisch: segundo botão liga a ult (impulso de velocidade + pose voando). Na ult, o botão
 ## de novo dá dash vermelho. Depois recarrega; o turbo de porcentagem continua no especial.
