@@ -42,6 +42,7 @@ var sprites: Dictionary = {}       # peça -> Sprite2D
 var corpos: Dictionary = {}        # corpo do piloto -> RigidBody2D
 var juntas: Dictionary = {}        # corpo filho -> PinJoint2D
 var v_ant: Dictionary = {}
+var _faixas: Dictionary = {}       # corpo -> Vector2(dobra mín, dobra máx) em rad, a partir da pose da arte
 var quebrado: Dictionary = {}      # corpo -> true (osso quebrado: a junta fica mole e o osso aparece)
 var _manchas_corpo: Dictionary = {} # corpo -> quantas manchas de sangue já tem
 var v_roda_ant := Vector2.ZERO
@@ -2039,9 +2040,11 @@ func soltar_ragdoll(herda_vel: Vector2, pulo: bool = false) -> void:
 		pj.disable_collision = true
 		pj.softness = 0.0
 		pj.angular_limit_enabled = true
-		var lim_j := 28.0 if j["b"] == "cabeca" else float(j["lim"]) * 0.55
-		pj.angular_limit_lower = -deg_to_rad(lim_j)
-		pj.angular_limit_upper = deg_to_rad(lim_j)
+		var fx := _faixa(j)                          # quanto cada junta dobra pra cada lado (anatomia)
+		_faixas[j["b"]] = fx
+		var lim_j := maxf(absf(fx.x), absf(fx.y)) + 0.15
+		pj.angular_limit_lower = -lim_j
+		pj.angular_limit_upper = lim_j
 		juntas[j["b"]] = pj
 		_ang0[j["b"]] = corpos[j["b"]].rotation - corpos[j["a"]].rotation
 	boneco.queue_free()
@@ -2140,11 +2143,11 @@ func _musculos() -> void:
 		var t := (-rel * 4.0 - wrel * 1.0) * forca
 		# limite duro (o do PinJoint2D escapa): passou do ângulo, empurra de volta com força
 		# e corta o giro pra fora. Pescoço mais curto: a cabeça não entra no peito.
-		var lim := deg_to_rad(28.0 if b == "cabeca" else float(j["lim"]) * 0.6)
-		if absf(rel) > lim:
-			var passou := rel - signf(rel) * lim
+		var fx: Vector2 = _faixas.get(b, Vector2(-0.6, 0.6))
+		if rel < fx.x or rel > fx.y:
+			var passou := rel - clampf(rel, fx.x, fx.y)
 			t += -passou * 120.0 - wrel * 12.0
-			if signf(wrel) == signf(rel):
+			if signf(wrel) == signf(passou):
 				rb.angular_velocity = ra.angular_velocity + wrel * 0.3
 		rb.apply_torque(t * _inercia(rb))
 		ra.apply_torque(-t * _inercia(rb) * 0.5)
@@ -2231,13 +2234,13 @@ func explodir(membro: String) -> void:
 	Audio.tocar("osso", 1.0)
 	Audio.tocar("impacto_forte", 0.9)
 	if sangue:
-		sangue.jorrar(pos, 110, 2600.0, Vector2.ZERO, vel * 0.3)
+		sangue.jorrar(pos, 60, 2600.0, Vector2.ZERO, vel * 0.3)
 	var cabeca := membro == "cabeca"
-	var pedacos: Array = [["carne", 6], ["osso", 2]]   # pedacinhos de carne e osso (estilo do gênero)
+	var pedacos: Array = [["carne", 3], ["osso", 1]]   # pedacinhos de carne e osso (estilo do gênero)
 	if cabeca:
-		pedacos = [["carne", 5], ["cranio", 4], ["cerebro", 3], ["olho", 2], ["dente", 5]]
+		pedacos = [["cranio", 3], ["cerebro", 2], ["olho", 2], ["dente", 2]]
 	elif membro == "tronco":
-		pedacos = [["carne", 6], ["costela", 5], ["coracao", 1], ["carne", 2]]
+		pedacos = [["costela", 3], ["coracao", 1], ["carne", 2]]
 		_tripa(pos, vel)
 	if Game.leve:
 		pedacos = [["carne", 4]] if not cabeca else [["carne", 3], ["olho", 1], ["cranio", 2]]
@@ -2356,9 +2359,9 @@ func _pedaco(tipo: String, pos: Vector2, vel: Vector2) -> void:
 	add_child(g)
 	g.linear_velocity = vel * 0.5 + Vector2.UP.rotated(randf_range(-1.4, 1.4)) * randf_range(900, 2400)
 	g.angular_velocity = randf_range(-14, 14)
-	if sangue and tipo in ["carne", "olho", "cerebro", "coracao", "cranio"]:
-		sangue.esguichar(g, Vector2.ZERO, Vector2.UP, 1.5)
-	get_tree().create_timer(25.0).timeout.connect(g.queue_free)
+	if sangue and tipo in ["carne", "cerebro", "coracao"] and randf() < 0.5:
+		sangue.esguichar(g, Vector2.ZERO, Vector2.UP, 1.0)
+	get_tree().create_timer(12.0).timeout.connect(g.queue_free)
 
 func foco() -> Node2D:
 	return chassi if montado else corpos.get("tronco", chassi)
@@ -2469,7 +2472,7 @@ func _tripa(pos: Vector2, vel: Vector2) -> void:
 		return
 	var gomos: Array = []
 	var ant: RigidBody2D = null
-	for i in 7:
+	for i in 5:
 		var g := RigidBody2D.new()
 		g.mass = 0.15
 		g.collision_layer = 0b100
@@ -2518,10 +2521,42 @@ func _tripa(pos: Vector2, vel: Vector2) -> void:
 		if get_tree() and get_tree().process_frame.is_connected(atualiza):
 			get_tree().process_frame.disconnect(atualiza))
 	if sangue:
-		sangue.esguichar(gomos[3], Vector2.ZERO, Vector2.UP, 2.0)
-	get_tree().create_timer(25.0).timeout.connect(func() -> void:
+		sangue.esguichar(gomos[2], Vector2.ZERO, Vector2.UP, 1.5)
+	get_tree().create_timer(12.0).timeout.connect(func() -> void:
 		for g in gomos:
 			if is_instance_valid(g):
 				g.queue_free()
 		if is_instance_valid(linha):
 			linha.queue_free())
+
+## faixa de dobra da junta, relativa à pose da arte. Joelho só dobra pra trás e cotovelo só pra
+## frente (até ~145°, nunca ao contrário); pescoço curto. O resto segue o "lim" do parts.json.
+func _faixa(j: Dictionary) -> Vector2:
+	var b: String = j["b"]
+	var lim := deg_to_rad(float(j["lim"]) * 0.6)
+	if b == "cabeca":
+		return Vector2(deg_to_rad(-20.0), deg_to_rad(35.0))
+	var joelho := b in ["canela", "canela2", "pe", "pe2"]
+	var cotovelo := b == "antebraco"
+	if not (joelho or cotovelo):
+		return Vector2(-lim, lim)
+	var p := v2(j["p"])
+	var da := _eixo(j["a"], p, true)
+	var db := _eixo(b, p, false)
+	if da == Vector2.ZERO or db == Vector2.ZERO:
+		return Vector2(-lim, lim)
+	var f0 := wrapf(db.angle() - da.angle(), -PI, PI)     # quanto já está dobrado no desenho
+	var dobra := deg_to_rad(145.0)
+	if joelho:
+		return Vector2(minf(-f0, -0.05), maxf(dobra - f0, 0.05))
+	return Vector2(minf(-dobra - f0, -0.05), maxf(-f0, 0.05))
+
+func _eixo(corpo: String, p: Vector2, para_junta: bool) -> Vector2:
+	var f: Array = D["corpos"].get(corpo, {}).get("forma", [])
+	if f.is_empty() or f[0] != "caps":
+		return Vector2.ZERO
+	var a := v2(f[1])
+	var c := v2(f[2])
+	var perto := a if a.distance_to(p) < c.distance_to(p) else c
+	var longe := c if perto == a else a
+	return (perto - longe).normalized() if para_junta else (longe - perto).normalized()
