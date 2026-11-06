@@ -5,9 +5,15 @@ extends Node
 ## e vira fantasma (pode soltar 1 mina). Pontos: chegada 3/2/1; Arquiteto ganha 1 por morte (+1 se a
 ## cabeça estourou), mas se ninguém chegar ele não ganha nada. O papel gira; quem criou a sala manda.
 
-const CUSTO := {"serra": 45.0, "mina": 30.0, "espinho": 25.0, "bola": 60.0}
-const NOMES := {"serra": "SERRA", "mina": "MINA", "espinho": "ESPINHO", "bola": "BOLA"}
-const CORES := {"serra": Color(1.0, 0.45, 0.35), "mina": Color(1.0, 0.85, 0.3), "espinho": Color(0.75, 0.8, 0.95), "bola": Color(0.6, 0.6, 0.7)}
+const TIPOS := ["serra", "mina", "espinho", "bola", "tnt", "prensa", "trilho", "drone", "trampolim", "caixas"]
+const CUSTO := {"serra": 45.0, "mina": 30.0, "espinho": 25.0, "bola": 60.0, "tnt": 35.0, "prensa": 55.0, "trilho": 50.0,
+	"drone": 70.0, "trampolim": 20.0, "caixas": 15.0}
+const NOMES := {"serra": "SERRA", "mina": "MINA", "espinho": "ESPINHO", "bola": "BOLA", "tnt": "TNT", "prensa": "PRENSA",
+	"trilho": "SERRA TRILHO", "drone": "DRONE", "trampolim": "TRAMPOLIM", "caixas": "CAIXAS"}
+const CORES := {"serra": Color(1.0, 0.45, 0.35), "mina": Color(1.0, 0.85, 0.3), "espinho": Color(0.75, 0.8, 0.95), "bola": Color(0.6, 0.6, 0.7),
+	"tnt": Color(1.0, 0.3, 0.2), "prensa": Color(0.6, 0.7, 0.85), "trilho": Color(1.0, 0.35, 0.3), "drone": Color(1.0, 0.55, 0.2),
+	"trampolim": Color(0.4, 1.0, 0.5), "caixas": Color(0.85, 0.6, 0.3)}
+const NO_CHAO := ["mina", "espinho", "tnt", "prensa", "trilho", "trampolim", "caixas"]
 const ENERGIA_MAX := 100.0
 const ENERGIA_GANHO := 14.0           # por segundo
 const TEMPO_RODADA := 75.0          # depois do preparo
@@ -44,6 +50,7 @@ var _apertado := false
 var _moveu := 0.0
 var _chegada_x := 20000.0
 var _bot_t := 1.0
+var _bot_i := 0
 var _foto_t := 1.0
 var _fotos := 0
 
@@ -87,7 +94,7 @@ func preparar_jogador() -> void:
 	if is_instance_valid(fase.cosm):
 		fase.cosm.queue_free()
 	olho = Node2D.new()
-	olho.position = Vector2(X_LIVRE + 2500.0, chao_y - 1500.0)
+	olho.position = Vector2(X_LIVRE + 2500.0, chao_y + 300.0)
 	fase.add_child(olho)
 	fase.set_meta("cam_base", true)
 	fase.camera.alvo = olho
@@ -123,7 +130,7 @@ func _montar_hud() -> void:
 		_dica.text = "Arrasta pra mover · escolhe a armadilha e toca na pista. Se NINGUÉM chegar, você não ganha nada!"
 		_barra_fundo = ColorRect.new()
 		_barra_fundo.color = Color(0, 0, 0, 0.55)
-		_barra_fundo.position = Vector2(v.x / 2.0 - 260, v.y - 160)
+		_barra_fundo.position = Vector2(v.x / 2.0 - 260, v.y - 206)
 		_barra_fundo.size = Vector2(520, 22)
 		hud.add_child(_barra_fundo)
 		_barra = ColorRect.new()
@@ -131,7 +138,7 @@ func _montar_hud() -> void:
 		_barra.position = _barra_fundo.position + Vector2(3, 3)
 		hud.add_child(_barra)
 		var i := 0
-		for t in ["serra", "mina", "espinho", "bola"]:
+		for t in TIPOS:
 			var b := Button.new()
 			b.text = "%s %d" % [NOMES[t], int(CUSTO[t])]
 			b.icon = load("res://assets/arquiteto/%s.png" % t)
@@ -139,10 +146,10 @@ func _montar_hud() -> void:
 			b.icon_alignment = HORIZONTAL_ALIGNMENT_CENTER
 			b.vertical_icon_alignment = VERTICAL_ALIGNMENT_TOP
 			b.focus_mode = Control.FOCUS_NONE
-			b.add_theme_font_size_override("font_size", 18)
-			b.add_theme_constant_override("icon_max_width", 70)
-			b.size = Vector2(150, 118)
-			b.position = Vector2(v.x / 2.0 - 2 * 160 + i * 160 + 5, v.y - 128)
+			b.add_theme_font_size_override("font_size", 14)
+			b.add_theme_constant_override("icon_max_width", 48)
+			b.size = Vector2(118, 82)
+			b.position = Vector2(v.x / 2.0 - 2.5 * 124 + (i % 5) * 124 + 3, v.y - 176 + (i / 5) * 88)
 			var nome: String = t
 			b.pressed.connect(func() -> void:
 				tipo = nome
@@ -204,8 +211,12 @@ func passo(dt: float) -> void:
 		_bot_t -= dt
 		if sou_arq and _bot_t <= 0.0:
 			_bot_t = 1.2
-			tipo = ["serra", "mina", "espinho", "bola"][randi() % 4]
-			_tentar_armar(Vector2(randf_range(X_LIVRE + 500.0, _chegada_x - 1500.0), chao_y - 600.0))
+			tipo = TIPOS[_bot_i % TIPOS.size()]
+			energia = ENERGIA_MAX
+			_tentar_armar(Vector2(X_LIVRE + 1500.0 + _bot_i * 1800.0, chao_y - 600.0))
+			if olho:
+				olho.position.x = X_LIVRE + 1500.0 + maxi(0, _bot_i - 2) * 1800.0
+			_bot_i += 1
 		elif not sou_arq and not fantasma:
 			Input.action_press("accelerate")
 	if "arq_fotos" in OS.get_cmdline_user_args():
@@ -288,7 +299,7 @@ func _tentar_armar(p: Vector2) -> void:
 	if sou_arq and energia < CUSTO[t]:
 		fase._mensagem("SEM ENERGIA!", Color(1, 0.4, 0.3))
 		return
-	if t in ["mina", "espinho"]:                    # vai pro chão embaixo do toque
+	if t in NO_CHAO:                                # vai pro chão embaixo do toque
 		var q := PhysicsRayQueryParameters2D.create(p + Vector2(0, -400), p + Vector2(0, 5000), 0b1)
 		var hit: Dictionary = fase.get_world_2d().direct_space_state.intersect_ray(q)
 		if hit.is_empty():
@@ -315,7 +326,7 @@ func _criar(de: String, d: Dictionary) -> void:
 	var t := str(d.get("t", "serra"))
 	var p := Vector2(float(d.get("x", 0)), float(d.get("y", 0)))
 	var aviso := Node2D.new()
-	aviso.position = p + (Vector2(0, -250) if t in ["mina", "espinho"] else Vector2.ZERO)
+	aviso.position = p + (Vector2(0, -250) if t in NO_CHAO else Vector2.ZERO)
 	aviso.z_index = 30
 	var cor: Color = CORES.get(t, Color.RED)
 	aviso.draw.connect(func() -> void:
@@ -343,6 +354,19 @@ func _criar(de: String, d: Dictionary) -> void:
 				fase.pecas.espinhos(p.x - 330.0, p.x + 330.0, p.y, 260.0)
 			"bola":
 				fase._bola_demolicao(p + Vector2(0, -1500.0), 1300.0, 0.95, 360.0)
+			"tnt":
+				fase.pecas.tnt(p + Vector2(0, -300.0))
+			"prensa":
+				fase.pecas.prensa(p.x, p.y, 3.0, 0.0)
+			"trilho":
+				fase.mec.serra_trilho(p, 2.6, 0.0)
+			"drone":
+				fase.mec.bomba_perseguidora(p, 3600.0)
+			"trampolim":
+				fase.mec.trampolim(p, 2600.0, 600.0)
+			"caixas":
+				for q in 3:
+					fase.pecas.caixa(p + Vector2([-160.0, 160.0, 0.0][q], -160.0 - (320.0 if q == 2 else 0.0)), 300.0)
 		Audio.tocar("metal", 0.7, 0.0))
 
 # ---------- mensagens ----------
