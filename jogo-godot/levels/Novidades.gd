@@ -2,14 +2,14 @@ extends Control
 ## Aviso de atualização: aparece por cima do lobby na primeira vez que abre a versão nova.
 ## Fundo é a arte do patch escurecida; o X fecha e fica no lobby.
 
-const VERSAO := "4.0.2"
+const VERSAO := "4.1"
 const ITENS := [
+	["MODO NOVO: O ARQUITETO", "No ONLINE: a cada rodada um é o Arquiteto e enche a pista de serra, mina, espinho e bola de demolição AO VIVO, e o resto corre. Ele ganha ponto por morte, mas se ninguém chegar não ganha nada. Todo mundo é Arquiteto uma vez.", Color(1.0, 0.75, 0.2)],
+	["SALAS DE ATÉ 8", "Agora cabe até 8 pessoas na mesma sala online.", Color(0.55, 0.85, 1.0)],
 	["MAIS LEVE", "O gore agora pesa igual ao jogo antes dele: no máximo 10 pedaços voando, menos gota no ar, mancha desenhada em bloco. Sem travada quando alguém explode.", Color(0.4, 1.0, 0.5)],
 	["BONECOS DE VOLTA", "Os cortes no braço e na perna foram desfeitos: os bonecos voltaram pro desenho original. Ficou só o limite de dobra: joelho só dobra pra trás e o pescoço não torce mais que o normal.", Color(1.0, 0.75, 0.2)],
 	["OSSOS E DESMEMBRAMENTO", "Osso quebra e fura a pele (o membro fica mole), toco com osso aparecendo, cabeça estoura em crânio, cérebro, olho e dente, tronco solta costela e coração. Pancada suja o corpo de sangue.", Color(0.95, 0.2, 0.25)],
 	["SANGUE NOVO", "Gotas com brilho, respingos, sangue escorrendo na parede e poça embaixo de quem sangra. A tela treme e pisca vermelho quando a cabeça estoura.", Color(0.85, 0.1, 0.15)],
-	["AVIÃO DO BOUÇAS", "O avião não se desmancha mais todo bugado quando ele morre: só amassa.", Color(0.85, 0.85, 0.9)],
-	["FASES EM CARROSSEL", "A escolha de fase ficou grande: arrasta pro lado, usa as setas ou toca na fase do lado. Toca na do meio (ou em JOGAR) pra jogar.", Color(1.0, 0.75, 0.2)],
 ]
 
 static func ja_viu() -> bool:

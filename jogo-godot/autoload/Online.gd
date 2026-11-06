@@ -10,7 +10,7 @@ signal caiu
 
 const PROJETO := "https://yowwwtstwdeudbgzddcf.supabase.co"
 const CHAVE := "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inlvd3d3dHN0d2RldWRiZ3pkZGNmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTI4Njc1NDIsImV4cCI6MjEwODQ0MzU0Mn0.w_kpeJlJCk84kA7ejQpY0zd_wBjLOwGOmIkZ2Yecd_w"
-const MAX_JOGADORES := 4
+const MAX_JOGADORES := 8
 
 var ws := WebSocketPeer.new()
 var id := ""
@@ -24,6 +24,7 @@ var pronto := false                  # sala: deu PRONTO
 var fase_sala := 1                   # sala: fase que o líder escolheu
 ## partida em andamento (sobrevive ao recarregar a fase): r, fase, ids, largou, inicio_ms, chegadas {id: tempo}, primeiro_ms
 var corrida: Dictionary = {}
+var arq: Dictionary = {}              # modo O Arquiteto: ordem, rodada (k), pontos, total
 var _topico := ""
 var _ref := 0
 var _hb := 0.0
@@ -69,6 +70,7 @@ func sair() -> void:
 	sala = ""
 	pronto = false
 	corrida = {}
+	arq = {}
 	jogadores.clear()
 
 func _mandar(evento_phx: String, payload: Dictionary) -> void:

@@ -214,6 +214,7 @@ func _recebeu(e: String, d: Dictionary, _de: String) -> void:
 func _ir(ids: Array, fase: int) -> void:
 	Online.ativo = true
 	Online.pronto = false
+	Online.arq = {}
 	Online.corrida = {"r": Online.rodada, "fase": fase, "ids": ids, "largou": false, "chegadas": {}, "primeiro_ms": -1}
 	Game.online_n = clampi(ids.size(), 1, Online.MAX_JOGADORES)
 	Game.fase = fase
@@ -245,7 +246,8 @@ func _atualizar() -> void:
 		nome_fase.text = Game.nome_fase(f)
 		modo_fase.text = {5: "TODOS JUNTOS contra o chefe: todo mundo tem que apertar os botões.",
 			11: "MATA-MATA: todo mundo dentro da roda. A cada 15 s fica mais difícil: laser, Semaj, laser duplo, espinho em dobro... Último vivo vence.",
-			12: "BATATA QUENTE: quem está com a bomba passa encostando em alguém. Acabou o tempo, explode. Último vivo vence."}.get(f,
+			12: "BATATA QUENTE: quem está com a bomba passa encostando em alguém. Acabou o tempo, explode. Último vivo vence.",
+			13: "O ARQUITETO: a cada rodada um monta armadilhas ao vivo e o resto corre. Ele ganha ponto por morte, mas se ninguém chegar, não ganha nada. Todo mundo é Arquiteto uma vez."}.get(f,
 			"CORRIDA: quem chegar primeiro ganha. Morreu, volta pro começo.")
 		if not Online.host:
 			modo_fase.text += "\nO líder escolhe a fase."

@@ -47,7 +47,7 @@ func _ready() -> void:
 			Game.fase = int(a.substr(2))
 	Engine.time_scale = Game.RITMO           # física a 180 Hz x 3 = mesmo passo de 1/60 s de jogo
 	RenderingServer.set_default_clear_color(Color(0.33, 0.55, 0.93))
-	tema = ["campo", "obra", "montanha", "lab", "boss", "mercado", "escola", "colorido", "julgamento", "roda", "roda", "roda"][clampi(Game.fase, 1, 12) - 1]
+	tema = ["campo", "obra", "montanha", "lab", "boss", "mercado", "escola", "colorido", "julgamento", "roda", "roda", "roda", "campo"][clampi(Game.fase, 1, 13) - 1]
 	_construir_fundo("hw" if tema == "campo" else tema)
 	_mat = PhysicsMaterial.new()
 	_mat.friction = 1.0
@@ -133,6 +133,8 @@ func _pos_jogador() -> void:
 	move_child(player, sangue.get_index())
 	camera.alvo = player.foco()
 	cosm = Cosmeticos.aplicar(self, player)
+	if arq:
+		arq.preparar_jogador()
 
 	if "teste_queda" in OS.get_cmdline_user_args():
 		_teste_queda()
@@ -287,6 +289,7 @@ func _construir_chao() -> void:
 		10: _fase_10()
 		11: _fase_10()
 		12: _fase_batata()
+		13: _fase_arquiteto()
 		_: _fase_1()
 
 ## marcos comuns: zona de morte, checkpoints (lista de Vector2: x, chão) e chegada
@@ -1633,6 +1636,7 @@ func _on_checkpoint(b: Node2D, ck: Vector2) -> void:
 		print("[FASE] checkpoint")
 
 var cosm: Cosmeticos
+var arq: Arquiteto                     # modo O Arquiteto (fase 13)
 var _fx_morte := false
 
 func _fim(ganhou: bool, motivo: String) -> void:
@@ -1641,6 +1645,12 @@ func _fim(ganhou: bool, motivo: String) -> void:
 		cosm.morrer()
 		get_tree().create_timer(1.0, true, false, true).timeout.connect(func() -> void: _fx_morte = false)
 	if not ativo or _queda7:                     # caindo do terraço pra luta: ninguém morre
+		return
+	if Online.ativo and Game.fase == 13 and arq:  # O Arquiteto: chegou ou virou fantasma
+		if ganhou:
+			arq.eu_cheguei()
+		else:
+			arq.eu_morri(motivo)
 		return
 	if Online.ativo and not ganhou and Game.fase in Game.MODOS_ONLINE:   # mata-mata / batata: tá fora
 		_morte_arena(motivo)
@@ -2482,7 +2492,7 @@ func _iniciar_online() -> void:
 	if Online.host and not c.get("largou", false):   # reenvia o aviso de começar (celular pode perder uma mensagem)
 		for k in 3:
 			get_tree().create_timer(0.5 + k * 1.0, true, false, true).timeout.connect(func() -> void:
-				Online.enviar("comecar", {"ids": c.get("ids", []), "r": Online.rodada, "fase": Game.fase}))
+				Online.enviar("comecar", {"ids": c.get("ids", []), "r": Online.rodada, "fase": Game.fase, "arq": Online.arq}))
 	Online.recebeu.connect(_online_msg)
 	Online.caiu.connect(func() -> void: _mensagem("CONEXÃO CAIU!", Color(1, 0.4, 0.3)))
 	_rotulo_online = Label.new()
@@ -2676,7 +2686,7 @@ func _resultado_corrida() -> void:
 func _process_online(delta: float) -> void:
 	var dt := delta / Engine.time_scale
 	_envio_t -= dt
-	if _envio_t <= 0.0 and is_instance_valid(player) and is_instance_valid(player.chassi):
+	if _envio_t <= 0.0 and is_instance_valid(player) and is_instance_valid(player.chassi) and not (arq and arq.sou_arq):
 		_envio_t = 0.1
 		var f := player.foco()
 		var v: Vector2 = player.chassi.linear_velocity if player.montado else Vector2.ZERO
@@ -2714,6 +2724,8 @@ func _process_online(delta: float) -> void:
 			if Online.host and ativo:
 				_mandar_vida_chefe(dt)
 			_rotulo_online.text = "ONLINE · SALA %s · %d jogadores · %d vivos" % [Online.sala, Game.online_n, vivos + (0 if _morto_online else 1)]
+		elif Game.fase == 13 and arq:
+			arq.passo(dt)
 		elif Game.fase in Game.MODOS_ONLINE:
 			_passo_arena(dt)
 		else:
@@ -2790,6 +2802,8 @@ func alvo_online() -> Array:
 	return c[randi() % c.size()]
 
 func _online_msg(e: String, d: Dictionary, de: String) -> void:
+	if arq:
+		arq.msg(e, d, de)
 	match e:
 		"p":
 			_fantasma(de, d)
@@ -2826,6 +2840,7 @@ func _online_msg(e: String, d: Dictionary, de: String) -> void:
 		"comecar":                                   # o líder começou outra partida
 			if not Online.host and Online.id in (d.get("ids", []) as Array) and int(d.get("r", 0)) > Online.rodada:
 				Online.rodada = int(d.get("r", 0))
+				Online.arq = d.get("arq", {})
 				_recomecar(d.get("ids", []), int(d.get("fase", Game.fase)))
 		"sala":                                      # o líder voltou pra sala: todo mundo volta
 			if not Online.host and int(d.get("r", 0)) == Online.rodada:
@@ -3095,7 +3110,7 @@ func _botao_fim(texto: String, pos: Vector2, cor: Color) -> Button:
 func _nova_rodada(fase: int) -> void:
 	var ids: Array = [Online.id] + Online.jogadores.keys()
 	Online.rodada += 1
-	Online.enviar("comecar", {"ids": ids, "r": Online.rodada, "fase": fase})
+	Online.enviar("comecar", {"ids": ids, "r": Online.rodada, "fase": fase, "arq": Online.arq})
 	_recomecar(ids, fase)
 
 ## recomeça a partida online com essas pessoas (sem fechar a sala)
@@ -4038,6 +4053,25 @@ func dano_ult_chefe(msg := "ESQUADRILHA DE PAPEL!") -> void:
 			_mensagem("-1 NO GERESCH!", Color(0.5, 1, 0.6))
 	elif c == vendedor:
 		vendedor._t += 4.0                                  # vendedor cansa mais rápido
+
+# ---------- MODO O ARQUITETO: pista limpa, o Arquiteto enche de armadilha ao vivo ----------
+func _fase_arquiteto() -> void:
+	var c: Array = []
+	var p := _largada()
+	p = _t_plano(p, 3600)
+	for volta in 3:                                   # pista limpa e comprida: quem enche de perigo é o Arquiteto
+		p = _t_ondas(p, 3, 110.0)
+		p = _t_plano(p, 1800)
+		p = _t_ladeira(p, 1800, -350.0)
+		p = _t_plano(p, 2200)
+		p = _t_ponte(p, 2300, 0.0)
+		p = _t_plano(p, 1800)
+		p = _t_ladeira(p, 1800, 350.0)
+		p = _t_plano(p, 2600)
+	arq = Arquiteto.new()
+	add_child(arq)
+	arq.montar(self, p.x + 1500.0, CHAO_Y)
+	_chegada(p, c)
 
 # ---------- MODOS ONLINE: mata-mata na roda e batata quente ----------
 ## morreu = tá fora (assiste). Quem fica por último vence. Batata: a bomba passa encostando
