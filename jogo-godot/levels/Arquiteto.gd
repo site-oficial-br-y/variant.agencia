@@ -123,7 +123,7 @@ func _montar_hud() -> void:
 		_dica.text = "Arrasta pra mover · escolhe a armadilha e toca na pista. Se NINGUÉM chegar, você não ganha nada!"
 		_barra_fundo = ColorRect.new()
 		_barra_fundo.color = Color(0, 0, 0, 0.55)
-		_barra_fundo.position = Vector2(v.x / 2.0 - 260, v.y - 168)
+		_barra_fundo.position = Vector2(v.x / 2.0 - 260, v.y - 160)
 		_barra_fundo.size = Vector2(520, 22)
 		hud.add_child(_barra_fundo)
 		_barra = ColorRect.new()
@@ -133,11 +133,16 @@ func _montar_hud() -> void:
 		var i := 0
 		for t in ["serra", "mina", "espinho", "bola"]:
 			var b := Button.new()
-			b.text = "%s\n%d" % [NOMES[t], int(CUSTO[t])]
+			b.text = "%s %d" % [NOMES[t], int(CUSTO[t])]
+			b.icon = load("res://assets/arquiteto/%s.png" % t)
+			b.expand_icon = true
+			b.icon_alignment = HORIZONTAL_ALIGNMENT_CENTER
+			b.vertical_icon_alignment = VERTICAL_ALIGNMENT_TOP
 			b.focus_mode = Control.FOCUS_NONE
-			b.add_theme_font_size_override("font_size", 22)
-			b.size = Vector2(150, 96)
-			b.position = Vector2(v.x / 2.0 - 2 * 160 + i * 160 + 5, v.y - 130)
+			b.add_theme_font_size_override("font_size", 18)
+			b.add_theme_constant_override("icon_max_width", 70)
+			b.size = Vector2(150, 118)
+			b.position = Vector2(v.x / 2.0 - 2 * 160 + i * 160 + 5, v.y - 128)
 			var nome: String = t
 			b.pressed.connect(func() -> void:
 				tipo = nome

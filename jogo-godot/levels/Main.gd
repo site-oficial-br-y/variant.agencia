@@ -256,7 +256,7 @@ func _physics_process(delta: float) -> void:
 		var px9 := player.foco().global_position.x if is_instance_valid(player) and is_instance_valid(player.chassi) else 0.0
 		julgamento.chuva(delta, 2.6 if px9 > 1500.0 and px9 < _chuva9_x1 and not _cena9 else 0.0)
 		ctamandura.atualizar(delta)
-	if Game.fase == 12:
+	if Game.fase in [12, 13]:
 		_passo_fundo10()
 	if Game.fase in [10, 11] and roda:
 		roda.atualizar(delta)
@@ -3854,6 +3854,10 @@ func _passo_fundo10() -> void:
 	if Game.fase == 12:                                    # arena parada no fundo, só desliza um pouco
 		_fundo10.position = Vector2(-clampf(cx / BATATA_LARG, 0.0, 1.0) * (_fundo10.size.x - v.x), v.y - _fundo10.size.y)
 		return
+	if Game.fase == 13:                                    # mesa do arquiteto: desliza devagar ao longo da pista
+		var larg: float = arq._chegada_x if arq else 60000.0
+		_fundo10.position = Vector2(-clampf(cx / larg, 0.0, 1.0) * (_fundo10.size.x - v.x), v.y - _fundo10.size.y)
+		return
 	_fundo10.position = Vector2(-fposmod(cx * 0.012, _fundo10.size.x - v.x), v.y * 0.55 - _fundo10.size.y * 0.74)   # rua da arte na altura do chão
 	if Game.checkpoint_x >= ARENA10_X - 5000.0:
 		_fundo10.visible = false
@@ -4056,6 +4060,17 @@ func dano_ult_chefe(msg := "ESQUADRILHA DE PAPEL!") -> void:
 
 # ---------- MODO O ARQUITETO: pista limpa, o Arquiteto enche de armadilha ao vivo ----------
 func _fase_arquiteto() -> void:
+	pecas.cor_chao = Color(0.1, 0.17, 0.3)               # pista de planta: azul escuro com borda azul clara
+	pecas.borda_neon = Color(0.55, 0.85, 1.0)
+	var camada := CanvasLayer.new()                       # fundo: mesa do arquiteto com as plantas das armadilhas
+	camada.layer = -70
+	add_child(camada)
+	_fundo10 = TextureRect.new()
+	_fundo10.texture = load("res://assets/arquiteto/fundo.jpg")
+	_fundo10.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+	_fundo10.stretch_mode = TextureRect.STRETCH_SCALE
+	_fundo10.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	camada.add_child(_fundo10)
 	var c: Array = []
 	var p := _largada()
 	p = _t_plano(p, 3600)
