@@ -120,11 +120,11 @@ class Mesa {
       if (o.topo === undefined) continue;
       const a = this.assentos[o.i];
       const sel = this.selecionavel && this.selecionavel(o.i);
-      if (o.luz > .5 || sel) {
+      {
         const fs = Math.max(11, 13 * esc); g.font = '400 ' + fs + 'px Lilita, system-ui, sans-serif';
         const nm = a.nome; const tw = g.measureText(nm).width + 16, ny = o.topo - 12 * esc;
         const ativo = o.i === this.vez && !this.girando && this.vezAtiva !== false;
-        g.globalAlpha = Math.max(o.luz, sel ? 1 : 0) * (a.vivo === false ? .6 : 1);
+        g.globalAlpha = a.vivo === false ? .6 : 1;
         g.fillStyle = this.selecionado === o.i ? '#ff5a4f' : ativo ? '#ffc21a' : 'rgba(30,16,10,.82)';
         this._rr(o.x - tw / 2, ny - fs * .82, tw, fs * 1.64, fs * .82); g.fill();
         if (sel && this.selecionado !== o.i) { g.strokeStyle = '#ffc21a'; g.lineWidth = 2; g.stroke(); }
@@ -186,8 +186,8 @@ class Mesa {
     g.save(); g.globalAlpha = alfa;
     if (giro) { g.translate(o.x, base); g.rotate(giro); g.translate(-o.x, -base); }
     const arte = a.vivo === false ? s.cinza : s.im;
-    if (luzP > 0) g.drawImage(arte, X, Y, w, h);
-    if (luzP < 1) { g.globalAlpha = alfa * (1 - luzP); g.drawImage(s.sil, X, Y, w, h); }
+    g.drawImage(arte, X, Y, w, h);
+    if (luzP < 1) { g.globalAlpha = alfa * (1 - luzP) * .22; g.drawImage(s.sil, X, Y, w, h); }   // só uma sombra leve: todo mundo aparece normal
     g.restore();
     if (this.selecionado === o.i) { g.strokeStyle = '#ff5a4f'; g.lineWidth = 4; this._el(o.x, base - 4 * esc, w * .45, w * .13); g.stroke(); }
     o.topo = Y; o.luz = luzP;
