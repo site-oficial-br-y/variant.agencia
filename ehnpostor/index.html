@@ -29,8 +29,17 @@ h1,h2,h3,.lil,button,.btn{font-family:Lilita,system-ui,sans-serif;font-weight:40
 [hidden]{display:none!important}
 .tela{position:fixed;inset:0;display:flex;flex-direction:column;overflow:hidden;overflow:clip}
 .rola{overflow-y:auto;-webkit-overflow-scrolling:touch;flex:1;padding:calc(16px + var(--topo)) 16px calc(24px + var(--base))}
-.fundo-sala{background:radial-gradient(120% 70% at 50% 35%,#4a2a40 0%,#2f1b3a 45%,#170d1f 100%)}
-.fundo-sala:before{content:"";position:absolute;inset:0;background:repeating-linear-gradient(90deg,rgba(255,255,255,.035) 0 18px,transparent 18px 46px);pointer-events:none}
+/* fundo vivo: luz quente vindo de cima, manchas de luz andando devagar e grão de filme */
+.fundo-sala{background:radial-gradient(70% 42% at 50% -6%,rgba(255,190,100,.42),transparent 72%),
+  radial-gradient(90% 55% at 50% 112%,rgba(150,45,95,.5),transparent 70%),linear-gradient(180deg,#2c1738 0%,#1c0f27 60%,#140a1b 100%)}
+.fundo-sala:before{content:"";position:absolute;inset:-20%;pointer-events:none;filter:blur(30px);opacity:.75;
+  background:radial-gradient(14% 10% at 18% 30%,rgba(255,194,26,.30),transparent 70%),radial-gradient(18% 13% at 82% 22%,rgba(255,90,79,.22),transparent 70%),
+  radial-gradient(20% 14% at 70% 75%,rgba(160,90,255,.22),transparent 70%),radial-gradient(16% 12% at 25% 82%,rgba(74,222,128,.14),transparent 70%);
+  animation:bokeh 22s ease-in-out infinite alternate}
+@keyframes bokeh{0%{transform:translate(0,0) scale(1)}50%{transform:translate(4%,-3%) scale(1.08)}100%{transform:translate(-4%,3%) scale(.96)}}
+.fundo-sala:after{content:"";position:absolute;inset:0;pointer-events:none;opacity:.09;mix-blend-mode:overlay;
+  background:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E")}
+.fundo-sala>*{position:relative;z-index:1}
 .miolo{max-width:520px;margin:0 auto;position:relative}
 
 /* botões gordinhos com contorno marrom, igual a logo */
@@ -95,12 +104,30 @@ h1,h2,h3,.lil,button,.btn{font-family:Lilita,system-ui,sans-serif;font-weight:40
 .jog .x{width:42px;height:42px;border-radius:12px;border:3px solid var(--marrom2);background:#fff6e8;color:var(--vermelho2);font:400 22px Lilita;flex:none}
 
 /* escolha de boneco */
-.grade-bonecos{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px}
-.grade-bonecos button{position:relative;border:3px solid var(--marrom2);border-radius:16px;background:var(--creme2);padding:4px 4px 0;aspect-ratio:3/4;overflow:hidden;box-shadow:0 3px 0 var(--marrom2)}
-.grade-bonecos button img{width:100%;height:100%;object-fit:contain;object-position:bottom}
-.grade-bonecos button span{position:absolute;left:0;right:0;bottom:3px;font:400 12px Lilita;color:var(--marrom2);text-shadow:0 1px 0 #fff}
-.grade-bonecos button.on{background:var(--amarelo);outline:4px solid var(--amarelo);outline-offset:2px}
+/* escolha de boneco: o escolhido grande num palco, os outros em rostinhos embaixo */
+.palco{position:relative;height:250px;display:flex;flex-direction:column;align-items:center;justify-content:flex-end;margin:-4px 0 12px}
+.palco:before{content:"";position:absolute;left:50%;top:-30px;width:300px;height:290px;transform:translateX(-50%);
+  background:conic-gradient(from 160deg at 50% 0%,transparent 0deg,rgba(255,214,140,.30) 20deg,rgba(255,214,140,.30) 40deg,transparent 60deg);filter:blur(6px);pointer-events:none}
+.palco:after{content:"";position:absolute;bottom:34px;left:50%;width:200px;height:34px;transform:translateX(-50%);border-radius:50%;
+  background:radial-gradient(closest-side,rgba(255,200,120,.55),rgba(255,200,120,.12) 70%,transparent);pointer-events:none}
+.palco img{position:relative;z-index:1;height:200px;width:auto;filter:drop-shadow(0 10px 10px rgba(0,0,0,.45));margin-bottom:26px}
+.palco img.pula{animation:entra .45s cubic-bezier(.3,1.6,.5,1)}
+@keyframes entra{0%{transform:translateY(16px) scale(.85);opacity:.3}100%{transform:none;opacity:1}}
+.palco .pick-nome{position:absolute;bottom:0;z-index:2;font:400 26px Lilita;color:var(--marrom2);background:var(--amarelo);border:3px solid var(--marrom2);border-radius:14px;padding:4px 16px;box-shadow:0 4px 0 var(--marrom2);transform:rotate(-2deg)}
+.nome-linha{margin-bottom:14px}
+.nome-linha label{display:block;font:400 15px Lilita;color:#e9d6f7;margin:0 0 6px 4px;letter-spacing:.04em}
+.grade-bonecos{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px 10px;padding-bottom:96px}
+.grade-bonecos button{border:0;background:none;padding:0;display:flex;flex-direction:column;align-items:center;gap:5px;color:#e9d6f7;font:400 13px Lilita;cursor:pointer}
+.grade-bonecos button i{position:relative;display:block;width:100%;aspect-ratio:1;border-radius:22px;background:linear-gradient(180deg,#fbe9d0,#f0cf9f);border:3px solid var(--marrom2);
+  box-shadow:0 4px 0 var(--marrom2);overflow:hidden;transition:transform .15s}
+.grade-bonecos button img{position:absolute;inset:8% 4% 0;width:92%;height:92%;object-fit:contain;object-position:bottom}
+.grade-bonecos button:active i{transform:translateY(3px);box-shadow:0 1px 0 var(--marrom2)}
+.grade-bonecos button.on i{background:linear-gradient(180deg,#ffe07a,#ffc21a);transform:translateY(-4px) scale(1.06);box-shadow:0 0 0 4px var(--amarelo),0 8px 0 var(--marrom2)}
+.grade-bonecos button.on{color:var(--amarelo)}
 .grade-bonecos button.ocupado{opacity:.35;pointer-events:none}
+.grade-bonecos button.ocupado i:after{content:"NA MESA";position:absolute;left:0;right:0;bottom:6px;font:400 11px Lilita;color:#fff;background:rgba(42,22,11,.8)}
+.fixo-base{position:absolute;left:0;right:0;bottom:0;padding:14px 16px calc(14px + var(--base));background:linear-gradient(180deg,transparent,rgba(20,10,27,.92) 35%);z-index:5}
+.fixo-base .btn{max-width:520px;margin:0 auto}
 
 /* revelar (passa o celular) */
 #revelar{background:radial-gradient(110% 80% at 50% 30%,#3e2550,#170d1f)}
@@ -235,10 +262,11 @@ h1,h2,h3,.lil,button,.btn{font-family:Lilita,system-ui,sans-serif;font-weight:40
 <section class="tela fundo-sala" id="perfil" hidden>
   <div class="rola"><div class="miolo">
     <div class="barra"><button class="voltar" data-voltar>‹</button><h2 id="perfil-titulo">Seu boneco</h2></div>
-    <div class="cartao" id="perfil-nome-cartao"><h3>Seu nome</h3><input class="campo" id="perfil-input" maxlength="14" placeholder="Como te chamam?"></div>
-    <div class="cartao"><h3>Escolhe o boneco</h3><div class="grade-bonecos" id="grade-bonecos"></div></div>
-    <button class="btn" id="perfil-ok">PRONTO</button>
+    <div class="palco"><img id="pick-grande" alt=""><div class="pick-nome" id="pick-nome"></div></div>
+    <div class="nome-linha" id="perfil-nome-cartao"><label for="perfil-input">SEU NOME</label><input class="campo" id="perfil-input" maxlength="14" placeholder="Como te chamam?"></div>
+    <div class="grade-bonecos" id="grade-bonecos"></div>
   </div></div>
+  <div class="fixo-base"><button class="btn" id="perfil-ok">PRONTO</button></div>
 </section>
 
 <!-- PRESENCIAL: CONFIGURAR -->

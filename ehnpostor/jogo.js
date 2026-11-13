@@ -61,12 +61,18 @@ function abrirPicker({ titulo, comNome, atual, nome, bloqueados = [], ok }) {
   $('#perfil-input').value = nome || '';
   bonecoTemp = atual; ocupados = bloqueados; aoEscolherBoneco = ok;
   const g = $('#grade-bonecos'); g.innerHTML = '';
+  const mostrar = (i, anima) => {
+    const im = $('#pick-grande'); im.src = 'bonecos/' + i + '.webp'; $('#pick-nome').textContent = NOMES_BONECO[i];
+    if (anima) { im.classList.remove('pula'); void im.offsetWidth; im.classList.add('pula'); }
+  };
   for (let i = 0; i < 16; i++) {
-    const b = el('button', (i === atual ? 'on ' : '') + (bloqueados.includes(i) ? 'ocupado' : ''), `<img src="bonecos/${i}.webp" alt=""><span>${NOMES_BONECO[i]}</span>`);
-    b.onclick = () => { bonecoTemp = i; som('pop'); g.querySelectorAll('button').forEach((x, k) => x.classList.toggle('on', k === i)); };
+    const b = el('button', (i === atual ? 'on ' : '') + (bloqueados.includes(i) ? 'ocupado' : ''), `<i><img src="bonecos/r${i}.webp" alt=""></i>${NOMES_BONECO[i]}`);
+    b.onclick = () => { bonecoTemp = i; som('pop'); vibrar(15); g.querySelectorAll('button').forEach((x, k) => x.classList.toggle('on', k === i)); mostrar(i, true); };
     g.appendChild(b);
   }
+  mostrar(atual, false);
   ir('perfil');
+  $('#perfil .rola').scrollTop = 0;
 }
 $('#perfil-ok').onclick = () => {
   const nome = $('#perfil-input').value.trim();
