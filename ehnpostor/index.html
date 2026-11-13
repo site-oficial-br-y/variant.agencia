@@ -5,9 +5,9 @@
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no">
 <meta name="theme-color" content="#24142f">
 <title>Ehnpostor</title>
-<meta name="description" content="Todo mundo tem a mesma palavra, menos o impostor. Descobre quem é antes que ele te engane.">
+<meta name="description" content="Todos recebem a mesma palavra, exceto o impostor. Descubra quem é antes que ele engane você.">
 <meta property="og:title" content="Ehnpostor">
-<meta property="og:description" content="Todo mundo tem a mesma palavra, menos o impostor. Joga com a galera na mesma sala ou online.">
+<meta property="og:description" content="Todos recebem a mesma palavra, exceto o impostor. Jogue com seus amigos no mesmo lugar ou online.">
 <meta property="og:image" content="https://site-oficial-br-y.github.io/variant.agencia/ehnpostor/capa.jpg">
 <link rel="manifest" href="manifest.json">
 <link rel="icon" href="icone-192.png">
@@ -248,11 +248,11 @@ h1,h2,h3,.lil,button,.btn{font-family:Lilita,system-ui,sans-serif;font-weight:40
 <section class="tela fundo-sala" id="inicio">
   <div class="rola"><div class="miolo">
     <img class="logo" src="logo.webp" alt="Ehnpostor">
-    <p class="subtitulo">Todo mundo tem a mesma palavra. Menos o impostor.</p>
-    <div class="perfil-chip" id="perfil-chip"><img id="perfil-rosto" alt=""><b id="perfil-nome">Você</b><span>trocar ›</span></div>
+    <p class="subtitulo">Todos recebem a mesma palavra, exceto o impostor.</p>
+    <div class="perfil-chip" id="perfil-chip"><img id="perfil-rosto" alt=""><b id="perfil-nome">Você</b><span>alterar ›</span></div>
     <div class="botoes-inicio">
-      <button class="btn" id="b-presencial"><span class="empilha">PRESENCIAL<small>Um celular só, passando de mão em mão</small></span></button>
-      <button class="btn creme" id="b-online"><span class="empilha">ONLINE<small>Cada um no seu celular, até 8 na mesa</small></span></button>
+      <button class="btn" id="b-presencial"><span class="empilha">PRESENCIAL<small>Um único celular, passado entre os jogadores</small></span></button>
+      <button class="btn creme" id="b-online"><span class="empilha">ONLINE<small>Cada jogador no próprio celular, até 8 jogadores</small></span></button>
     </div>
     <div class="rodape"><button class="link" id="b-ajuda">Como jogar</button></div>
   </div></div>
@@ -261,9 +261,9 @@ h1,h2,h3,.lil,button,.btn{font-family:Lilita,system-ui,sans-serif;font-weight:40
 <!-- PERFIL / ESCOLHER BONECO -->
 <section class="tela fundo-sala" id="perfil" hidden>
   <div class="rola"><div class="miolo">
-    <div class="barra"><button class="voltar" data-voltar>‹</button><h2 id="perfil-titulo">Seu boneco</h2></div>
+    <div class="barra"><button class="voltar" data-voltar>‹</button><h2 id="perfil-titulo">Seu personagem</h2></div>
     <div class="palco"><img id="pick-grande" alt=""><div class="pick-nome" id="pick-nome"></div></div>
-    <div class="nome-linha" id="perfil-nome-cartao"><label for="perfil-input">SEU NOME</label><input class="campo" id="perfil-input" maxlength="14" placeholder="Como te chamam?"></div>
+    <div class="nome-linha" id="perfil-nome-cartao"><label for="perfil-input">SEU NOME</label><input class="campo" id="perfil-input" maxlength="14" placeholder="Digite seu nome"></div>
     <div class="grade-bonecos" id="grade-bonecos"></div>
   </div></div>
   <div class="fixo-base"><button class="btn" id="perfil-ok">PRONTO</button></div>
@@ -274,12 +274,12 @@ h1,h2,h3,.lil,button,.btn{font-family:Lilita,system-ui,sans-serif;font-weight:40
   <div class="rola"><div class="miolo">
     <div class="barra"><button class="voltar" data-voltar>‹</button><h2>Presencial</h2></div>
     <div class="cartao"><h3>Jogadores <small id="pres-n"></small></h3><div id="pres-jogs"></div>
-      <button class="btn creme peq" id="pres-add">+ JOGADOR</button></div>
-    <div class="cartao"><h3>Categorias <small>toca pra escolher</small></h3><div id="pres-cats"></div></div>
+      <button class="btn creme peq" id="pres-add">+ ADICIONAR JOGADOR</button></div>
+    <div class="cartao"><h3>Categorias <small>selecione uma ou mais</small></h3><div id="pres-cats"></div></div>
     <div class="cartao"><div class="opcao"><div><h3 style="margin:0">Impostores</h3><p id="pres-imp-info"></p></div>
       <div class="passo" style="flex:none"><button id="imp-menos">−</button><b id="imp-n">1</b><button id="imp-mais">+</button></div></div></div>
-    <div class="cartao"><div class="opcao"><div><h3 style="margin:0">Dica pro impostor</h3><p>Ele recebe uma palavra parecida pra se misturar.</p></div><div class="chave on" id="pres-dica"></div></div></div>
-    <div class="cartao"><div class="opcao"><div><h3 style="margin:0">Última chance</h3><p>Impostor pego chuta a palavra. Acertou, os impostores ganham.</p></div><div class="chave on" id="pres-chute"></div></div></div>
+    <div class="cartao"><div class="opcao"><div><h3 style="margin:0">Dica para o impostor</h3><p>O impostor recebe uma palavra relacionada para ajudá-lo a se disfarçar.</p></div><div class="chave on" id="pres-dica"></div></div></div>
+    <div class="cartao"><div class="opcao"><div><h3 style="margin:0">Última chance</h3><p>Se o impostor for eliminado, ele pode tentar adivinhar a palavra. Se acertar, os impostores vencem.</p></div><div class="chave on" id="pres-chute"></div></div></div>
     <div class="cartao"><h3>Tempo por vez</h3><div id="pres-tempo"></div></div>
     <button class="btn verde" id="pres-iniciar">▶ INICIAR JOGO</button>
   </div></div>
@@ -291,8 +291,8 @@ h1,h2,h3,.lil,button,.btn{font-family:Lilita,system-ui,sans-serif;font-weight:40
     <div class="contador-rev" id="rev-cont"></div>
     <div class="carta" id="carta">
       <div class="face frente"><img class="rosto" id="rev-rosto" alt=""><h2 id="rev-nome"></h2>
-        <p class="aviso">Só você pode ver. Os outros, olho fechado!</p>
-        <div class="seg"><span style="font-size:42px">👆</span>SEGURA PRA VER</div></div>
+        <p class="aviso">Somente você deve ver esta tela.</p>
+        <div class="seg"><span style="font-size:42px">👆</span>SEGURE PARA REVELAR</div></div>
       <div class="face verso" id="rev-verso"></div>
     </div>
     <button class="btn" id="rev-prox" style="max-width:360px" disabled>PRÓXIMO JOGADOR ›</button>
@@ -303,11 +303,11 @@ h1,h2,h3,.lil,button,.btn{font-family:Lilita,system-ui,sans-serif;font-weight:40
 <section class="tela fundo-sala" id="online" hidden>
   <div class="rola"><div class="miolo">
     <div class="barra"><button class="voltar" data-voltar>‹</button><h2>Online</h2></div>
-    <div class="cartao"><h3>Entrar numa sala</h3>
+    <div class="cartao"><h3>Entrar em uma sala</h3>
       <div class="envio"><input class="campo" id="on-codigo" maxlength="4" placeholder="CÓDIGO" style="text-transform:uppercase;letter-spacing:.2em;font-size:24px;text-align:center" autocomplete="off">
         <button class="btn" id="on-entrar">ENTRAR</button></div>
       <div class="erro-msg" id="on-erro"></div></div>
-    <div class="cartao"><h3>Ou cria uma nova</h3><p style="margin-bottom:12px">Você vira o dono da sala e manda o código pra galera.</p>
+    <div class="cartao"><h3>Criar uma sala</h3><p style="margin-bottom:12px">Você será o anfitrião e poderá enviar o código aos outros jogadores.</p>
       <button class="btn verde" id="on-criar">CRIAR SALA</button></div>
   </div></div>
 </section>
@@ -342,20 +342,20 @@ h1,h2,h3,.lil,button,.btn{font-family:Lilita,system-ui,sans-serif;font-weight:40
   <div class="rola"><div class="miolo">
     <div class="barra"><button class="voltar" data-voltar>‹</button><h2>Como jogar</h2></div>
     <div class="cartao ajuda">
-      <h4>O segredo</h4>
-      <p>Todo mundo recebe a <b>mesma palavra secreta</b>. Menos o <b>impostor</b>: ele não sabe a palavra (com a dica ligada, recebe só uma palavra parecida).</p>
+      <h4>Objetivo</h4>
+      <p>Todos os jogadores recebem a mesma <b>palavra secreta</b>, exceto o <b>impostor</b>, que não a conhece. Com a dica ativada, ele recebe apenas uma palavra relacionada.</p>
       <h4>A rodada</h4>
-      <p>A mesa gira e cada um, na sua vez, fala <b>uma palavra</b> ligada à secreta. Exemplo: a palavra é <i>Sabão</i>. "Limpeza" é boa. "Controle"... suspeito.</p>
-      <ul><li>Não pode falar a própria palavra secreta.</li><li>Não pode repetir palavra que alguém já falou.</li><li>Falou muito óbvio, o impostor descobre. Falou muito longe, desconfiam de você.</li></ul>
+      <p>A mesa gira e, na sua vez, cada jogador diz <b>uma palavra</b> relacionada à palavra secreta. Exemplo: se a palavra for <i>sabão</i>, "limpeza" é uma boa resposta; "controle" levanta suspeitas.</p>
+      <ul><li>Não é permitido dizer a própria palavra secreta.</li><li>Não é permitido repetir uma palavra já dita.</li><li>Uma palavra óbvia demais ajuda o impostor; uma palavra distante demais faz os outros desconfiarem de você.</li></ul>
       <h4>A votação</h4>
-      <p>Depois que todo mundo fala, a galera discute e vota em quem acha que é o impostor. O mais votado sai e o jogo mostra se ele era ou não. Empate: ninguém sai.</p>
-      <h4>Quem ganha</h4>
-      <ul><li><b>Inocentes:</b> quando todos os impostores forem eliminados.</li><li><b>Impostores:</b> quando sobrarem tantos impostores quanto inocentes.</li>
-      <li><b>Última chance:</b> impostor eliminado pode chutar a palavra. Se acertar, os impostores ganham na hora.</li></ul>
-      <p>Com 2 ou 3 impostores, pegar um não acaba o jogo: começa outra rodada com quem sobrou.</p>
-      <h4>Online</h4>
-      <ul><li><b>Emergência:</b> se mais da metade apertar, a votação abre na hora.</li><li><b>Emotes:</b> escolhe um e toca em alguém na mesa pra jogar nele.</li>
-      <li>Quem é eliminado vira plateia: assiste o resto e só conversa com os outros eliminados.</li></ul>
+      <p>Depois que todos falam, os jogadores discutem e votam em quem acham que é o impostor. O mais votado é eliminado, e o jogo revela se ele era o impostor. Em caso de empate, ninguém é eliminado.</p>
+      <h4>Fim de jogo</h4>
+      <ul><li><b>Inocentes</b> vencem quando todos os impostores forem eliminados.</li><li><b>Impostores</b> vencem quando o número de impostores se iguala ao de inocentes.</li>
+      <li><b>Última chance:</b> o impostor eliminado pode tentar adivinhar a palavra. Se acertar, os impostores vencem.</li></ul>
+      <p>Com 2 ou 3 impostores, eliminar um deles não encerra a partida: uma nova rodada começa com os jogadores restantes.</p>
+      <h4>Modo online</h4>
+      <ul><li><b>Emergência:</b> se mais da metade dos jogadores pedir, a votação começa imediatamente.</li><li><b>Emotes:</b> escolha um emote e toque em um jogador para enviá-lo.</li>
+      <li>Jogadores eliminados continuam assistindo e conversam apenas entre si.</li></ul>
     </div>
   </div></div>
 </section>
