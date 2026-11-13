@@ -96,9 +96,19 @@ class Mesa {
     const retrato = areaH > W * 0.9;
     const cx = W / 2, cy = areaY0 + areaH * (retrato ? 0.50 : 0.48);
     const Rx = Math.min(W * (retrato ? .36 : .30), areaH * .50), Ry = Rx * .52, esc = Rx / 215;
-    g.globalAlpha = .06; g.fillStyle = '#fff';
-    for (let x = (W / 2) % 46 - 46; x < W; x += 46) g.fillRect(x, 0, 18, cy - Ry * .2);
-    g.globalAlpha = 1;
+    // parede com rodapé de madeira e chão mais escuro (sem listra repetida)
+    const yChao = cy + Ry * .15;
+    const ch = g.createLinearGradient(0, yChao, 0, H); ch.addColorStop(0, '#2a1626'); ch.addColorStop(1, '#120914');
+    g.fillStyle = ch; g.fillRect(0, yChao, W, H - yChao);
+    g.fillStyle = '#4a2a1a'; g.fillRect(0, yChao - 10 * esc, W, 10 * esc);
+    g.fillStyle = 'rgba(255,200,140,.18)'; g.fillRect(0, yChao - 10 * esc, W, 2);
+    // manchas de luz andando devagar na parede
+    for (let k = 0; k < 5; k++) {
+      const bx = W * (.15 + .7 * ((k * .37 + Math.sin(t * .05 + k * 2.1) * .12 + 1) % 1)), by = (yChao - 20) * (.25 + .5 * ((k * .53) % 1)) + Math.sin(t * .3 + k) * 10;
+      const r = (40 + k * 14) * Math.max(.6, esc), gb = g.createRadialGradient(bx, by, 0, bx, by, r);
+      gb.addColorStop(0, ['rgba(255,194,26,.10)', 'rgba(255,90,79,.08)', 'rgba(170,110,255,.09)', 'rgba(255,214,140,.10)', 'rgba(74,222,128,.06)'][k]); gb.addColorStop(1, 'rgba(0,0,0,0)');
+      g.fillStyle = gb; g.fillRect(bx - r, by - r, r * 2, r * 2);
+    }
     const luz = g.createRadialGradient(cx, cy - Ry * .2, 10, cx, cy, Rx * 2.1);
     luz.addColorStop(0, 'rgba(255,214,140,.42)'); luz.addColorStop(.45, 'rgba(255,170,90,.13)'); luz.addColorStop(1, 'rgba(0,0,0,0)');
     g.fillStyle = luz; g.fillRect(0, 0, W, H);
