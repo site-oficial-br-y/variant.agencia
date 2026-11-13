@@ -51,7 +51,7 @@ let perfil = guarda.ler('perfil', null);
 if (!perfil) { perfil = { nome: '', boneco: Math.floor(Math.random() * 16) }; }
 function mostrarPerfil() {
   $('#perfil-rosto').src = rosto(perfil.boneco);
-  $('#perfil-nome').textContent = perfil.nome || 'Escolhe seu nome';
+  $('#perfil-nome').textContent = perfil.nome || 'Defina seu nome';
 }
 mostrarPerfil();
 let aoEscolherBoneco = null, bonecoTemp = 0, ocupados = [];
@@ -76,14 +76,14 @@ function abrirPicker({ titulo, comNome, atual, nome, bloqueados = [], ok }) {
 }
 $('#perfil-ok').onclick = () => {
   const nome = $('#perfil-input').value.trim();
-  if (!$('#perfil-nome-cartao').hidden && !nome) { $('#perfil-input').focus(); toast('Coloca um nome'); return; }
+  if (!$('#perfil-nome-cartao').hidden && !nome) { $('#perfil-input').focus(); toast('Digite um nome'); return; }
   som('bom'); const f = aoEscolherBoneco; voltar(); f && f(bonecoTemp, nome);
 };
-$('#perfil-chip').onclick = () => abrirPicker({ titulo: 'Seu boneco', comNome: true, atual: perfil.boneco, nome: perfil.nome,
+$('#perfil-chip').onclick = () => abrirPicker({ titulo: 'Seu personagem', comNome: true, atual: perfil.boneco, nome: perfil.nome,
   ok: (b, n) => { perfil = { nome: n, boneco: b }; guarda.pôr('perfil', perfil); mostrarPerfil(); } });
 function garantirPerfil(depois) {
   if (perfil.nome) return depois();
-  abrirPicker({ titulo: 'Quem é você?', comNome: true, atual: perfil.boneco, nome: '',
+  abrirPicker({ titulo: 'Escolha seu personagem', comNome: true, atual: perfil.boneco, nome: '',
     ok: (b, n) => { perfil = { nome: n, boneco: b }; guarda.pôr('perfil', perfil); mostrarPerfil(); depois(); } });
 }
 $('#b-ajuda').onclick = () => { som('pop'); ir('ajuda'); };
@@ -113,7 +113,7 @@ function atualizarSelecao() {
   const box = $('#j-emotes');
   box.querySelectorAll('button').forEach(b => b.classList.toggle('on', b.textContent === emoSel));
   box.querySelector('.dica')?.remove();
-  if (modoToque === 'emote') box.appendChild(el('div', 'dica', 'Toca em alguém'));
+  if (modoToque === 'emote') box.appendChild(el('div', 'dica', 'Toque em um jogador'));
   mesa.selecionavel = modoToque === 'emote' ? (i => On.ativo && On.assentoMeu !== i)
     : modoToque === 'voto' ? (i => votoPermitido(i)) : null;
 }
@@ -191,7 +191,7 @@ const Pres = {
     this.desenharConfig(); ir('pres');
   },
   addJog(redesenha = true) {
-    if (this.cfg.jogs.length >= 8) { toast('Máximo de 8 na mesa'); return; }
+    if (this.cfg.jogs.length >= 8) { toast('O limite é de 8 jogadores'); return; }
     const usados = this.cfg.jogs.map(j => j.boneco), livres = [...Array(16).keys()].filter(i => !usados.includes(i));
     const b = livres[Math.floor(Math.random() * livres.length)];
     this.cfg.jogs.push({ nome: NOMES_BONECO[b], boneco: b });
@@ -205,11 +205,11 @@ const Pres = {
     const L = $('#pres-jogs'); L.innerHTML = '';
     c.jogs.forEach((j, k) => {
       const r = el('div', 'jog');
-      r.innerHTML = `<img src="${rosto(j.boneco)}" alt="trocar boneco"><input class="campo" maxlength="14" value="${esc(j.nome)}"><button class="x" aria-label="remover">✕</button>`;
-      r.querySelector('img').onclick = () => abrirPicker({ titulo: 'Boneco de ' + (j.nome || 'jogador'), comNome: false, atual: j.boneco,
+      r.innerHTML = `<img src="${rosto(j.boneco)}" alt="Trocar personagem"><input class="campo" maxlength="14" value="${esc(j.nome)}"><button class="x" aria-label="remover">✕</button>`;
+      r.querySelector('img').onclick = () => abrirPicker({ titulo: 'Personagem de ' + (j.nome || 'jogador'), comNome: false, atual: j.boneco,
         bloqueados: c.jogs.filter((_, q) => q !== k).map(q => q.boneco), ok: b => { j.boneco = b; this.salvar(); this.desenharConfig(); } });
       r.querySelector('input').oninput = e => { j.nome = e.target.value; this.salvar(); };
-      r.querySelector('.x').onclick = () => { if (c.jogs.length <= 3) { toast('Precisa de pelo menos 3'); return; } c.jogs.splice(k, 1); som('pop'); this.salvar(); this.desenharConfig(); };
+      r.querySelector('.x').onclick = () => { if (c.jogs.length <= 3) { toast('São necessários pelo menos 3 jogadores'); return; } c.jogs.splice(k, 1); som('pop'); this.salvar(); this.desenharConfig(); };
       L.appendChild(r);
     });
     $('#pres-n').textContent = c.jogs.length + ' de 8';
@@ -222,7 +222,7 @@ const Pres = {
       C.appendChild(ch);
     }
     $('#imp-n').textContent = c.impostores;
-    $('#pres-imp-info').textContent = `Com ${c.jogs.length} jogadores dá até ${this.maxImp()}.`;
+    $('#pres-imp-info').textContent = `Com ${c.jogs.length} jogadores, o máximo é ${this.maxImp()}.`;
     $('#pres-dica').classList.toggle('on', c.dica);
     $('#pres-chute').classList.toggle('on', c.chute);
     const T = $('#pres-tempo'); T.innerHTML = '';
@@ -240,9 +240,9 @@ const Pres = {
   },
   iniciar() {
     const c = this.cfg;
-    for (const j of c.jogs) if (!j.nome.trim()) { toast('Tem jogador sem nome'); return; }
+    for (const j of c.jogs) if (!j.nome.trim()) { toast('Há um jogador sem nome'); return; }
     const nomes = c.jogs.map(j => j.nome.trim().toLowerCase());
-    if (new Set(nomes).size !== nomes.length) { toast('Tem nome repetido'); return; }
+    if (new Set(nomes).size !== nomes.length) { toast('Há nomes repetidos'); return; }
     const w = this.sortear();
     const imps = embaralhar([...c.jogs.keys()]).slice(0, Math.min(c.impostores, this.maxImp()));
     this.G = { palavra: w.p, dica: w.d, cat: w.cat, rodada: 1, vez: -1, fase: 'revelar', falou: 0,
@@ -256,11 +256,11 @@ const Pres = {
     $('#rev-rosto').src = rosto(j.boneco); $('#rev-nome').textContent = j.nome.toUpperCase();
     const v = $('#rev-verso');
     v.innerHTML = j.imp
-      ? `<div class="cat">${esc(j.nome)}, você é...</div><div class="imp">O IMPOSTOR</div>${this.cfg.dica ? `<div class="cat" style="margin-top:8px">sua dica</div><div class="palavra" style="font-size:30px">${esc(G.dica)}</div>` : '<p class="aviso">Sem dica. Se vira!</p>'}<p class="aviso">Finge que sabe a palavra e não deixa ninguém desconfiar.</p>`
-      : `<div class="cat">${esc(j.nome)}, a palavra é</div><div class="palavra">${esc(G.palavra)}</div><div class="cat">categoria: ${esc(G.cat)}</div><p class="aviso">Fala algo ligado, mas não entrega fácil pro impostor.</p>`;
+      ? `<div class="cat">${esc(j.nome)}, você é...</div><div class="imp">O IMPOSTOR</div>${this.cfg.dica ? `<div class="cat" style="margin-top:8px">sua dica</div><div class="palavra" style="font-size:30px">${esc(G.dica)}</div>` : '<p class="aviso">Você não recebeu dica.</p>'}<p class="aviso">Finja que conhece a palavra e não deixe ninguém desconfiar.</p>`
+      : `<div class="cat">${esc(j.nome)}, a palavra é</div><div class="palavra">${esc(G.palavra)}</div><div class="cat">categoria: ${esc(G.cat)}</div><p class="aviso">Diga algo relacionado, sem facilitar para o impostor.</p>`;
     $('#carta').classList.toggle('imp', j.imp); $('#carta').classList.remove('aberta');
     $('#rev-prox').disabled = true;
-    $('#rev-prox').textContent = this.revIdx === G.jog.length - 1 ? 'COMEÇAR A RODADA ›' : 'PASSA PRO ' + G.jog[this.revIdx + 1].nome.toUpperCase() + ' ›';
+    $('#rev-prox').textContent = this.revIdx === G.jog.length - 1 ? 'COMEÇAR A RODADA ›' : 'PASSE PARA ' + G.jog[this.revIdx + 1].nome.toUpperCase() + ' ›';
   },
   proximoRevelar() {
     som('pop');
@@ -288,8 +288,8 @@ const Pres = {
     const G = this.G, j = G.jog[G.vez], t = (texto || '').trim();
     if (t) {
       const n = Pres.norm(t);
-      if (!j.imp && n === Pres.norm(G.palavra)) { toast('Não pode falar a palavra secreta!'); return; }
-      if (G.jog.some(q => q.falas.some(f => Pres.norm(f) === n))) { toast('Essa já falaram!'); return; }
+      if (!j.imp && n === Pres.norm(G.palavra)) { toast('Não é permitido dizer a palavra secreta'); return; }
+      if (G.jog.some(q => q.falas.some(f => Pres.norm(f) === n))) { toast('Essa palavra já foi dita'); return; }
       mesa.falar(G.vez, t); som('fala');
     } else mesa.pular(G.vez);
     j.falas.push(t || '✓');
@@ -303,27 +303,27 @@ const Pres = {
   painel() {
     const G = this.G, P = $('#j-painel'); P.innerHTML = '';
     const vivos = G.jog.filter(q => q.vivo).length;
-    $('#j-fase').textContent = { falando: 'RODADA ' + G.rodada, fimRodada: 'TODO MUNDO FALOU', votacao: 'VOTAÇÃO', fim: 'FIM' }[G.fase] || '';
+    $('#j-fase').textContent = { falando: 'RODADA ' + G.rodada, fimRodada: 'FIM DA RODADA', votacao: 'VOTAÇÃO', fim: 'FIM' }[G.fase] || '';
     $('#j-sub').textContent = `${vivos} na mesa · categoria: ${G.cat}`;
     const cx = el('div', 'caixa'); P.appendChild(cx);
     if (G.fase === 'falando') {
       const j = G.jog[G.vez];
       mesa.vezAtiva = true;
-      cx.innerHTML = `<div class="tit">Vez de ${esc(j.nome)}</div><div class="sub">Fala UMA palavra em voz alta. Se quiser, anota aqui pra ficar no histórico.</div>
-        <div class="envio"><input class="campo" id="p-fala" maxlength="18" placeholder="anotar (opcional)" autocomplete="off"><button class="btn verde" id="p-falou">FALOU ✓</button></div>
+      cx.innerHTML = `<div class="tit">Vez de ${esc(j.nome)}</div><div class="sub">Diga uma palavra em voz alta. Se quiser, registre-a aqui para o histórico.</div>
+        <div class="envio"><input class="campo" id="p-fala" maxlength="18" placeholder="Palavra dita (opcional)" autocomplete="off"><button class="btn verde" id="p-falou">PRÓXIMO ✓</button></div>
         <div class="acoes"><button class="btn escuro peq" id="p-emerg">🚨 VOTAR AGORA</button></div>`;
       const ir2 = () => this.falou($('#p-fala').value);
       $('#p-falou').onclick = ir2; $('#p-fala').onkeydown = e => { if (e.key === 'Enter') ir2(); };
       $('#p-emerg').onclick = () => { som('ruim'); this.irVotacao(); };
     } else if (G.fase === 'fimRodada') {
-      cx.innerHTML = `<div class="tit">Discutam! Quem tá estranho?</div><div class="sub">Abre o 📜 pra ver o que cada um falou.</div>
+      cx.innerHTML = `<div class="tit">Hora de discutir</div><div class="sub">Toque em 📜 para ver o que cada jogador disse.</div>
         <div class="acoes"><button class="btn creme" id="p-mais">OUTRA RODADA</button><button class="btn vermelho" id="p-votar">VOTAR</button></div>`;
       $('#p-mais').onclick = () => { som('pop'); G.rodada++; G.falou = 0; G.fase = 'falando'; G.primeiro = this.proxVivo(G.primeiro); G.vez = G.primeiro; mesa.calar(); this.iniciarVez(); };
       $('#p-votar').onclick = () => { som('ruim'); this.irVotacao(); };
     } else if (G.fase === 'votacao') {
       const s = mesa.selecionado;
       cx.innerHTML = s === null || s === undefined
-        ? `<div class="tit">Quem é o impostor?</div><div class="sub">Decidam juntos e toquem no boneco na mesa.</div><div class="acoes"><button class="btn creme peq" id="p-pular">NINGUÉM, OUTRA RODADA</button></div>`
+        ? `<div class="tit">Quem é o impostor?</div><div class="sub">Decidam juntos e toquem no jogador escolhido.</div><div class="acoes"><button class="btn creme peq" id="p-pular">NÃO ELIMINAR, NOVA RODADA</button></div>`
         : `<div class="tit">Eliminar ${esc(G.jog[s].nome)}?</div><div class="acoes"><button class="btn creme peq" id="p-cancelar">TROCAR</button><button class="btn vermelho" id="p-elim">ELIMINAR</button></div>`;
       if ($('#p-pular')) $('#p-pular').onclick = () => { modoToque = null; atualizarSelecao(); G.rodada++; G.falou = 0; G.fase = 'falando'; G.primeiro = this.proxVivo(G.primeiro); G.vez = G.primeiro; mesa.calar(); this.iniciarVez(); };
       if ($('#p-cancelar')) $('#p-cancelar').onclick = () => { mesa.selecionado = null; this.painel(); };
@@ -340,15 +340,15 @@ const Pres = {
     som(j.imp ? 'bom' : 'ruim'); vibrar(j.imp ? [60, 40, 60] : 200);
     setTimeout(() => {
       modal(`<img class="rosto-g cinza" src="${rosto(j.boneco)}" alt=""><div class="grande">${esc(j.nome)}</div>
-        <div class="carimbo ${j.imp ? 'vermelho' : 'verde'}">${j.imp ? 'ERA IMPOSTOR!' : 'ERA INOCENTE'}</div>
-        <p class="sub" style="margin-top:8px">${j.imp ? (G.jog.some(q => q.vivo && q.imp) ? 'Mas ainda tem impostor na mesa...' : 'Pegaram o impostor!') : 'Vocês eliminaram um inocente...'}</p>`,
+        <div class="carimbo ${j.imp ? 'vermelho' : 'verde'}">${j.imp ? 'ERA O IMPOSTOR' : 'ERA INOCENTE'}</div>
+        <p class="sub" style="margin-top:8px">${j.imp ? (G.jog.some(q => q.vivo && q.imp) ? 'Ainda há impostor na mesa.' : 'O impostor foi descoberto.') : 'Vocês eliminaram um inocente.'}</p>`,
         [['CONTINUAR', '', () => { modal(''); this.depoisEliminar(i); }]]);
     }, 1000);
   },
   depoisEliminar(i) {
     const G = this.G, j = G.jog[i];
     if (j.imp && this.cfg.chute) {
-      modal(`<img class="rosto-g" src="${rosto(j.boneco)}" alt=""><div class="grande">Última chance!</div><p class="sub">${esc(j.nome)}, fala em voz alta qual você acha que era a palavra.</p>`,
+      modal(`<img class="rosto-g" src="${rosto(j.boneco)}" alt=""><div class="grande">Última chance!</div><p class="sub">${esc(j.nome)}, diga em voz alta qual você acha que era a palavra.</p>`,
         [['MOSTRAR A PALAVRA', '', () => modal(`<div class="sub">A palavra era</div><div class="grande">${esc(G.palavra)}</div><p class="sub">${esc(j.nome)} acertou?</p>`,
           [['ERROU', 'creme', () => { modal(''); this.checarFim(); }], ['ACERTOU', 'vermelho', () => { modal(''); this.fim('impostores', j.nome + ' acertou a palavra!'); }]])]]);
       return;
@@ -379,14 +379,14 @@ const Pres = {
     const G = this.G; if (!this.ativo || !G) return;
     if (G.fase === 'falando' && G.fimVez) {
       relogio(G.fimVez + deltaServ);
-      if (Date.now() > G.fimVez) { toast('Acabou o tempo de ' + G.jog[G.vez].nome); this.falou(''); }
+      if (Date.now() > G.fimVez) { toast('Tempo esgotado para ' + G.jog[G.vez].nome); this.falou(''); }
     } else relogio(null);
   }
 };
 $('#b-presencial').onclick = () => { som('pop'); Pres.abrir(); };
 $('#pres-add').onclick = () => { Pres.addJog(); Pres.salvar(); };
 $('#imp-menos').onclick = () => { Pres.cfg.impostores = Math.max(1, Pres.cfg.impostores - 1); som('pop'); Pres.salvar(); Pres.desenharConfig(); };
-$('#imp-mais').onclick = () => { if (Pres.cfg.impostores >= Pres.maxImp()) { toast('Precisa de mais gente pra isso'); return; } Pres.cfg.impostores++; som('pop'); Pres.salvar(); Pres.desenharConfig(); };
+$('#imp-mais').onclick = () => { if (Pres.cfg.impostores >= Pres.maxImp()) { toast('É preciso mais jogadores para isso'); return; } Pres.cfg.impostores++; som('pop'); Pres.salvar(); Pres.desenharConfig(); };
 $('#pres-dica').onclick = () => { Pres.cfg.dica = !Pres.cfg.dica; som('pop'); Pres.salvar(); Pres.desenharConfig(); };
 $('#pres-chute').onclick = () => { Pres.cfg.chute = !Pres.cfg.chute; som('pop'); Pres.salvar(); Pres.desenharConfig(); };
 $('#pres-iniciar').onclick = () => { som('bom'); Pres.iniciar(); };
@@ -409,10 +409,10 @@ async function rpc(f, args) {
   if (!r.ok) throw new Error('http ' + r.status);
   return r.json();
 }
-const ERROS = { nao_existe: 'Essa sala não existe', cheia: 'Sala cheia (8 jogadores)', poucos: 'Precisa de pelo menos 3 na sala', so_o_dono: 'Só o dono da sala pode', em_jogo: 'O jogo já começou',
-  nao_e_sua_vez: 'Não é sua vez', tamanho: 'Palavra muito curta ou longa', uma_palavra: 'Só UMA palavra, sem espaço', secreta: 'Não pode falar a palavra secreta!',
-  repetida: 'Essa já falaram!', agora_nao: 'Agora não dá', alvo: 'Não dá pra votar nesse', chat_fechado: 'O chat abre depois que todo mundo falar', calma: 'Calma aí',
-  boneco_em_uso: 'Esse boneco já tá na mesa', fora: 'Você não está nessa sala', sem_palavras: 'Sem palavras no servidor' };
+const ERROS = { nao_existe: 'Essa sala não existe', cheia: 'Sala cheia (8 jogadores)', poucos: 'São necessários pelo menos 3 jogadores', so_o_dono: 'Apenas o anfitrião pode fazer isso', em_jogo: 'O jogo já começou',
+  nao_e_sua_vez: 'Não é sua vez', tamanho: 'A palavra é curta ou longa demais', uma_palavra: 'Digite apenas uma palavra, sem espaços', secreta: 'Não é permitido dizer a palavra secreta',
+  repetida: 'Essa palavra já foi dita', agora_nao: 'Não é possível agora', alvo: 'Não é possível votar nesse jogador', chat_fechado: 'O chat abre depois que todos disserem sua palavra', calma: 'Aguarde um momento',
+  boneco_em_uso: 'Esse personagem já está em uso', fora: 'Você não está nesta sala', sem_palavras: 'Não há palavras cadastradas no servidor' };
 
 const On = {
   ativo: false, codigo: null, est: null, desde: 0, rodando: false, vistoFalas: {}, ultFase: null, ultVez: null, ultUlt: '', naoLidas: 0, assentoMeu: -1, ids: [], partida: -1,
@@ -424,7 +424,7 @@ const On = {
       if (r.erro) { err.textContent = ERROS[r.erro] || r.erro; som('ruim'); return; }
       this.codigo = r.codigo; guarda.pôr('sala', { codigo: r.codigo, quando: Date.now() });
       this.comecar();
-    } catch { err.textContent = 'Sem conexão. Tenta de novo.'; som('ruim'); }
+    } catch { err.textContent = 'Sem conexão. Tente novamente.'; som('ruim'); }
   },
   comecar() {
     Pres.ativo = false; this.ativo = true; this.est = null; this.desde = 0; this.vistoFalas = {}; this.ultFase = null; this.ultVez = null; this.ultUlt = ''; this.partida = -1;
@@ -452,7 +452,7 @@ const On = {
         if (e.erro) { this.sairLocal('Você saiu da sala'); break; }
         deltaServ = e.agora - Date.now();
         this.aplicar(e);
-      } catch { $('#j-sub').textContent = 'reconectando...'; }
+      } catch { $('#j-sub').textContent = 'Reconectando...'; }
       const minhaVez = this.est && this.est.sala.vez === this.est.eu.id;
       await new Promise(r => setTimeout(r, minhaVez ? 1200 : 850));
     }
@@ -501,9 +501,9 @@ const On = {
     if (s.fase !== 'revelacao' && s.fase !== 'fim' && ['revelacao', 'fim', 'chute'].includes(this.ultFase) && s.fase !== 'chute') modal('');
     if (s.fase === 'sala' && this.ultFase === 'fim') modal('');
     if (s.fase === 'votacao' && this.ultFase !== 'votacao') { som('ruim'); vibrar(120); mesa.selecionado = null; mesa.calar(); }
-    if (s.fase === 'discussao' && this.ultFase !== 'discussao') { toast('Todo mundo falou! Discutam no chat 💬'); mesa.calar(); }
-    if (s.fase === 'falando' && this.ultFase && this.ultFase !== 'falando' && this.ultFase !== 'sala') toast('Rodada ' + s.rodada + '!');
-    if (s.fase === 'falando' && this.ultFase === 'sala') { mesa.calar(); toast('Começou! Sua palavra tá lá em cima 👆', 3000); som('bom'); }
+    if (s.fase === 'discussao' && this.ultFase !== 'discussao') { toast('Todos disseram sua palavra. Discutam no chat 💬'); mesa.calar(); }
+    if (s.fase === 'falando' && this.ultFase && this.ultFase !== 'falando' && this.ultFase !== 'sala') toast('Rodada ' + s.rodada);
+    if (s.fase === 'falando' && this.ultFase === 'sala') { mesa.calar(); toast('A partida começou. Sua palavra está no topo da tela', 3000); som('bom'); }
     this.ultUlt = ultStr; this.ultFase = s.fase;
     // modo de toque
     const podeVotar = s.fase === 'votacao' && eu.jogando && eu.vivo && !eu.voto;
@@ -526,10 +526,10 @@ const On = {
   topo() {
     const e = this.est, s = e.sala, eu = e.eu, vivos = e.jogadores.filter(j => j.jogando && j.vivo).length;
     const nome = id => (this.jogadorPor(id) || {}).nome || '?';
-    const T = { sala: 'SALA ' + s.codigo, falando: s.vez === eu.id ? 'SUA VEZ!' : 'Vez de ' + nome(s.vez), discussao: 'DISCUSSÃO', votacao: 'VOTAÇÃO',
-      revelacao: 'RESULTADO', chute: s.vez === eu.id ? 'ÚLTIMA CHANCE!' : nome(s.vez) + ' vai chutar', fim: 'FIM DE JOGO' }[s.fase];
+    const T = { sala: 'SALA ' + s.codigo, falando: s.vez === eu.id ? 'SUA VEZ' : 'Vez de ' + nome(s.vez), discussao: 'DISCUSSÃO', votacao: 'VOTAÇÃO',
+      revelacao: 'RESULTADO', chute: s.vez === eu.id ? 'ÚLTIMA CHANCE' : nome(s.vez) + ' tentará adivinhar', fim: 'FIM DE JOGO' }[s.fase];
     $('#j-fase').textContent = T;
-    $('#j-sub').textContent = s.fase === 'sala' ? `${e.jogadores.length} de 8 na mesa` : s.fase === 'fim' ? '' : `Rodada ${s.rodada} · ${vivos} vivos` + (!eu.jogando ? ' · assistindo' : !eu.vivo ? ' · você é plateia 👻' : '');
+    $('#j-sub').textContent = s.fase === 'sala' ? `${e.jogadores.length} de 8 jogadores` : s.fase === 'fim' ? '' : `Rodada ${s.rodada} · ${vivos} vivos` + (!eu.jogando ? ' · assistindo' : !eu.vivo ? ' · você foi eliminado' : '');
     relogio(['falando', 'discussao', 'votacao', 'chute'].includes(s.fase) ? s.prazo : null);
   },
   painel() {
@@ -548,52 +548,52 @@ const On = {
     };
     if (s.fase === 'sala') {
       const c = s.config;
-      const resumo = `${c.impostores} impostor${c.impostores > 1 ? 'es' : ''} · dica ${c.dica ? 'sim' : 'não'} · ${c.tempo_vez ? c.tempo_vez + 's por vez' : 'sem tempo'} · ${c.categorias.length ? c.categorias.length + ' categorias' : 'todas as categorias'}`;
+      const resumo = `${c.impostores} impostor${c.impostores > 1 ? 'es' : ''} · dica ${c.dica ? 'sim' : 'não'} · ${c.tempo_vez ? c.tempo_vez + 's por vez' : 'sem limite de tempo'} · ${c.categorias.length ? c.categorias.length + ' categorias' : 'todas as categorias'}`;
       cx.innerHTML = `<div class="sub" style="margin:0">Código da sala</div><div class="codigo-sala">${esc(s.codigo)}</div><div class="sub">${resumo}</div>
-        <div class="acoes"><button class="btn creme peq" id="o-convidar">📲 CONVIDAR</button><button class="btn creme peq" id="o-boneco">🎭 BONECO</button>${eu.host ? '<button class="btn creme peq" id="o-config">⚙️ REGRAS</button>' : ''}</div>
-        ${eu.host ? `<div class="acoes"><button class="btn verde" id="o-iniciar" ${e.jogadores.length < 3 ? 'disabled' : ''}>▶ COMEÇAR${e.jogadores.length < 3 ? ' (mín. 3)' : ''}</button></div>` : '<div class="sub" style="margin:10px 0 0">Esperando o dono da sala começar...</div>'}`;
+        <div class="acoes"><button class="btn creme peq" id="o-convidar">CONVIDAR</button><button class="btn creme peq" id="o-boneco">PERSONAGEM</button>${eu.host ? '<button class="btn creme peq" id="o-config">REGRAS</button>' : ''}</div>
+        ${eu.host ? `<div class="acoes"><button class="btn verde" id="o-iniciar" ${e.jogadores.length < 3 ? 'disabled' : ''}>▶ INICIAR${e.jogadores.length < 3 ? ' (mín. 3)' : ''}</button></div>` : '<div class="sub" style="margin:10px 0 0">Aguardando o anfitrião iniciar a partida.</div>'}`;
       $('#o-convidar').onclick = () => this.convidar();
-      $('#o-boneco').onclick = () => abrirPicker({ titulo: 'Seu boneco', comNome: true, atual: euJ.boneco, nome: euJ.nome, bloqueados: e.jogadores.filter(j => j.id !== eu.id).map(j => j.boneco),
+      $('#o-boneco').onclick = () => abrirPicker({ titulo: 'Seu personagem', comNome: true, atual: euJ.boneco, nome: euJ.nome, bloqueados: e.jogadores.filter(j => j.id !== eu.id).map(j => j.boneco),
         ok: async (b, n) => { perfil = { nome: n, boneco: b }; guarda.pôr('perfil', perfil); mostrarPerfil(); const r = await rpc('ehn_perfil', { p_codigo: this.codigo, p_token: token, p_nome: n, p_boneco: b }); if (r.erro) toast(ERROS[r.erro]); } });
       if ($('#o-config')) $('#o-config').onclick = () => this.config();
       if ($('#o-iniciar')) $('#o-iniciar').onclick = async () => { som('bom'); const r = await rpc('ehn_iniciar', { p_codigo: this.codigo, p_token: token }); if (r.erro) toast(ERROS[r.erro] || r.erro); };
     } else if (s.fase === 'falando') {
       if (s.vez === eu.id) {
-        cx.innerHTML = `<div class="tit">Sua vez! Fala UMA palavra</div><div class="sub">Ligada à palavra secreta, sem entregar demais.</div>
-          <div class="envio"><input class="campo" id="o-fala" maxlength="18" placeholder="sua palavra" autocomplete="off" enterkeyhint="send"><button class="btn verde" id="o-falar">➤</button></div><div class="erro-msg" id="o-erro"></div>` + emerg();
+        cx.innerHTML = `<div class="tit">Sua vez: digite uma palavra</div><div class="sub">Relacionada à palavra secreta, sem revelar demais.</div>
+          <div class="envio"><input class="campo" id="o-fala" maxlength="18" placeholder="Sua palavra" autocomplete="off" enterkeyhint="send"><button class="btn verde" id="o-falar">➤</button></div><div class="erro-msg" id="o-erro"></div>` + emerg();
         const vai = async () => {
           const v = $('#o-fala').value.trim(); if (!v) return;
           $('#o-falar').disabled = true;
           try { const r = await rpc('ehn_falar', { p_codigo: this.codigo, p_token: token, p_palavra: v }); if (r.erro) { $('#o-erro').textContent = ERROS[r.erro] || r.erro; som('ruim'); $('#o-falar').disabled = false; } }
-          catch { $('#o-erro').textContent = 'Falhou, tenta de novo'; $('#o-falar').disabled = false; }
+          catch { $('#o-erro').textContent = 'Falha ao enviar. Tente novamente.'; $('#o-falar').disabled = false; }
         };
         $('#o-falar').onclick = vai; $('#o-fala').onkeydown = ev => { if (ev.key === 'Enter') vai(); };
         setTimeout(() => $('#o-fala') && $('#o-fala').focus({ preventScroll: true }), 400);
       } else {
         const j = this.jogadorPor(s.vez);
-        cx.innerHTML = `<div class="tit">${esc(j ? j.nome : '')} tá pensando...</div><div class="sub">${!eu.jogando ? 'Você entrou no meio: assiste essa partida.' : !eu.vivo ? 'Você é plateia 👻 Conversa com os outros eliminados no chat.' : 'Presta atenção no que cada um fala.'}</div>` + emerg();
+        cx.innerHTML = `<div class="tit">Vez de ${esc(j ? j.nome : '')}</div><div class="sub">${!eu.jogando ? 'Você entrou durante a partida e vai assistir a esta rodada.' : !eu.vivo ? 'Você foi eliminado. Pode conversar com os outros eliminados no chat.' : 'Preste atenção no que cada jogador diz.'}</div>` + emerg();
       }
     } else if (s.fase === 'discussao') {
-      cx.innerHTML = `<div class="tit">Discutam! Quem tá estranho?</div><div class="sub">Abre o 💬 pra conversar e o 📜 pra ver as palavras. A votação abre quando o tempo acabar.</div>` + emerg();
+      cx.innerHTML = `<div class="tit">Hora de discutir</div><div class="sub">Use o 💬 para conversar e o 📜 para ver as palavras. A votação começa quando o tempo acabar.</div>` + emerg();
     } else if (s.fase === 'votacao') {
-      if (!eu.jogando || !eu.vivo) cx.innerHTML = `<div class="tit">Votação rolando...</div><div class="sub">Você não vota dessa vez.</div>`;
-      else if (eu.voto) { const alvo = eu.voto === 'pular' ? 'pular' : (this.jogadorPor(eu.voto) || {}).nome; cx.innerHTML = `<div class="tit">Você votou ${eu.voto === 'pular' ? 'pra pular' : 'em ' + esc(alvo)}</div><div class="sub">Esperando os outros (${e.jogadores.filter(j => j.votou).length}/${vivosJ.length})</div>`; }
+      if (!eu.jogando || !eu.vivo) cx.innerHTML = `<div class="tit">Votação em andamento</div><div class="sub">Você não participa desta votação.</div>`;
+      else if (eu.voto) { const alvo = eu.voto === 'pular' ? 'pular' : (this.jogadorPor(eu.voto) || {}).nome; cx.innerHTML = `<div class="tit">Você votou ${eu.voto === 'pular' ? 'para pular' : 'em ' + esc(alvo)}</div><div class="sub">Aguardando os demais (${e.jogadores.filter(j => j.votou).length}/${vivosJ.length})</div>`; }
       else if (mesa.selecionado !== null && mesa.selecionado !== undefined && this.votavel(mesa.selecionado)) {
         const j = this.jogadorPor(this.ids[mesa.selecionado]);
         cx.innerHTML = `<div class="tit">Votar em ${esc(j.nome)}?</div><div class="acoes"><button class="btn creme peq" id="o-trocar">TROCAR</button><button class="btn vermelho" id="o-votar">VOTAR</button></div>`;
         $('#o-trocar').onclick = () => { mesa.selecionado = null; this.painel(); };
         $('#o-votar').onclick = () => this.votar(j.id);
       } else {
-        cx.innerHTML = `<div class="tit">Quem é o impostor?</div><div class="sub">Toca em alguém na mesa pra votar.</div><div class="acoes"><button class="btn creme peq" id="o-pular">PULAR VOTO</button></div>`;
+        cx.innerHTML = `<div class="tit">Quem é o impostor?</div><div class="sub">Toque em um jogador para votar.</div><div class="acoes"><button class="btn creme peq" id="o-pular">PULAR VOTO</button></div>`;
         $('#o-pular').onclick = () => this.votar('pular');
       }
     } else if (s.fase === 'chute') {
       if (s.vez === eu.id) {
-        cx.innerHTML = `<div class="tit">Te pegaram! Última chance</div><div class="sub">Acerta a palavra e os impostores ganham.</div>
-          <div class="envio"><input class="campo" id="o-chute" maxlength="24" placeholder="qual era a palavra?" autocomplete="off"><button class="btn vermelho" id="o-chutar">➤</button></div>`;
+        cx.innerHTML = `<div class="tit">Você foi descoberto. Última chance</div><div class="sub">Se acertar a palavra, os impostores vencem.</div>
+          <div class="envio"><input class="campo" id="o-chute" maxlength="24" placeholder="Qual era a palavra?" autocomplete="off"><button class="btn vermelho" id="o-chutar">➤</button></div>`;
         const vai = async () => { const v = $('#o-chute').value.trim(); if (!v) return; $('#o-chutar').disabled = true; await rpc('ehn_chutar', { p_codigo: this.codigo, p_token: token, p_palavra: v }).catch(() => { }); };
         $('#o-chutar').onclick = vai; $('#o-chute').onkeydown = ev => { if (ev.key === 'Enter') vai(); };
-      } else { const j = this.jogadorPor(s.vez); cx.innerHTML = `<div class="tit">${esc(j ? j.nome : '')} era impostor!</div><div class="sub">Agora tá tentando adivinhar a palavra... Se acertar, os impostores ganham.</div>`; }
+      } else { const j = this.jogadorPor(s.vez); cx.innerHTML = `<div class="tit">${esc(j ? j.nome : '')} era o impostor</div><div class="sub">Ele está tentando adivinhar a palavra. Se acertar, os impostores vencem.</div>`; }
     } else cx.remove();
     if ($('#o-emerg')) $('#o-emerg').onclick = async () => { som('ruim'); const r = await rpc('ehn_emergencia', { p_codigo: this.codigo, p_token: token }); if (r.erro) toast(ERROS[r.erro] || r.erro); };
     if (foco && $('#' + foco) && valor !== null) { $('#' + foco).value = valor; $('#' + foco).focus({ preventScroll: true }); }
@@ -601,14 +601,14 @@ const On = {
   async votar(alvo) {
     som('voto'); vibrar(30);
     const r = await rpc('ehn_votar', { p_codigo: this.codigo, p_token: token, p_alvo: alvo }).catch(() => ({ erro: 'rede' }));
-    if (r.erro) toast(ERROS[r.erro] || 'Falhou, tenta de novo');
+    if (r.erro) toast(ERROS[r.erro] || 'Falha ao enviar. Tente novamente.');
     else { this.est.eu.voto = alvo; mesa.selecionado = null; modoToque = null; atualizarSelecao(); this.painel(); }
   },
   revelar(u) {
     const e = this.est;
     if (u.empate || !u.eliminado) {
       som('pop');
-      modal(`<div class="grande">${u.empate ? 'EMPATE!' : 'NINGUÉM SAIU'}</div><p class="sub">${u.empate ? 'Ninguém foi eliminado. Vai pra outra rodada.' : 'A maioria pulou o voto. Outra rodada!'}</p>${this.listaVotos(u)}`);
+      modal(`<div class="grande">${u.empate ? 'EMPATE' : 'NINGUÉM FOI ELIMINADO'}</div><p class="sub">${u.empate ? 'Houve empate na votação. Uma nova rodada vai começar.' : 'A maioria preferiu não eliminar ninguém. Uma nova rodada vai começar.'}</p>${this.listaVotos(u)}`);
       return;
     }
     const j = this.jogadorPor(u.eliminado) || { nome: '?', boneco: 0 }, i = this.seat(u.eliminado);
@@ -616,7 +616,7 @@ const On = {
     som(u.impostor ? 'bom' : 'ruim'); vibrar(u.impostor ? [60, 40, 60] : 220);
     const sobra = e.jogadores.some(q => q.jogando && q.vivo && q.impostor === null && q.id !== e.eu.id) || (e.eu.impostor && e.eu.vivo);
     setTimeout(() => modal(`<img class="rosto-g cinza" src="${rosto(j.boneco)}" alt=""><div class="grande">${esc(j.nome)}${u.eliminado === e.eu.id ? ' (você)' : ''}</div>
-      <div class="carimbo ${u.impostor ? 'vermelho' : 'verde'}">${u.impostor ? 'ERA IMPOSTOR!' : 'ERA INOCENTE'}</div>${this.listaVotos(u)}`), 900);
+      <div class="carimbo ${u.impostor ? 'vermelho' : 'verde'}">${u.impostor ? 'ERA O IMPOSTOR' : 'ERA INOCENTE'}</div>${this.listaVotos(u)}`), 900);
   },
   listaVotos(u) {
     const v = u.votos || {}, nome = id => id === 'pular' ? 'pular' : ((this.jogadorPor(id) || {}).nome || '?');
@@ -629,7 +629,7 @@ const On = {
     const ganhei = eu.jogando && ((s.vencedor === 'impostores') === eu.impostor);
     if (!silencioso) { if (ganhei) { som('vitoria'); confete(); } else som('ruim'); }
     const u = s.ult || {};
-    const motivo = u.acertou ? `${(this.jogadorPor(u.eliminado) || {}).nome} acertou a palavra no chute!` : '';
+    const motivo = u.acertou ? `${(this.jogadorPor(u.eliminado) || {}).nome} acertou a palavra.` : '';
     modal(`<div class="grande">${s.vencedor === 'inocentes' ? 'OS INOCENTES VENCERAM!' : 'OS IMPOSTORES VENCERAM!'}</div>
       ${eu.jogando ? `<div class="carimbo ${ganhei ? 'verde' : 'vermelho'}">${ganhei ? 'VOCÊ GANHOU' : 'VOCÊ PERDEU'}</div>` : ''}
       ${motivo ? `<p class="sub">${esc(motivo)}</p>` : ''}
@@ -638,7 +638,7 @@ const On = {
       <div class="lista-imp">${imps.map(q => `<figure><img src="${rosto(q.boneco)}" alt="">${esc(q.nome)}</figure>`).join('')}</div>`,
       eu.host ? [['JOGAR DE NOVO', 'verde', async () => { await rpc('ehn_denovo', { p_codigo: this.codigo, p_token: token }); modal(''); }], ['SAIR', 'creme', () => this.sair()]]
         : [['SAIR', 'creme', () => this.sair()]]);
-    if (!eu.host) { const c = $('#j-modal .caixa'); c && c.insertAdjacentHTML('beforeend', '<p class="sub" style="margin-top:10px">O dono da sala decide se tem outra.</p>'); }
+    if (!eu.host) { const c = $('#j-modal .caixa'); c && c.insertAdjacentHTML('beforeend', '<p class="sub" style="margin-top:10px">O anfitrião decide se haverá outra partida.</p>'); }
   },
   addChat(c) {
     const e = this.est, j = this.jogadorPor(c.de);
@@ -658,14 +658,14 @@ const On = {
     const fantasma = !['sala', 'fim'].includes(s.fase) && !(eu.jogando && eu.vivo);
     const fechado = !fantasma && ['falando', 'chute'].includes(s.fase);
     $('#chat-envio').hidden = fechado; $('#chat-fechado').hidden = !fechado;
-    $('#chat-fechado').textContent = 'O chat abre depois que todo mundo falar a palavra.';
-    $('#chat-input').placeholder = fantasma ? 'só os eliminados veem 👻' : 'Escreve aqui...';
+    $('#chat-fechado').textContent = 'O chat abre depois que todos disserem sua palavra.';
+    $('#chat-input').placeholder = fantasma ? 'Apenas os eliminados veem estas mensagens' : 'Digite sua mensagem';
   },
   async mandarChat() {
     const i = $('#chat-input'), v = i.value.trim(); if (!v) return;
     i.value = '';
     const r = await rpc('ehn_dizer', { p_codigo: this.codigo, p_token: token, p_tipo: 'msg', p_texto: v, p_alvo: null }).catch(() => ({ erro: 'rede' }));
-    if (r.erro) { toast(ERROS[r.erro] || 'Não foi'); i.value = v; }
+    if (r.erro) { toast(ERROS[r.erro] || 'Não foi possível enviar'); i.value = v; }
   },
   config() {
     const c = JSON.parse(JSON.stringify(this.est.sala.config));
@@ -674,12 +674,12 @@ const On = {
       const chips = (arr, atual, campo) => arr.map(([v, t]) => `<span class="chip${atual === v ? ' on' : ''}" data-c="${campo}" data-v="${v}">${t}</span>`).join('');
       modal(`<div class="tit">Regras da sala</div>
         <div style="text-align:left;max-height:58vh;overflow-y:auto">
-        <div class="sub" style="text-align:left;margin:6px 0">Impostores (até ${maxImp} com ${n} na sala)</div>${chips([[1, '1'], [2, '2'], [3, '3']], c.impostores, 'impostores')}
-        <div class="sub" style="text-align:left;margin:6px 0">Dica pro impostor</div>${chips([[true, 'Sim'], [false, 'Não']], c.dica, 'dica')}
-        <div class="sub" style="text-align:left;margin:6px 0">Última chance (impostor chuta a palavra)</div>${chips([[true, 'Sim'], [false, 'Não']], c.chute, 'chute')}
-        <div class="sub" style="text-align:left;margin:6px 0">Tempo pra falar a palavra</div>${chips([[20, '20s'], [30, '30s'], [45, '45s'], [60, '60s']], c.tempo_vez, 'tempo_vez')}
-        <div class="sub" style="text-align:left;margin:6px 0">Discussão antes de votar</div>${chips([[0, 'Direto'], [30, '30s'], [60, '1 min'], [90, '1:30'], [120, '2 min']], c.tempo_disc, 'tempo_disc')}
-        <div class="sub" style="text-align:left;margin:6px 0">Tempo pra votar</div>${chips([[20, '20s'], [30, '30s'], [45, '45s'], [60, '60s']], c.tempo_voto, 'tempo_voto')}
+        <div class="sub" style="text-align:left;margin:6px 0">Impostores (máximo de ${maxImp} com ${n} jogadores)</div>${chips([[1, '1'], [2, '2'], [3, '3']], c.impostores, 'impostores')}
+        <div class="sub" style="text-align:left;margin:6px 0">Dica para o impostor</div>${chips([[true, 'Sim'], [false, 'Não']], c.dica, 'dica')}
+        <div class="sub" style="text-align:left;margin:6px 0">Última chance (o impostor eliminado tenta adivinhar a palavra)</div>${chips([[true, 'Sim'], [false, 'Não']], c.chute, 'chute')}
+        <div class="sub" style="text-align:left;margin:6px 0">Tempo para dizer a palavra</div>${chips([[20, '20s'], [30, '30s'], [45, '45s'], [60, '60s']], c.tempo_vez, 'tempo_vez')}
+        <div class="sub" style="text-align:left;margin:6px 0">Discussão antes de votar</div>${chips([[0, 'Sem discussão'], [30, '30s'], [60, '1 min'], [90, '1:30'], [120, '2 min']], c.tempo_disc, 'tempo_disc')}
+        <div class="sub" style="text-align:left;margin:6px 0">Tempo para votar</div>${chips([[20, '20s'], [30, '30s'], [45, '45s'], [60, '60s']], c.tempo_voto, 'tempo_voto')}
         <div class="sub" style="text-align:left;margin:6px 0">Categorias</div><span class="chip${c.categorias.length ? '' : ' on'}" data-cat="">🎲 Todas</span>${CATEGORIAS.map(k => `<span class="chip${c.categorias.includes(k.nome) ? ' on' : ''}" data-cat="${esc(k.nome)}">${k.emoji} ${esc(k.nome)}</span>`).join('')}
         </div>`, [['CANCELAR', 'creme', () => modal('')], ['SALVAR', 'verde', async () => {
           const r = await rpc('ehn_config', { p_codigo: this.codigo, p_token: token, p_config: c }).catch(() => ({ erro: 'rede' }));
@@ -687,7 +687,7 @@ const On = {
         }]]);
       document.querySelectorAll('#j-modal [data-c]').forEach(ch => ch.onclick = () => {
         const k = ch.dataset.c, raw = ch.dataset.v, v = raw === 'true' ? true : raw === 'false' ? false : +raw;
-        if (k === 'impostores' && v > maxImp) { toast(`Com ${n} na sala dá até ${maxImp}`); return; }
+        if (k === 'impostores' && v > maxImp) { toast(`Com ${n} jogadores, o máximo é ${maxImp}`); return; }
         c[k] = v; som('pop'); desenhar();
       });
       document.querySelectorAll('#j-modal [data-cat]').forEach(ch => ch.onclick = () => {
@@ -699,9 +699,9 @@ const On = {
   },
   convidar() {
     const url = location.origin + location.pathname + '?sala=' + this.codigo;
-    const texto = `Bora jogar EHNPOSTOR! Sala ${this.codigo}`;
+    const texto = `Venha jogar Ehnpostor! Sala ${this.codigo}`;
     if (navigator.share) navigator.share({ title: 'Ehnpostor', text: texto, url }).catch(() => { });
-    else { navigator.clipboard && navigator.clipboard.writeText(texto + ' ' + url); toast('Link copiado! Cola no grupo'); }
+    else { navigator.clipboard && navigator.clipboard.writeText(texto + ' ' + url); toast('Link copiado'); }
   },
   async sair() {
     modal('');
@@ -723,7 +723,7 @@ function mandarEmote(i, emo) {
   if (!On.ativo) return;
   const alvo = On.ids[i]; if (!alvo) return;
   mesa.emote(On.assentoMeu, i, emo); som('pop');
-  rpc('ehn_dizer', { p_codigo: On.codigo, p_token: token, p_tipo: 'emo', p_texto: emo, p_alvo: alvo }).then(r => { if (r.erro === 'calma') toast('Calma aí'); }).catch(() => { });
+  rpc('ehn_dizer', { p_codigo: On.codigo, p_token: token, p_tipo: 'emo', p_texto: emo, p_alvo: alvo }).then(r => { if (r.erro === 'calma') toast('Aguarde um momento'); }).catch(() => { });
 }
 $('#chat-mandar').onclick = () => On.mandarChat();
 $('#chat-input').onkeydown = e => { if (e.key === 'Enter') On.mandarChat(); };
@@ -731,7 +731,7 @@ $('#chat-fechar').onclick = () => $('#j-chat').classList.remove('on');
 $('#j-minha').onclick = () => { $('#j-minha').classList.toggle('oculta'); som('pop'); };
 $('#j-sair').onclick = () => {
   if (Pres.ativo) { modal('<div class="tit">Sair da partida?</div>', [['FICAR', 'creme', () => modal('')], ['SAIR', 'vermelho', () => Pres.sair()]]); return; }
-  modal('<div class="tit">Sair da sala?</div><p class="sub">Se o jogo já começou, você sai da partida.</p>', [['FICAR', 'creme', () => modal('')], ['SAIR', 'vermelho', () => On.sair()]]);
+  modal('<div class="tit">Sair da sala?</div><p class="sub">Se a partida já começou, você será retirado dela.</p>', [['FICAR', 'creme', () => modal('')], ['SAIR', 'vermelho', () => On.sair()]]);
 };
 $('#b-online').onclick = () => garantirPerfil(() => { som('pop'); abrirOnline(); });
 function abrirOnline(codigo) {
@@ -743,7 +743,7 @@ function abrirOnline(codigo) {
     $('#on-codigo').value = salva.codigo;
   }
 }
-$('#on-entrar').onclick = () => { const c = $('#on-codigo').value.trim().toUpperCase(); if (c.length !== 4) { $('#on-erro').textContent = 'O código tem 4 letras'; return; } som('pop'); On.entrar(c, false); };
+$('#on-entrar').onclick = () => { const c = $('#on-codigo').value.trim().toUpperCase(); if (c.length !== 4) { $('#on-erro').textContent = 'O código tem 4 caracteres'; return; } som('pop'); On.entrar(c, false); };
 $('#on-codigo').onkeydown = e => { if (e.key === 'Enter') $('#on-entrar').click(); };
 $('#on-criar').onclick = () => { som('pop'); On.entrar(null, true); };
 
